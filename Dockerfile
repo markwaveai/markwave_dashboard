@@ -1,11 +1,18 @@
-# Use an official Nginx image to serve the React app
+# Use an official Nginx image
 FROM nginx:alpine
 
-# Copy the build files to the Nginx HTML directory
+# Replace default nginx config to support React Router (SPA)
+RUN printf "server {\n\
+    listen 80;\n\
+    root /usr/share/nginx/html;\n\
+\n\
+    location / {\n\
+        try_files \$uri /index.html;\n\
+    }\n\
+}\n" > /etc/nginx/conf.d/default.conf
+
+# Copy React build files
 COPY ./build /usr/share/nginx/html
 
-# Expose port 80 to the outside world
-EXPOSE 80
-
-# Start Nginx when the container launches
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
