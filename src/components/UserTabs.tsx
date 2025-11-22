@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './UserTabs.css';
+import BuffaloTree from './BuffaloTree';
 import axios from 'axios';
 
 const UserTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'nonVerified' | 'existing'>('nonVerified');
+  const [activeTab, setActiveTab] = useState<'nonVerified' | 'existing' | 'tree'>('nonVerified');
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -32,9 +33,10 @@ const UserTabs: React.FC = () => {
       }
     };
 
+    // Only fetch data for the user-related tabs. The 'tree' tab is client-side.
     if (activeTab === 'nonVerified') {
       fetchReferralUsers();
-    } else {
+    } else if (activeTab === 'existing') {
       fetchExistingCustomers();
     }
   }, [activeTab]);
@@ -81,6 +83,12 @@ const UserTabs: React.FC = () => {
         >
           Existing Customers
         </button>
+        <button
+          className={activeTab === 'tree' ? 'active' : ''}
+          onClick={() => setActiveTab('tree')}
+        >
+          Buffalo Tree
+        </button>
       </div>
 
       <div className="tab-content">
@@ -115,7 +123,7 @@ const UserTabs: React.FC = () => {
             </div>
             <button className="floating-create-icon" onClick={handleCreateClick}>+</button>
           </div>
-        ) : (
+        ) : activeTab === 'existing' ? (
           <div>
             <h2>Existing Customers</h2>
             <div className="table-container">
@@ -144,6 +152,21 @@ const UserTabs: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        ) : (
+          <div>
+            {/* Buffalo Tree tab content */}
+            {activeTab === 'tree' && (
+              <div style={{ padding: '1rem' }}>
+                <h2>Buffalo Family Tree</h2>
+                <div className="tree-wrapper">
+                  {/* Render BuffaloTree component */}
+                  <div id="buffalo-tree-root">
+                    <BuffaloTree />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
