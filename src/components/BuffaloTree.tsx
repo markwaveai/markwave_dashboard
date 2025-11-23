@@ -32,8 +32,9 @@ function generateBuffalo(name: string, bornDate: Date, windowStart: Date, window
 
   let childIndex = 1;
   let childBirthDate = new Date(milkStart);
+  const maxChildren = 10; // Maximum number of children per buffalo
 
-  while (childBirthYear <= windowEndYear) {
+  while (childBirthYear <= windowEndYear && childIndex <= maxChildren) {
     const childName = `${name}${childIndex}`;
 
     const childNode = generateBuffalo(childName, new Date(childBirthDate), windowStart, windowEnd);
