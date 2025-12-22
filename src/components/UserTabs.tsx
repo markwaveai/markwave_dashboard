@@ -3,6 +3,7 @@ import './UserTabs.css';
 import BuffaloTree from './BuffaloTree';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
+import { useTableSortAndSearch } from '../hooks/useTableSortAndSearch';
 
 interface UserTabsProps {
   adminMobile: string;
@@ -130,6 +131,264 @@ const ProductImageCarousel: React.FC<{ images: string[], breed: string, inStock:
   );
 };
 
+// Modal to show ID Proof image names
+const ImageNamesModal: React.FC<{ isOpen: boolean; onClose: () => void; data: any }> = ({ isOpen, onClose, data }) => {
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  if (!isOpen || !data) return null;
+
+  // Heuristic to find image-like fields
+  // Helper to check if a value is an image URL
+  const isImage = (key: string, value: any) => {
+    // console.log(value);
+    if (typeof value !== 'string') return false;
+    const lowerKey = key.toLowerCase();
+    const lowerValue = value.toLowerCase();
+    return (
+      lowerKey.includes('image') ||
+      lowerKey.includes('photo') ||
+      lowerKey.includes('proof') ||
+      lowerKey.includes('card') ||
+      lowerValue.match(/\.(jpeg|jpg|png|gif|webp)(\?.*)?$/)
+    );
+  };
+
+  const imageFields: [string, any][] = [];
+
+  // Check top level fields
+  if (data) {
+    Object.entries(data).forEach(([key, value]) => {
+      if (isImage(key, value)) {
+        imageFields.push([key, value]);
+      }
+    });
+
+    // Check transaction object fields
+    if (data.transaction && typeof data.transaction === 'object') {
+      Object.entries(data.transaction).forEach(([key, value]) => {
+        if (isImage(key, value)) {
+          imageFields.push([`Transaction: ${key}`, value]);
+        }
+      });
+    }
+  }
+
+  const handleClose = () => {
+    setViewingImage(null);
+    setIsLoading(false);
+    onClose();
+  };
+
+  const handleViewImage = (url: string) => {
+    setViewingImage(url);
+    setIsLoading(true);
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }} onClick={handleClose}>
+      <div style={{
+        background: 'white',
+        borderRadius: '8px',
+        padding: '24px',
+        width: '90%',
+        maxWidth: '600px',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: viewingImage ? '500px' : 'auto', // Fixed minimum height when viewing image
+        transition: 'min-height 0.3s ease'
+      }} onClick={e => e.stopPropagation()}>
+        <button
+          onClick={handleClose}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            background: 'none',
+            border: 'none',
+            fontSize: '24px',
+            cursor: 'pointer',
+            color: '#666',
+            zIndex: 10
+          }}
+        >
+          ×
+        </button>
+
+        {viewingImage ? (
+          // View Image Mode
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '450px' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
+              View Document
+            </h3>
+
+            <div style={{
+              flex: 1,
+              overflow: 'auto',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'flex-start',
+              background: '#f3f4f6',
+              borderRadius: '4px',
+              marginBottom: '16px',
+              position: 'relative',
+              minHeight: '400px' // Fixed container height
+            }}>
+              {isLoading && (
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <div className="spinner" style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid #e5e7eb',
+                    borderTop: '4px solid #3b82f6',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  <span style={{ color: '#6b7280', fontSize: '14px' }}>Loading...</span>
+                  <style>{`
+                    @keyframes spin {
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
+                    }
+                  `}</style>
+                </div>
+              )}
+              <img
+                src={viewingImage}
+                alt="ID Proof"
+                onLoad={() => setIsLoading(false)}
+                onError={() => setIsLoading(false)}
+                style={{
+                  maxWidth: '100%',
+                  height: 'auto',
+                  opacity: isLoading ? 0 : 1,
+                  transition: 'opacity 0.3s ease'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <button
+                onClick={() => setViewingImage(null)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                &larr; Back to List
+              </button>
+              <a
+                href={viewingImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '8px 16px',
+                  background: '#2563eb',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 500,
+                  fontSize: '14px'
+                }}
+              >
+                Open Original
+              </a>
+            </div>
+          </div>
+        ) : (
+          // List Mode
+          <>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
+              Payment Proof Files: {data.name}
+            </h3>
+
+            {imageFields.length === 0 ? (
+              <p style={{ color: '#666', textAlign: 'center' }}>No Payment proof documents found.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {imageFields.map(([key, value]) => (
+                  <div key={key} style={{
+                    padding: '12px',
+                    background: '#f9fafb',
+                    borderRadius: '6px',
+                    border: '1px solid #e5e7eb',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>
+                      {key}
+                    </div>
+                    <button
+                      onClick={() => handleViewImage(String(value))}
+                      style={{
+                        fontSize: '12px',
+                        color: '#2563eb',
+                        textDecoration: 'underline',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0
+                      }}
+                    >
+                      View
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={handleClose}
+                style={{
+                  padding: '8px 16px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
   const [activeTab, setActiveTab] = useState<'orders' | 'nonVerified' | 'existing' | 'tree' | 'products'>('orders');
   const [showModal, setShowModal] = useState(false);
@@ -161,11 +420,90 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
   });
 
 
+
+
+  // ID Proof Modal State
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [selectedProofData, setSelectedProofData] = useState<any>(null);
+
+
   const [referralUsers, setReferralUsers] = useState<any[]>([]);
   const [existingCustomers, setExistingCustomers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [pendingUnits, setPendingUnits] = useState<any[]>([]);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  // --- Filter State ---
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('All');
+  const [paymentModeFilter, setPaymentModeFilter] = useState<string>('All');
+
+  // --- Derived Data for Filters ---
+  const uniquePaymentModes = React.useMemo(() => {
+    const modes = new Set<string>();
+    pendingUnits.forEach((item: any) => {
+      if (item.transaction?.paymentType) {
+        modes.add(item.transaction.paymentType);
+      }
+    });
+    return Array.from(modes);
+  }, [pendingUnits]);
+
+  // --- Pre-filter Data ---
+  const preFilteredUnits = React.useMemo(() => {
+    return pendingUnits.filter((item: any) => {
+      const matchStatus = paymentStatusFilter === 'All' || item.order?.paymentStatus === paymentStatusFilter;
+      const matchMode = paymentModeFilter === 'All' || item.transaction?.paymentType === paymentModeFilter;
+      return matchStatus && matchMode;
+    });
+  }, [pendingUnits, paymentStatusFilter, paymentModeFilter]);
+
+  // --- Orders Table Logic ---
+  const {
+    filteredData: filteredOrders,
+    searchQuery: ordersSearchQuery,
+    setSearchQuery: setOrdersSearchQuery,
+    sortConfig: ordersSortConfig,
+    requestSort: requestOrdersSort,
+  } = useTableSortAndSearch(preFilteredUnits, { key: '', direction: 'asc' }, (item, query) => {
+    const lowerQuery = query.toLowerCase();
+    const order = item.order || {};
+    const investor = item.investor || {};
+    const transaction = item.transaction || {};
+    return (
+      (investor.name || '').toLowerCase().includes(lowerQuery) ||
+      (order.id || '').toLowerCase().includes(lowerQuery) ||
+      (investor.mobile || '').toLowerCase().includes(lowerQuery) ||
+      (investor.email || '').toLowerCase().includes(lowerQuery)
+      // String(item.order?.numUnits || '').toLowerCase().includes(lowerQuery) ||
+      // String(transaction.amount || '').toLowerCase().includes(lowerQuery) ||
+      // (transaction.paymentType || '').toLowerCase().includes(lowerQuery) ||
+      // (order.paymentStatus || '').toLowerCase().includes(lowerQuery)
+    );
+  });
+
+  // --- Referral Users Table Logic ---
+  const {
+    filteredData: filteredReferrals,
+    searchQuery: referralSearchQuery,
+    setSearchQuery: setReferralSearchQuery,
+    sortConfig: referralSortConfig,
+    requestSort: requestReferralSort,
+  } = useTableSortAndSearch(referralUsers, { key: '', direction: 'asc' });
+
+  // --- Existing Users Table Logic ---
+  const {
+    filteredData: filteredExistingUsers,
+    searchQuery: existingUsersSearchQuery,
+    setSearchQuery: setExistingUsersSearchQuery,
+    sortConfig: existingUsersSortConfig,
+    requestSort: requestExistingUsersSort,
+  } = useTableSortAndSearch(existingCustomers, { key: '', direction: 'asc' });
+
+  const getSortIcon = (key: string, currentSortConfig: any) => {
+    if (currentSortConfig.key !== key) return '';
+    return currentSortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
 
   useEffect(() => {
     const fetchReferralUsers = async () => {
@@ -177,38 +515,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
       }
     };
 
-    const fetchPendingUnits = async () => {
-      try {
-        setOrdersError(null);
-        const response = await axios.get(API_ENDPOINTS.getPendingUnits(), {
-          headers: {
-            'X-Admin-Mobile': adminMobile,
-          },
-        });
-        const units = response.data?.units || [];
-        setPendingUnits(units);
-      } catch (error: any) {
-        console.error('Error fetching pending units:', error);
-        const rawDetail = error?.response?.data?.detail;
-        let msg: string;
-        if (typeof rawDetail === 'string') {
-          msg = rawDetail;
-        } else if (Array.isArray(rawDetail)) {
-          const first = rawDetail[0];
-          if (first && typeof first === 'object' && 'msg' in first) {
-            msg = String(first.msg);
-          } else {
-            msg = 'Failed to load orders';
-          }
-        } else if (rawDetail && typeof rawDetail === 'object' && 'msg' in rawDetail) {
-          msg = String(rawDetail.msg);
-        } else {
-          msg = 'Failed to load orders';
-        }
-        setOrdersError(msg);
-        setPendingUnits([]);
-      }
-    };
+    // Removed shadowed fetchPendingUnits to use the component-level function
 
     const fetchExistingCustomers = async () => {
       try {
@@ -224,6 +531,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
         const response = await axios.get(API_ENDPOINTS.getProducts());
         // Extract products array from the response structure
         const productsData = response.data?.products || [];
+        console.log(productsData)
         setProducts(productsData);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -251,7 +559,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
           'X-Admin-Mobile': adminMobile,
         },
       });
-      const units = response.data?.units || [];
+      const units = response.data?.orders || [];
       setPendingUnits(units);
     } catch (error: any) {
       console.error('Error fetching pending units:', error);
@@ -276,15 +584,30 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     }
   };
 
-  const handleApproveClick = (unitId: string) => {
-    setApprovingUnitId(unitId);
-    setApprovalData({
-      shedNumber: '',
-      farmName: '',
-      farmLocation: '',
-    });
-    setShowApproveModal(true);
+  const handleApproveClick = async (unitId: string) => {
+    // setApprovingUnitId(unitId);
+    // setApprovalData({
+    //   shedNumber: '',
+    //   farmName: '',
+    //   farmLocation: '',
+    // });
+    // setShowApproveModal(false);
+    try {
+      await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId }, {
+        headers: {
+          'X-Admin-Mobile': adminMobile,
+        }
+      });
+      alert('Order approved successfully!');
+      setShowApproveModal(false);
+      setApprovingUnitId(null);
+      fetchPendingUnits();
+    } catch (error) {
+      console.error('Error approving order:', error);
+      alert('Failed to approve order.');
+    }
   };
+
 
   const handleApprovalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -296,7 +619,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     if (!approvingUnitId) return;
 
     try {
-      await axios.post(API_ENDPOINTS.approveUnit(approvingUnitId), approvalData, {
+      await axios.post(API_ENDPOINTS.approveUnit(), { orderId: approvingUnitId }, {
         headers: {
           'X-Admin-Mobile': adminMobile,
         }
@@ -319,7 +642,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
   const handleReject = async (unitId: string) => {
     if (!window.confirm('Are you sure you want to reject this order?')) return;
     try {
-      await axios.post(API_ENDPOINTS.rejectUnit(unitId), {}, {
+      await axios.post(API_ENDPOINTS.rejectUnit(), { orderId: unitId }, {
         headers: {
           'X-Admin-Mobile': adminMobile,
         }
@@ -485,6 +808,17 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     setEditingUser(null);
   };
 
+  const handleViewProof = (transaction: any, investor: any) => {
+    setSelectedProofData({ ...transaction, name: investor.name });
+    setShowProofModal(true);
+  };
+
+  const handleCloseProofModal = () => {
+    setShowProofModal(false);
+    setSelectedProofData(null);
+  };
+
+
   return (
     <div>
       <div className="tabs">
@@ -527,41 +861,116 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
             {ordersError && (
               <div style={{ marginBottom: '0.75rem', color: '#dc2626' }}>{ordersError}</div>
             )}
+            {/* <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="Search orders..."
+                value={ordersSearchQuery}
+                onChange={(e) => setOrdersSearchQuery(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #d1d5db',
+                  width: '100%',
+                  maxWidth: '300px'
+                }}
+              />
+
+              <select
+                value={paymentModeFilter}
+                onChange={(e) => setPaymentModeFilter(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #d1d5db',
+                  minWidth: '150px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="All">All Payment Modes</option>
+                {uniquePaymentModes.map(mode => (
+                  <option key={mode} value={mode}>{mode}</option>
+                ))}
+              </select>
+
+              <select
+                value={paymentStatusFilter}
+                onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #d1d5db',
+                  minWidth: '150px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="All">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div> */}
             <div className="table-container">
               <table className="user-table">
                 <thead>
-                  <tr>
-                    <th>Unit ID</th>
-                    <th>User Mobile</th>
-                    <th>Buffalo ID</th>
-                    <th>Units</th>
-                    <th>Amount</th>
-                    <th>Payment Type</th>
-                    <th>Lat</th>
-                    <th>Lng</th>
-                    <th>Status</th>
+                  <tr >
+                    <th>S.No</th>
+                    <th style={{ minWidth: '180px', cursor: 'pointer' }} onClick={() => requestOrdersSort('investor.name')}>
+                      User Name {getSortIcon('investor.name', ordersSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => requestOrdersSort('order.id')}>
+                      Unit Id {getSortIcon('order.id', ordersSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => requestOrdersSort('investor.mobile')}>
+                      User Mobile {getSortIcon('investor.mobile', ordersSortConfig)}
+                    </th>
+                    <th style={{ minWidth: '150px', cursor: 'pointer' }} onClick={() => requestOrdersSort('investor.email')}>
+                      Email {getSortIcon('investor.email', ordersSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => requestOrdersSort('order.numUnits')}>
+                      Units {getSortIcon('order.numUnits', ordersSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => requestOrdersSort('transaction.amount')}>
+                      Amount {getSortIcon('transaction.amount', ordersSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => requestOrdersSort('transaction.paymentType')}>
+                      Payment Type {getSortIcon('transaction.paymentType', ordersSortConfig)}
+                    </th>
+                    <th>Payment Image Proof</th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => requestOrdersSort('order.paymentStatus')}>
+                      Status {getSortIcon('order.paymentStatus', ordersSortConfig)}
+                    </th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pendingUnits.length === 0 ? (
+                  {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={10} style={{ textAlign: 'center', color: '#888' }}>No pending orders</td>
+                      <td colSpan={10} style={{ textAlign: 'center', color: '#888' }}>No pending orders found</td>
                     </tr>
                   ) : (
-                    pendingUnits.map((entry: any, index: number) => {
-                      const unit = entry.unit || {};
+                    filteredOrders.map((entry: any, index: number) => {
+                      const unit = entry.order || {};
                       const tx = entry.transaction || {};
+                      const inv = entry.investor || {};
                       return (
                         <tr key={unit.id || index}>
+                          <td>{index + 1}</td>
+                          <td >{inv.name}</td>
                           <td>{unit.id}</td>
-                          <td>{unit.userId}</td>
-                          <td>{unit.buffaloId}</td>
+                          <td>{inv.mobile}</td>
+                          <td>{inv.email ?? '-'}</td>
                           <td>{unit.numUnits}</td>
                           <td>{tx.amount ?? '-'}</td>
                           <td>{tx.paymentType || '-'}</td>
-                          <td>{unit.lat ?? '-'}</td>
-                          <td>{unit.lng ?? '-'}</td>
+                          <td >
+                            <button
+                              style={{ minWidth: '100px', paddingTop: '4px', cursor: 'pointer', color: '#2563eb', textDecoration: 'underline', background: 'none', border: 'none' }}
+                              onClick={() => handleViewProof(tx, inv)}
+                            >
+                              Payment Proof
+                            </button>
+                          </td>
                           <td>
                             <span style={{
                               padding: '4px 8px',
@@ -625,29 +1034,54 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
         ) : activeTab === 'nonVerified' ? (
           <div>
             <h2>Referrals</h2>
+            {/* <div style={{ marginBottom: '1rem' }}>
+              <input
+                type="text"
+                placeholder="Search referrals..."
+                value={referralSearchQuery}
+                onChange={(e) => setReferralSearchQuery(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #d1d5db',
+                  width: '100%',
+                  maxWidth: '300px'
+                }}
+              />
+            </div> */}
             <div className="table-container">
               <table className="user-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Mobile</th>
-                    <th>Role</th>
-                    <th>Referred By</th>
-                    <th>Referrer Mobile</th>
-                    <th>Actions</th>
+                    <th style={{ cursor: 'pointer', textAlign: 'center' }} onClick={() => requestReferralSort('first_name')}>
+                      Name {getSortIcon('first_name', referralSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer', textAlign: 'center' }} onClick={() => requestReferralSort('mobile')}>
+                      Mobile {getSortIcon('mobile', referralSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer', textAlign: 'center' }} onClick={() => requestReferralSort('role')}>
+                      Role {getSortIcon('role', referralSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer', textAlign: 'center' }} onClick={() => requestReferralSort('refered_by_name')}>
+                      Referred By {getSortIcon('refered_by_name', referralSortConfig)}
+                    </th>
+                    <th style={{ cursor: 'pointer', textAlign: 'center' }} onClick={() => requestReferralSort('refered_by_mobile')}>
+                      Referrer Mobile {getSortIcon('refered_by_mobile', referralSortConfig)}
+                    </th>
+                    <th style={{ textAlign: 'center' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {referralUsers.length === 0 ? (
+                  {filteredReferrals.length === 0 ? (
                     <tr>
                       <td colSpan={6} style={{ textAlign: 'center', color: '#888' }}>No users found</td>
                     </tr>
                   ) : (
-                    referralUsers.map((user: any, index: number) => (
+                    filteredReferrals.map((user: any, index: number) => (
                       <tr key={index}>
-                        <td>{user.first_name} {user.last_name}</td>
-                        <td>{user.mobile}</td>
-                        <td>
+                        <td style={{ textAlign: 'center' }}>{user.first_name} {user.last_name}</td>
+                        <td style={{ textAlign: 'center' }}>{user.mobile}</td>
+                        <td style={{ textAlign: 'center' }}>
                           <span style={{
                             padding: '2px 6px',
                             borderRadius: '4px',
@@ -660,9 +1094,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
                             {user.role || 'Investor'}
                           </span>
                         </td>
-                        <td>{user.refered_by_name || '-'}</td>
-                        <td>{user.refered_by_mobile || '-'}</td>
-                        <td>
+                        <td style={{ textAlign: 'center' }}>{user.refered_by_name || '-'}</td>
+                        <td style={{ textAlign: 'center' }}>{user.refered_by_mobile || '-'}</td>
+                        <td style={{ textAlign: 'center' }}>
                           <button
                             onClick={() => handleRowClick(user)}
                             style={{
@@ -698,34 +1132,49 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
         ) : activeTab === 'existing' ? (
           <div>
             <h2>Verified Users</h2>
+            {/* <div style={{ marginBottom: '1rem' }}>
+              <input
+                type="text"
+                placeholder="Search verified users..."
+                value={existingUsersSearchQuery}
+                onChange={(e) => setExistingUsersSearchQuery(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #d1d5db',
+                  width: '100%',
+                  maxWidth: '300px'
+                }}
+              />
+            </div> */}
             <div className="table-container">
               <table className="user-table">
                 <thead>
                   <tr>
-                    <th style={{ whiteSpace: 'nowrap' }}>First Name</th>
-                    <th style={{ whiteSpace: 'nowrap' }}>Last Name</th>
-                    <th style={{ whiteSpace: 'nowrap' }}>Mobile</th>
-                    <th style={{ whiteSpace: 'nowrap' }}>Form Filled</th>
-                    <th style={{ whiteSpace: 'nowrap' }}>Referred By</th>
-                    <th style={{ whiteSpace: 'nowrap' }}>Referrer Mobile</th>
-                    <th style={{ whiteSpace: 'nowrap' }}>Verified</th>
+                    <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('first_name')}>First Name {getSortIcon('first_name', existingUsersSortConfig)}</th>
+                    <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('last_name')}>Last Name {getSortIcon('last_name', existingUsersSortConfig)}</th>
+                    <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('mobile')}>Mobile {getSortIcon('mobile', existingUsersSortConfig)}</th>
+                    <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('isFormFilled')}>Form Filled {getSortIcon('isFormFilled', existingUsersSortConfig)}</th>
+                    <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('refered_by_name')}>Referred By {getSortIcon('refered_by_name', existingUsersSortConfig)}</th>
+                    <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('refered_by_mobile')}>Referrer Mobile {getSortIcon('refered_by_mobile', existingUsersSortConfig)}</th>
+                    <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('verified')}>Verified {getSortIcon('verified', existingUsersSortConfig)}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {existingCustomers.length === 0 ? (
+                  {filteredExistingUsers.length === 0 ? (
                     <tr>
                       <td colSpan={7} style={{ textAlign: 'center', color: '#888' }}>No users found</td>
                     </tr>
                   ) : (
-                    existingCustomers.map((user: any, index: number) => (
+                    filteredExistingUsers.map((user: any, index: number) => (
                       <tr key={index}>
-                        <td>{user.first_name || '-'}</td>
-                        <td>{user.last_name || '-'}</td>
-                        <td>{user.mobile}</td>
-                        <td>{user.isFormFilled ? 'Yes' : 'No'}</td>
-                        <td>{user.refered_by_name || '-'}</td>
-                        <td>{user.refered_by_mobile || '-'}</td>
-                        <td>{user.verified ? 'Yes' : 'No'}</td>
+                        <td style={{ textAlign: 'center' }}>{user.first_name || '-'}</td>
+                        <td style={{ textAlign: 'center' }}>{user.last_name || '-'}</td>
+                        <td style={{ textAlign: 'center' }}>{user.mobile}</td>
+                        <td style={{ textAlign: 'center' }}>{user.isFormFilled ? 'Yes' : 'No'}</td>
+                        <td style={{ textAlign: 'center' }}>{user.refered_by_name || '-'}</td>
+                        <td style={{ textAlign: 'center' }}>{user.refered_by_mobile || '-'}</td>
+                        <td style={{ textAlign: 'center' }}>{user.verified ? 'Yes' : 'No'}</td>
                       </tr>
                     ))
                   )}
@@ -843,342 +1292,358 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
               </div>
             )}
           </div>
-        )}
-      </div>
+        )
+        }
+      </div >
 
       {/* Floating + Icon at bottom left - only show on Referral tab */}
-      {activeTab === 'nonVerified' && (
-        <button
-          onClick={handleCreateClick}
-          style={{
-            position: 'fixed',
-            bottom: '32px',
-            left: '32px',
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            background: '#2563eb',
-            color: 'white',
-            border: 'none',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(37,99,235,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-          aria-label="Add New Referral"
-        >
-          +
-        </button>
-      )}
+      {
+        activeTab === 'nonVerified' && (
+          <button
+            onClick={handleCreateClick}
+            style={{
+              position: 'fixed',
+              bottom: '32px',
+              left: '32px',
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(37,99,235,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}
+            aria-label="Add New Referral"
+          >
+            +
+          </button>
+        )
+      }
 
-      {showModal && (
-        <div className="modal" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={handleCloseModal}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                color: '#9ca3af',
-                cursor: 'pointer',
-                width: '2rem',
-                height: '2rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.style.color = '#374151';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#9ca3af';
-              }}
-            >
-              ×
-            </button>
-            <h3>Add New Referral</h3>
-            <form onSubmit={handleSubmit}>
-              <label>
-                Role:
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '0.375rem',
-                    fontSize: '1rem'
-                  }}
-                >
-                  <option value="Investor">Investor</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Supervisor">Supervisor</option>
-                  <option value="Employee">Employee</option>
-                </select>
-              </label>
-              <label>
-                Mobile:
-                <input
-                  type="tel"
-                  name="mobile"
-                  value={formData.mobile}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter mobile number"
-                />
-              </label>
-              <label>
-                First Name:
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter first name"
-                />
-              </label>
-              <label>
-                Last Name:
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter last name"
-                />
-              </label>
-              <label>
-                Referral(Mobile):
-                <input
-                  type="tel"
-                  name="refered_by_mobile"
-                  value={formData.refered_by_mobile}
-                  onChange={handleInputChange}
-                  onBlur={handleReferralMobileBlur}
-                  required={formData.role === 'Investor'}
-                  placeholder="Enter referrer's mobile"
-                />
-              </label>
-              <label>
-                Referral(Name):
-                <input
-                  type="text"
-                  name="refered_by_name"
-                  value={formData.refered_by_name}
-                  onChange={handleInputChange}
-                  required={formData.role === 'Investor'}
-                  placeholder="Enter referrer's name"
-                />
-              </label>
-              <button type="submit">Submit</button>
-              <button type="button" onClick={handleCloseModal}>Cancel</button>
-            </form>
+      {
+        showModal && (
+          <div className="modal" onClick={handleCloseModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={handleCloseModal}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  color: '#9ca3af',
+                  cursor: 'pointer',
+                  width: '2rem',
+                  height: '2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  e.currentTarget.style.color = '#374151';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#9ca3af';
+                }}
+              >
+                ×
+              </button>
+              <h3>Add New Referral</h3>
+              <form onSubmit={handleSubmit}>
+                <label>
+                  Role:
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.375rem',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    <option value="Investor">Investor</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Supervisor">Supervisor</option>
+                    <option value="Employee">Employee</option>
+                  </select>
+                </label>
+                <label>
+                  Mobile:
+                  <input
+                    type="tel"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Enter mobile number"
+                  />
+                </label>
+                <label>
+                  First Name:
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Enter first name"
+                  />
+                </label>
+                <label>
+                  Last Name:
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Enter last name"
+                  />
+                </label>
+                <label>
+                  Referral(Mobile):
+                  <input
+                    type="tel"
+                    name="refered_by_mobile"
+                    value={formData.refered_by_mobile}
+                    onChange={handleInputChange}
+                    onBlur={handleReferralMobileBlur}
+                    required={formData.role === 'Investor'}
+                    placeholder="Enter referrer's mobile"
+                  />
+                </label>
+                <label>
+                  Referral(Name):
+                  <input
+                    type="text"
+                    name="refered_by_name"
+                    value={formData.refered_by_name}
+                    onChange={handleInputChange}
+                    required={formData.role === 'Investor'}
+                    placeholder="Enter referrer's name"
+                  />
+                </label>
+                <button type="submit">Submit</button>
+                <button type="button" onClick={handleCloseModal}>Cancel</button>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Edit Modal */}
-      {showEditModal && editingUser && (
-        <div className="modal" onClick={handleCloseEditModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={handleCloseEditModal}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                color: '#9ca3af',
-                cursor: 'pointer',
-                width: '2rem',
-                height: '2rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.style.color = '#374151';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#9ca3af';
-              }}
-            >
-              ×
-            </button>
-            <h3>Edit Referral</h3>
-            <form onSubmit={handleEditSubmit}>
-              <label>
-                Mobile:
-                <input
-                  type="tel"
-                  name="mobile"
-                  value={editFormData.mobile}
-                  disabled
-                  style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
-                  placeholder="Mobile number (cannot be changed)"
-                />
-              </label>
-              <label>
-                Role:
-                <input
-                  type="text"
-                  name="role"
-                  value={editingUser.role || 'Investor'}
-                  disabled
-                  style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
-                />
-              </label>
-              <label>
-                First Name:
-                <input
-                  type="text"
-                  name="first_name"
-                  value={editFormData.first_name}
-                  onChange={handleEditInputChange}
-                  required
-                  placeholder="Enter first name"
-                />
-              </label>
-              <label>
-                Last Name:
-                <input
-                  type="text"
-                  name="last_name"
-                  value={editFormData.last_name}
-                  onChange={handleEditInputChange}
-                  required
-                  placeholder="Enter last name"
-                />
-              </label>
-              <label>
-                Referred By(Mobile):
-                <input
-                  type="tel"
-                  name="refered_by_mobile"
-                  value={editFormData.refered_by_mobile}
-                  onChange={handleEditInputChange}
-                  onBlur={handleEditReferralMobileBlur}
-                  required
-                  placeholder="Enter referrer's mobile"
-                />
-              </label>
-              <label>
-                Referred By(Name):
-                <input
-                  type="text"
-                  name="refered_by_name"
-                  value={editFormData.refered_by_name}
-                  onChange={handleEditInputChange}
-                  required
-                  placeholder="Enter referrer's name"
-                />
-              </label>
-              <button type="submit">Update</button>
-              <button type="button" onClick={handleCloseEditModal}>Cancel</button>
-            </form>
+      {
+        showEditModal && editingUser && (
+          <div className="modal" onClick={handleCloseEditModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={handleCloseEditModal}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  color: '#9ca3af',
+                  cursor: 'pointer',
+                  width: '2rem',
+                  height: '2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  e.currentTarget.style.color = '#374151';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#9ca3af';
+                }}
+              >
+                ×
+              </button>
+              <h3>Edit Referral</h3>
+              <form onSubmit={handleEditSubmit}>
+                <label>
+                  Mobile:
+                  <input
+                    type="tel"
+                    name="mobile"
+                    value={editFormData.mobile}
+                    disabled
+                    style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                    placeholder="Mobile number (cannot be changed)"
+                  />
+                </label>
+                <label>
+                  Role:
+                  <input
+                    type="text"
+                    name="role"
+                    value={editingUser.role || 'Investor'}
+                    disabled
+                    style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                  />
+                </label>
+                <label>
+                  First Name:
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={editFormData.first_name}
+                    onChange={handleEditInputChange}
+                    required
+                    placeholder="Enter first name"
+                  />
+                </label>
+                <label>
+                  Last Name:
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={editFormData.last_name}
+                    onChange={handleEditInputChange}
+                    required
+                    placeholder="Enter last name"
+                  />
+                </label>
+                <label>
+                  Referred By(Mobile):
+                  <input
+                    type="tel"
+                    name="refered_by_mobile"
+                    value={editFormData.refered_by_mobile}
+                    onChange={handleEditInputChange}
+                    onBlur={handleEditReferralMobileBlur}
+                    required
+                    placeholder="Enter referrer's mobile"
+                  />
+                </label>
+                <label>
+                  Referred By(Name):
+                  <input
+                    type="text"
+                    name="refered_by_name"
+                    value={editFormData.refered_by_name}
+                    onChange={handleEditInputChange}
+                    required
+                    placeholder="Enter referrer's name"
+                  />
+                </label>
+                <button type="submit">Update</button>
+                <button type="button" onClick={handleCloseEditModal}>Cancel</button>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Approve Order Modal */}
-      {showApproveModal && (
-        <div className="modal" onClick={handleCloseApproveModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={handleCloseApproveModal}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                color: '#9ca3af',
-                cursor: 'pointer',
-                width: '2rem',
-                height: '2rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.style.color = '#374151';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#9ca3af';
-              }}
-            >
-              ×
-            </button>
-            <h3>Approve Order</h3>
-            <form onSubmit={handleApproveSubmit}>
-              <label>
-                Shed Number:
-                <input
-                  type="text"
-                  name="shedNumber"
-                  value={approvalData.shedNumber}
-                  onChange={handleApprovalInputChange}
-                  required
-                  placeholder="Enter Shed Number"
-                />
-              </label>
-              <label>
-                Farm Name:
-                <input
-                  type="text"
-                  name="farmName"
-                  value={approvalData.farmName}
-                  onChange={handleApprovalInputChange}
-                  required
-                  placeholder="Enter Farm Name"
-                />
-              </label>
-              <label>
-                Farm Location:
-                <input
-                  type="text"
-                  name="farmLocation"
-                  value={approvalData.farmLocation}
-                  onChange={handleApprovalInputChange}
-                  required
-                  placeholder="Enter Farm Location"
-                />
-              </label>
-              <button type="submit" style={{ backgroundColor: '#10b981' }}>Confirm Approval</button>
-              <button type="button" onClick={handleCloseApproveModal}>Cancel</button>
-            </form>
+      {
+        showApproveModal && (
+          <div className="modal" onClick={handleCloseApproveModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={handleCloseApproveModal}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  color: '#9ca3af',
+                  cursor: 'pointer',
+                  width: '2rem',
+                  height: '2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  e.currentTarget.style.color = '#374151';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#9ca3af';
+                }}
+              >
+                ×
+              </button>
+              <h3>Approve Order</h3>
+              <form onSubmit={handleApproveSubmit}>
+                <label>
+                  Shed Number:
+                  <input
+                    type="text"
+                    name="shedNumber"
+                    value={approvalData.shedNumber}
+                    onChange={handleApprovalInputChange}
+                    required
+                    placeholder="Enter Shed Number"
+                  />
+                </label>
+                <label>
+                  Farm Name:
+                  <input
+                    type="text"
+                    name="farmName"
+                    value={approvalData.farmName}
+                    onChange={handleApprovalInputChange}
+                    required
+                    placeholder="Enter Farm Name"
+                  />
+                </label>
+                <label>
+                  Farm Location:
+                  <input
+                    type="text"
+                    name="farmLocation"
+                    value={approvalData.farmLocation}
+                    onChange={handleApprovalInputChange}
+                    required
+                    placeholder="Enter Farm Location"
+                  />
+                </label>
+                <button type="submit" style={{ backgroundColor: '#10b981' }}>Confirm Approval</button>
+                <button type="button" onClick={handleCloseApproveModal}>Cancel</button>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+
+      <ImageNamesModal
+        isOpen={showProofModal}
+        onClose={handleCloseProofModal}
+        data={selectedProofData}
+      />
+
+    </div >
   );
 };
 

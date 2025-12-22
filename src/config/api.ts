@@ -1,9 +1,10 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
     const corsUrl = 'https://cors-couipk45fa-el.a.run.app';
-    const productionUrl = 'https://markwave-live-services-couipk45fa-el.a.run.app';
+    const productionUrl = 'https://markwave-live-apis-couipk45fa-el.a.run.app';
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const baseUrl = isLocalhost ? 'http://localhost:8000' : `${corsUrl}/${productionUrl}`;
+    const baseUrl = `${corsUrl}/${productionUrl}`;
+    // const baseUrl = isLocalhost ? 'http://localhost:8000' : `${corsUrl}/${productionUrl}`;
     console.log('🔗 API Base URL (with CORS):', baseUrl);
     return baseUrl;
   }
@@ -19,6 +20,6 @@ export const API_ENDPOINTS = {
   getProducts: () => `${API_CONFIG.getBaseUrl()}/products`,
   health: () => `${API_CONFIG.getBaseUrl()}/health`,
   getPendingUnits: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/pending`,
-  approveUnit: (unitId: string) => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/${unitId}/approve`,
-  rejectUnit: (unitId: string) => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/${unitId}/reject`,
+  approveUnit: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/approve`,
+  rejectUnit: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/reject`,
 };
