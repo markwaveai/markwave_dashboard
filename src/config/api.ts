@@ -5,7 +5,7 @@ export const API_CONFIG = {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const baseUrl = `${corsUrl}/${productionUrl}`;
     // const baseUrl = isLocalhost ? 'http://localhost:8000' : `${corsUrl}/${productionUrl}`;
-    console.log('🔗 API Base URL (with CORS):', baseUrl);
+    // console.log('🔗 API Base URL (with CORS):', baseUrl);
     return baseUrl;
   }
 };
