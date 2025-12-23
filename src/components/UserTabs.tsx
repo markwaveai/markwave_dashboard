@@ -4,7 +4,8 @@ import BuffaloTree from './BuffaloTree';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
 import { useTableSortAndSearch } from '../hooks/useTableSortAndSearch';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, PanelLeft, PanelLeftClose } from 'lucide-react';
+import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, PanelLeft, PanelLeftClose, Search, Settings, Bell, Home, CheckCircle, XCircle, Menu, X } from 'lucide-react';
+import HealthStatus from './HealthStatus';
 
 
 interface UserTabsProps {
@@ -413,10 +414,6 @@ const AdminDetailsModal: React.FC<{
         className="admin-popover"
         onClick={(e) => e.stopPropagation()}
         style={{
-          position: 'absolute',
-          bottom: '80px',
-          left: '70px',
-          width: '280px',
           background: 'white',
           borderRadius: '12px',
           boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
@@ -859,363 +856,490 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
   return (
     <div className="app-container">
-      {/* Sidebar */}
-      <nav className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}>
-        <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: isSidebarOpen ? 'space-between' : 'center', alignItems: 'center', minHeight: '32px' }}>
-          {isSidebarOpen && (
-            <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#4f46e5' }}>
-              MarkWave
-            </div>
-          )}
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '4px', display: 'flex' }}
-          >
-            {isSidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
-          </button>
-        </div>
+      {/* Mobile Sidebar Overlay */}
+      <div
+        className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`}
+        onClick={() => setIsSidebarOpen(false)}
+      />
 
-        <ul className="sidebar-menu">
-          <li>
-            <button
-              className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => setActiveTab('orders')}
-              title={!isSidebarOpen ? "Orders" : ""}
-            >
-              <LayoutDashboard />
-              <span className="nav-text">Orders</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={`nav-item ${activeTab === 'nonVerified' ? 'active' : ''}`}
-              onClick={() => setActiveTab('nonVerified')}
-              title={!isSidebarOpen ? "Referral" : ""}
-            >
-              <Users />
-              <span className="nav-text">Referral</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={`nav-item ${activeTab === 'existing' ? 'active' : ''}`}
-              onClick={() => setActiveTab('existing')}
-              title={!isSidebarOpen ? "Verified Users" : ""}
-            >
-              <UserCheck />
-              <span className="nav-text">Verified Users</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={`nav-item ${activeTab === 'tree' ? 'active' : ''}`}
-              onClick={() => setActiveTab('tree')}
-              title={!isSidebarOpen ? "Buffalo Tree" : ""}
-            >
-              <TreePine />
-              <span className="nav-text">Buffalo Tree</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={`nav-item ${activeTab === 'products' ? 'active' : ''}`}
-              onClick={() => setActiveTab('products')}
-              title={!isSidebarOpen ? "Products" : ""}
-            >
-              <ShoppingBag />
-              <span className="nav-text">Products</span>
-            </button>
-          </li>
-        </ul>
+      {/* Global Header - Full Width */}
+      <header style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '1rem 2rem',
+        background: 'var(--bg-color)', /* Match bg */
+        position: 'relative',
+        zIndex: 101, /* Above sidebar */
+        height: '60px' // Check height
+      }}>
+        {/* Mobile Menu Toggle - Visible only on mobile */}
+        {/* Mobile Menu Toggle - Always visible on mobile to toggle state */}
+        <button
+          className="mobile-menu-toggle"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          style={{
+            position: 'absolute',
+            left: '2rem',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#344767',
+            display: 'none' // Hidden by default, shown via CSS on mobile
+          }}
+        >
+          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
 
-        <div className="sidebar-footer">
-          <div className="user-profile" onClick={() => setShowAdminDetails(true)} style={{ cursor: 'pointer' }}>
-            <div className="avatar-circle">{adminName.charAt(0)}</div>
-            <div className="user-info">
-              <span className="user-name">{adminName}</span>
-              <span className="user-email">{adminMobile}</span>
-            </div>
+        {/* Centered Title */}
+        <h6 style={{
+          margin: 0,
+          fontSize: '1.25rem',
+          fontWeight: 700,
+          color: '#344767'
+        }}>
+          Animalkart Dashboard
+        </h6>
+
+        {/* Right Status - Absolutely positioned */}
+        <div style={{
+          position: 'absolute',
+          right: '2rem',
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          <div style={{ background: 'white', padding: '0.4rem 0.8rem', borderRadius: '20px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+            <HealthStatus />
           </div>
-          <button className="logout-btn" onClick={onLogout} title={!isSidebarOpen ? "Logout" : ""}>
-            <LogOut size={18} />
-            <span className="nav-text">Logout</span>
-          </button>
         </div>
-      </nav>
+      </header>
 
-      {/* Main Content Area */}
-      <main className="main-content">
-        <div className="tab-content">
-          {/* Content will be rendered here based on activeTab */}
-          {activeTab === 'orders' ? (
-            <div>
-
-              <h2>Live Orders (Pending Approval)</h2>
-
-              <div className="filter-controls">
-                <input
-                  type="text"
-                  placeholder="Search By User Name,Unit Id,User Mobile,Buffalo Id"
-                  className="search-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-
-                <select
-                  className="filter-select"
-                  value={paymentFilter}
-                  onChange={(e) => setPaymentFilter(e.target.value)}
-                >
-                  <option value="All Payments">All Payments</option>
-                  <option value="BANK_TRANSFER">Bank Transfer</option>
-                  <option value="CHEQUE">Cheque</option>
-                  <option value="ONLINE_UPI">Online/UPI</option>
-                </select>
-
-                <select
-                  className="filter-select"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="All Status">All Status</option>
-                  <option value="PENDING_ADMIN_VERIFICATION">Needs Approval</option>
-                  <option value="PENDING_PAYMENT">Not Paid(Draft)</option>
-                  <option value="PAID">Approved</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
+      {/* Main Body Layout (Sidebar + Content) */}
+      <div className="layout-body">
+        {/* Sidebar */}
+        <nav className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}>
+          <div className="sidebar-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: isSidebarOpen ? 'space-between' : 'center', alignItems: 'center', minHeight: '32px' }}>
+            {isSidebarOpen && (
+              <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#344767', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '24px', height: '24px', background: 'linear-gradient(310deg, #2152ff 0%, #21d4fd 100%)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                  <LayoutDashboard size={14} />
+                </div>
+                MarkWave
               </div>
+            )}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '4px', display: 'flex' }}
+            >
+              {isSidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
+            </button>
+          </div>
 
-              {ordersError && (
-                <div style={{ marginBottom: '0.75rem', color: '#dc2626' }}>{ordersError}</div>
-              )}
+          <ul className="sidebar-menu">
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
+                onClick={() => setActiveTab('orders')}
+                title={!isSidebarOpen ? "Orders" : ""}
+              >
+                <LayoutDashboard />
+                <span className="nav-text">Orders</span>
+              </button>
+            </li>
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'nonVerified' ? 'active' : ''}`}
+                onClick={() => setActiveTab('nonVerified')}
+                title={!isSidebarOpen ? "Referral" : ""}
+              >
+                <Users />
+                <span className="nav-text">Referral</span>
+              </button>
+            </li>
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'existing' ? 'active' : ''}`}
+                onClick={() => setActiveTab('existing')}
+                title={!isSidebarOpen ? "Verified Users" : ""}
+              >
+                <UserCheck />
+                <span className="nav-text">Verified Users</span>
+              </button>
+            </li>
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'tree' ? 'active' : ''}`}
+                onClick={() => setActiveTab('tree')}
+                title={!isSidebarOpen ? "Buffalo Tree" : ""}
+              >
+                <TreePine />
+                <span className="nav-text">Buffalo Tree</span>
+              </button>
+            </li>
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'products' ? 'active' : ''}`}
+                onClick={() => setActiveTab('products')}
+                title={!isSidebarOpen ? "Products" : ""}
+              >
+                <ShoppingBag />
+                <span className="nav-text">Products</span>
+              </button>
+            </li>
+          </ul>
 
-              <div className="table-container">
-                <table className="user-table">
-                  <thead>
-                    <tr>
-                      <th>S.No</th>
-                      <th>User Name</th>
-                      <th>Unit Id</th>
-                      <th>User Mobile</th>
-                      <th>Email</th>
-                      <th>Units</th>
-                      <th>Amount</th>
-                      <th>Payment Type</th>
-                      <th>Payment Image Proof</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUnits.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} style={{ textAlign: 'center', color: '#888' }}>
-                          {searchQuery ? 'No matching orders found' : 'No pending orders'}
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredUnits.map((entry: any, index: number) => {
-                        const unit = entry.order || {};
-                        const tx = entry.transaction || {};
-                        const inv = entry.investor || {};
-                        return (
-                          <tr key={unit.id || index}>
-                            <td>{index + 1}</td>
-                            <td >{inv.name}</td>
-                            <td>{unit.id}</td>
-                            <td>{inv.mobile}</td>
-                            <td>{inv.email || '-'}</td>
-                            <td>{unit.numUnits}</td>
-                            <td>{tx.amount ?? '-'}</td>
-                            <td>{tx.paymentType || '-'}</td>
-                            <td >
-                              {unit.paymentType && (
-                                <button
-                                  className="view-proof-btn"
-                                  onClick={() => handleViewProof(tx, inv)}
-                                >
-                                  Payment Proof
-                                </button>
-                              ) || '-'}
-                            </td>
-                            <td>
-                              <span className={`status-badge ${(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_PAYMENT') ? 'pending' :
-                                unit.paymentStatus === 'Approved' ? 'approved' :
-                                  unit.paymentStatus === 'Rejected' ? 'rejected' : ''
-                                }`}>
-                                {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' ? 'PENDING_ADMIN_VERIFICATION' :
-                                  unit.paymentStatus === 'PENDING_PAYMENT' ? 'PENDING_PAYMENT' :
-                                    unit.paymentStatus || '-'}
-                              </span>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
-                                  <button
-                                    onClick={() => handleApproveClick(unit.id)}
-                                    className="action-btn approve"
-                                  >
-                                    Approve
-                                  </button>
-                                )}
-                                {(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_PAYMENT') && (
-                                  <button
-                                    onClick={() => handleReject(unit.id)}
-                                    className="action-btn reject"
-                                  >
-                                    Reject
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+          <div className="sidebar-footer">
+
+            <div className="user-profile" onClick={() => setShowAdminDetails(true)} style={{ cursor: 'pointer' }}>
+              <div className="avatar-circle">{adminName.charAt(0)}</div>
+              <div className="user-info">
+                <span className="user-name">{adminName}</span>
+                <span className="user-email">{adminMobile}</span>
               </div>
             </div>
-          ) : activeTab === 'nonVerified' ? (
-            <div>
-              <h2>Referrals</h2>
+            <button className="logout-btn" onClick={onLogout} title={!isSidebarOpen ? "Logout" : ""}>
+              <LogOut size={18} />
+              <span className="nav-text">Logout</span>
+            </button>
+          </div>
+        </nav>
 
-              <div className="table-container">
-                <table className="user-table">
-                  <thead>
-                    <tr>
-                      <th style={{ cursor: 'pointer', textAlign: 'center' }}>
-                        Name
-                      </th>
-                      <th style={{ cursor: 'pointer', textAlign: 'center' }} >
-                        Mobile
-                      </th>
-                      <th style={{ cursor: 'pointer', textAlign: 'center' }} >
-                        Role
-                      </th>
-                      <th style={{ cursor: 'pointer', textAlign: 'center' }} >
-                        Referred By
-                      </th>
-                      <th style={{ cursor: 'pointer', textAlign: 'center' }} >
-                        Referrer Mobile
-                      </th>
-                      <th style={{ textAlign: 'center' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredReferrals.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', color: '#888' }}>No users found</td>
-                      </tr>
-                    ) : (
-                      filteredReferrals.map((user: any, index: number) => (
-                        <tr key={index}>
-                          <td style={{ textAlign: 'center' }}>{user.first_name} {user.last_name}</td>
-                          <td style={{ textAlign: 'center' }}>{user.mobile}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <span style={{
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              background: '#f3f4f6',
-                              fontSize: '11px',
-                              fontWeight: '500',
-                              color: '#374151',
-                              border: '1px solid #e5e7eb'
-                            }}>
-                              {user.role || 'Investor'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>{user.refered_by_name || '-'}</td>
-                          <td style={{ textAlign: 'center' }}>{user.refered_by_mobile || '-'}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <button
-                              onClick={() => handleRowClick(user)}
-                              style={{
-                                background: '#3b82f6',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                padding: '6px 12px',
-                                fontSize: '12px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = '#2563eb';
-                                e.currentTarget.style.transform = 'translateY(-1px)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = '#3b82f6';
-                                e.currentTarget.style.transform = 'translateY(0)';
-                              }}
-                            >
-                              Edit
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : activeTab === 'existing' ? (
-            <div>
-              <h2>Verified Users</h2>
+        {/* Main Content Area */}
+        <main className="main-content">
+          {/* Soft UI Header / Breadcrumbs */}
 
-              <div className="table-container">
-                <table className="user-table">
-                  <thead>
-                    <tr>
-                      <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('first_name')}>First Name {getSortIcon('first_name', existingUsersSortConfig)}</th>
-                      <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('last_name')}>Last Name {getSortIcon('last_name', existingUsersSortConfig)}</th>
-                      <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('mobile')}>Mobile {getSortIcon('mobile', existingUsersSortConfig)}</th>
-                      <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('isFormFilled')}>Form Filled {getSortIcon('isFormFilled', existingUsersSortConfig)}</th>
-                      <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('refered_by_name')}>Referred By {getSortIcon('refered_by_name', existingUsersSortConfig)}</th>
-                      <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('refered_by_mobile')}>Referrer Mobile {getSortIcon('refered_by_mobile', existingUsersSortConfig)}</th>
-                      <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('verified')}>Verified {getSortIcon('verified', existingUsersSortConfig)}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredExistingUsers.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} style={{ textAlign: 'center', color: '#888' }}>No users found</td>
-                      </tr>
-                    ) : (
-                      filteredExistingUsers.map((user: any, index: number) => (
-                        <tr key={index}>
-                          <td style={{ textAlign: 'center' }}>{user.first_name || '-'}</td>
-                          <td style={{ textAlign: 'center' }}>{user.last_name || '-'}</td>
-                          <td style={{ textAlign: 'center' }}>{user.mobile}</td>
-                          <td style={{ textAlign: 'center' }}>{user.isFormFilled ? 'Yes' : 'No'}</td>
-                          <td style={{ textAlign: 'center' }}>{user.refered_by_name || '-'}</td>
-                          <td style={{ textAlign: 'center' }}>{user.refered_by_mobile || '-'}</td>
-                          <td style={{ textAlign: 'center' }}>{user.verified ? 'Yes' : 'No'}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : activeTab === 'tree' ? (
-            <div>
-              {/* Buffalo Tree tab content */}
-              <div style={{ padding: '1rem' }}>
-                <h2>Buffalo Family Tree</h2>
-                <div className="tree-wrapper">
-                  {/* Render BuffaloTree component */}
-                  <div id="buffalo-tree-root">
-                    <BuffaloTree />
+          <div className="tab-content">
+            {/* Content will be rendered here based on activeTab */}
+            {activeTab === 'orders' && (
+              <div className="orders-dashboard">
+                <h2>Live Orders (Pending Approval)</h2>
+                {/* Stats Widgets */}
+                <div className="stats-grid">
+                  <div style={{ background: 'white', borderRadius: '1rem', padding: '1.5rem', boxShadow: '0 20px 27px 0 rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div>
+                        <p style={{ color: '#67748e', fontSize: '0.875rem', fontWeight: 600, margin: '0 0 4px 0' }}>Pending Orders</p>
+                        <h5 style={{ color: '#344767', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
+                          {pendingUnits.filter((u: any) => u.order?.paymentStatus === 'PENDING_PAYMENT' || u.order?.paymentStatus === 'PENDING_ADMIN_VERIFICATION').length}
+                        </h5>
+                      </div>
+                      <div style={{ width: '48px', height: '48px', background: 'linear-gradient(310deg, #2152ff 0%, #21d4fd 100%)', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <ShoppingBag size={24} />
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '1rem' }}>
+                      <span style={{ color: '#82d616', fontWeight: 700, fontSize: '0.875rem' }}>+15%</span>
+                      <span style={{ color: '#67748e', fontSize: '0.875rem', marginLeft: '4px' }}>since last week</span>
+                    </div>
+                  </div>
+
+
+
+                  <div style={{ background: 'white', borderRadius: '1rem', padding: '1.5rem', boxShadow: '0 20px 27px 0 rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div>
+                        <p style={{ color: '#67748e', fontSize: '0.875rem', fontWeight: 600, margin: '0 0 4px 0' }}>Approved Orders</p>
+                        <h5 style={{ color: '#344767', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
+                          {pendingUnits.filter((u: any) => u.order?.paymentStatus === 'Approved' || u.order?.paymentStatus === 'PAID').length}
+                        </h5>
+                      </div>
+                      <div style={{ width: '48px', height: '48px', background: 'linear-gradient(310deg, #17ad37 0%, #98ec2d 100%)', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <CheckCircle size={24} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'white', borderRadius: '1rem', padding: '1.5rem', boxShadow: '0 20px 27px 0 rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div>
+                        <p style={{ color: '#67748e', fontSize: '0.875rem', fontWeight: 600, margin: '0 0 4px 0' }}>Rejected Orders</p>
+                        <h5 style={{ color: '#344767', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
+                          {pendingUnits.filter((u: any) => u.order?.paymentStatus === 'Rejected' || u.order?.paymentStatus === 'REJECTED').length}
+                        </h5>
+                      </div>
+                      <div style={{ width: '48px', height: '48px', background: 'linear-gradient(310deg, #ea0606 0%, #ff667c 100%)', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <XCircle size={24} />
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                <div className="filter-controls">
+                  <input
+                    type="text"
+                    placeholder="Search By User Name,Unit Id,User Mobile,Buffalo Id"
+                    className="search-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+
+                  <select
+                    className="filter-select"
+                    value={paymentFilter}
+                    onChange={(e) => setPaymentFilter(e.target.value)}
+                  >
+                    <option value="All Payments">All Payments</option>
+                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                    <option value="CHEQUE">Cheque</option>
+                    <option value="ONLINE_UPI">Online/UPI</option>
+                  </select>
+
+                  <select
+                    className="filter-select"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="All Status">All Status</option>
+                    <option value="PENDING_ADMIN_VERIFICATION">Needs Approval</option>
+                    <option value="PENDING_PAYMENT">Not Paid(Draft)</option>
+                    <option value="PAID">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                </div>
+
+                {ordersError && (
+                  <div style={{ marginBottom: '0.75rem', color: '#dc2626' }}>{ordersError}</div>
+                )}
+
+                <div className="table-container">
+                  <table className="user-table">
+                    <thead>
+                      <tr>
+                        <th>S.No</th>
+                        <th>User Name</th>
+                        <th>Unit Id</th>
+                        <th>User Mobile</th>
+                        <th>Email</th>
+                        <th>Units</th>
+                        <th>Amount</th>
+                        <th>Payment Type</th>
+                        <th>Payment Image Proof</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUnits.length === 0 ? (
+                        <tr>
+                          <td colSpan={10} style={{ textAlign: 'center', color: '#888' }}>
+                            {searchQuery ? 'No matching orders found' : 'No pending orders'}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredUnits.map((entry: any, index: number) => {
+                          const unit = entry.order || {};
+                          const tx = entry.transaction || {};
+                          const inv = entry.investor || {};
+                          return (
+                            <tr key={unit.id || index}>
+                              <td>{index + 1}</td>
+                              <td >{inv.name}</td>
+                              <td>{unit.id}</td>
+                              <td>{inv.mobile}</td>
+                              <td>{inv.email || '-'}</td>
+                              <td>{unit.numUnits}</td>
+                              <td>{tx.amount ?? '-'}</td>
+                              <td>{tx.paymentType || '-'}</td>
+                              <td >
+                                {unit.paymentType && (
+                                  <button
+                                    className="view-proof-btn"
+                                    onClick={() => handleViewProof(tx, inv)}
+                                  >
+                                    Payment Proof
+                                  </button>
+                                ) || '-'}
+                              </td>
+                              <td>
+                                <span className={`status-badge ${(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_PAYMENT') ? 'pending' :
+                                  unit.paymentStatus === 'Approved' ? 'approved' :
+                                    unit.paymentStatus === 'Rejected' ? 'rejected' : ''
+                                  }`}>
+                                  {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' ? 'PENDING_ADMIN_VERIFICATION' :
+                                    unit.paymentStatus === 'PENDING_PAYMENT' ? 'PENDING_PAYMENT' :
+                                      unit.paymentStatus || '-'}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
+                                    <button
+                                      onClick={() => handleApproveClick(unit.id)}
+                                      className="action-btn approve"
+                                    >
+                                      Approve
+                                    </button>
+                                  )}
+                                  {(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_PAYMENT') && (
+                                    <button
+                                      onClick={() => handleReject(unit.id)}
+                                      className="action-btn reject"
+                                    >
+                                      Reject
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div>
-              {/* Products tab content */}
-              {activeTab === 'products' && (
+
+            )}
+
+            {activeTab === 'nonVerified' && (
+              <div>
+                <h2>Referrals</h2>
+
+                <div className="table-container">
+                  <table className="user-table">
+                    <thead>
+                      <tr>
+                        <th style={{ cursor: 'pointer', textAlign: 'center' }}>
+                          Name
+                        </th>
+                        <th style={{ cursor: 'pointer', textAlign: 'center' }} >
+                          Mobile
+                        </th>
+                        <th style={{ cursor: 'pointer', textAlign: 'center' }} >
+                          Role
+                        </th>
+                        <th style={{ cursor: 'pointer', textAlign: 'center' }} >
+                          Referred By
+                        </th>
+                        <th style={{ cursor: 'pointer', textAlign: 'center' }} >
+                          Referrer Mobile
+                        </th>
+                        <th style={{ textAlign: 'center' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredReferrals.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', color: '#888' }}>No users found</td>
+                        </tr>
+                      ) : (
+                        filteredReferrals.map((user: any, index: number) => (
+                          <tr key={index}>
+                            <td style={{ textAlign: 'center' }}>{user.first_name} {user.last_name}</td>
+                            <td style={{ textAlign: 'center' }}>{user.mobile}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span style={{
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                background: '#f3f4f6',
+                                fontSize: '11px',
+                                fontWeight: '500',
+                                color: '#374151',
+                                border: '1px solid #e5e7eb'
+                              }}>
+                                {user.role || 'Investor'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>{user.refered_by_name || '-'}</td>
+                            <td style={{ textAlign: 'center' }}>{user.refered_by_mobile || '-'}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <button
+                                onClick={() => handleRowClick(user)}
+                                style={{
+                                  background: '#3b82f6',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '6px 12px',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = '#2563eb';
+                                  e.currentTarget.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = '#3b82f6';
+                                  e.currentTarget.style.transform = 'translateY(0)';
+                                }}
+                              >
+                                Edit
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {
+              activeTab === 'existing' && (
+                <div>
+                  <h2>Verified Users</h2>
+
+                  <div className="table-container">
+                    <table className="user-table">
+                      <thead>
+                        <tr>
+                          <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('first_name')}>First Name {getSortIcon('first_name', existingUsersSortConfig)}</th>
+                          <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('last_name')}>Last Name {getSortIcon('last_name', existingUsersSortConfig)}</th>
+                          <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('mobile')}>Mobile {getSortIcon('mobile', existingUsersSortConfig)}</th>
+                          <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('isFormFilled')}>Form Filled {getSortIcon('isFormFilled', existingUsersSortConfig)}</th>
+                          <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('refered_by_name')}>Referred By {getSortIcon('refered_by_name', existingUsersSortConfig)}</th>
+                          <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('refered_by_mobile')}>Referrer Mobile {getSortIcon('refered_by_mobile', existingUsersSortConfig)}</th>
+                          <th style={{ whiteSpace: 'nowrap', cursor: 'pointer', textAlign: 'center' }} onClick={() => requestExistingUsersSort('verified')}>Verified {getSortIcon('verified', existingUsersSortConfig)}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredExistingUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', color: '#888' }}>No users found</td>
+                          </tr>
+                        ) : (
+                          filteredExistingUsers.map((user: any, index: number) => (
+                            <tr key={index}>
+                              <td style={{ textAlign: 'center' }}>{user.first_name || '-'}</td>
+                              <td style={{ textAlign: 'center' }}>{user.last_name || '-'}</td>
+                              <td style={{ textAlign: 'center' }}>{user.mobile}</td>
+                              <td style={{ textAlign: 'center' }}>{user.isFormFilled ? 'Yes' : 'No'}</td>
+                              <td style={{ textAlign: 'center' }}>{user.refered_by_name || '-'}</td>
+                              <td style={{ textAlign: 'center' }}>{user.refered_by_mobile || '-'}</td>
+                              <td style={{ textAlign: 'center' }}>{user.verified ? 'Yes' : 'No'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+
+            {
+              activeTab === 'tree' && (
+                <div>
+                  {/* Buffalo Tree tab content */}
+                  <div style={{ padding: '1rem' }}>
+                    <h2>Buffalo Family Tree</h2>
+                    <div className="tree-wrapper">
+                      {/* Render BuffaloTree component */}
+                      <div id="buffalo-tree-root">
+                        <BuffaloTree />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              )
+            }
+
+            {
+              activeTab === 'products' && (
                 <div style={{ padding: '1rem' }}>
                   <h2>Products</h2>
                   <div style={{
@@ -1307,295 +1431,294 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                     )}
                   </div>
                 </div>
-              )}
+              )
+            }
+          </div >
+        </main >
+
+        {/* Floating + Icon at bottom left - only show on Referral tab */}
+        {
+          activeTab === 'nonVerified' && (
+            <button
+              onClick={handleCreateClick}
+              style={{
+                position: 'fixed',
+                bottom: '32px',
+                right: '32px', // Moved to right for better UX with sidebar
+                left: 'auto',
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: '#2563eb',
+                color: 'white',
+                border: 'none',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(37,99,235,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000
+              }}
+              aria-label="Add New Referral"
+            >
+              +
+            </button>
+          )
+        }
+
+        {
+          showModal && (
+            <div className="modal" onClick={handleCloseModal}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={handleCloseModal}
+                  style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '1.5rem',
+                    color: '#9ca3af',
+                    cursor: 'pointer',
+                    width: '2rem',
+                    height: '2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.color = '#374151';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#9ca3af';
+                  }}
+                >
+                  ×
+                </button>
+                <h3>Add New Referral</h3>
+                <form onSubmit={handleSubmit}>
+                  <label>
+                    Role:
+                    <select
+                      name="role"
+                      value={formData.role}
+                      onChange={handleInputChange}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '0.375rem',
+                        fontSize: '1rem'
+                      }}
+                    >
+                      <option value="Investor">Investor</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Supervisor">Supervisor</option>
+                      <option value="Employee">Employee</option>
+                    </select>
+                  </label>
+                  <label>
+                    Mobile:
+                    <input
+                      type="tel"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Enter mobile number"
+                    />
+                  </label>
+                  <label>
+                    First Name:
+                    <input
+                      type="text"
+                      name="first_name"
+                      value={formData.first_name}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Enter first name"
+                    />
+                  </label>
+                  <label>
+                    Last Name:
+                    <input
+                      type="text"
+                      name="last_name"
+                      value={formData.last_name}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Enter last name"
+                    />
+                  </label>
+                  <label>
+                    Referral(Mobile):
+                    <input
+                      type="tel"
+                      name="refered_by_mobile"
+                      value={formData.refered_by_mobile}
+                      onChange={handleInputChange}
+                      onBlur={handleReferralMobileBlur}
+                      required={formData.role === 'Investor'}
+                      placeholder="Enter referrer's mobile"
+                    />
+                  </label>
+                  <label>
+                    Referral(Name):
+                    <input
+                      type="text"
+                      name="refered_by_name"
+                      value={formData.refered_by_name}
+                      onChange={handleInputChange}
+                      required={formData.role === 'Investor'}
+                      placeholder="Enter referrer's name"
+                    />
+                  </label>
+                  <button type="submit">Submit</button>
+                  <button type="button" onClick={handleCloseModal}>Cancel</button>
+                </form>
+              </div>
             </div>
           )
-          }
-        </div>
-      </main>
+        }
 
-      {/* Floating + Icon at bottom left - only show on Referral tab */}
-      {
-        activeTab === 'nonVerified' && (
-          <button
-            onClick={handleCreateClick}
-            style={{
-              position: 'fixed',
-              bottom: '32px',
-              right: '32px', // Moved to right for better UX with sidebar
-              left: 'auto',
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              background: '#2563eb',
-              color: 'white',
-              border: 'none',
-              fontSize: '24px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(37,99,235,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000
-            }}
-            aria-label="Add New Referral"
-          >
-            +
-          </button>
-        )
-      }
-
-      {
-        showModal && (
-          <div className="modal" onClick={handleCloseModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={handleCloseModal}
-                style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  color: '#9ca3af',
-                  cursor: 'pointer',
-                  width: '2rem',
-                  height: '2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  e.currentTarget.style.color = '#374151';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#9ca3af';
-                }}
-              >
-                ×
-              </button>
-              <h3>Add New Referral</h3>
-              <form onSubmit={handleSubmit}>
-                <label>
-                  Role:
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    <option value="Investor">Investor</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Supervisor">Supervisor</option>
-                    <option value="Employee">Employee</option>
-                  </select>
-                </label>
-                <label>
-                  Mobile:
-                  <input
-                    type="tel"
-                    name="mobile"
-                    value={formData.mobile}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter mobile number"
-                  />
-                </label>
-                <label>
-                  First Name:
-                  <input
-                    type="text"
-                    name="first_name"
-                    value={formData.first_name}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter first name"
-                  />
-                </label>
-                <label>
-                  Last Name:
-                  <input
-                    type="text"
-                    name="last_name"
-                    value={formData.last_name}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter last name"
-                  />
-                </label>
-                <label>
-                  Referral(Mobile):
-                  <input
-                    type="tel"
-                    name="refered_by_mobile"
-                    value={formData.refered_by_mobile}
-                    onChange={handleInputChange}
-                    onBlur={handleReferralMobileBlur}
-                    required={formData.role === 'Investor'}
-                    placeholder="Enter referrer's mobile"
-                  />
-                </label>
-                <label>
-                  Referral(Name):
-                  <input
-                    type="text"
-                    name="refered_by_name"
-                    value={formData.refered_by_name}
-                    onChange={handleInputChange}
-                    required={formData.role === 'Investor'}
-                    placeholder="Enter referrer's name"
-                  />
-                </label>
-                <button type="submit">Submit</button>
-                <button type="button" onClick={handleCloseModal}>Cancel</button>
-              </form>
+        {/* Edit Modal */}
+        {
+          showEditModal && editingUser && (
+            <div className="modal" onClick={handleCloseEditModal}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={handleCloseEditModal}
+                  style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '1.5rem',
+                    color: '#9ca3af',
+                    cursor: 'pointer',
+                    width: '2rem',
+                    height: '2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.color = '#374151';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#9ca3af';
+                  }}
+                >
+                  ×
+                </button>
+                <h3>Edit Referral</h3>
+                <form onSubmit={handleEditSubmit}>
+                  <label>
+                    Mobile:
+                    <input
+                      type="tel"
+                      name="mobile"
+                      value={editFormData.mobile}
+                      disabled
+                      style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                      placeholder="Mobile number (cannot be changed)"
+                    />
+                  </label>
+                  <label>
+                    Role:
+                    <input
+                      type="text"
+                      name="role"
+                      value={editingUser.role || 'Investor'}
+                      disabled
+                      style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                    />
+                  </label>
+                  <label>
+                    First Name:
+                    <input
+                      type="text"
+                      name="first_name"
+                      value={editFormData.first_name}
+                      onChange={handleEditInputChange}
+                      required
+                      placeholder="Enter first name"
+                    />
+                  </label>
+                  <label>
+                    Last Name:
+                    <input
+                      type="text"
+                      name="last_name"
+                      value={editFormData.last_name}
+                      onChange={handleEditInputChange}
+                      required
+                      placeholder="Enter last name"
+                    />
+                  </label>
+                  <label>
+                    Referred By(Mobile):
+                    <input
+                      type="tel"
+                      name="refered_by_mobile"
+                      value={editFormData.refered_by_mobile}
+                      onChange={handleEditInputChange}
+                      onBlur={handleEditReferralMobileBlur}
+                      required
+                      placeholder="Enter referrer's mobile"
+                    />
+                  </label>
+                  <label>
+                    Referred By(Name):
+                    <input
+                      type="text"
+                      name="refered_by_name"
+                      value={editFormData.refered_by_name}
+                      onChange={handleEditInputChange}
+                      required
+                      placeholder="Enter referrer's name"
+                    />
+                  </label>
+                  <button type="submit">Update</button>
+                  <button type="button" onClick={handleCloseEditModal}>Cancel</button>
+                </form>
+              </div>
             </div>
-          </div>
-        )
-      }
-
-      {/* Edit Modal */}
-      {
-        showEditModal && editingUser && (
-          <div className="modal" onClick={handleCloseEditModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={handleCloseEditModal}
-                style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  color: '#9ca3af',
-                  cursor: 'pointer',
-                  width: '2rem',
-                  height: '2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  e.currentTarget.style.color = '#374151';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#9ca3af';
-                }}
-              >
-                ×
-              </button>
-              <h3>Edit Referral</h3>
-              <form onSubmit={handleEditSubmit}>
-                <label>
-                  Mobile:
-                  <input
-                    type="tel"
-                    name="mobile"
-                    value={editFormData.mobile}
-                    disabled
-                    style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
-                    placeholder="Mobile number (cannot be changed)"
-                  />
-                </label>
-                <label>
-                  Role:
-                  <input
-                    type="text"
-                    name="role"
-                    value={editingUser.role || 'Investor'}
-                    disabled
-                    style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
-                  />
-                </label>
-                <label>
-                  First Name:
-                  <input
-                    type="text"
-                    name="first_name"
-                    value={editFormData.first_name}
-                    onChange={handleEditInputChange}
-                    required
-                    placeholder="Enter first name"
-                  />
-                </label>
-                <label>
-                  Last Name:
-                  <input
-                    type="text"
-                    name="last_name"
-                    value={editFormData.last_name}
-                    onChange={handleEditInputChange}
-                    required
-                    placeholder="Enter last name"
-                  />
-                </label>
-                <label>
-                  Referred By(Mobile):
-                  <input
-                    type="tel"
-                    name="refered_by_mobile"
-                    value={editFormData.refered_by_mobile}
-                    onChange={handleEditInputChange}
-                    onBlur={handleEditReferralMobileBlur}
-                    required
-                    placeholder="Enter referrer's mobile"
-                  />
-                </label>
-                <label>
-                  Referred By(Name):
-                  <input
-                    type="text"
-                    name="refered_by_name"
-                    value={editFormData.refered_by_name}
-                    onChange={handleEditInputChange}
-                    required
-                    placeholder="Enter referrer's name"
-                  />
-                </label>
-                <button type="submit">Update</button>
-                <button type="button" onClick={handleCloseEditModal}>Cancel</button>
-              </form>
-            </div>
-          </div>
-        )
-      }
+          )
+        }
 
 
 
-      <ImageNamesModal
-        isOpen={showProofModal}
-        onClose={handleCloseProofModal}
-        data={selectedProofData}
-      />
+        <ImageNamesModal
+          isOpen={showProofModal}
+          onClose={handleCloseProofModal}
+          data={selectedProofData}
+        />
 
-      <AdminDetailsModal
-        isOpen={showAdminDetails}
-        onClose={() => setShowAdminDetails(false)}
-        adminName={adminName}
-        adminMobile={adminMobile}
-        adminRole={adminRole}
-        lastLogin={lastLogin}
-        presentLogin={presentLogin}
-      />
+        <AdminDetailsModal
+          isOpen={showAdminDetails}
+          onClose={() => setShowAdminDetails(false)}
+          adminName={adminName}
+          adminMobile={adminMobile}
+          adminRole={adminRole}
+          lastLogin={lastLogin}
+          presentLogin={presentLogin}
+        />
 
+      </div>
     </div >
   );
 };

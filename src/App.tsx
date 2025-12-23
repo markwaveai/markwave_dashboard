@@ -58,19 +58,7 @@ function App() {
 
   return (
     <div className="App">
-      <header className="header" style={{ position: 'relative', height: '64px' }}>
-        <div className="container" style={{ position: 'relative', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Centered Title */}
-          <h1 className="title" style={{ margin: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
-            Animalkart Dashboard
-          </h1>
-
-          {/* Right Section: Health Status */}
-          <div style={{ position: 'absolute', right: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', height: '100%' }}>
-            <HealthStatus />
-          </div>
-        </div>
-      </header>
+      {/* Global Header Removed for Soft UI Theme - Moved to UserTabs */}
 
       {!session && (
         <Login onLogin={handleLogin} />
