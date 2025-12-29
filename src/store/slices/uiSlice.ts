@@ -21,8 +21,16 @@ export interface UIState {
     };
 }
 
+const getInitialActiveTab = (): UIState['activeTab'] => {
+    const saved = localStorage.getItem('activeTab');
+    if (saved && ['orders', 'nonVerified', 'existing', 'tree', 'products', 'tracking', 'buffaloViz', 'emi'].includes(saved)) {
+        return saved as UIState['activeTab'];
+    }
+    return 'orders';
+};
+
 const initialState: UIState = {
-    activeTab: 'orders',
+    activeTab: getInitialActiveTab(),
     isSidebarOpen: window.innerWidth >= 768,
     showAdminDetails: false,
     modals: {

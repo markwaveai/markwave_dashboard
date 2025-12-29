@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { usePersistentState, usePersistentPagination } from '../../hooks/usePersistence';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { useTableSortAndSearch } from '../../hooks/useTableSortAndSearch';
@@ -17,8 +18,8 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
     const dispatch = useAppDispatch();
     const { referralUsers, loading: usersLoading } = useAppSelector((state: RootState) => state.users);
 
-    const [activeSubTab, setActiveSubTab] = useState<'verified' | 'non-verified'>('non-verified');
-    const [currentPage, setCurrentPage] = useState(1);
+    const [activeSubTab, setActiveSubTab] = usePersistentState<'verified' | 'non-verified'>('referrals_activeSubTab', 'non-verified');
+    const [currentPage, setCurrentPage] = usePersistentPagination('referrals_currentPage', 1);
     const itemsPerPage = 15;
 
     // Filter for Admins and then split by verification
@@ -37,15 +38,25 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
         sortConfig: referralSortConfig
     } = useTableSortAndSearch(dataToDisplay);
 
-    // Reset to page 1 if filtered results change or sub-tab changes
-    React.useEffect(() => {
-        setCurrentPage(1);
-    }, [filteredReferrals.length, activeSubTab]);
+    // Reset to page 1 ONLY if sub-tab changes (skip on initial mount to preserve persisted page)
+    const prevSubTabRef = React.useRef(activeSubTab);
+    useEffect(() => {
+        if (prevSubTabRef.current !== activeSubTab) {
+            setCurrentPage(1);
+            prevSubTabRef.current = activeSubTab;
+        }
+    }, [activeSubTab, setCurrentPage]);
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredReferrals.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(filteredReferrals.length / itemsPerPage);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage, setCurrentPage]);
 
     const handleRowClick = (user: any) => {
         dispatch(setEditReferralModal({ isOpen: true, user }));

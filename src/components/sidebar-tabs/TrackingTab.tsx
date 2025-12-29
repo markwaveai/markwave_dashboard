@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { usePersistentPagination, usePersistentState } from '../../hooks/usePersistence';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import {
@@ -17,10 +18,30 @@ const TrackingTab: React.FC = () => {
     const dispatch = useAppDispatch();
     const { pendingUnits, trackingData, expansion, loading: ordersLoading } = useAppSelector((state: RootState) => state.orders);
     const { expandedOrderId, activeUnitIndex, showFullDetails } = expansion;
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
+
+    // Persist search query
+    const [searchQuery, setSearchQuery] = usePersistentState('tracking_searchQuery', '');
+    const [currentPage, setCurrentPage] = usePersistentPagination('tracking_currentPage', 1);
+
+    // Local expansion state for timeline accordions (visual only, not critical to persist globally unless desired)
     const [expandedTrackerKeys, setExpandedTrackerKeys] = useState<Record<string, boolean>>({});
     const itemsPerPage = 15;
+
+    // Persist expansion state (Same keys as OrdersTab to share state/context)
+    useEffect(() => {
+        if (expandedOrderId === null) localStorage.removeItem('orders_expandedOrderId');
+        else localStorage.setItem('orders_expandedOrderId', expandedOrderId);
+
+        if (activeUnitIndex === null) localStorage.removeItem('orders_activeUnitIndex');
+        else localStorage.setItem('orders_activeUnitIndex', String(activeUnitIndex));
+
+        localStorage.setItem('orders_showFullDetails', String(showFullDetails));
+    }, [expandedOrderId, activeUnitIndex, showFullDetails]);
+
+    // Persist tracking data (Same key as OrdersTab)
+    useEffect(() => {
+        localStorage.setItem('orders_trackingData', JSON.stringify(trackingData));
+    }, [trackingData]);
 
     // Filter for PAID or Approved orders
     const approvedOrders = pendingUnits.filter((entry: any) => {
@@ -40,15 +61,26 @@ const TrackingTab: React.FC = () => {
     });
 
     // Reset page on search change
+    const prevSearchRef = useRef(searchQuery);
     useEffect(() => {
-        setCurrentPage(1);
-    }, [searchQuery]);
+        if (prevSearchRef.current !== searchQuery) {
+            setCurrentPage(1);
+            prevSearchRef.current = searchQuery;
+        }
+    }, [searchQuery, setCurrentPage]);
 
     // Pagination Logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = approvedOrders.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(approvedOrders.length / itemsPerPage);
+
+    // Ensure we don't stay on a page that no longer exists
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage, setCurrentPage]);
 
     const handleStageUpdateLocal = (orderId: string, buffaloNum: number, nextStageId: number, currentTrackerState?: any) => {
         const key = `${orderId}-${buffaloNum}`;

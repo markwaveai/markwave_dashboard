@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { usePersistentPagination } from '../../hooks/usePersistence';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList, ChevronDown, Copy, Check } from 'lucide-react';
@@ -82,6 +83,29 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
         return () => clearTimeout(timer);
     }, [localSearch, dispatch]);
 
+    // Persist filters to localStorage
+    useEffect(() => {
+        localStorage.setItem('orders_searchQuery', searchQuery);
+        localStorage.setItem('orders_paymentFilter', paymentFilter);
+        localStorage.setItem('orders_statusFilter', statusFilter);
+    }, [searchQuery, paymentFilter, statusFilter]);
+
+    // Persist expansion state
+    useEffect(() => {
+        if (expandedOrderId === null) localStorage.removeItem('orders_expandedOrderId');
+        else localStorage.setItem('orders_expandedOrderId', expandedOrderId);
+
+        if (activeUnitIndex === null) localStorage.removeItem('orders_activeUnitIndex');
+        else localStorage.setItem('orders_activeUnitIndex', String(activeUnitIndex));
+
+        localStorage.setItem('orders_showFullDetails', String(showFullDetails));
+    }, [expandedOrderId, activeUnitIndex, showFullDetails]);
+
+    // Persist tracking data
+    useEffect(() => {
+        localStorage.setItem('orders_trackingData', JSON.stringify(trackingData));
+    }, [trackingData]);
+
     // Filter Logic
     const filteredUnits = useMemo(() => {
         return pendingUnits.filter((entry: any) => {
@@ -123,19 +147,42 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
 
     // Pagination State
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = usePersistentPagination('orders_currentPage', 1);
     const itemsPerPage = 15;
 
     // Reset page on filter change
+    // Use a ref to track previous filters so we only reset when they ACTUALLY change,
+    // not just on mount/re-render.
+    const prevFiltersRef = React.useRef({ searchQuery, paymentFilter, statusFilter });
+
     useEffect(() => {
-        setCurrentPage(1);
-    }, [searchQuery, paymentFilter, statusFilter]);
+        const prev = prevFiltersRef.current;
+        const current = { searchQuery, paymentFilter, statusFilter };
+
+        // Compare current filters with previous filters
+        const isDifferent =
+            prev.searchQuery !== current.searchQuery ||
+            prev.paymentFilter !== current.paymentFilter ||
+            prev.statusFilter !== current.statusFilter;
+
+        if (isDifferent) {
+            setCurrentPage(1);
+            prevFiltersRef.current = current;
+        }
+    }, [searchQuery, paymentFilter, statusFilter, setCurrentPage]);
 
     // Pagination Logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredUnits.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(filteredUnits.length / itemsPerPage);
+
+    // Ensure we don't stay on a page that no longer exists
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage, setCurrentPage]);
 
     const handleViewProof = useCallback((transaction: any, investor: any) => {
         dispatch(setProofModal({ isOpen: true, data: { ...transaction, name: investor.name } }));
@@ -335,7 +382,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                 const tx = entry.transaction || entry.transation || {};
                                 const inv = entry.investor || {};
                                 const isExpanded = expandedOrderId === unit.id;
-                                const canExpand = false;
+                                const canExpand = true;
                                 const serialNumber = indexOfFirstItem + index + 1;
 
                                 return (

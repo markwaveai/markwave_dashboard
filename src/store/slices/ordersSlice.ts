@@ -88,22 +88,39 @@ export interface OrdersState {
     };
 }
 
+const getInitialExpansion = () => {
+    try {
+        return {
+            expandedOrderId: localStorage.getItem('orders_expandedOrderId') || null,
+            activeUnitIndex: localStorage.getItem('orders_activeUnitIndex') ? Number(localStorage.getItem('orders_activeUnitIndex')) : null,
+            showFullDetails: localStorage.getItem('orders_showFullDetails') === 'true',
+        };
+    } catch {
+        return { expandedOrderId: null, activeUnitIndex: null, showFullDetails: false };
+    }
+};
+
+const getInitialTrackingData = () => {
+    try {
+        const saved = localStorage.getItem('orders_trackingData');
+        return saved ? JSON.parse(saved) : {};
+    } catch {
+        return {};
+    }
+};
+
 const initialState: OrdersState = {
     pendingUnits: [],
     loading: false,
     error: null,
     actionLoading: false,
-    trackingData: {},
+    trackingData: getInitialTrackingData(),
     filters: {
-        searchQuery: '',
-        paymentFilter: 'All Payments',
-        statusFilter: 'PENDING_ADMIN_VERIFICATION',
+        searchQuery: localStorage.getItem('orders_searchQuery') || '',
+        paymentFilter: localStorage.getItem('orders_paymentFilter') || 'All Payments',
+        statusFilter: localStorage.getItem('orders_statusFilter') || 'PENDING_ADMIN_VERIFICATION',
     },
-    expansion: {
-        expandedOrderId: null,
-        activeUnitIndex: null,
-        showFullDetails: false,
-    },
+    expansion: getInitialExpansion(),
 };
 
 const ordersSlice = createSlice({

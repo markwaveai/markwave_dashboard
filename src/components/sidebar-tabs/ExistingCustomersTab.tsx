@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { usePersistentState, usePersistentPagination } from '../../hooks/usePersistence';
 import { useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { useTableSortAndSearch } from '../../hooks/useTableSortAndSearch';
@@ -15,8 +16,9 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
 }) => {
     const { existingCustomers, referralUsers, loading: usersLoading } = useAppSelector((state: RootState) => state.users);
 
-    const [activeSubTab, setActiveSubTab] = useState<'verified' | 'non-verified'>('verified');
-    const [currentPage, setCurrentPage] = useState(1);
+    // Use persistent state
+    const [activeSubTab, setActiveSubTab] = usePersistentState<'verified' | 'non-verified'>('existing_activeSubTab', 'verified');
+    const [currentPage, setCurrentPage] = usePersistentPagination('existing_currentPage', 1);
     const itemsPerPage = 15;
 
     // Combine and deduplicate users (only Investors for this tab)
@@ -45,15 +47,25 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
         sortConfig: existingUsersSortConfig
     } = useTableSortAndSearch(dataToDisplay);
 
-    // Reset to page 1 if filtered results change or sub-tab changes
-    React.useEffect(() => {
-        setCurrentPage(1);
-    }, [filteredExistingUsers.length, activeSubTab]);
+    // Reset to page 1 ONLY if sub-tab changes (skip on initial mount to preserve persisted page)
+    const prevSubTabRef = React.useRef(activeSubTab);
+    useEffect(() => {
+        if (prevSubTabRef.current !== activeSubTab) {
+            setCurrentPage(1);
+            prevSubTabRef.current = activeSubTab;
+        }
+    }, [activeSubTab, setCurrentPage]);
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = filteredExistingUsers.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(filteredExistingUsers.length / itemsPerPage);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage, setCurrentPage]);
 
     return (
         <div className="existing-customers-container">
