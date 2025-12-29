@@ -8,15 +8,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .orders-title {
     margin: 0;
 }
 
+
+
 .search-input.orders-search {
-    width: 300px;
+    width: 200px;
     padding: 6px 12px;
     font-size: 0.9rem;
     height: auto;
@@ -169,12 +171,12 @@
     top: 50%;
     left: calc(100% + 15px);
     transform: translateY(-50%);
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
+    background-color: #0f172a;
+    border: 1px solid #1e293b;
     border-radius: 12px;
     padding: 16px;
     width: 280px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
     z-index: 1000;
     opacity: 0;
     transition: opacity 0.3s, visibility 0.3s;
@@ -188,7 +190,7 @@
     margin-top: -8px;
     border-width: 8px;
     border-style: solid;
-    border-color: transparent #ffffff transparent transparent;
+    border-color: transparent #0f172a transparent transparent;
 }
 
 .bank-transfer-hover-container:hover .bank-details-tooltip {
@@ -199,10 +201,10 @@
 .tooltip-title {
     font-size: 13px;
     font-weight: 700;
-    color: #111827;
+    color: #f8fafc;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #334155;
 }
 
 .tooltip-item {
@@ -219,14 +221,14 @@
 .tooltip-label {
     font-size: 11px;
     font-weight: 600;
-    color: #64748b;
+    color: #94a3b8;
     white-space: nowrap;
 }
 
 .tooltip-value {
     font-size: 11px;
     font-weight: 600;
-    color: #1e293b;
+    color: #f1f5f9;
     text-align: right;
     word-break: break-all;
 }

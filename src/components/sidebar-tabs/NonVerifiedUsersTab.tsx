@@ -52,6 +52,7 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('first_name')}>First Name {getSortIcon('first_name', referralSortConfig)}</th>
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('last_name')}>Last Name {getSortIcon('last_name', referralSortConfig)}</th>
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('mobile')}>Mobile {getSortIcon('mobile', referralSortConfig)}</th>
+                            <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('role')}>Role {getSortIcon('role', referralSortConfig)}</th>
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('refered_by_name')}>Referred By {getSortIcon('refered_by_name', referralSortConfig)}</th>
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('refered_by_mobile')}>Referrer Mobile {getSortIcon('refered_by_mobile', referralSortConfig)}</th>
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('verified')}>Verified {getSortIcon('verified', referralSortConfig)}</th>
@@ -76,6 +77,7 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
                                     <td className="non-verified-td">{user.first_name || '-'}</td>
                                     <td className="non-verified-td">{user.last_name || '-'}</td>
                                     <td className="non-verified-td">{user.mobile}</td>
+                                    <td className="non-verified-td">{user.role}</td>
                                     <td className="non-verified-td">{user.refered_by_name || '-'}</td>
                                     <td className="non-verified-td">{user.refered_by_mobile || '-'}</td>
                                     <td className="non-verified-td">{user.verified ? 'Yes' : 'No'}</td>

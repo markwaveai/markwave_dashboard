@@ -46,6 +46,7 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('first_name')}>First Name {getSortIcon('first_name', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('last_name')}>Last Name {getSortIcon('last_name', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('mobile')}>Mobile {getSortIcon('mobile', existingUsersSortConfig)}</th>
+                            {/* <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('role')}>Role {getSortIcon('role', existingUsersSortConfig)}</th> */}
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('isFormFilled')}>Form Filled {getSortIcon('isFormFilled', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('refered_by_name')}>Referred By {getSortIcon('refered_by_name', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('refered_by_mobile')}>Referrer Mobile {getSortIcon('refered_by_mobile', existingUsersSortConfig)}</th>
@@ -64,12 +65,14 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
                                 <td colSpan={8} className="existing-customers-no-data">No users found</td>
                             </tr>
                         ) : (
+
                             currentItems.map((user: any, index: number) => (
                                 <tr key={index}>
                                     <td className="existing-customers-td">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td className="existing-customers-td">{user.first_name || '-'}</td>
                                     <td className="existing-customers-td">{user.last_name || '-'}</td>
                                     <td className="existing-customers-td">{user.mobile}</td>
+                                    {/* <td className="existing-customers-td">{user.role}</td> */}
                                     <td className="existing-customers-td">{user.isFormFilled ? 'Yes' : 'No'}</td>
                                     <td className="existing-customers-td">{user.refered_by_name || '-'}</td>
                                     <td className="existing-customers-td">{user.refered_by_mobile || '-'}</td>

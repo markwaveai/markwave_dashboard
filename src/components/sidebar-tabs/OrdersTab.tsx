@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList, ChevronDown } from 'lucide-react';
+import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList, ChevronDown, Copy, Check } from 'lucide-react';
 import {
     setSearchQuery,
     setPaymentFilter,
@@ -14,8 +14,41 @@ import {
 import { API_ENDPOINTS } from '../../config/api';
 import './OrdersTab.css';
 import { setProofModal } from '../../store/slices/uiSlice';
+
 import Pagination from '../common/Pagination';
 import Loader from '../common/Loader';
+
+const UTRCopyButton: React.FC<{ value: string }> = ({ value }) => {
+    const [isCopied, setIsCopied] = useState(false);
+
+    const handleCopy = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (value && value !== '-') {
+            navigator.clipboard.writeText(String(value));
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        }
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            style={{
+                border: 'none',
+                background: 'transparent',
+                padding: 0,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                color: isCopied ? '#2563eb' : '#64748b',
+                transition: 'color 0.2s',
+            }}
+            title={isCopied ? 'Copied!' : 'Copy'}
+        >
+            {isCopied ? <Check size={14} /> : <Copy size={12} />}
+        </button>
+    );
+};
 
 interface OrdersTabProps {
     handleApproveClick: (unitId: string) => void;
@@ -169,7 +202,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                 <h2>Live Orders</h2>
                 <input
                     type="text"
-                    placeholder="Search By UserName, OrderId, UserMobile"
+                    placeholder="Search..."
                     className="search-input orders-search"
                     value={localSearch}
                     onChange={(e) => setLocalSearch(e.target.value)}
@@ -179,6 +212,18 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             {/* New Filter Tabs */}
             {/* Status Cards / Filters */}
             <div className="status-controls">
+                <div
+                    className={`stats-card ${statusFilter === 'All Status' ? 'active-all' : ''}`}
+                    onClick={() => dispatch(setStatusFilter('All Status'))}
+                >
+                    <div className="card-icon-wrapper all">
+                        <ClipboardList size={24} />
+                    </div>
+                    <div className="card-content">
+                        <h3>{pendingUnits.length}</h3>
+                        <p>Open Orders</p>
+                    </div>
+                </div>
                 <div
                     className={`stats-card ${statusFilter === 'PENDING_ADMIN_VERIFICATION' ? 'active-pending' : ''}`}
                     onClick={() => dispatch(setStatusFilter('PENDING_ADMIN_VERIFICATION'))}
@@ -231,18 +276,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                     </div>
                 </div>
 
-                <div
-                    className={`stats-card ${statusFilter === 'All Status' ? 'active-all' : ''}`}
-                    onClick={() => dispatch(setStatusFilter('All Status'))}
-                >
-                    <div className="card-icon-wrapper all">
-                        <ClipboardList size={24} />
-                    </div>
-                    <div className="card-content">
-                        <h3>{pendingUnits.length}</h3>
-                        <p>Open Orders</p>
-                    </div>
-                </div>
+
             </div>
 
             {/* Filter Controls Removed (Search moved to header, Select moved to Table) */}
@@ -255,7 +289,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
             <div className="table-container">
                 <table className="user-table">
-                    <thead>
+                    <thead style={{ backgroundColor: '#f0f2f5' }}>
                         <tr>
                             <th>S.No</th>
                             <th className="th-user-name">User Name</th>
@@ -278,7 +312,8 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                 </select>
                             </th>
                             <th className="th-proof">Payment Image Proof</th>
-                            <th>Actions</th>
+                            {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <th>Actions</th>}
+                            {statusFilter === 'REJECTED' && <th>Rejected Reason</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -385,26 +420,38 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                         </div>
                                                                         <div className="tooltip-item">
                                                                             <span className="tooltip-label">{isCheque ? 'Cheque No:' : 'A/C Number:'}</span>
-                                                                            <span className="tooltip-value">
-                                                                                {isCheque
-                                                                                    ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
-                                                                                    : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no'])
-                                                                                }
-                                                                            </span>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                                                                <span className="tooltip-value">
+                                                                                    {isCheque
+                                                                                        ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
+                                                                                        : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no'])
+                                                                                    }
+                                                                                </span>
+                                                                                {isCheque && (
+                                                                                    <UTRCopyButton value={findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])} />
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                         <div className="tooltip-item">
                                                                             <span className="tooltip-label">{isCheque ? 'Cheque Date:' : 'UTR:'}</span>
-                                                                            <span className="tooltip-value">
-                                                                                {isCheque
-                                                                                    ? findVal(tx, ['cheque_date', 'date'], ['date'])
-                                                                                    : findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
-                                                                                }
-                                                                            </span>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                                                                <span className="tooltip-value">
+                                                                                    {isCheque
+                                                                                        ? findVal(tx, ['cheque_date', 'date'], ['date'])
+                                                                                        : findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
+                                                                                    }
+                                                                                </span>
+                                                                                {!isCheque && (
+                                                                                    <UTRCopyButton value={findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])} />
+                                                                                )}
+                                                                            </div>
                                                                         </div>
-                                                                        <div className="tooltip-item">
-                                                                            <span className="tooltip-label">IFSC:</span>
-                                                                            <span className="tooltip-value">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
-                                                                        </div>
+                                                                        {!isCheque && (
+                                                                            <div className="tooltip-item">
+                                                                                <span className="tooltip-label">IFSC:</span>
+                                                                                <span className="tooltip-value">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
+                                                                            </div>
+                                                                        )}
                                                                     </>
                                                                 );
                                                             })()}
@@ -424,7 +471,10 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                     </button>
                                                 ) : '-'}
                                             </td>
-                                            <td>
+                                            {statusFilter === 'REJECTED' && <td>
+                                                {unit.rejectedReason || 'No reason provided'}
+                                            </td>}
+                                            {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <td>
                                                 <div className="action-btn-container">
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
@@ -443,7 +493,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                         </button>
                                                     )}
                                                 </div>
-                                            </td>
+                                            </td>}
                                         </tr>
                                         {isExpanded && canExpand && (
                                             <tr className="expanded-row">

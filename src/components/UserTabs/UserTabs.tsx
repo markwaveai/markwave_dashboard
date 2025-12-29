@@ -410,7 +410,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
           <svg width="240" height="60" viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg" style={{ height: '45px', marginLeft: '0px' }}>
             <text
-              x="10"
+              x="-40"
               y="38"
               fontSize="32"
               fontFamily="Inter, sans-serif"
@@ -420,7 +420,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
               mark
             </text>
             <text
-              x="90"
+              x="45"
               y="38"
               fontSize="32"
               fontFamily="Inter, sans-serif"
@@ -430,7 +430,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
               wave
             </text>
             <path
-              d="M90 45 C105 35, 120 35, 135 45"
+              d="M60 45 C105 35, 120 35, 135 45"
               fill="none"
               stroke="#38BDF8"
               strokeWidth="3"
