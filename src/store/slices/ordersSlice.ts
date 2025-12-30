@@ -5,12 +5,25 @@ import { API_ENDPOINTS } from '../../config/api';
 // Async Thunks
 export const fetchPendingUnits = createAsyncThunk(
     'orders/fetchPendingUnits',
-    async (adminMobile: string, { rejectWithValue }) => {
+    async ({ adminMobile, page = 1, pageSize = 10, paymentStatus, paymentType, transferMode }: {
+        adminMobile: string;
+        page?: number;
+        pageSize?: number;
+        paymentStatus?: string;
+        paymentType?: string;
+        transferMode?: string;
+    }, { rejectWithValue }) => {
         try {
+            const params: any = { page, page_size: pageSize };
+            if (paymentStatus && paymentStatus !== 'All Status') params.paymentStatus = paymentStatus;
+            if (paymentType && paymentType !== 'All Payments') params.paymentType = paymentType;
+            if (transferMode && transferMode !== 'All Modes') params.transferMode = transferMode;
+
             const response = await axios.get(API_ENDPOINTS.getPendingUnits(), {
-                headers: { 'X-Admin-Mobile': adminMobile }
+                headers: { 'X-Admin-Mobile': adminMobile },
+                params
             });
-            return response.data?.orders || [];
+            return response.data; // Return full response to get count
         } catch (error: any) {
             const rawDetail = error?.response?.data?.detail;
             let msg: string;
@@ -35,13 +48,22 @@ export const fetchPendingUnits = createAsyncThunk(
 
 export const approveOrder = createAsyncThunk(
     'orders/approveOrder',
-    async ({ unitId, adminMobile }: { unitId: string; adminMobile: string }, { dispatch, rejectWithValue }) => {
+    async ({ unitId, adminMobile }: { unitId: string; adminMobile: string }, { dispatch, rejectWithValue, getState }) => {
         try {
             await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId }, {
                 headers: { 'X-Admin-Mobile': adminMobile }
             });
-            // Refresh list after success
-            dispatch(fetchPendingUnits(adminMobile));
+            // Refresh list after success, preserving filters
+            const state = getState() as any;
+            const { filters } = state.orders;
+            dispatch(fetchPendingUnits({
+                adminMobile,
+                page: filters.page,
+                pageSize: filters.pageSize,
+                paymentStatus: filters.statusFilter,
+                paymentType: filters.paymentTypeFilter,
+                transferMode: filters.transferModeFilter
+            }));
             return unitId;
         } catch (error: any) {
             return rejectWithValue('Failed to approve order');
@@ -51,13 +73,22 @@ export const approveOrder = createAsyncThunk(
 
 export const rejectOrder = createAsyncThunk(
     'orders/rejectOrder',
-    async ({ unitId, adminMobile, reason }: { unitId: string; adminMobile: string; reason: string }, { dispatch, rejectWithValue }) => {
+    async ({ unitId, adminMobile, reason }: { unitId: string; adminMobile: string; reason: string }, { dispatch, rejectWithValue, getState }) => {
         try {
             await axios.post(API_ENDPOINTS.rejectUnit(), { orderId: unitId, reason }, {
                 headers: { 'X-Admin-Mobile': adminMobile }
             });
-            // Refresh list after success
-            dispatch(fetchPendingUnits(adminMobile));
+            // Refresh list after success, preserving filters
+            const state = getState() as any;
+            const { filters } = state.orders;
+            dispatch(fetchPendingUnits({
+                adminMobile,
+                page: filters.page,
+                pageSize: filters.pageSize,
+                paymentStatus: filters.statusFilter,
+                paymentType: filters.paymentTypeFilter,
+                transferMode: filters.transferModeFilter
+            }));
             return unitId;
         } catch (error: any) {
             return rejectWithValue('Failed to reject order');
@@ -76,10 +107,17 @@ export interface OrdersState {
             history: { [stageId: number]: { date: string, time: string } };
         }
     };
+    totalCount: number;
+    totalAllOrders: number;
+    statusCounts: { [key: string]: number };
     filters: {
-        searchQuery: string;
+        searchQuery: string; // Keeping for client-side or future use
         paymentFilter: string;
+        paymentTypeFilter: string;
+        transferModeFilter: string;
         statusFilter: string;
+        page: number;
+        pageSize: number;
     };
     expansion: {
         expandedOrderId: string | null;
@@ -115,10 +153,17 @@ const initialState: OrdersState = {
     error: null,
     actionLoading: false,
     trackingData: getInitialTrackingData(),
+    totalCount: 0,
+    totalAllOrders: 0,
+    statusCounts: {},
     filters: {
         searchQuery: localStorage.getItem('orders_searchQuery') || '',
         paymentFilter: localStorage.getItem('orders_paymentFilter') || 'All Payments',
+        paymentTypeFilter: localStorage.getItem('orders_paymentTypeFilter') || 'All Payments',
+        transferModeFilter: localStorage.getItem('orders_transferModeFilter') || 'All Modes',
         statusFilter: localStorage.getItem('orders_statusFilter') || 'PENDING_ADMIN_VERIFICATION',
+        page: 1,
+        pageSize: 15,
     },
     expansion: getInitialExpansion(),
 };
@@ -137,10 +182,17 @@ const ordersSlice = createSlice({
             state.filters.searchQuery = action.payload;
         },
         setPaymentFilter: (state, action: PayloadAction<string>) => {
-            state.filters.paymentFilter = action.payload;
+            state.filters.paymentFilter = action.payload; // Legacy, using paymentTypeFilter now ideally, but keeping for compatibility if needed.
+            state.filters.paymentTypeFilter = action.payload;
+        },
+        setTransferModeFilter: (state, action: PayloadAction<string>) => {
+            state.filters.transferModeFilter = action.payload;
         },
         setStatusFilter: (state, action: PayloadAction<string>) => {
             state.filters.statusFilter = action.payload;
+        },
+        setPage: (state, action: PayloadAction<number>) => {
+            state.filters.page = action.payload;
         },
         setExpandedOrderId: (state, action: PayloadAction<string | null>) => {
             state.expansion.expandedOrderId = action.payload;
@@ -171,7 +223,37 @@ const ordersSlice = createSlice({
         });
         builder.addCase(fetchPendingUnits.fulfilled, (state, action) => {
             state.loading = false;
-            state.pendingUnits = action.payload;
+            // Handle response format: { orders: [], total_count: 123 } or just array
+            const payload = action.payload;
+            let currentCount = 0;
+
+            if (payload && Array.isArray(payload.orders)) {
+                state.pendingUnits = payload.orders;
+                // Prefer total_filtered for pagination if available, otherwise fallback
+                currentCount = payload.total_filtered ?? (payload.total_count || payload.total || payload.count || payload.orders.length);
+                state.totalCount = currentCount;
+
+                // Set total_all_orders if available
+                if (typeof payload.total_all_orders === 'number') {
+                    state.totalAllOrders = payload.total_all_orders;
+                }
+            } else if (Array.isArray(payload)) {
+                state.pendingUnits = payload;
+                currentCount = payload.length;
+                state.totalCount = currentCount;
+            } else {
+                state.pendingUnits = [];
+                state.totalCount = 0;
+            }
+
+            // Update cached count for the current filters if pertinent
+            // We only reliably know the count for the CURRENT status filter
+            const currentStatus = state.filters.statusFilter;
+            // Also ensure other filters are 'All' to be sure this count represents the status count
+            // However, even if filtered by paymentType, showing the count for that context is useful
+            if (currentStatus) {
+                state.statusCounts[currentStatus] = currentCount;
+            }
         });
         builder.addCase(fetchPendingUnits.rejected, (state, action) => {
             state.loading = false;
@@ -207,7 +289,9 @@ export const {
     setOrdersError,
     setSearchQuery,
     setPaymentFilter,
+    setTransferModeFilter,
     setStatusFilter,
+    setPage,
     setExpandedOrderId,
     setActiveUnitIndex,
     setShowFullDetails,

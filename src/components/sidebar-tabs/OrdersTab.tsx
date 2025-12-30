@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { usePersistentPagination } from '../../hooks/usePersistence';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList, ChevronDown, Copy, Check } from 'lucide-react';
+import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList, Copy, Check } from 'lucide-react';
 import {
     setSearchQuery,
     setPaymentFilter,
     setStatusFilter,
+    setTransferModeFilter,
+    setPage,
+    fetchPendingUnits
 } from '../../store/slices/ordersSlice';
-import { API_ENDPOINTS } from '../../config/api';
-import './OrdersTab.css';
 import { setProofModal } from '../../store/slices/uiSlice';
-
-import Pagination from '../common/Pagination';
 import Loader from '../common/Loader';
+import Pagination from '../common/Pagination';
+import './OrdersTab.css';
 import TableSkeleton from '../common/TableSkeleton';
 
 const UTRCopyButton: React.FC<{ value: string }> = ({ value }) => {
@@ -60,10 +60,26 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
     const dispatch = useAppDispatch();
 
     // Redux State
-    const pendingUnits = useAppSelector((state: RootState) => state.orders.pendingUnits);
-    const { error: ordersError, loading: ordersLoading } = useAppSelector((state: RootState) => state.orders);
-    const { searchQuery, paymentFilter, statusFilter } = useAppSelector((state: RootState) => state.orders.filters);
-    const trackingData = useAppSelector((state: RootState) => state.orders.trackingData);
+    const {
+        pendingUnits,
+        loading: ordersLoading,
+        error: ordersError,
+        totalCount,
+        totalAllOrders,
+        statusCounts, // Get statusCounts from state
+        filters
+    } = useAppSelector((state: RootState) => state.orders);
+
+    const {
+        searchQuery,
+        paymentTypeFilter,
+        statusFilter,
+        transferModeFilter,
+        page,
+        pageSize
+    } = filters;
+
+    const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
 
     // Debounce Search
     const [localSearch, setLocalSearch] = useState(searchQuery);
@@ -74,164 +90,74 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            dispatch(setSearchQuery(localSearch));
-        }, 300);
+            if (localSearch !== searchQuery) {
+                dispatch(setSearchQuery(localSearch));
+            }
+        }, 500);
         return () => clearTimeout(timer);
-    }, [localSearch, dispatch]);
+    }, [localSearch, dispatch, searchQuery]);
 
     // Persist filters to localStorage
     useEffect(() => {
         localStorage.setItem('orders_searchQuery', searchQuery);
-        localStorage.setItem('orders_paymentFilter', paymentFilter);
+        localStorage.setItem('orders_paymentFilter', paymentTypeFilter);
+        localStorage.setItem('orders_paymentTypeFilter', paymentTypeFilter);
         localStorage.setItem('orders_statusFilter', statusFilter);
-    }, [searchQuery, paymentFilter, statusFilter]);
+        localStorage.setItem('orders_transferModeFilter', transferModeFilter);
+        localStorage.setItem('orders_page', String(page));
+    }, [searchQuery, paymentTypeFilter, statusFilter, transferModeFilter, page]);
 
-    // Persist expansion state
-
-
-    // Persist tracking data
+    // Fetch Data on Filter Change
     useEffect(() => {
-        localStorage.setItem('orders_trackingData', JSON.stringify(trackingData));
-    }, [trackingData]);
+        dispatch(fetchPendingUnits({
+            adminMobile,
+            page,
+            pageSize,
+            paymentStatus: statusFilter,
+            paymentType: paymentTypeFilter,
+            transferMode: transferModeFilter
+        }));
+    }, [dispatch, adminMobile, page, pageSize, statusFilter, paymentTypeFilter, transferModeFilter]);
 
-    // Filter Logic
-    const filteredUnits = useMemo(() => {
-        return pendingUnits.filter((entry: any) => {
-            const unit = entry.order || {};
-            const tx = entry.transaction || entry.transation || {};
-            const inv = entry.investor || {};
-
-            let matchesSearch = true;
-            if (searchQuery) {
-                const query = searchQuery.toLocaleLowerCase();
-                matchesSearch = (
-                    (unit.id && String(unit.id).toLocaleLowerCase().includes(query)) ||
-                    (unit.userId && String(unit.userId).toLocaleLowerCase().includes(query)) ||
-                    (unit.breedId && String(unit.breedId).toLocaleLowerCase().includes(query)) ||
-                    (inv.name && String(inv.name).toLocaleLowerCase().includes(query))
-                );
-            }
-
-            let matchesPayment = true;
-            if (paymentFilter !== 'All Payments') {
-                matchesPayment = tx.paymentType === paymentFilter;
-            }
-
-            let matchesStatus = true;
-            if (statusFilter !== 'All Status') {
-                const currentStatus = unit.paymentStatus;
-                if (statusFilter === 'PAID') {
-                    matchesStatus = currentStatus === 'PAID' || currentStatus === 'Approved';
-                } else if (statusFilter === 'REJECTED') {
-                    matchesStatus = currentStatus === 'REJECTED' || currentStatus === 'Rejected';
-                } else {
-                    matchesStatus = currentStatus === statusFilter;
-                }
-            }
-
-            return matchesSearch && matchesPayment && matchesStatus;
-        });
-    }, [pendingUnits, searchQuery, paymentFilter, statusFilter]);
-
-
-    // Pagination State
-    const [currentPage, setCurrentPage] = usePersistentPagination('orders_currentPage', 1);
-    const itemsPerPage = 15;
-
-    // Reset page on filter change
-    // Use a ref to track previous filters so we only reset when they ACTUALLY change,
-    // not just on mount/re-render.
-    const prevFiltersRef = React.useRef({ searchQuery, paymentFilter, statusFilter });
-
+    // Reset Page on Filter Change
+    const prevFiltersRef = useRef({ statusFilter, paymentTypeFilter, transferModeFilter });
     useEffect(() => {
         const prev = prevFiltersRef.current;
-        const current = { searchQuery, paymentFilter, statusFilter };
+        const current = { statusFilter, paymentTypeFilter, transferModeFilter };
 
-        // Compare current filters with previous filters
-        const isDifferent =
-            prev.searchQuery !== current.searchQuery ||
-            prev.paymentFilter !== current.paymentFilter ||
-            prev.statusFilter !== current.statusFilter;
-
-        if (isDifferent) {
-            setCurrentPage(1);
+        if (
+            prev.statusFilter !== current.statusFilter ||
+            prev.paymentTypeFilter !== current.paymentTypeFilter ||
+            prev.transferModeFilter !== current.transferModeFilter
+        ) {
+            dispatch(setPage(1));
             prevFiltersRef.current = current;
         }
-    }, [searchQuery, paymentFilter, statusFilter, setCurrentPage]);
+    }, [statusFilter, paymentTypeFilter, transferModeFilter, dispatch]);
 
-    // Pagination Logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredUnits.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredUnits.length / itemsPerPage);
-
-    // Ensure we don't stay on a page that no longer exists
-    useEffect(() => {
-        if (currentPage > totalPages && totalPages > 0) {
-            setCurrentPage(totalPages);
-        }
-    }, [totalPages, currentPage, setCurrentPage]);
 
     const handleViewProof = useCallback((transaction: any, investor: any) => {
         dispatch(setProofModal({ isOpen: true, data: { ...transaction, name: investor.name } }));
     }, [dispatch]);
 
-    const formatIndiaDate = useCallback((val: any) => {
-        if (!val || (typeof val !== 'string' && typeof val !== 'number')) return String(val);
-        const date = new Date(val);
-        if (date instanceof Date && !isNaN(date.getTime()) && String(val).length > 10) {
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-        }
-        return val;
-    }, []);
-
-    const formatIndiaDateHeader = (val: any) => {
-        if (!val || (typeof val !== 'string' && typeof val !== 'number')) return '-';
-        const date = new Date(val);
-        if (date instanceof Date && !isNaN(date.getTime()) && String(val).length > 10) {
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-        }
-        return val;
-    };
-
-    // Calculate Counts
-    const counts = {
-        needsApproval: pendingUnits.filter((u: any) => u.order?.paymentStatus === 'PENDING_ADMIN_VERIFICATION').length,
-        approved: pendingUnits.filter((u: any) => u.order?.paymentStatus === 'Approved' || u.order?.paymentStatus === 'PAID').length,
-        rejected: pendingUnits.filter((u: any) => u.order?.paymentStatus === 'Rejected' || u.order?.paymentStatus === 'REJECTED').length,
-        notPaid: pendingUnits.filter((u: any) => u.order?.paymentStatus === 'PENDING_PAYMENT').length,
-    };
-
-
-
-    // ... inside the component ...
+    // Pagination
+    const totalPages = Math.ceil((totalCount || 0) / pageSize);
 
     return (
         <div className="orders-dashboard">
             <div className="orders-header">
                 <h2>Live Orders</h2>
+                {/* Search hidden as it might not be fully supported by API yet in this mode */}
                 <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Search by ID/Name..."
                     className="search-input orders-search"
+                    style={{ visibility: 'hidden' }}
                     value={localSearch}
                     onChange={(e) => setLocalSearch(e.target.value)}
                 />
             </div>
 
-            {/* New Filter Tabs */}
             {/* Status Cards / Filters */}
             <div className="status-controls">
                 <div
@@ -242,8 +168,8 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                         <ClipboardList size={24} />
                     </div>
                     <div className="card-content">
-                        <h3>{pendingUnits.length}</h3>
-                        <p>Open Orders</p>
+                        <h3>{statusFilter === 'All Status' ? totalAllOrders : (statusCounts['All Status'] ?? (totalAllOrders > 0 ? totalAllOrders : '-'))}</h3>
+                        <p>All Status</p>
                     </div>
                 </div>
                 <div
@@ -254,7 +180,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                         <CheckCircle size={24} />
                     </div>
                     <div className="card-content">
-                        <h3>{counts.needsApproval}</h3>
+                        <h3>{statusFilter === 'PENDING_ADMIN_VERIFICATION' ? totalCount : (statusCounts['PENDING_ADMIN_VERIFICATION'] ?? '-')}</h3>
                         <p>Admin Approval</p>
                     </div>
                 </div>
@@ -267,8 +193,8 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                         <CheckSquare size={24} />
                     </div>
                     <div className="card-content">
-                        <h3>{counts.approved}</h3>
-                        <p>Approved</p>
+                        <h3>{statusFilter === 'PAID' ? totalCount : (statusCounts['PAID'] ?? '-')}</h3>
+                        <p>Approved/Paid</p>
                     </div>
                 </div>
 
@@ -280,7 +206,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                         <XCircle size={24} />
                     </div>
                     <div className="card-content">
-                        <h3>{counts.rejected}</h3>
+                        <h3>{statusFilter === 'REJECTED' ? totalCount : (statusCounts['REJECTED'] ?? '-')}</h3>
                         <p>Rejected</p>
                     </div>
                 </div>
@@ -293,15 +219,13 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                         <Clock size={24} />
                     </div>
                     <div className="card-content">
-                        <h3>{counts.notPaid}</h3>
+                        <h3>{statusFilter === 'PENDING_PAYMENT' ? totalCount : (statusCounts['PENDING_PAYMENT'] ?? '-')}</h3>
                         <p>Payment Due</p>
                     </div>
                 </div>
-
-
             </div>
 
-            {/* Filter Controls Removed (Search moved to header, Select moved to Table) */}
+            {/* Filters Bar Removed - Payment Filter moved to table header */}
 
             {
                 ordersError && (
@@ -321,16 +245,30 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                             <th>User Mobile</th>
                             <th>Email</th>
                             <th>Amount</th>
-                            <th>
+                            <th style={{ minWidth: '140px' }}>
                                 <select
-                                    value={paymentFilter}
+                                    value={paymentTypeFilter}
                                     onChange={(e) => dispatch(setPaymentFilter(e.target.value))}
-                                    className="payment-type-select"
+                                    style={{
+                                        width: '100%',
+                                        padding: '4px',
+                                        borderRadius: '4px',
+                                        border: '1px solid #cbd5e1',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        color: '#475569',
+                                        cursor: 'pointer',
+                                        outline: 'none',
+                                        background: '#fff',
+                                        textAlign: 'center'
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
                                 >
                                     <option value="All Payments">Payment Type</option>
                                     <option value="BANK_TRANSFER">Bank Transfer</option>
                                     <option value="CHEQUE">Cheque</option>
-                                    <option value="ONLINE_UPI" disabled>Online/UPI</option>
+                                    <option value="ONLINE">Online/UPI</option>
+                                    <option value="CASH">Cash</option>
                                 </select>
                             </th>
                             <th className="th-proof">Payment Image Proof</th>
@@ -341,18 +279,18 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                     <tbody>
                         {ordersLoading ? (
                             <TableSkeleton cols={11} rows={10} />
-                        ) : currentItems.length === 0 ? (
+                        ) : pendingUnits.length === 0 ? (
                             <tr>
                                 <td colSpan={11} className="no-data-row">
-                                    {searchQuery ? 'No matching orders found' : 'No pending orders'}
+                                    No orders found matching filters.
                                 </td>
                             </tr>
                         ) : (
-                            currentItems.map((entry: any, index: number) => {
+                            pendingUnits.map((entry: any, index: number) => {
                                 const unit = entry.order || {};
                                 const tx = entry.transaction || entry.transation || {};
                                 const inv = entry.investor || {};
-                                const serialNumber = indexOfFirstItem + index + 1;
+                                const serialNumber = (page - 1) * pageSize + index + 1;
 
                                 return (
                                     <React.Fragment key={`${unit.id || 'order'}-${index}`}>
@@ -450,6 +388,12 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                                 <span className="tooltip-value">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
                                                                             </div>
                                                                         )}
+                                                                        {tx.transferMode && (
+                                                                            <div className="tooltip-item">
+                                                                                <span className="tooltip-label">Mode:</span>
+                                                                                <span className="tooltip-value">{tx.transferMode}</span>
+                                                                            </div>
+                                                                        )}
                                                                     </>
                                                                 );
                                                             })()}
@@ -503,9 +447,9 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             </div>
 
             <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                currentPage={page}
+                totalPages={totalPages || 1}
+                onPageChange={(p) => dispatch(setPage(p))}
             />
         </div >
     );

@@ -152,7 +152,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
     // Only fetch data for the user-related tabs.
     if (activeTab === 'orders' || activeTab === 'tracking') {
-      dispatch(fetchPendingUnits(adminMobile));
+      dispatch(fetchPendingUnits({ adminMobile }));
     } else if (activeTab === 'nonVerified') {
       dispatch(fetchReferralUsers());
     } else if (activeTab === 'existing') {
