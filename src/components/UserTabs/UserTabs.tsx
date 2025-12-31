@@ -109,8 +109,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, [dispatch]);
 
   // Fetch Admin Details to get latest name
@@ -151,8 +149,10 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     localStorage.setItem('activeTab', activeTab);
 
     // Only fetch data for the user-related tabs.
-    if (activeTab === 'orders' || activeTab === 'tracking') {
+    if (activeTab === 'orders') {
       dispatch(fetchPendingUnits({ adminMobile }));
+    } else if (activeTab === 'tracking') {
+      dispatch(fetchPendingUnits({ adminMobile, paymentStatus: 'PAID', pageSize: 100 }));
     } else if (activeTab === 'nonVerified') {
       dispatch(fetchReferralUsers());
     } else if (activeTab === 'existing') {

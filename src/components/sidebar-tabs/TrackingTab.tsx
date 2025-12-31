@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { usePersistentPagination, usePersistentState } from '../../hooks/usePersistence';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
@@ -44,22 +44,32 @@ const TrackingTab: React.FC = () => {
         localStorage.setItem('orders_trackingData', JSON.stringify(trackingData));
     }, [trackingData]);
 
-    // Filter for PAID or Approved orders
-    const approvedOrders = pendingUnits.filter((entry: any) => {
-        const status = entry.order?.paymentStatus;
-        const isPaidOrApproved = status === 'PAID' || status === 'Approved';
+    // Filter for PAID or Approved orders and REMOVE DUPLICATES
+    const approvedOrders = useMemo(() => {
+        const seenIds = new Set();
+        return pendingUnits.filter((entry: any) => {
+            const unit = entry.order || {};
+            const status = unit.paymentStatus;
+            const isPaidOrApproved = status === 'PAID' || status === 'Approved';
 
-        if (!isPaidOrApproved) return false;
+            if (!isPaidOrApproved) return false;
 
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            const orderId = entry.order?.id ? String(entry.order.id).toLowerCase() : '';
-            const investorName = entry.investor?.name ? String(entry.investor.name).toLowerCase() : '';
-            return orderId.includes(query) || investorName.includes(query);
-        }
+            // DEDUPLICATION: Ensure one row per Order ID
+            if (unit.id) {
+                if (seenIds.has(unit.id)) return false;
+                seenIds.add(unit.id);
+            }
 
-        return true;
-    });
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                const orderId = unit.id ? String(unit.id).toLowerCase() : '';
+                const investorName = entry.investor?.name ? String(entry.investor.name).toLowerCase() : '';
+                return orderId.includes(query) || investorName.includes(query);
+            }
+
+            return true;
+        });
+    }, [pendingUnits, searchQuery]);
 
     // Reset page on search change
     const prevSearchRef = useRef(searchQuery);
@@ -226,10 +236,11 @@ const TrackingTab: React.FC = () => {
                                 currentItems.map((entry: any, index: number) => {
                                     const { order, investor, transaction: tx } = entry;
                                     const unit = order || {};
+                                    const absoluteIndex = (currentPage - 1) * itemsPerPage + index;
                                     const isExpanded = expandedOrderId === unit.id;
 
                                     return (
-                                        <React.Fragment key={`${order.id}-${index}`}>
+                                        <React.Fragment key={`${order.id}-${absoluteIndex}`}>
                                             <tr className="tracking-table-row">
                                                 <td className="tracking-table-td">
                                                     {(currentPage - 1) * itemsPerPage + index + 1}

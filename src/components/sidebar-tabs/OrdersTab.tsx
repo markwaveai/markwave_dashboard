@@ -288,7 +288,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                         ) : (
                             pendingUnits.map((entry: any, index: number) => {
                                 const unit = entry.order || {};
-                                const tx = entry.transaction || entry.transation || {};
+                                const tx = entry.transaction || {};
                                 const inv = entry.investor || {};
                                 const serialNumber = (page - 1) * pageSize + index + 1;
 
