@@ -6,6 +6,16 @@ import HealthStatus from './components/HealthStatus';
 import UserTabs from './components/UserTabs/UserTabs';
 import Login from './components/auth/Login';
 
+// Skeletons
+import BuffaloVizSkeleton from './components/common/skeletons/BuffaloVizSkeleton';
+import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSkeleton';
+
+// Lazy Load Public Components
+const BuffaloVisualizationTab = React.lazy(() => import('./components/sidebar-tabs/BuffaloVisualizationTab'));
+const EmiCalculatorTab = React.lazy(() => import('./components/sidebar-tabs/EmiCalculatorTab'));
+const AcfCalculatorTab = React.lazy(() => import('./components/sidebar-tabs/AcfCalculatorTab'));
+
+
 interface Session {
   mobile: string;
   role: string | null;
@@ -87,12 +97,36 @@ function App() {
 
   const isAdmin = session?.role === 'Admin';
 
+  const PublicBuffaloViz = (
+    <React.Suspense fallback={<BuffaloVizSkeleton />}>
+      <BuffaloVisualizationTab />
+    </React.Suspense>
+  );
+
+  const PublicEmi = (
+    <React.Suspense fallback={<EmiCalculatorSkeleton />}>
+      <EmiCalculatorTab />
+    </React.Suspense>
+  );
+
+  const PublicAcf = (
+    <React.Suspense fallback={<EmiCalculatorSkeleton />}>
+      <AcfCalculatorTab />
+    </React.Suspense>
+  );
+
   return (
     <div className="App">
       <Routes>
         <Route path="/login" element={
           session ? <Navigate to="/dashboard/orders" replace /> : <Login onLogin={handleLogin} />
         } />
+
+        {/* Public Routes - No Login Required */}
+        <Route path="/buffalo-viz" element={PublicBuffaloViz} />
+        <Route path="/emi-calculator" element={PublicEmi} />
+        <Route path="/acf-calculator" element={PublicAcf} />
+
 
         <Route path="/dashboard/*" element={
           !session ? (
