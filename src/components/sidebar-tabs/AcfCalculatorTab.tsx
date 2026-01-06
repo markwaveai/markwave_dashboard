@@ -1,12 +1,12 @@
 import React from 'react';
-import App from '../emi-calculator/App';
+import { AcfCalculatorApp } from '../emi-calculator/App';
 
-const EmiCalculatorTab: React.FC = () => {
+const AcfCalculatorTab: React.FC = () => {
     return (
         <div style={{ width: '100%', height: 'calc(100vh - 60px)', overflow: 'auto', position: 'relative' }}>
-            <App />
+            <AcfCalculatorApp />
         </div>
     );
 };
 
-export default EmiCalculatorTab;
+export default AcfCalculatorTab;

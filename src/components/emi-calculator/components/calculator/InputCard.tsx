@@ -1,0 +1,203 @@
+import React from 'react';
+import { useEmi } from '../../context/EmiContext';
+import { Pencil, Landmark, Info, Smartphone } from 'lucide-react';
+
+const InputCard = () => {
+    const {
+        amount, setAmount,
+        rate, setRate,
+        months, setMonths,
+        units, setUnits,
+        formatCurrency,
+        cpfEnabled, setCpfEnabled,
+        cgfEnabled, setCgfEnabled
+    } = useEmi();
+
+    const perUnitBase = 350000.0;
+    const perUnitCpf = 15000.0;
+    const requiredBase = perUnitBase * units;
+    const requiredCpf = cpfEnabled ? perUnitCpf * units : 0;
+    const totalRequired = requiredBase + requiredCpf;
+    const surplus = amount - totalRequired;
+
+    const UNIT_COST = 400000;
+
+    return (
+        <div className="bg-white rounded-3xl p-4 space-y-3 border border-gray-100 shadow-lg h-full">
+            <div className="flex items-center space-x-3 mb-2">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                    <Pencil className="w-5 h-5 text-blue-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Loan Details</h2>
+            </div>
+
+            {/* Loan Amount */}
+            <div className="space-y-1">
+                <div className="relative">
+                    <div className="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Loan Amount
+                    </div>
+                    <div className="flex items-center bg-white border border-gray-300 rounded-xl p-2 shadow-sm">
+                        <Landmark className="w-5 h-5 text-gray-400 mr-3" />
+                        <span className="text-gray-600 font-bold mr-1">₹</span>
+                        <input
+                            type="text"
+                            value={formatCurrency(amount)}
+                            onChange={(e) => {
+                                const valStr = e.target.value.replace(/,/g, '');
+                                if (!isNaN(Number(valStr))) {
+                                    const val = Number(valStr);
+                                    setAmount(val);
+                                    // Sync Units: Floor(Amount / 4L)
+                                    // 10L -> 2.5 -> 2
+                                    // 5L -> 1.25 -> 1
+                                    const calcUnits = Math.floor(val / UNIT_COST);
+                                    setUnits(calcUnits >= 1 ? calcUnits : 1);
+                                }
+                            }}
+                            className="bg-transparent border-none focus:outline-none w-full text-gray-800 font-bold text-base"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* CPF and CGF Group */}
+            <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white rounded-2xl p-2.5 border border-gray-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-1">
+                        <div className="space-y-0.5">
+                            <p className="text-sm font-bold text-gray-700">CPF</p>
+                            <p className="text-[10px] text-gray-400 font-bold">Cattle Protection Fund</p>
+                            <p className="text-[10px] text-gray-400">₹15k per unit</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={cpfEnabled}
+                                onChange={(e) => setCpfEnabled(e.target.checked)}
+                                className="sr-only peer"
+                            />
+                            <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5c59cc]"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-2.5 border border-gray-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-1">
+                        <div className="space-y-0.5">
+                            <p className="text-sm font-bold text-gray-700">CGF</p>
+                            <p className="text-[10px] text-gray-400 font-bold">Cattle Growth Fund</p>
+                            <p className="text-[10px] text-gray-400">Growth Fund</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={cgfEnabled}
+                                onChange={(e) => setCgfEnabled(e.target.checked)}
+                                className="sr-only peer"
+                            />
+                            <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f59e0b]"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {/* Calculation Info Box */}
+            <div className="bg-[#ebf0f5] rounded-2xl p-2.5 flex items-start space-x-2">
+                <div className="mt-1">
+                    <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Info className="w-3.5 h-3.5 text-blue-600" />
+                    </div>
+                </div>
+                <div className="space-y-0.5 w-full">
+                    <p className="text-[12px] font-bold text-gray-700">
+                        ₹{formatCurrency(totalRequired)} = ₹{formatCurrency(requiredBase)} + ₹{formatCurrency(requiredCpf)} <span className="text-gray-400 font-normal">(CPF)</span>
+                    </p>
+                    <p className="text-[11px] font-medium italic text-green-600">
+                        Additional surplus remaining: ₹{formatCurrency(surplus)}
+                    </p>
+                </div>
+            </div>
+
+            {/* Units */}
+            <div className="space-y-1">
+                <label className="text-[11px] font-bold text-gray-500 ml-1 uppercase tracking-tight">Units</label>
+                <div className="bg-white border border-gray-100 rounded-2xl p-2 shadow-sm">
+                    <input
+                        type="number"
+                        min={1}
+                        value={units || ''}
+                        onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '') setUnits(0);
+                            else {
+                                const num = Number(val);
+                                if (!isNaN(num) && num >= 0) {
+                                    setUnits(num);
+                                    // Sync Amount: Units * 4L
+                                    if (num >= 1) {
+                                        setAmount(num * UNIT_COST);
+                                    }
+                                }
+                            }
+                        }}
+                        className="bg-transparent border-none focus:outline-none w-full text-gray-800 font-bold text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                </div>
+                <p className="text-[10px] text-gray-400 font-medium px-1 leading-relaxed">
+                    {units || 0} units = ₹{formatCurrency(totalRequired)} (₹{formatCurrency(perUnitBase)} + ₹{formatCurrency(perUnitCpf)} CPF per unit)
+                </p>
+            </div>
+
+            {/* Interest Rate and Tenure Group */}
+            <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-gray-500 ml-1 uppercase tracking-tight">Interest Rate</label>
+                    <div className="flex items-center bg-white rounded-2xl p-2 border border-gray-100 shadow-sm focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                        <input
+                            type="number"
+                            min={1}
+                            value={rate || ''}
+                            onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '') setRate(0);
+                                else {
+                                    const num = Number(val);
+                                    if (!isNaN(num) && num >= 0) setRate(num);
+                                }
+                            }}
+                            className="w-full text-sm font-bold text-gray-900 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="text-gray-400 font-bold ml-1">%</span>
+                    </div>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-gray-500 ml-1 uppercase tracking-tight">Loan Tenure (Months)</label>
+                    <div className="flex items-center bg-white rounded-2xl p-2 border border-gray-100 shadow-sm focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                        <input
+                            type="number"
+                            min={1}
+                            value={months || ''}
+                            onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '') setMonths(0);
+                                else {
+                                    const num = Number(val);
+                                    if (!isNaN(num) && num >= 0) setMonths(num);
+                                }
+                            }}
+                            className="w-full text-sm font-bold text-gray-900 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="text-xs text-gray-400 font-bold ml-1">M</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default InputCard;

@@ -54,6 +54,7 @@ const ProductsTab = React.lazy(() => import('../sidebar-tabs/ProductsTab'));
 
 const BuffaloVisualizationTab = React.lazy(() => import('../sidebar-tabs/BuffaloVisualizationTab'));
 const EmiCalculatorTab = React.lazy(() => import('../sidebar-tabs/EmiCalculatorTab'));
+const AcfCalculatorTab = React.lazy(() => import('../sidebar-tabs/AcfCalculatorTab'));
 
 
 interface UserTabsProps {
@@ -90,6 +91,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/products')) activeTab = 'products';
   else if (currentPath.includes('/buffalo-viz')) activeTab = 'buffaloViz';
   else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
+  else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
   else if (currentPath.includes('/orders')) activeTab = 'orders';
 
   const [formData, setFormData] = useState({
@@ -575,6 +577,22 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 </div>
               </button>
             </li>
+
+            {/* ACF Calculator */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'acf' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/dashboard/acf-calculator');
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Calculator size={18} />
+                  <span className="nav-text">ACF Calculator</span>
+                </div>
+              </button>
+            </li>
           </ul>
 
           <div className="sidebar-footer">
@@ -628,6 +646,11 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
             <Route path="emi-calculator" element={
               <React.Suspense fallback={<EmiCalculatorSkeleton />}>
                 <EmiCalculatorTab />
+              </React.Suspense>
+            } />
+            <Route path="acf-calculator" element={
+              <React.Suspense fallback={<EmiCalculatorSkeleton />}>
+                <AcfCalculatorTab />
               </React.Suspense>
             } />
 

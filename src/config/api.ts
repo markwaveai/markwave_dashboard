@@ -1,7 +1,7 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
-    const corsUrl = 'https://cors-couipk45fa-el.a.run.app';
-    const productionUrl = 'https://markwave-live-apis-couipk45fa-el.a.run.app';
+    const corsUrl = process.env.REACT_APP_CORS_URL || 'https://cors-couipk45fa-el.a.run.app';
+    const productionUrl = process.env.REACT_APP_PRODUCTION_URL || 'https://markwave-live-apis-couipk45fa-el.a.run.app';
     const baseUrl = `${corsUrl}/${productionUrl}`;
     return baseUrl;
   }

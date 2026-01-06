@@ -1,0 +1,89 @@
+import React from 'react';
+import { useEmi } from '../../context/EmiContext';
+import { LayoutGrid, TrendingUp, CreditCard, Calendar, ShieldCheck } from 'lucide-react';
+
+const ResultCard = () => {
+    const {
+        emi,
+        totalPayment,
+        totalInterest,
+        months,
+        units,
+        cpfEnabled,
+        formatCurrency,
+        totalNetCash, // Using this to check if calculation occurred
+    } = useEmi();
+
+    const cpfPerUnitYearly = 15000.0;
+    const year2MonthlyCpf = cpfEnabled ? (cpfPerUnitYearly / 12) * units : 0;
+    const displayMonthlyPayment = emi; // Flutter screenshot shows EMI as main Monthly Payment
+
+    return (
+        <div className="bg-white rounded-3xl p-6 h-full border border-gray-100 shadow-lg">
+            <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-[#f0f9f1] rounded-lg">
+                    <LayoutGrid className="w-5 h-5 text-[#4caf50]" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">EMI Results</h2>
+            </div>
+
+            <div className="bg-[#ebf0f5] rounded-3xl p-6 mb-8 text-center sm:text-left">
+                <p className="text-sm font-bold text-gray-400 mb-2">Monthly Payment</p>
+                <div className="text-[32px] font-black text-[#3f51b5] leading-tight mb-2">
+                    ₹{formatCurrency(displayMonthlyPayment)}
+                </div>
+                <p className="text-sm font-bold text-gray-400">
+                    Monthly EMI: {formatCurrency(emi)}
+                </p>
+            </div>
+
+            <div className="space-y-5 px-1">
+                <ResultRow
+                    label="Total Interest"
+                    value={formatCurrency(totalInterest)}
+                    icon={TrendingUp}
+                />
+
+                <ResultRow
+                    label="Total Payment"
+                    value={formatCurrency(totalPayment)}
+                    icon={CreditCard}
+                />
+
+                <ResultRow
+                    label="Loan Tenure"
+                    value={`${months} Months`}
+                    icon={Calendar}
+                />
+
+                <ResultRow
+                    label="Year 2+ Monthly CPF"
+                    value={formatCurrency(year2MonthlyCpf)}
+                    icon={ShieldCheck}
+                />
+            </div>
+        </div>
+    );
+};
+
+interface ResultRowProps {
+    label: string;
+    value: string;
+    icon: any;
+}
+
+const ResultRow: React.FC<ResultRowProps> = ({ label, value, icon: Icon }) => {
+    return (
+        <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-[#ebf0f5] flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-[#3f51b5]" />
+                </div>
+                <span className="text-[13px] font-bold text-gray-500">{label}:</span>
+            </div>
+            <span className="text-[14px] font-black text-gray-800">{value}</span>
+        </div>
+    );
+};
+
+export default ResultCard;
