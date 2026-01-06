@@ -15,6 +15,48 @@ export const fetchProducts = createAsyncThunk(
     }
 );
 
+export const deleteProduct = createAsyncThunk(
+    'products/deleteProduct',
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await axios.delete(API_ENDPOINTS.deleteProduct(id)); // Assuming API supports DELETE
+            return id;
+        } catch (error: any) {
+            return rejectWithValue('Failed to delete product');
+        }
+    }
+);
+
+export const updateProduct = createAsyncThunk(
+    'products/updateProduct',
+    async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(API_ENDPOINTS.updateProduct(id), data); // Assuming API supports PUT
+            return response.data?.product || { id, ...data }; // Use returned data or fallback
+        } catch (error: any) {
+            return rejectWithValue('Failed to update product');
+        }
+    }
+);
+
+export const uploadProductImage = createAsyncThunk(
+    'products/uploadProductImage',
+    async ({ id, file }: { id: string; file: File }, { rejectWithValue }) => {
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await axios.post(API_ENDPOINTS.uploadProductImage(id), formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return { id, images: response.data?.images || [] };
+        } catch (error: any) {
+            return rejectWithValue('Failed to upload product image');
+        }
+    }
+);
+
 export interface ProductsState {
     products: any[];
     loading: boolean;
@@ -47,6 +89,30 @@ const productsSlice = createSlice({
         builder.addCase(fetchProducts.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload as string;
+        });
+
+        // Delete Product
+        builder.addCase(deleteProduct.fulfilled, (state, action) => {
+            state.products = state.products.filter(product => product.id !== action.payload);
+        });
+
+        // Update Product
+        builder.addCase(updateProduct.fulfilled, (state, action) => {
+            const index = state.products.findIndex(product => product.id === action.payload.id);
+            if (index !== -1) {
+                state.products[index] = action.payload;
+            }
+        });
+
+        // Upload Product Image
+        builder.addCase(uploadProductImage.fulfilled, (state, action) => {
+            const index = state.products.findIndex(product => product.id === action.payload.id);
+            if (index !== -1) {
+                // Update images based on returned data, assuming payload contains updated image list
+                if (action.payload.images) {
+                    state.products[index].buffalo_images = action.payload.images;
+                }
+            }
         });
     }
 });

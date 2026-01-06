@@ -18,7 +18,7 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({ images, bre
     };
 
     return (
-        <div style={{ position: 'relative', height: '200px', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '3/2', overflow: 'hidden' }}>
             <img
                 src={images[currentImageIndex]}
                 alt={`${breed} - Image ${currentImageIndex + 1}`}
