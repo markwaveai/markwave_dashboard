@@ -19,6 +19,7 @@ import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
 
 // Privacy
 import PrivacyPolicy from './components/PrivacyPolicy';
+import Support from './components/Support';
 
 // Skeletons
 import OrdersPageSkeleton from './components/common/skeletons/OrdersPageSkeleton';
@@ -246,6 +247,13 @@ function App() {
         <Route path="/privacy-policy" element={
           <ConditionalLayoutWrapper>
             <PrivacyPolicy />
+          </ConditionalLayoutWrapper>
+        } />
+
+        {/* Support Page - Context Aware */}
+        <Route path="/support" element={
+          <ConditionalLayoutWrapper>
+            <Support />
           </ConditionalLayoutWrapper>
         } />
 

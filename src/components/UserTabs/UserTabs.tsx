@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './UserTabs.css';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin, Calculator, MonitorPlay, ChevronLeft, ChevronRight, ChevronDown, Shield as ShieldIcon } from 'lucide-react';
+import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin, Calculator, MonitorPlay, ChevronLeft, ChevronRight, ChevronDown, Shield as ShieldIcon, LifeBuoy } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
@@ -94,6 +94,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
   else if (currentPath.includes('/orders')) activeTab = 'orders';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
+  else if (currentPath.includes('/support')) activeTab = 'support';
 
   const [formData, setFormData] = useState({
     mobile: '',
@@ -597,6 +598,22 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                   <ShieldIcon size={18} />
                   <span className="nav-text">Privacy & Policy</span>
+                </div>
+              </button>
+            </li>
+
+            {/* Support */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'support' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/support', { state: { fromDashboard: true } });
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <LifeBuoy size={18} />
+                  <span className="nav-text">Support</span>
                 </div>
               </button>
             </li>
