@@ -12,13 +12,9 @@ import {
     fetchPendingUnits,
     setExpandedOrderId,
     setActiveUnitIndex,
-    setShowFullDetails,
-    updateTrackingData,
-    setInitialTracking,
-    fetchStatusCounts
+    setInitialTracking
 } from '../../store/slices/ordersSlice';
 import { setProofModal } from '../../store/slices/uiSlice';
-import Loader from '../common/Loader';
 import Pagination from '../common/Pagination';
 import './OrdersTab.css';
 import TableSkeleton from '../common/TableSkeleton';
@@ -76,10 +72,11 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
         statusCounts,
         filters,
         trackingData,
-        expansion
+        expansion,
+        actionLoading
     } = useAppSelector((state: RootState) => state.orders);
 
-    const { expandedOrderId, activeUnitIndex, showFullDetails } = expansion;
+    const { expandedOrderId, activeUnitIndex } = expansion;
 
     const {
         searchQuery,
@@ -604,17 +601,19 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
                                                             onClick={() => handleApproveClick(unit.id)}
-                                                            className="action-btn approve"
+                                                            className={`action-btn approve ${actionLoading ? 'loading' : ''}`}
+                                                            disabled={actionLoading}
                                                         >
-                                                            Approve
+                                                            {actionLoading ? 'Processing...' : 'Approve'}
                                                         </button>
                                                     )}
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
                                                             onClick={() => handleReject(unit.id)}
-                                                            className="action-btn reject"
+                                                            className={`action-btn reject ${actionLoading ? 'loading' : ''}`}
+                                                            disabled={actionLoading}
                                                         >
-                                                            Reject
+                                                            {actionLoading ? 'Processing...' : 'Reject'}
                                                         </button>
                                                     )}
                                                 </div>

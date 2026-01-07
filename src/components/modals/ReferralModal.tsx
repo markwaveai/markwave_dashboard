@@ -41,8 +41,8 @@ const ReferralModal: React.FC<ReferralModalProps> = ({
                 {/* Header */}
                 <div className="referral-header">
                     <div>
-                        <h3>Add New Referral</h3>
-                        <p>Create a user to track their orders</p>
+                        <h3>Add New {formData.role === 'Investor' ? 'Investor' : 'Employee'}</h3>
+                        <p>Create a {formData.role === 'Investor' ? 'investor' : 'employee'} account to track their activity</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -66,10 +66,15 @@ const ReferralModal: React.FC<ReferralModalProps> = ({
                                 required
                                 className="form-input"
                             >
-                                <option value="Investor">Investor</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Supervisor">Supervisor</option>
-                                <option value="Employee">Employee</option>
+                                {formData.role === 'Investor' ? (
+                                    <option value="Investor">Investor</option>
+                                ) : (
+                                    <>
+                                        <option value="Employee">Employee</option>
+                                        <option value="Admin">Admin</option>
+                                        <option value="Superadmin">Superadmin</option>
+                                    </>
+                                )}
                             </select>
                         </div>
 

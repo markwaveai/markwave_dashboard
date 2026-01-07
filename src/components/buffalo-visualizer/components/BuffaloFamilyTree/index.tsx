@@ -42,6 +42,37 @@ export default function BuffaloFamilyTree() {
         }
     }, [startYear, startMonth]);
 
+    // Load from local storage on mount
+    useEffect(() => {
+        try {
+            const savedData = localStorage.getItem('buffalo_tree_data');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                // Also restore config
+                if (parsed.startYear) setStartYear(parsed.startYear);
+                if (parsed.startMonth !== undefined) setStartMonth(parsed.startMonth);
+                if (parsed.startDay) setStartDay(parsed.startDay);
+                if (parsed.units) setUnits(parsed.units);
+                if (parsed.years) setYears(parsed.years);
+
+                // Need to restore treeData but ensure it's valid
+                setTreeData(parsed);
+            }
+        } catch (e) {
+            console.error("Failed to load tree data", e);
+        }
+    }, []);
+
+    // Save to local storage whenever treeData changes
+    useEffect(() => {
+        if (treeData) {
+            localStorage.setItem('buffalo_tree_data', JSON.stringify({
+                ...treeData,
+                // Ensure config is saved too if it's not part of treeData (it is, but double check)
+            }));
+        }
+    }, [treeData]);
+
     // Staggered revenue configuration
     const revenueConfig = {
         landingPeriod: 2,
@@ -721,6 +752,7 @@ export default function BuffaloFamilyTree() {
 
     // Reset function
     const resetSimulation = () => {
+        localStorage.removeItem('buffalo_tree_data');
         setTreeData(null);
         setUnits(1);
         setYears(10);

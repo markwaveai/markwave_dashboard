@@ -15,8 +15,12 @@ export const API_ENDPOINTS = {
   verifyUser: () => `${API_CONFIG.getBaseUrl()}/users/verify`,
   updateUser: (mobile: string) => `${API_CONFIG.getBaseUrl()}/users/${mobile}`,
   getProducts: () => `${API_CONFIG.getBaseUrl()}/products`,
+  addProduct: () => `${API_CONFIG.getBaseUrl()}/products`,
+  updateProduct: (id: string) => `${API_CONFIG.getBaseUrl()}/products/${id}`,
+  deleteProduct: (id: string) => `${API_CONFIG.getBaseUrl()}/products/${id}`,
   health: () => `${API_CONFIG.getBaseUrl()}/health`,
   getPendingUnits: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/pending`,
   approveUnit: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/approve`,
   rejectUnit: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/reject`,
+  uploadProductImage: (id: string) => `${API_CONFIG.getBaseUrl()}/products/${id}/images`,
 };

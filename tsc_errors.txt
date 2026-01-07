@@ -1,0 +1,2 @@
+src/components/buffalo-visualizer/components/BuffaloFamilyTree/CommonComponents.tsx(3,20): error TS2307: Cannot find module 'react-xarrows' or its corresponding type declarations.
+src/components/buffalo-visualizer/components/BuffaloFamilyTree/TreeVisualization.tsx(3,45): error TS2307: Cannot find module 'react-xarrows' or its corresponding type declarations.
