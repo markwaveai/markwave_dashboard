@@ -92,7 +92,7 @@ export const BuffaloNode = ({ data, founder, displayName, elementId, parentDispl
                     <div className="space-y-2">
                         <div className="flex justify-between">
                             <span className="text-slate-400">Age:</span>
-                            <span className="font-semibold text-slate-200">{data.ageDisplay}</span>
+                            <span className="font-semibold text-slate-200">{Math.floor(data.ageInMonths / 12)}y {data.ageInMonths % 12}m</span>
                         </div>
                         <div className="flex justify-between border-t border-slate-700 pt-2 mt-2">
                             <span className="text-slate-400">Lifetime Revenue:</span>

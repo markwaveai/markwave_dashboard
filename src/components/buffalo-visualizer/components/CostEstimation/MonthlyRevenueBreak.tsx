@@ -44,7 +44,7 @@ const MonthlyRevenueBreak = ({
             // Or if it's M1/M2 which are main units
             if (buffalo.generation === 0) return true;
 
-            if (currentSimYearStart < buffalo.birthYear + 2) {
+            if (currentSimYearStart < buffalo.birthYear) {
                 return false;
             }
 
@@ -53,7 +53,24 @@ const MonthlyRevenueBreak = ({
                 return (monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0) > 0;
             });
 
+
             // Show if it has revenue OR is of CPF paying age (>= 24 months)
+            if (buffalo.generation > 0) {
+                // Check if buffalo reaches 24 months in this year
+                const reachesCPFAge = Array.from({ length: 12 }).some((_, m) => {
+                    const { year, month } = getCalendarDate(selectedYearIndex, m);
+                    const age = calculateAgeInMonths(buffalo, year, month);
+                    return age >= 24;
+                });
+
+                const hasRevenue = Array.from({ length: 12 }).some((_, m) => {
+                    const { year, month } = getCalendarDate(selectedYearIndex, m);
+                    return (monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0) > 0;
+                });
+
+                return reachesCPFAge || hasRevenue;
+            }
+
             return true;
         });
 
@@ -501,7 +518,7 @@ const MonthlyRevenueBreak = ({
 
                                                         // Subtle styling
                                                         let cellClass = "text-slate-400";
-                                                        let displayText = "-";
+                                                        let displayText: React.ReactNode = "-";
 
                                                         // Calculate start absolute month for the buffalo
                                                         let buffaloStartAbsoluteMonth;
@@ -518,11 +535,78 @@ const MonthlyRevenueBreak = ({
                                                         const currentAbsoluteMonth = year * 12 + month;
                                                         const monthDiff = currentAbsoluteMonth - buffaloStartAbsoluteMonth;
 
+                                                        // Calculate simulation month index (1-based) for display
+                                                        const currentSimMonthIndex = (year - treeData.startYear) * 12 + month + 1;
+
                                                         if (revenue > 0) {
                                                             cellClass = "text-slate-700 font-semibold";
-                                                            displayText = formatCurrency(revenue);
+                                                            displayText = (
+                                                                <div className="flex flex-col items-center leading-none">
+                                                                    <span>{formatCurrency(revenue)}</span>
+
+                                                                </div>
+                                                            );
                                                             if (revenue >= 9000) cellClass = "text-emerald-600 font-bold bg-emerald-50/30";
                                                             else if (revenue >= 6000) cellClass = "text-blue-600 font-semibold bg-blue-50/30";
+                                                        } else if (buffalo.generation > 0) {
+                                                            // Children Logic
+                                                            // monthDiff is 0-indexed offset from birthMonth. 
+
+                                                            if (monthDiff < 0) {
+                                                                displayText = "-";
+                                                            } else if (monthDiff === 24) {
+                                                                cellClass = "text-rose-400 text-xs font-medium bg-rose-50";
+                                                                displayText = (
+                                                                    <div className="flex flex-col items-center leading-none">
+                                                                        <span>CPF</span>
+                                                                        <span className="text-[9px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
+                                                                    </div>
+                                                                );
+                                                            } else if (monthDiff >= 32) {
+                                                                // Generalized logic for Born/Transport events
+                                                                // Cycle starts at 34 months (first birth). Subsequent births every 12 months.
+                                                                // "Born" label at BirthMonth - 2. "Transport" label at BirthMonth - 1.
+
+                                                                // Check for "Born" event (monthDiff is BirthMonth - 2)
+                                                                // TargetAge = monthDiff. BirthMonth = TargetAge + 2.
+                                                                // Condition: (TargetAge + 2 - 34) % 12 === 0
+
+                                                                const monthsSinceFirstBirthForBorn = monthDiff + 2 - 34;
+                                                                const monthsSinceFirstBirthForTransport = monthDiff + 1 - 34;
+
+                                                                if (monthsSinceFirstBirthForBorn >= 0 && monthsSinceFirstBirthForBorn % 12 === 0) {
+                                                                    const childIndex = 1 + (monthsSinceFirstBirthForBorn / 12);
+                                                                    cellClass = "text-slate-500 text-xs font-medium bg-slate-100";
+                                                                    displayText = (
+                                                                        <div className="flex flex-col items-center leading-none">
+                                                                            <span>{buffalo.id}{childIndex} Child (born)</span>
+                                                                            <span className="text-[9px] text-slate-400 font-normal">({currentSimMonthIndex}th month)</span>
+                                                                        </div>
+                                                                    );
+                                                                } else if (monthDiff < 34) {
+                                                                    // Catch any gaps between 32 and 34 not covered above (shouldn't be any if logic holds, but strictly < 34 is Growing)
+                                                                    // Actually 32 is Born, 33 is Transport. So this just covers logic.
+                                                                    // But "Growing" is only for < 34.
+                                                                    // Re-eval logic:
+                                                                    // If monthDiff is e.g. 40. 40 < 34 is false.
+                                                                    // We need to fallback to "Rest" or whatever the status is.
+                                                                    // But wait. "Rest" implies revenue is 0.
+                                                                    // If revenue > 0, it enters the FIRST if block (Lines 524).
+                                                                    // So this ELSE block is ONLY for months where Revenue == 0.
+                                                                    // Which are the "Resting" months.
+                                                                    // So "Rest" is the correct default here.
+                                                                    cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                                    displayText = "Rest";
+                                                                } else {
+                                                                    cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                                    displayText = "Rest";
+                                                                }
+                                                            } else if (monthDiff < 34) { // 0-31
+                                                                displayText = "-";
+                                                            } else {
+                                                                cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                                displayText = "Rest";
+                                                            }
                                                         } else if (monthDiff < 0 && buffalo.id === 'B') {
                                                             cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
                                                             displayText = "Importing";
@@ -532,6 +616,8 @@ const MonthlyRevenueBreak = ({
                                                         } else if (monthDiff === 1) {
                                                             cellClass = "text-slate-500 text-xs font-medium bg-slate-50";
                                                             displayText = "Milk Yield Initiation Period";
+                                                            // Actually user said "resting and landing periods of children".
+                                                            // For Gen 0, Month 2 is implicitly "Landing Phase" before full revenue.
                                                         } else if (isCpfApplicable) {
                                                             cellClass = "text-rose-400 text-xs";
                                                             displayText = "CPF";

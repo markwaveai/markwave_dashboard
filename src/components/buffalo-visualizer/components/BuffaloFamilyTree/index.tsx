@@ -5,6 +5,7 @@ import TreeVisualization from './TreeVisualization';
 import { formatCurrency, formatNumber, calculateAgeInMonths, getBuffaloValueByAge } from './CommonComponents';
 import CostEstimationTable from "../CostEstimation/CostEstimationTable";
 
+
 export default function BuffaloFamilyTree() {
     // Initialize with current date
     // Initialize with default date: Jan 1, 2026
@@ -62,7 +63,7 @@ export default function BuffaloFamilyTree() {
 
         let offset = 2;
         if (generation > 0) {
-            offset = 34; // Standardized for all offspring
+            offset = 34; // Standardized for all offspring (Back to 34)
         }
 
         if (monthsSinceAcquisition < offset) {
@@ -263,6 +264,7 @@ export default function BuffaloFamilyTree() {
                     unit: u + 1,
                     rootId: id1, // Root ID for lineage tracking
                     startedAt: date1.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+                    birthMonth: startMonth,
                 });
 
                 // Second buffalo - acquired in July (6 months later)
@@ -283,6 +285,7 @@ export default function BuffaloFamilyTree() {
                     unit: u + 1,
                     rootId: id2, // Root ID for lineage tracking
                     startedAt: date2.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+                    birthMonth: (startMonth + 6) % 12,
                 });
             }
 
@@ -302,41 +305,94 @@ export default function BuffaloFamilyTree() {
             // Simulate years (Calendar Years)
             for (let year = 1; year <= yearsToSimulate; year++) {
                 const currentYear = startYear + (year - 1);
-                const matureBuffaloes = herd.filter((b) => b.age >= 3);
 
-                // Each mature buffalo gives birth to one offspring per year
-                matureBuffaloes.forEach((parent) => {
-                    // Check if expected birth is within simulation range
-                    const birthMonth = parent.acquisitionMonth; // Inherits cycle
-                    const absoluteBirthMonth = currentYear * 12 + birthMonth;
+                // Get snapshot of current herd including those who just matured
+                const currentHerd = [...herd];
 
-                    if (absoluteBirthMonth > absoluteEndMonth) {
-                        return; // Skip birth if after simulation end
+                currentHerd.forEach((parent) => {
+                    // Logic for Gen 0: Standard Annual Cycle based on acquisitionMonth
+                    if (parent.generation === 0) {
+                        if (parent.age >= 3) { // Gen 0 starts mature (5), so this is always true
+                            const birthMonth = parent.acquisitionMonth;
+                            const absoluteBirthMonth = currentYear * 12 + birthMonth;
+
+                            // Check bounds
+                            if (absoluteBirthMonth > absoluteEndMonth) return;
+                            if (absoluteBirthMonth < absoluteStartMonth) return;
+
+                            // Create Baby
+                            if (!offspringCounts[parent.id]) offspringCounts[parent.id] = 0;
+                            offspringCounts[parent.id]++;
+                            const newId = `${parent.id}${offspringCounts[parent.id]}`;
+
+                            herd.push({
+                                id: newId,
+                                age: 0,
+                                mature: false,
+                                parentId: parent.id,
+                                birthYear: currentYear,
+                                birthMonth: birthMonth, // Explicit birth month
+                                acquisitionMonth: birthMonth, // Inherits cycle (for display/grouping)
+                                absoluteAcquisitionMonth: absoluteBirthMonth,
+                                generation: parent.generation + 1,
+                                unit: parent.unit,
+                                rootId: parent.rootId,
+                            });
+                        }
                     }
+                    // Logic for Gen > 0: Precise 34-month first cycle, then 12 month interval
+                    else {
+                        // Calculate if a birth milestone falls in this years range [currentYear*12, currentYear*12 + 11]
+                        const yearStartAbs = currentYear * 12;
+                        const yearEndAbs = yearStartAbs + 11;
 
-                    if (absoluteBirthMonth < absoluteStartMonth) {
-                        return; // Skip birth if before simulation start
+                        const parentBirthAbs = parent.absoluteAcquisitionMonth || (parent.birthYear * 12 + (parent.birthMonth || 0));
+
+                        // Milestones: 34m, 46m, 58m ... (1st at 34, then +12)
+                        // Iterate through potential milestones count (k=0, 1, 2...) associated with this parent
+
+                        // We can't infinite loop, but we know the range is bounded by the year.
+                        // Milestone = Birth + 34 + (k * 12)
+
+                        // Let's just check if any k satisfies: yearStart <= Milestone <= yearEnd
+                        // k = (Milestone - Birth - 34) / 12
+                        // We can solve for k. 
+
+                        // Or simpler: iterate reasonable k
+                        for (let k = 0; k < 15; k++) { // 15 cycles max (enough for 10-15 years)
+                            const milestoneAbs = parentBirthAbs + 32 + (k * 12);
+
+                            if (milestoneAbs >= yearStartAbs && milestoneAbs <= yearEndAbs) {
+                                // Valid Birth Event!
+                                if (milestoneAbs > absoluteEndMonth) continue;
+                                if (milestoneAbs < absoluteStartMonth) continue;
+
+                                const birthMonth = milestoneAbs % 12;
+
+                                // Create Baby
+                                if (!offspringCounts[parent.id]) offspringCounts[parent.id] = 0;
+                                offspringCounts[parent.id]++;
+                                const newId = `${parent.id}${offspringCounts[parent.id]}`;
+
+                                // Check if already added (since we iterate k) - Offspring ID should be unique to parent+k index basically?
+                                // Effectively offspringCounts handles uniqueness order.
+
+                                herd.push({
+                                    id: newId,
+                                    age: 0,
+                                    mature: false,
+                                    parentId: parent.id,
+                                    birthYear: currentYear, // Born in this calendar year
+                                    birthMonth: birthMonth,
+                                    acquisitionMonth: birthMonth, // Cycle shifts!
+                                    absoluteAcquisitionMonth: milestoneAbs,
+                                    generation: parent.generation + 1,
+                                    unit: parent.unit,
+                                    rootId: parent.rootId,
+                                });
+                            }
+                        }
                     }
-
-                    if (!offspringCounts[parent.id]) {
-                        offspringCounts[parent.id] = 0;
-                    }
-                    offspringCounts[parent.id]++;
-
-                    const newId = `${parent.id}${offspringCounts[parent.id]}`;
-
-                    herd.push({
-                        id: newId,
-                        age: 0,
-                        mature: false,
-                        parentId: parent.id,
-                        birthYear: currentYear,
-                        acquisitionMonth: parent.acquisitionMonth, // Inherits cycle offset
-                        absoluteAcquisitionMonth: absoluteBirthMonth, // Offspring start producing from birth (maturation logic handles age)
-                        generation: parent.generation + 1,
-                        unit: parent.unit,
-                        rootId: parent.rootId, // Inherit root ID
-                    });
                 });
 
                 // Age all buffaloes
@@ -502,10 +558,18 @@ export default function BuffaloFamilyTree() {
             herd.forEach(buffalo => {
                 // 1. Age & Asset Value
                 const targetMonth = (endMonthOfSimulation === 11) ? 12 : endMonthOfSimulation;
-                const ageInMonths = calculateAgeInMonths(buffalo, endYear, targetMonth);
-                (buffalo as any).ageInMonths = ageInMonths;
-                (buffalo as any).ageDisplay = `${Math.floor(ageInMonths / 12)}y ${ageInMonths % 12}m`;
-                (buffalo as any).currentAssetValue = getBuffaloValueByAge(ageInMonths);
+                const realAgeInMonths = calculateAgeInMonths(buffalo, endYear, targetMonth);
+
+                // For offspring (Gen > 0), revenue logic has a 2-month landing/resting period.
+                // We adjust the displayed age to reflect "active" age (Age - 2), clamped to 0.
+                let displayAgeInMonths = realAgeInMonths;
+                if (buffalo.generation > 0) {
+                    displayAgeInMonths = Math.max(0, realAgeInMonths - 2);
+                }
+
+                (buffalo as any).ageInMonths = realAgeInMonths;
+                (buffalo as any).ageDisplay = `${Math.floor(displayAgeInMonths / 12)}y ${displayAgeInMonths % 12}m`;
+                (buffalo as any).currentAssetValue = getBuffaloValueByAge(realAgeInMonths);
 
                 // 2. Grandparent
                 if (buffalo.parentId) {
@@ -529,7 +593,7 @@ export default function BuffaloFamilyTree() {
 
                         // --- Revenue Logic ---
                         let isRevenueApplicable = true;
-                        // For offspring (Gen > 0), revenue only starts after 36 months
+                        // For offspring (Gen > 0), revenue only starts after 34 months
                         if (buffalo.generation > 0) {
                             const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
                             const ageAtMonth = ((y - buffalo.birthYear) * 12) + (m - birthMonth);
@@ -804,6 +868,7 @@ export default function BuffaloFamilyTree() {
                         toggleFullScreen={toggleFullScreen}
                         handleFitToScreen={handleFitToScreen}
                     />
+
                 ) : treeData ? (
                     <div className="h-full overflow-auto bg-gradient-to-br from-blue-50 to-indigo-50">
                         <CostEstimationTable
