@@ -259,6 +259,59 @@
 .action-btn-container {
     display: flex;
     gap: 8px;
+    align-items: center;
+}
+
+.action-btn {
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none !important;
+    color: white !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    text-transform: none !important;
+    /* Force Title Case */
+    display: inline-flex !important;
+    /* Use inline-flex for better alignment */
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: normal !important;
+    height: auto !important;
+    /* Prevent huge height */
+    width: auto !important;
+    /* Prevent huge width */
+    min-width: 80px !important;
+    /* Minimum width for consistency */
+    max-height: 40px !important;
+    /* Max height to be safe */
+    margin: 0 !important;
+}
+
+.action-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.action-btn.approve {
+    background-color: #16a34a !important;
+    /* Success Green */
+}
+
+.action-btn.approve:hover:not(:disabled) {
+    background-color: #15803d !important;
+}
+
+.action-btn.reject {
+    background-color: #dc2626 !important;
+    /* Danger Red */
+}
+
+.action-btn.reject:hover:not(:disabled) {
+    background-color: #b91c1c !important;
 }
 
 /* Expanded Row Styles */

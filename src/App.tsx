@@ -151,8 +151,18 @@ function App() {
           <ProtectedRoute>
             <React.Suspense fallback={<OrdersPageSkeleton />}>
               <OrdersTab
-                handleApproveClick={(o: any) => dispatch(approveOrder({ unitId: o.id, adminMobile: session!.mobile }))}
-                handleReject={(o: any) => dispatch(rejectOrder({ unitId: o.id, adminMobile: session!.mobile, reason: 'Rejected by admin' }))}
+                handleApproveClick={async (id: string) => {
+                  const result = await dispatch(approveOrder({ unitId: id, adminMobile: session!.mobile }));
+                  if (approveOrder.fulfilled.match(result)) {
+                    window.alert('Order Approved Successfully!');
+                  }
+                }}
+                handleReject={async (id: string) => {
+                  const result = await dispatch(rejectOrder({ unitId: id, adminMobile: session!.mobile, reason: 'Rejected by admin' }));
+                  if (rejectOrder.fulfilled.match(result)) {
+                    window.alert('Order Rejected Successfully!');
+                  }
+                }}
               />
             </React.Suspense>
           </ProtectedRoute>
