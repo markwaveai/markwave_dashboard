@@ -5,8 +5,10 @@ import { deleteProduct, updateProduct, uploadProductImage } from '../../store/sl
 import ProductImageCarousel from '../products/ProductImageCarousel';
 import Loader from '../common/Loader';
 import ProductCardSkeleton from '../common/ProductCardSkeleton';
-import EditProductModal from '../modals/EditProductModal';
-import { Edit, Trash2, MoreVertical } from 'lucide-react';
+import ProductFormModal from '../modals/ProductFormModal';
+import { deleteProduct } from '../../store/slices/productsSlice';
+import { useAppDispatch } from '../../store/hooks';
+import { useState } from 'react';
 import './ProductsTab.css';
 
 interface ProductsTabProps { }
@@ -14,9 +16,8 @@ interface ProductsTabProps { }
 const ProductsTab: React.FC<ProductsTabProps> = () => {
     const dispatch = useAppDispatch();
     const { products, loading: productsLoading } = useAppSelector((state: RootState) => state.products);
-
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<any>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
     const toggleMenu = (id: string, e: React.MouseEvent) => {
@@ -24,51 +25,42 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
         setActiveMenuId(activeMenuId === id ? null : id);
     };
 
-    // Close menu when clicking outside
+    // Close menu when clicking outside (handled via document click listener if needed, 
+    // but for now simple toggle is usually enough or we add a global listener)
     React.useEffect(() => {
         const handleClickOutside = () => setActiveMenuId(null);
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    const handleDelete = async (id: string) => {
+    const handleAddProduct = () => {
+        setEditingProduct(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditProduct = (product: any) => {
+        setEditingProduct(product);
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteProduct = async (id: string) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             try {
                 await dispatch(deleteProduct(id)).unwrap();
-                // alert('Product deleted successfully');
             } catch (error) {
                 console.error('Failed to delete product', error);
-                alert('Failed to delete product');
             }
         }
     };
-
-    const handleEditClick = (product: any) => {
-        setSelectedProduct(product);
-        setIsEditModalOpen(true);
-    };
-
-    const handleEditSubmit = async (formData: any, file: File | null) => {
-        if (selectedProduct) {
-            try {
-                await dispatch(updateProduct({ id: selectedProduct.id, data: formData })).unwrap();
-                if (file) {
-                    await dispatch(uploadProductImage({ id: selectedProduct.id, file })).unwrap();
-                }
-                setIsEditModalOpen(false);
-                setSelectedProduct(null);
-                // alert('Product updated successfully');
-            } catch (error) {
-                console.error('Failed to update product', error);
-                alert('Failed to update product');
-            }
-        }
-    };
-
 
     return (
         <div className="products-tab-container">
-            <h2>Products</h2>
+            <div className="products-tab-header">
+                <h2>Products</h2>
+                <button className="btn-add-product" onClick={handleAddProduct}>
+                    + Add Product
+                </button>
+            </div>
             <div className="products-grid">
                 {productsLoading ? (
                     Array.from({ length: 8 }).map((_, i) => (
@@ -111,7 +103,12 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                     <div className="product-meta-item">
                                         <strong>ID:</strong> {product.id}
                                     </div>
+                                    <div className="product-meta-item">
+                                        <strong>ID:</strong> {product.id}
+                                    </div>
                                 </div>
+
+
 
                                 <p className="product-description">
                                     {product.description}
@@ -122,9 +119,31 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                         <div className="product-price">
                                             ₹{product.price?.toLocaleString()}
                                         </div>
-                                        <div className="product-insurance">
-                                            Insurance: ₹{product.insurance?.toLocaleString()}
-                                        </div>
+                                    </div>
+                                    <div className="product-actions-menu-container">
+                                        <button
+                                            className="btn-menu-trigger"
+                                            onClick={(e) => toggleMenu(product.id, e)}
+                                        >
+                                            <span className="dots-icon">⋮</span>
+                                        </button>
+
+                                        {activeMenuId === product.id && (
+                                            <div className="menu-dropdown">
+                                                <button
+                                                    className="menu-item"
+                                                    onClick={() => handleEditProduct(product)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="menu-item delete"
+                                                    onClick={() => handleDeleteProduct(product.id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="product-actions">
                                         <button
@@ -167,11 +186,10 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                 )}
             </div>
 
-            <EditProductModal
-                isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
-                onSubmit={handleEditSubmit}
-                product={selectedProduct}
+            <ProductFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                product={editingProduct}
             />
         </div>
     );

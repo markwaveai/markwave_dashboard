@@ -200,49 +200,90 @@
     color: #6b7280;
 }
 
-.menu-btn:hover {
-    background-color: #f3f4f6;
-    color: #111827;
+/* Product Actions */
+.products-tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
 }
 
-.action-menu-dropdown {
+.btn-add-product {
+    background: #2563eb;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 1rem;
+}
+
+.btn-add-product:hover {
+    background: #1d4ed8;
+}
+
+
+/* 3-dots Menu Styles */
+.product-actions-menu-container {
+    position: relative;
+    margin-left: auto;
+}
+
+.btn-menu-trigger {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0 8px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+}
+
+.btn-menu-trigger:hover {
+    background-color: #f3f4f6;
+    color: #111;
+}
+
+.menu-dropdown {
     position: absolute;
     bottom: 100%;
     right: 0;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
     min-width: 140px;
-    padding: 4px;
     z-index: 10;
-    margin-bottom: 8px;
 }
 
 .menu-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 0.875rem;
-    color: #374151;
-    background: none;
+    background: transparent;
     border: none;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.2s;
+    padding: 10px 16px;
     text-align: left;
+    width: 100%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #374151;
+    transition: background 0.2s;
 }
 
 .menu-item:hover {
-    background-color: #f3f4f6;
+    background: #f9fafb;
 }
 
-.delete-item {
+.menu-item.delete {
     color: #dc2626;
 }
 
-.delete-item:hover {
-    background-color: #fee2e2;
+.menu-item.delete:hover {
+    background: #fef2f2;
 }

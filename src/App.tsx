@@ -6,15 +6,23 @@ import HealthStatus from './components/HealthStatus';
 import UserTabs from './components/UserTabs/UserTabs';
 import Login from './components/auth/Login';
 
+// Tabs
+import OrdersTab from './components/sidebar-tabs/OrdersTab';
+import UserManagementTab from './components/sidebar-tabs/UserManagementTab';
+import ProductsTab from './components/sidebar-tabs/ProductsTab';
+import BuffaloVisualizationTab from './components/sidebar-tabs/BuffaloVisualizationTab';
+import EmiCalculatorTab from './components/sidebar-tabs/EmiCalculatorTab';
+import AcfCalculatorTab from './components/sidebar-tabs/AcfCalculatorTab';
+
+// Redux
+import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
+
 // Skeletons
+import OrdersPageSkeleton from './components/common/skeletons/OrdersPageSkeleton';
+import UsersPageSkeleton from './components/common/skeletons/UsersPageSkeleton';
+import ProductsPageSkeleton from './components/common/skeletons/ProductsPageSkeleton';
 import BuffaloVizSkeleton from './components/common/skeletons/BuffaloVizSkeleton';
 import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSkeleton';
-
-// Lazy Load Public Components
-const BuffaloVisualizationTab = React.lazy(() => import('./components/sidebar-tabs/BuffaloVisualizationTab'));
-const EmiCalculatorTab = React.lazy(() => import('./components/sidebar-tabs/EmiCalculatorTab'));
-const AcfCalculatorTab = React.lazy(() => import('./components/sidebar-tabs/AcfCalculatorTab'));
-
 
 interface Session {
   mobile: string;
@@ -97,23 +105,39 @@ function App() {
 
   const isAdmin = session?.role === 'Admin';
 
-  const PublicBuffaloViz = (
-    <React.Suspense fallback={<BuffaloVizSkeleton />}>
-      <BuffaloVisualizationTab />
-    </React.Suspense>
+  const getSortIcon = (key: string, currentSortConfig: any) => {
+    if (currentSortConfig.key !== key) return '';
+    return currentSortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
+  const renderWithLayout = (component: React.ReactNode) => (
+    <UserTabs
+      adminMobile={session?.mobile || undefined}
+      adminName={session?.name}
+      adminRole={session?.role || undefined}
+      lastLogin={session?.lastLoginTime}
+      presentLogin={session?.currentLoginTime}
+      onLogout={handleLogout}
+    >
+      {component}
+    </UserTabs>
   );
 
-  const PublicEmi = (
-    <React.Suspense fallback={<EmiCalculatorSkeleton />}>
-      <EmiCalculatorTab />
-    </React.Suspense>
-  );
-
-  const PublicAcf = (
-    <React.Suspense fallback={<EmiCalculatorSkeleton />}>
-      <AcfCalculatorTab />
-    </React.Suspense>
-  );
+  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    if (!session) {
+      return <Navigate to="/login" replace state={{ from: location }} />;
+    }
+    if (!isAdmin) {
+      return (
+        <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1.5rem', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textAlign: 'center' }}>
+          <h2 style={{ marginBottom: '0.75rem' }}>Access Restricted</h2>
+          <p style={{ marginBottom: 0 }}>Only Admin users can access this dashboard. Please login with an Admin mobile.</p>
+          <button onClick={handleLogout} style={{ marginTop: '1rem', padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Logout</button>
+        </div>
+      );
+    }
+    return <>{renderWithLayout(children)}</>;
+  };
 
   return (
     <div className="App">
@@ -122,35 +146,71 @@ function App() {
           session ? <Navigate to="/orders" replace /> : <Login onLogin={handleLogin} />
         } />
 
-        {/* Public Routes - No Login Required */}
-        <Route path="/visualizer" element={PublicBuffaloViz} />
-        <Route path="/emi" element={PublicEmi} />
-        <Route path="/acf" element={PublicAcf} />
+        {/* Protected Dashboard Routes */}
+        <Route path="/orders" element={
+          <ProtectedRoute>
+            <React.Suspense fallback={<OrdersPageSkeleton />}>
+              <OrdersTab
+                handleApproveClick={(o: any) => dispatch(approveOrder({ unitId: o.id, adminMobile: session!.mobile }))}
+                handleReject={(o: any) => dispatch(rejectOrder({ unitId: o.id, adminMobile: session!.mobile, reason: 'Rejected by admin' }))}
+              />
+            </React.Suspense>
+          </ProtectedRoute>
+        } />
 
+        <Route path="/user-management" element={
+          <ProtectedRoute>
+            <React.Suspense fallback={<UsersPageSkeleton />}>
+              <UserManagementTab getSortIcon={getSortIcon} />
+            </React.Suspense>
+          </ProtectedRoute>
+        } />
 
-        <Route path="/*" element={
-          !session ? (
-            <Navigate to="/login" replace state={{ from: location }} />
-          ) : !isAdmin ? (
-            <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1.5rem', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textAlign: 'center' }}>
-              <h2 style={{ marginBottom: '0.75rem' }}>Access Restricted</h2>
-              <p style={{ marginBottom: 0 }}>Only Admin users can access this dashboard. Please login with an Admin mobile.</p>
-              <button onClick={handleLogout} style={{ marginTop: '1rem', padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Logout</button>
-            </div>
-          ) : (
-            <UserTabs
-              adminMobile={session.mobile}
-              adminName={session.name || 'Admin'}
-              adminRole={session.role || 'Admin'}
-              lastLogin={session.lastLoginTime || 'First Login'}
-              presentLogin={session.currentLoginTime || new Date().toLocaleString()}
-              onLogout={handleLogout}
-            />
+        <Route path="/products" element={
+          <ProtectedRoute>
+            <React.Suspense fallback={<ProductsPageSkeleton />}>
+              <ProductsTab />
+            </React.Suspense>
+          </ProtectedRoute>
+        } />
+
+        {/* Publically Accessible Visualization Routes */}
+        <Route path="/buffalo-viz" element={
+          renderWithLayout(
+            <React.Suspense fallback={<BuffaloVizSkeleton />}>
+              <BuffaloVisualizationTab />
+            </React.Suspense>
           )
         } />
 
-        {/* Redirect root to orders */}
-        <Route path="*" element={<Navigate to="/orders" replace />} />
+        <Route path="/emi-calculator" element={
+          renderWithLayout(
+            <React.Suspense fallback={<EmiCalculatorSkeleton />}>
+              <EmiCalculatorTab />
+            </React.Suspense>
+          )
+        } />
+
+        <Route path="/acf-calculator" element={
+          renderWithLayout(
+            <React.Suspense fallback={<EmiCalculatorSkeleton />}>
+              <AcfCalculatorTab />
+            </React.Suspense>
+          )
+        } />
+
+        {/* Backward Compatibility Redirects */}
+        <Route path="/dashboard/orders" element={<Navigate to="/orders" replace />} />
+        <Route path="/dashboard/user-management" element={<Navigate to="/user-management" replace />} />
+        <Route path="/dashboard/products" element={<Navigate to="/products" replace />} />
+        <Route path="/dashboard/buffalo-viz" element={<Navigate to="/buffalo-viz" replace />} />
+        <Route path="/dashboard/emi-calculator" element={<Navigate to="/emi-calculator" replace />} />
+        <Route path="/dashboard/acf-calculator" element={<Navigate to="/acf-calculator" replace />} />
+        <Route path="/dashboard/*" element={<Navigate to="/orders" replace />} />
+
+        {/* Default redirect to orders or login */}
+        <Route path="/" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
+        <Route path="*" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
       </Routes>
     </div>
   );
