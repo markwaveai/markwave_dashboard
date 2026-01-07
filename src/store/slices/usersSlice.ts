@@ -46,7 +46,9 @@ export const createReferralUser = createAsyncThunk(
 export interface UsersState {
     referralUsers: any[];
     existingCustomers: any[];
-    loading: boolean;
+    referralLoading: boolean;
+    existingLoading: boolean;
+    loading: boolean; // Computed loading state
     error: string | null;
     actionLoading: boolean; // For create action
 }
@@ -54,6 +56,8 @@ export interface UsersState {
 const initialState: UsersState = {
     referralUsers: [],
     existingCustomers: [],
+    referralLoading: false,
+    existingLoading: false,
     loading: false,
     error: null,
     actionLoading: false,
@@ -73,29 +77,35 @@ const usersSlice = createSlice({
     extraReducers: (builder) => {
         // Fetch Referral Users
         builder.addCase(fetchReferralUsers.pending, (state) => {
+            state.referralLoading = true;
             state.loading = true;
             state.error = null;
         });
         builder.addCase(fetchReferralUsers.fulfilled, (state, action) => {
-            state.loading = false;
+            state.referralLoading = false;
+            state.loading = state.existingLoading;
             state.referralUsers = action.payload;
         });
         builder.addCase(fetchReferralUsers.rejected, (state, action) => {
-            state.loading = false;
+            state.referralLoading = false;
+            state.loading = state.existingLoading;
             state.error = action.payload as string;
         });
 
         // Fetch Existing Customers
         builder.addCase(fetchExistingCustomers.pending, (state) => {
+            state.existingLoading = true;
             state.loading = true;
             state.error = null;
         });
         builder.addCase(fetchExistingCustomers.fulfilled, (state, action) => {
-            state.loading = false;
+            state.existingLoading = false;
+            state.loading = state.referralLoading;
             state.existingCustomers = action.payload;
         });
         builder.addCase(fetchExistingCustomers.rejected, (state, action) => {
-            state.loading = false;
+            state.existingLoading = false;
+            state.loading = state.referralLoading;
             state.error = action.payload as string;
         });
 

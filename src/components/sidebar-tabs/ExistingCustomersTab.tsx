@@ -82,8 +82,7 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
 
     return (
         <div className="existing-customers-container">
-            <div className="existing-customers-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 px-2">
-                <h2 className="existing-customers-title text-xl font-bold">Investors</h2>
+            <div className="existing-customers-header flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4 py-4 px-2">
                 <div className="investor-sub-tabs flex flex-nowrap gap-0 w-full sm:w-auto">
                     <button
                         className={`sub-tab-btn ${activeSubTab === 'verified' ? 'active' : ''}`}

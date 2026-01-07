@@ -4,15 +4,62 @@ import type { RootState } from '../../store';
 import ProductImageCarousel from '../products/ProductImageCarousel';
 import Loader from '../common/Loader';
 import ProductCardSkeleton from '../common/ProductCardSkeleton';
+import ProductFormModal from '../modals/ProductFormModal';
+import { deleteProduct } from '../../store/slices/productsSlice';
+import { useAppDispatch } from '../../store/hooks';
+import { useState } from 'react';
 import './ProductsTab.css';
 
 interface ProductsTabProps { }
 
 const ProductsTab: React.FC<ProductsTabProps> = () => {
+    const dispatch = useAppDispatch();
     const { products, loading: productsLoading } = useAppSelector((state: RootState) => state.products);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<any>(null);
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+    const toggleMenu = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveMenuId(activeMenuId === id ? null : id);
+    };
+
+    // Close menu when clicking outside (handled via document click listener if needed, 
+    // but for now simple toggle is usually enough or we add a global listener)
+    React.useEffect(() => {
+        const handleClickOutside = () => setActiveMenuId(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    const handleAddProduct = () => {
+        setEditingProduct(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditProduct = (product: any) => {
+        setEditingProduct(product);
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteProduct = async (id: string) => {
+        if (window.confirm('Are you sure you want to delete this product?')) {
+            try {
+                await dispatch(deleteProduct(id)).unwrap();
+            } catch (error) {
+                console.error('Failed to delete product', error);
+            }
+        }
+    };
+
     return (
         <div className="products-tab-container">
-            <h2>Products</h2>
+            <div className="products-tab-header">
+                <h2>Products</h2>
+                <button className="btn-add-product" onClick={handleAddProduct}>
+                    + Add Product
+                </button>
+            </div>
             <div className="products-grid">
                 {productsLoading ? (
                     Array.from({ length: 8 }).map((_, i) => (
@@ -55,7 +102,12 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                     <div className="product-meta-item">
                                         <strong>ID:</strong> {product.id}
                                     </div>
+                                    <div className="product-meta-item">
+                                        <strong>ID:</strong> {product.id}
+                                    </div>
                                 </div>
+
+
 
                                 <p className="product-description">
                                     {product.description}
@@ -66,9 +118,31 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                         <div className="product-price">
                                             ₹{product.price?.toLocaleString()}
                                         </div>
-                                        <div className="product-insurance">
-                                            Insurance: ₹{product.insurance?.toLocaleString()}
-                                        </div>
+                                    </div>
+                                    <div className="product-actions-menu-container">
+                                        <button
+                                            className="btn-menu-trigger"
+                                            onClick={(e) => toggleMenu(product.id, e)}
+                                        >
+                                            <span className="dots-icon">⋮</span>
+                                        </button>
+
+                                        {activeMenuId === product.id && (
+                                            <div className="menu-dropdown">
+                                                <button
+                                                    className="menu-item"
+                                                    onClick={() => handleEditProduct(product)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="menu-item delete"
+                                                    onClick={() => handleDeleteProduct(product.id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -76,6 +150,12 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                     ))
                 )}
             </div>
+
+            <ProductFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                product={editingProduct}
+            />
         </div>
     );
 };

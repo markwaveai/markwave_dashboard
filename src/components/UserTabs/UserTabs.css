@@ -177,36 +177,50 @@
     display: flex;
     align-items: center;
     width: 100%;
-    padding: 12px 16px;
+    padding: 10px 14px;
     border: none;
     background: transparent;
-    border-radius: 8px;
+    border-radius: 10px;
     color: #94a3b8;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: left;
     outline: none;
     position: relative;
-    /* For badge positioning */
+    margin: 2px 0;
   }
 
   .nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.08);
     color: #ffffff;
+    transform: translateX(2px);
   }
 
   .nav-item.active,
   .nav-item.active-main {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: #ffffff;
-    font-weight: 600;
+    background-color: #475569;
+    color: #ffffff !important;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
 
   .nav-text {
-    margin-left: 12px;
+    margin-left: 10px;
     flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-item svg {
+    min-width: 18px;
+  }
+
+  .nav-item.active svg,
+  .nav-item.active-main svg {
+    stroke-width: 2.5px;
   }
 
   /* Badges in Sidebar */
@@ -487,28 +501,110 @@
   }
 
 
-  /* Floating Action Button */
-  .floating-create-icon {
+  /* FAB Speed Dial Components */
+  .fab-container {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: 32px;
+    right: 32px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .fab-main-btn {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background-image: linear-gradient(310deg, #2152ff 0%, #21d4fd 100%);
+    background: #2563eb;
     color: white;
-    font-size: 24px;
+    border: none;
+    font-size: 28px;
+    font-weight: 300;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    transition: transform 0.2s;
-    z-index: 99;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
   }
 
-  .floating-create-icon:hover {
-    transform: scale(1.05);
+  .fab-container.expanded .fab-main-btn {
+    transform: rotate(180deg);
+    background: #475569;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .fab-options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fab-container.expanded .fab-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .fab-option-btn {
+    background: white;
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .fab-option-btn.referral-employee {
+    color: #2563eb;
+    border-color: #2563eb;
+  }
+
+  .fab-option-btn.referral-employee:hover {
+    background: #eff6ff;
+    transform: translateX(-4px);
+  }
+
+  .fab-option-btn.employee {
+    color: #16a34a;
+    border-color: #16a34a;
+  }
+
+  .fab-option-btn.employee:hover {
+    background: #f0fdf4;
+    transform: translateX(-4px);
+  }
+
+  /* Overlay for FAB */
+  .fab-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .fab-container.expanded+.fab-overlay {
+    opacity: 1;
+    visibility: visible;
   }
 
   /* Modal / Popover Styles */
@@ -745,9 +841,10 @@
       flex-direction: column;
     }
 
-    .header-brand-text{
+    .header-brand-text {
       font-size: 1rem;
     }
+
     .sidebar {
       position: fixed;
       top: 0;
