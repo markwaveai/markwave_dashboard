@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './UserTabs.css';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin, Calculator, MonitorPlay, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin, Calculator, MonitorPlay, ChevronLeft, ChevronRight, ChevronDown, Shield as ShieldIcon } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
@@ -93,6 +93,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
   else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
   else if (currentPath.includes('/orders')) activeTab = 'orders';
+  else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
 
   const [formData, setFormData] = useState({
     mobile: '',
@@ -542,7 +543,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate('/buffalo-viz');
+                  navigate('/buffalo-viz', { state: { fromDashboard: true } });
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -558,7 +559,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate('/emi-calculator');
+                  navigate('/emi-calculator', { state: { fromDashboard: true } });
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -574,12 +575,28 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'acf' ? 'active-main' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate('/acf-calculator');
+                  navigate('/acf-calculator', { state: { fromDashboard: true } });
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                   <Calculator size={18} />
                   <span className="nav-text">ACF Calculator</span>
+                </div>
+              </button>
+            </li>
+
+            {/* Privacy Policy */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'privacy' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/privacy-policy', { state: { fromDashboard: true } });
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <ShieldIcon size={18} />
+                  <span className="nav-text">Privacy & Policy</span>
                 </div>
               </button>
             </li>

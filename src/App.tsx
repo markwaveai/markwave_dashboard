@@ -17,6 +17,9 @@ import AcfCalculatorTab from './components/sidebar-tabs/AcfCalculatorTab';
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
 
+// Privacy
+import PrivacyPolicy from './components/PrivacyPolicy';
+
 // Skeletons
 import OrdersPageSkeleton from './components/common/skeletons/OrdersPageSkeleton';
 import UsersPageSkeleton from './components/common/skeletons/UsersPageSkeleton';
@@ -139,6 +142,27 @@ function App() {
     return <>{renderWithLayout(children)}</>;
   };
 
+  const ConditionalLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+    const shouldShowLayout = location.state?.fromDashboard && session;
+
+    if (shouldShowLayout) {
+      return (
+        <UserTabs
+          adminMobile={session?.mobile || undefined}
+          adminName={session?.name}
+          adminRole={session?.role || undefined}
+          lastLogin={session?.lastLoginTime}
+          presentLogin={session?.currentLoginTime}
+          onLogout={handleLogout}
+        >
+          {children}
+        </UserTabs>
+      );
+    }
+
+    return <>{children}</>;
+  };
+
   return (
     <div className="App">
       <Routes>
@@ -186,27 +210,27 @@ function App() {
 
         {/* Publically Accessible Visualization Routes */}
         <Route path="/buffalo-viz" element={
-          renderWithLayout(
+          <ConditionalLayoutWrapper>
             <React.Suspense fallback={<BuffaloVizSkeleton />}>
               <BuffaloVisualizationTab />
             </React.Suspense>
-          )
+          </ConditionalLayoutWrapper>
         } />
 
         <Route path="/emi-calculator" element={
-          renderWithLayout(
+          <ConditionalLayoutWrapper>
             <React.Suspense fallback={<EmiCalculatorSkeleton />}>
               <EmiCalculatorTab />
             </React.Suspense>
-          )
+          </ConditionalLayoutWrapper>
         } />
 
         <Route path="/acf-calculator" element={
-          renderWithLayout(
+          <ConditionalLayoutWrapper>
             <React.Suspense fallback={<EmiCalculatorSkeleton />}>
               <AcfCalculatorTab />
             </React.Suspense>
-          )
+          </ConditionalLayoutWrapper>
         } />
 
         {/* Backward Compatibility Redirects */}
@@ -217,6 +241,13 @@ function App() {
         <Route path="/dashboard/emi-calculator" element={<Navigate to="/emi-calculator" replace />} />
         <Route path="/dashboard/acf-calculator" element={<Navigate to="/acf-calculator" replace />} />
         <Route path="/dashboard/*" element={<Navigate to="/orders" replace />} />
+
+        {/* Privacy Policy - Standalone, no UserTabs, accessible publicly if needed */}
+        <Route path="/privacy-policy" element={
+          <ConditionalLayoutWrapper>
+            <PrivacyPolicy />
+          </ConditionalLayoutWrapper>
+        } />
 
         {/* Default redirect to orders or login */}
         <Route path="/" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
