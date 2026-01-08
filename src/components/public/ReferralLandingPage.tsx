@@ -2,7 +2,7 @@
 import React from 'react';
 import './ReferralLandingPage.css';
 import { CheckCircle, ShieldCheck, MapPin } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
@@ -15,6 +15,9 @@ const INDIAN_STATES = [
 ];
 
 const ReferralLandingPage = () => {
+    const [searchParams] = useSearchParams();
+    const referralCode = searchParams.get('referral_code') || '';
+
     return (
         <div className="referral-landing-container">
             {/* Navbar */}
@@ -81,7 +84,7 @@ const ReferralLandingPage = () => {
                                 type="text"
                                 placeholder="Referral Code"
                                 className="landing-input"
-                                value="HAPIAOXE"
+                                value={referralCode}
                                 readOnly
                                 style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#64748b' }}
                             />
