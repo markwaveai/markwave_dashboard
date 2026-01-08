@@ -95,6 +95,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/orders')) activeTab = 'orders';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
   else if (currentPath.includes('/support')) activeTab = 'support';
+  else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
 
   const [formData, setFormData] = useState({
     mobile: '',
@@ -202,7 +203,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     setIsFabExpanded(false);
     setFormData(prev => ({
       ...prev,
-      role: type === 'investor' ? 'Investor' : 'Employee'
+      role: type === 'investor' ? 'Investor' : 'Employee',
+      refered_by_mobile: adminMobile || '',
+      refered_by_name: displayAdminName || ''
     }));
     dispatch(setReferralModalOpen(true));
   };
@@ -602,6 +605,23 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
               </button>
             </li>
 
+            {/* Referral Landing Page */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'referral-landing' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/referral-landing', { state: { fromDashboard: true } });
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <UserCheck size={18} />
+                  <span className="nav-text">Referral Page</span>
+                </div>
+              </button>
+            </li>
+
+
             {/* Support */}
             <li>
               <button
@@ -651,7 +671,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                     className="fab-option-btn referral-employee"
                     onClick={() => handleChoiceSelection('investor')}
                   >
-                    Add Referral
+                    Add Investor
                   </button>
                   <button
                     className="fab-option-btn employee"
@@ -673,42 +693,44 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         </main>
       </div>
 
-      {hasSession && (
-        <>
-          <ReferralModal
-            formData={formData}
-            onInputChange={handleInputChange}
-            onBlur={handleReferralMobileBlur}
-            onSubmit={handleSubmit}
-          />
+      {
+        hasSession && (
+          <>
+            <ReferralModal
+              formData={formData}
+              onInputChange={handleInputChange}
+              onBlur={handleReferralMobileBlur}
+              onSubmit={handleSubmit}
+            />
 
-          <EditReferralModal
-            editFormData={editFormData}
-            onInputChange={handleEditInputChange}
-            onBlur={handleEditReferralMobileBlur}
-            onSubmit={handleEditSubmit}
-          />
+            <EditReferralModal
+              editFormData={editFormData}
+              onInputChange={handleEditInputChange}
+              onBlur={handleEditReferralMobileBlur}
+              onSubmit={handleEditSubmit}
+            />
 
-          <ImageNamesModal />
+            <ImageNamesModal />
 
-          <AdminDetailsModal
-            adminName={displayAdminName}
-            adminMobile={adminMobile}
-            adminRole={adminRole}
-            lastLogin={lastLogin}
-            presentLogin={presentLogin}
-          />
+            <AdminDetailsModal
+              adminName={displayAdminName}
+              adminMobile={adminMobile}
+              adminRole={adminRole}
+              lastLogin={lastLogin}
+              presentLogin={presentLogin}
+            />
 
-          <RejectionModal />
+            <RejectionModal />
 
-          <LogoutModal
-            isOpen={isLogoutModalOpen}
-            onClose={() => setIsLogoutModalOpen(false)}
-            onConfirm={onLogout!}
-          />
-        </>
-      )}
-    </div>
+            <LogoutModal
+              isOpen={isLogoutModalOpen}
+              onClose={() => setIsLogoutModalOpen(false)}
+              onConfirm={onLogout!}
+            />
+          </>
+        )
+      }
+    </div >
   );
 };
 

@@ -55,28 +55,7 @@ const ReferralModal: React.FC<ReferralModalProps> = ({
                 {/* Form Content */}
                 <div className="referral-content">
                     <form onSubmit={onSubmit} className="referral-form">
-                        <div className="form-group">
-                            <label className="form-label">
-                                Role
-                            </label>
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={onInputChange}
-                                required
-                                className="form-input"
-                            >
-                                {formData.role === 'Investor' ? (
-                                    <option value="Investor">Investor</option>
-                                ) : (
-                                    <>
-                                        <option value="Employee">Employee</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="Superadmin">Superadmin</option>
-                                    </>
-                                )}
-                            </select>
-                        </div>
+
 
                         <div className="form-group">
                             <label className="form-label">
