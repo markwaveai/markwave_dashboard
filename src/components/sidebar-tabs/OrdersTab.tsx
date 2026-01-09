@@ -335,7 +335,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
         else if (nextStageId === 4) status = 'APPROVED';
 
         if (!status) {
-            alert("This stage cannot be updated manually via timeline. Use 'Approve' for payment verification.");
+            alert("Update restricted for this stage. Please complete Payment verification via the main 'Approve' button.");
             return;
         }
 
@@ -811,10 +811,10 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                                                                         {stage.label}
                                                                                                                     </div>
 
-                                                                                                                    {isCurrent && (
+                                                                                                                    {isCurrent && stage.id >= 3 && (
                                                                                                                         <button
                                                                                                                             className="tracking-update-btn"
-                                                                                                                            onClick={() => handleStageUpdateLocal(unit.id, buffaloNum, stage.id + 1)}
+                                                                                                                            onClick={() => handleStageUpdateLocal(unit.id, buffaloNum, stage.id)}
                                                                                                                         >
                                                                                                                             {stage.id === 8 ? 'Confirm Delivery' : 'Update'}
                                                                                                                         </button>
