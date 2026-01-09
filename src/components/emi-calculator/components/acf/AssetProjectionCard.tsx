@@ -16,6 +16,7 @@ const AssetProjectionCard: React.FC<AssetProjectionCardProps> = ({
     buffaloCount,
     formatCurrency
 }) => {
+    
     // Calculate a mock date based on year (Assuming starting from current year)
     const currentYear = new Date().getFullYear();
     const displayYear = currentYear + (year - 1);

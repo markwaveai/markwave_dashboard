@@ -12,17 +12,17 @@ const AcfStatsGrid = () => {
         acfUnits,
         acfTotalBenefit,
         acfCpfBenefit,
-        simulateHerd,
-        calculateAssetValueFromSimulation,
+        calculateProjectedAssetValue: calculateProjection, // Destructure with alias if needed or direct
         acfProjectionYear,
         setAcfProjectionYear,
         formatCurrency
     } = useEmi();
 
     // Projection Logic for Card
-    const tenureForChecking = acfProjectionYear * 12;
-    const offspringAges = simulateHerd(tenureForChecking, acfUnits);
-    const projectedAssetValue = calculateAssetValueFromSimulation(offspringAges, acfUnits);
+    // Use the new precise calculation matching Buffalo Vis
+    const { totalAssetValue: projectedAssetValue, totalBuffaloes: projectedBuffaloCount } =
+        calculateProjection ? calculateProjection(acfProjectionYear, acfUnits) : { totalAssetValue: 0, totalBuffaloes: 0 };
+
     return (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <HoverGradientStatCard
@@ -39,7 +39,7 @@ const AcfStatsGrid = () => {
                 value={projectedAssetValue}
                 year={acfProjectionYear}
                 onYearChange={setAcfProjectionYear}
-                buffaloCount={(acfUnits * 2) + (offspringAges.length * acfUnits)}
+                buffaloCount={projectedBuffaloCount}
                 formatCurrency={formatCurrency}
             />
 

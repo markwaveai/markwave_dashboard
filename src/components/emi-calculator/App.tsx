@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { EmiProvider, useEmi } from './context/EmiContext';
+import { useEmi } from './context/EmiContext';
+import { EmiProvider } from './context/EmiProvider';
 import MainLayout from './components/layout/MainLayout';
 import InputCard from './components/calculator/InputCard';
 import ResultCard from './components/calculator/ResultCard';
