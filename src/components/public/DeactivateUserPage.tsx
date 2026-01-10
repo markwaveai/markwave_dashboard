@@ -232,14 +232,15 @@ const DeactivateUserPage = () => {
                             <form onSubmit={handleMobileSubmit}>
                                 {/* 1. Mobile Number */}
                                 <div className="relative mb-4">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span className="text-gray-500 font-medium">+91</span>
+                                    <div className="absolute top-0 left-0 h-full w-14 flex items-center justify-center pointer-events-none z-10">
+                                        <span className="text-gray-500 font-medium text-base pt-0.5">+91</span>
                                     </div>
                                     <input
                                         type="tel"
                                         name="mobile"
                                         placeholder="Enter your registered mobile *"
                                         className="landing-input !pl-14"
+                                        style={{ marginBottom: 0 }}
                                         value={formData.mobile}
                                         onChange={(e) => {
                                             const val = e.target.value.replace(/\D/g, '').slice(0, 10);
