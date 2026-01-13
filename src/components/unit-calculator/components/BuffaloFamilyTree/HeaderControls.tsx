@@ -3,15 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { Play, RotateCcw, Calendar, Loader2, ToggleLeft, ToggleRight, LayoutGrid, ChevronDown } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { formatCurrency } from './CommonComponents';
+import { formatCurrency, formatLargeCurrency } from './CommonComponents';
 import algorithmConfig from '../../algorithms.json';
 
 
 const HeaderControls = ({
     units,
     setUnits,
-    years,
-    setYears,
+    durationMonths,
+    setDurationMonths,
     startYear,
     setStartYear,
     startMonth,
@@ -29,8 +29,8 @@ const HeaderControls = ({
 }: {
     units: number;
     setUnits: (val: number) => void;
-    years: number;
-    setYears: (val: number) => void;
+    durationMonths: number;
+    setDurationMonths: (val: number) => void;
     startYear: number;
     setStartYear: (val: number) => void;
     startMonth: number;
@@ -89,7 +89,7 @@ const HeaderControls = ({
     // Auto-run simulation on inputs change
     useEffect(() => {
         runSimulation();
-    }, [units, years, startYear, startMonth, startDay]);
+    }, [units, durationMonths, startYear, startMonth, startDay]);
 
     return (
         <div className="bg-white border-b border-slate-200 px-4 py-3 pb-8 z-[80] relative">
@@ -142,39 +142,35 @@ const HeaderControls = ({
                             </div>
                         </div>
 
-                        {/* End Year Picker - Year Selection */}
+                        {/* End Date Picker - Month/Year Selection */}
                         <div className="flex flex-col items-center px-4 border-r border-slate-100 min-w-[7rem]">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Year</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
                             <div className="relative w-24 flex justify-center">
                                 <DatePicker
                                     selected={(() => {
-                                        const endYearBase = startMonth === 0 ? startYear + years - 1 : startYear + years;
-                                        return new Date(endYearBase, 0, 1);
+                                        const endDate = new Date(startYear, startMonth + durationMonths - 1); // -1 because duration includes start month
+                                        return endDate;
                                     })()}
                                     onChange={(date: Date | null) => {
                                         if (date) {
                                             const selectedYear = date.getFullYear();
-                                            let newDuration;
-                                            if (startMonth === 0) {
-                                                // Jan Start: 2026-2026 = 1 year
-                                                newDuration = selectedYear - startYear + 1;
-                                            } else {
-                                                // Non-Jan: 2026-2027 = 1 year
-                                                newDuration = selectedYear - startYear;
-                                            }
-                                            setYears(Math.max(1, Math.min(10, newDuration)));
+                                            const selectedMonth = date.getMonth();
+
+                                            // Diff in months: (SelectedY - StartY)*12 + (SelectedM - StartM) + 1
+                                            // +1 because if start Jan, end Jan, that's 1 month duration.
+                                            let newDuration = ((selectedYear - startYear) * 12) + (selectedMonth - startMonth) + 1;
+
+                                            // Constants
+                                            const MIN_DURATION = 1;
+                                            const MAX_DURATION = 120; // 10 years
+
+                                            setDurationMonths(Math.max(MIN_DURATION, Math.min(MAX_DURATION, newDuration)));
                                         }
                                     }}
-                                    minDate={(() => {
-                                        const minYear = startMonth === 0 ? startYear : startYear + 1;
-                                        return new Date(minYear, 0, 1);
-                                    })()}
-                                    maxDate={(() => {
-                                        const maxYear = startMonth === 0 ? startYear + 9 : startYear + 10;
-                                        return new Date(maxYear, 11, 31);
-                                    })()}
-                                    showYearPicker
-                                    dateFormat="yyyy"
+                                    minDate={new Date(startYear, startMonth)}
+                                    maxDate={new Date(startYear, startMonth + 119)} // 10 years - 1 month
+                                    showMonthYearPicker
+                                    dateFormat="MMM yyyy"
                                     className="w-full bg-transparent text-sm font-bold text-slate-700 cursor-pointer focus:outline-none text-center hover:text-indigo-600 transition-colors"
                                     onKeyDown={(e) => e.preventDefault()}
                                     popperClassName="!z-[100]"
@@ -187,8 +183,8 @@ const HeaderControls = ({
                         <div className="flex flex-col items-center px-4">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Initial Inv</span>
                             <div className="flex flex-col items-center leading-none">
-                                <span className="text-sm font-black text-slate-800">{formatCurrency(initialBuffaloCost)}</span>
-                                <span className="text-[9px] font-bold text-rose-500 mt-0.5">CPF: {formatCurrency(initialCpfCost)}</span>
+                                <span className="text-sm font-black text-slate-800">{formatLargeCurrency(initialBuffaloCost)}</span>
+                                <span className="text-[9px] font-bold text-blue-600 mt-0.5">CPF: {formatLargeCurrency(initialCpfCost)}</span>
                             </div>
                         </div>
 
@@ -243,7 +239,7 @@ const HeaderControls = ({
                         {/* Asset Value - Added */}
                         <div className="flex flex-col items-center">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Val</span>
-                            <span className="text-sm font-black text-blue-600">{formatCurrency(treeData.summaryStats.totalAssetValue)}</span>
+                            <span className="text-sm font-black text-blue-600">{formatLargeCurrency(treeData.summaryStats.totalAssetValue)}</span>
                         </div>
 
                         <div className="w-px h-8 bg-slate-200" />
@@ -253,7 +249,7 @@ const HeaderControls = ({
                                 {isCGFEnabled ? "Net (+CGF)" : "Net Rev"}
                             </span>
                             <span className={`text-sm font-black ${isCGFEnabled ? 'text-emerald-600' : 'text-emerald-600'}`}>
-                                {formatCurrency(isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)}
+                                {formatLargeCurrency(isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)}
                             </span>
                         </div>
 
@@ -274,7 +270,7 @@ const HeaderControls = ({
                         <div className="flex flex-col items-center">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total ROI</span>
                             <span className="text-sm font-black text-slate-900">
-                                {formatCurrency(
+                                {formatLargeCurrency(
                                     (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) +
                                     treeData.summaryStats.totalAssetValue
                                 )}

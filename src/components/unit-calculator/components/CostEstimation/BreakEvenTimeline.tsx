@@ -24,7 +24,7 @@ const BreakEvenTimeline: React.FC<any> = ({
 
     const lastYear = breakEvenAnalysis.breakEvenData.length > 0
         ? breakEvenAnalysis.breakEvenData[breakEvenAnalysis.breakEvenData.length - 1].year
-        : (treeData.startYear + treeData.years - 1);
+        : (treeData.startYear + Math.ceil((treeData.durationMonths || (treeData.years * 12)) / 12) - 1);
 
     const formattedDateRange = `${monthNames[treeData.startMonth || 0]} ${treeData.startYear} - December ${lastYear}`;
 

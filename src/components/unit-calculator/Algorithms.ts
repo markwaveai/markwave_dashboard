@@ -73,7 +73,7 @@ export const isCpfApplicable = (
     treeData: any
 ): boolean => {
     const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
-    const absoluteEndMonth = absoluteStartMonth + (treeData.years * 12) - 1;
+    const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
 
     if (currentAbsoluteMonth < absoluteStartMonth || currentAbsoluteMonth > absoluteEndMonth) {
         return false;

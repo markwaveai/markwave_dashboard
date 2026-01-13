@@ -95,18 +95,27 @@ const CostEstimationTableContent = ({
             // For Gen > 0, we can use birthMonth if available or inherit from parent acquisition if consistent.
             // In the new treeData, acquisitionMonth is passed down.
 
-            const birthMonth = buffalo.generation === 0 ? (buffalo.acquisitionMonth || 0) : (buffalo.acquisitionMonth || 0);
+            const birthMonth = buffalo.generation === 0
+                ? (buffalo.acquisitionMonth || 0)
+                : (buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0));
+
+            // Normalize data types for safer consumption
+            const gen = Number(buffalo.generation);
+            const acqMonth = Number(buffalo.acquisitionMonth || 0);
+            const absAcq = buffalo.absoluteAcquisitionMonth !== undefined
+                ? Number(buffalo.absoluteAcquisitionMonth)
+                : (Number(treeData.startYear) * 12 + acqMonth); // robust fallback
 
             buffaloDetails[buffalo.id] = {
                 id: buffalo.id,
-                name: buffalo.name || buffalo.id, // Pass name, fallback to ID
+                name: buffalo.name || buffalo.id,
                 originalId: buffalo.id,
-                generation: buffalo.generation,
+                generation: gen,
                 unit: buffalo.unit,
-                acquisitionMonth: buffalo.acquisitionMonth,
-                absoluteAcquisitionMonth: buffalo.absoluteAcquisitionMonth, // Pass this down
-                birthYear: buffalo.birthYear,
-                birthMonth: birthMonth,
+                acquisitionMonth: acqMonth,
+                absoluteAcquisitionMonth: absAcq,
+                birthYear: Number(buffalo.birthYear),
+                birthMonth: Number(birthMonth),
                 parentId: buffalo.parentId,
                 children: [],
                 grandchildren: []
@@ -174,7 +183,13 @@ const CostEstimationTableContent = ({
 
         const CPF_PER_MONTH = 15000 / 12;
 
-        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+        const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
+        const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const absoluteEnd = absoluteStart + totalSimMonths - 1;
+        const endYearVal = Math.floor(absoluteEnd / 12);
+        const durationYears = endYearVal - treeData.startYear + 1;
+
+        for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
             let totalCPFCost = 0;
             cpfCostByMonth[year] = {};
 
@@ -191,7 +206,7 @@ const CostEstimationTableContent = ({
                     // Cutoff Logic
                     const currentAbsoluteMonth = year * 12 + month;
                     const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-                    const absoluteEndMonth = absoluteStartMonth + (treeData.years * 12) - 1;
+                    const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
 
                     if (currentAbsoluteMonth < absoluteStartMonth || currentAbsoluteMonth > absoluteEndMonth) {
                         return;
@@ -351,7 +366,13 @@ const CostEstimationTableContent = ({
         const investorMonthlyRevenue: any = {};
         const buffaloValuesByYear: any = {};
 
-        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+        const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
+        const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const absoluteEnd = absoluteStart + totalSimMonths - 1;
+        const endYearVal = Math.floor(absoluteEnd / 12);
+        const durationYears = endYearVal - treeData.startYear + 1;
+
+        for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
             monthlyRevenue[year] = {};
             investorMonthlyRevenue[year] = {};
             buffaloValuesByYear[year] = {};
@@ -366,7 +387,7 @@ const CostEstimationTableContent = ({
         }
 
         Object.values(buffaloDetails).forEach((buffalo: any) => {
-            for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+            for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
                 const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
 
                 if (!buffaloValuesByYear[year][buffalo.id]) {
@@ -396,7 +417,7 @@ const CostEstimationTableContent = ({
                         // Cutoff Logic
                         const currentAbsoluteMonth = year * 12 + month;
                         const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-                        const absoluteEndMonth = absoluteStartMonth + (treeData.years * 12) - 1;
+                        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
 
                         if (currentAbsoluteMonth < absoluteStartMonth || currentAbsoluteMonth > absoluteEndMonth) {
                             continue;
@@ -423,7 +444,7 @@ const CostEstimationTableContent = ({
                             monthlyRevenue[year][month].total += revenue;
                             monthlyRevenue[year][month].buffaloes[buffalo.id] = revenue;
                             // Investor Revenue is Total across all units
-                            investorMonthlyRevenue[year][month] += revenue * treeData.units; // Scale by units for aggregate
+                            investorMonthlyRevenue[year][month] += revenue; // Do not scale by units again
                         }
                     }
                 }
@@ -470,7 +491,7 @@ const CostEstimationTableContent = ({
         };
 
         // Calculate Simulation-Year based data
-        const simulationYears = treeData.years;
+        const simulationYears = Math.ceil((treeData.durationMonths || (treeData.years * 12)) / 12);
         let cumulativeRevenueWithCPF = 0;
 
         // We need to track break-even precisely monthly, but aggregate yearly for table
@@ -526,7 +547,7 @@ const CostEstimationTableContent = ({
 
 
         // We iterate ONE continuous stream of months for exact dates
-        const totalMonths = simulationYears * 12;
+        const totalMonths = treeData.durationMonths || (simulationYears * 12);
         for (let absM = 0; absM < totalMonths; absM++) {
             const simY = Math.floor(absM / 12);
             const simM = absM % 12;
@@ -648,11 +669,11 @@ const CostEstimationTableContent = ({
     const calculateAssetMarketValue = () => {
         const assetValues: any[] = [];
         // Correctly calculate end year including partial years (same as index.jsx)
-        const totalMonthsDuration = treeData.years * 12;
+        const totalMonthsDuration = Math.min(120, treeData.durationMonths || (treeData.years * 12));
         const endYear = treeData.startYear + Math.floor((treeData.startMonth + totalMonthsDuration - 1) / 12);
 
         const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-        const absoluteEndMonth = absoluteStartMonth + (treeData.years * 12) - 1;
+        const absoluteEndMonth = absoluteStartMonth + totalMonthsDuration - 1;
         const endMonthOfSimulation = absoluteEndMonth % 12;
 
         for (let year = treeData.startYear; year <= endYear; year++) {
@@ -676,7 +697,13 @@ const CostEstimationTableContent = ({
                 // Only count buffaloes born before or in the last year/month
                 if (buffalo.birthYear < year || (buffalo.birthYear === year && (buffalo.birthMonth || 0) <= targetMonth)) {
                     const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
-                    const value = getBuffaloValueByAge(ageInMonths);
+                    let value = getBuffaloValueByAge(ageInMonths);
+
+                    // Override: 0-12 months value is 0 in the first year only
+                    if (year === treeData.startYear && ageInMonths <= 12) {
+                        value = 0;
+                    }
+
                     totalAssetValue += value;
 
                     if (ageInMonths >= 41) {
@@ -703,26 +730,21 @@ const CostEstimationTableContent = ({
 
             const yearData = yearlyData.find((d: any) => d.year === year);
 
-            // Scale all values by total units
-            const multiplier = treeData.units;
-            const scaledTotalAssetValue = totalAssetValue * multiplier;
+            // Do not scale by units again, as buffaloDetails contains full population
+            const scaledTotalAssetValue = totalAssetValue;
 
-            // Scale age categories
+            // Scale age categories - No scaling needed
             const scaledAgeCategories: any = {};
             Object.keys(ageCategories).forEach(key => {
                 scaledAgeCategories[key] = {
-                    count: ageCategories[key].count * multiplier,
-                    value: ageCategories[key].value * multiplier
+                    count: ageCategories[key].count,
+                    value: ageCategories[key].value
                 };
             });
 
             assetValues.push({
                 year: year,
-                totalBuffaloes: (yearData?.totalBuffaloes || 0), // Already scaled in yearlyData? Yes, scaledTreeData does it.
-                // But wait, yearlyData was passed as prop?
-                // treeData.revenueData.yearlyData IS SCALED.
-                // So yearData.totalBuffaloes is SCALED.
-                // But ageCategories is calculated from buffaloDetails (1 Unit). So we explicitly scale it.
+                totalBuffaloes: (yearData?.totalBuffaloes || 0),
                 ageCategories: scaledAgeCategories,
                 totalAssetValue: scaledTotalAssetValue,
                 motherBuffaloes: scaledAgeCategories['41+ months'].count
@@ -750,7 +772,12 @@ const CostEstimationTableContent = ({
         Object.values(buffaloDetails).forEach((buffalo: any) => {
             if (year >= buffalo.birthYear) {
                 const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
-                const value = getBuffaloValueByAge(ageInMonths);
+                let value = getBuffaloValueByAge(ageInMonths);
+
+                // Override: 0-12 months value is 0 in the first year only
+                if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
+                    value = 0;
+                }
 
                 if (ageInMonths >= 41) {
                     ageGroups['41+ months'].count++;
@@ -777,17 +804,14 @@ const CostEstimationTableContent = ({
             }
         });
 
-        // Scale totals by units
-        const multiplier = treeData.units;
-        const scaledTotalValue = totalValue * multiplier;
-        const scaledTotalCount = totalCount * multiplier;
+        // Do not scale by units again
+        const scaledTotalValue = totalValue;
+        const scaledTotalCount = totalCount;
 
         const scaledAgeGroups: any = {};
         Object.keys(ageGroups).forEach(key => {
             scaledAgeGroups[key] = {
-                ...ageGroups[key],
-                count: ageGroups[key].count * multiplier,
-                value: ageGroups[key].value * multiplier
+                ...ageGroups[key]
             };
         });
 
@@ -817,9 +841,19 @@ const CostEstimationTableContent = ({
     };
 
     // Calculate dynamic year ranges
-    // Calculate dynamic year ranges
+    // Calculate precise calendar years duration
+    // For Data Generation, we need full calendar years
+    const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
+    const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
+    const absoluteEnd = absoluteStart + totalSimMonths - 1;
+    const endYearVal = Math.floor(absoluteEnd / 12);
+    const durationYears = endYearVal - treeData.startYear + 1;
+
+    // For Dropdown Display, we use Simulation Years (12-month chunks)
+    const simulationYearsCount = Math.ceil(totalSimMonths / 12);
+
     // const startYear = treeData.startYear; // startYear is already in scope from state
-    const endYear = startYear + treeData.years - 1;
+    const endYear = startYear + durationYears - 1;
     const yearRange = `${startYear}-${endYear}`;
 
     const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -866,20 +900,34 @@ const CostEstimationTableContent = ({
                         })}
                     </div>
 
-                    <div className="flex items-center gap-3 px-4 py-2 border-l border-slate-200">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Year</span>
-                        <select
-                            value={globalYearIndex}
-                            onChange={(e) => setGlobalYearIndex(Number(e.target.value))}
-                            className="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm hover:border-slate-300 transition-colors"
-                        >
-                            {Array.from({ length: treeData.years }).map((_, i) => (
-                                <option key={i} value={i}>
-                                    {treeData.startYear + i} (Year {i + 1})
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {["Monthly Revenue Break", "Cattle Growing Fund", "CPF + CGF", "Asset Market Value"].includes(activeTab) && (
+                        <div className="flex items-center gap-3 px-4 py-2 border-l border-slate-200">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Year</span>
+                            <select
+                                value={globalYearIndex}
+                                onChange={(e) => setGlobalYearIndex(Number(e.target.value))}
+                                className="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm hover:border-slate-300 transition-colors"
+                            >
+                                {Array.from({ length: simulationYearsCount }).map((_, i) => {
+                                    // Calculate month range for this SIMULATION year (12-month chunk)
+                                    const simYearStartAbs = absoluteStart + (i * 12);
+                                    const simYearEndAbs = Math.min(absoluteEnd, simYearStartAbs + 11);
+
+                                    const startMonthName = monthNames[simYearStartAbs % 12].slice(0, 3);
+                                    const endMonthName = monthNames[simYearEndAbs % 12].slice(0, 3);
+
+                                    const startYearNum = Math.floor(simYearStartAbs / 12);
+                                    const endYearNum = Math.floor(simYearEndAbs / 12);
+
+                                    return (
+                                        <option key={i} value={i}>
+                                            {startMonthName} {startYearNum} - {endMonthName} {endYearNum} (Year {i + 1})
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -933,8 +981,8 @@ const CostEstimationTableContent = ({
                                 yearlyData={yearlyData}
                                 formatCurrency={formatCurrency}
                                 startYear={startYear}
-                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.years * 12) - 1) / 12)}
-                                endMonth={(treeData.startMonth + (treeData.years * 12) - 1) % 12}
+                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) / 12)}
+                                endMonth={(treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) % 12}
                                 selectedYearIndex={globalYearIndex}
                             />
                         )}
@@ -948,8 +996,8 @@ const CostEstimationTableContent = ({
                                 calculateAgeInMonths={calculateAgeInMonths}
                                 monthNames={monthNames}
                                 startYear={startYear}
-                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.years * 12) - 1) / 12)}
-                                endMonth={(treeData.startMonth + (treeData.years * 12) - 1) % 12}
+                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) / 12)}
+                                endMonth={(treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) % 12}
                                 selectedYearIndex={globalYearIndex}
                             />
                         )}
@@ -985,8 +1033,8 @@ const CostEstimationTableContent = ({
                                 assetMarketValue={assetMarketValue}
                                 formatCurrency={formatCurrency}
                                 startYear={startYear}
-                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.years * 12) - 1) / 12)}
-                                endMonth={(treeData.startYear * 12 + treeData.startMonth + (treeData.years * 12) - 1) % 12}
+                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) / 12)}
+                                endMonth={(treeData.startYear * 12 + treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) % 12}
                                 yearRange={yearRange}
                                 yearlyData={yearlyData}
                                 monthlyRevenue={monthlyRevenue}

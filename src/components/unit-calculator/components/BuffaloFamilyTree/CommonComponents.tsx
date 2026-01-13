@@ -37,6 +37,16 @@ export const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-IN').format(num);
 };
 
+// Format large currency (Lakhs/Crores)
+export const formatLargeCurrency = (amount: number) => {
+    if (amount >= 10000000) { // 1 Crore
+        return `₹${(amount / 10000000).toFixed(2)} Cr`;
+    } else if (amount >= 100000) { // 1 Lakh
+        return `₹${(amount / 100000).toFixed(2)} L`;
+    }
+    return formatCurrency(amount);
+};
+
 // Calculate Age in Months
 export const calculateAgeInMonths = (buffalo: any, targetYear: number, targetMonth: number = 0) => {
     const birthYear = buffalo.birthYear;

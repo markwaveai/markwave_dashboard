@@ -81,7 +81,7 @@ const MonthlyRevenueBreak = ({
 
         // Global Cutoff Check
         const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
-        const absoluteEndMonth = absoluteStartMonth + (treeData.years * 12) - 1;
+        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
 
         if (absMonth < absoluteStartMonth || absMonth > absoluteEndMonth) {
             return false;

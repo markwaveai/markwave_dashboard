@@ -18,7 +18,8 @@ const AssetMarketValue = ({
     yearlyData,
     monthlyRevenue,
     yearlyCPFCost,
-    selectedYear
+    selectedYear,
+    selectedYearIndex
 }: any) => {
     const monthNames = ["January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"];
@@ -64,8 +65,8 @@ const AssetMarketValue = ({
         setBreakdownAssetData(assetData);
     }, [breakdownYear, assetMarketValue]);
 
-    // Age-Based Valuation Breakdown function for selected year
-    const calculateDetailedAssetValueForYear = (year: number) => {
+    // Age-Based Valuation Breakdown function for selected year index
+    const calculateDetailedAssetValueForYear = (yearIndex: number) => {
         const ageGroups: any = {
             '0-12 months': { count: 0, value: 0, unitValue: 10000 },
             '13-18 months': { count: 0, value: 0, unitValue: 25000 },
@@ -78,38 +79,72 @@ const AssetMarketValue = ({
         let totalValue = 0;
         let totalCount = 0;
 
+        // Calculate Simulation Year End (Absolute Month)
+        // startMonth is 0-indexed (Jan=0, Feb=1)
+        // Calculate Simulation Year End (Absolute Month)
+        // startMonth is 0-indexed (Jan=0, Feb=1)
+        const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
+
+        // Determine Total Duration (capped at 120 months / 10 years)
+        const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
+        const absoluteEnd = absoluteStart + totalSimMonths - 1;
+
+        // End of the selected simulation year (12 months span)
+        const theoreticalSimYearEnd = absoluteStart + (yearIndex * 12) + 11;
+
+        // Cap at the global absolute end to respect partial final years
+        // This ensures Body Asset Value matches Header Asset Value for the final partial year.
+        const simYearEndAbs = Math.min(absoluteEnd, theoreticalSimYearEnd);
+
+        // Ensure we don't go beyond global end if strictly capped?
+        // Actually for Asset Value at "Year X", we usually mean value at the END of that year.
+        const targetYear = Math.floor(simYearEndAbs / 12);
+        const targetMonth = simYearEndAbs % 12;
+
         Object.values(buffaloDetails).forEach((buffalo: any) => {
-            // Only count buffaloes born before or in the last year/month
-            // Determine target month: December (11) for full years, or endMonth for the final year
-            // Use 12 (January of next year equivalent) for full years to capture completed year valuation
-            const targetMonth = (year === endYear && endMonth !== undefined && endMonth !== 11) ? endMonth : 12;
+            // Calculate absolute birth month
+            const buffaloBirthAbs = buffalo.birthYear * 12 + (buffalo.birthMonth || 0);
 
-            if (buffalo.birthYear < year || (buffalo.birthYear === year && (buffalo.birthMonth || 0) <= targetMonth)) {
-                const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
+            // Only include if born on or before the simulation year end
+            if (buffaloBirthAbs <= simYearEndAbs) {
+                // Determine age in months relative to simYearEndAbs
+                const ageInMonths = (simYearEndAbs - buffaloBirthAbs);
+                // Note: User's logic was effectively +1? "0-12 months". 
+                // If born equal to current month -> 0 months old.
+                // Standard logic: (Current - Birth)
+
                 const value = getBuffaloValueByAge(ageInMonths);
-
-                if (ageInMonths >= 41) {
-                    ageGroups['41+ months'].count += (treeData.units || 1);
-                    ageGroups['41+ months'].value += value * (treeData.units || 1);
-                } else if (ageInMonths >= 35) {
-                    ageGroups['35-40 months'].count += (treeData.units || 1);
-                    ageGroups['35-40 months'].value += value * (treeData.units || 1);
-                } else if (ageInMonths >= 25) {
-                    ageGroups['25-34 months'].count += (treeData.units || 1);
-                    ageGroups['25-34 months'].value += value * (treeData.units || 1);
-                } else if (ageInMonths >= 19) {
-                    ageGroups['19-24 months'].count += (treeData.units || 1);
-                    ageGroups['19-24 months'].value += value * (treeData.units || 1);
-                } else if (ageInMonths >= 13) {
-                    ageGroups['13-18 months'].count += (treeData.units || 1);
-                    ageGroups['13-18 months'].value += value * (treeData.units || 1);
-                } else {
-                    ageGroups['0-12 months'].count += (treeData.units || 1);
-                    ageGroups['0-12 months'].value += value * (treeData.units || 1);
+                let appliedValue = value;
+                if (yearIndex === 0 && ageInMonths <= 12) {
+                    appliedValue = 0;
                 }
 
-                totalValue += value * (treeData.units || 1);
-                totalCount += 1 * (treeData.units || 1);
+                // Assign to bucket
+                // We use treeData.units multiplier as buffaloDetails represents the base unit template.
+                const multiplier = treeData.units || 1;
+
+                if (ageInMonths >= 41) {
+                    ageGroups['41+ months'].count += multiplier;
+                    ageGroups['41+ months'].value += appliedValue * multiplier;
+                } else if (ageInMonths >= 35) {
+                    ageGroups['35-40 months'].count += multiplier;
+                    ageGroups['35-40 months'].value += appliedValue * multiplier;
+                } else if (ageInMonths >= 25) {
+                    ageGroups['25-34 months'].count += multiplier;
+                    ageGroups['25-34 months'].value += appliedValue * multiplier;
+                } else if (ageInMonths >= 19) {
+                    ageGroups['19-24 months'].count += multiplier;
+                    ageGroups['19-24 months'].value += appliedValue * multiplier;
+                } else if (ageInMonths >= 13) {
+                    ageGroups['13-18 months'].count += multiplier;
+                    ageGroups['13-18 months'].value += appliedValue * multiplier;
+                } else {
+                    ageGroups['0-12 months'].count += multiplier;
+                    ageGroups['0-12 months'].value += appliedValue * multiplier;
+                }
+
+                totalValue += appliedValue * multiplier;
+                totalCount += multiplier;
             }
         });
 
@@ -165,7 +200,7 @@ const AssetMarketValue = ({
             return <div>Loading asset data...</div>;
         }
 
-        const detailedValue = calculateDetailedAssetValueForYear(selectedYear);
+        const detailedValue = calculateDetailedAssetValueForYear(selectedYearIndex);
 
         return (
             <div className="w-full mb-8 space-y-4">
@@ -220,7 +255,7 @@ const AssetMarketValue = ({
                                                     {ageGroup}
                                                 </td>
                                                 <td className="px-6 py-3 font-medium text-slate-600 text-center border-r border-slate-100">
-                                                    {formatCurrency(data.unitValue)}
+                                                    {ageGroup === '0-12 months' && selectedYearIndex === 0 ? formatCurrency(0) : formatCurrency(data.unitValue)}
                                                 </td>
                                                 <td className="px-6 py-3 font-bold text-slate-700 text-center border-r border-slate-100">
                                                     {data.count}

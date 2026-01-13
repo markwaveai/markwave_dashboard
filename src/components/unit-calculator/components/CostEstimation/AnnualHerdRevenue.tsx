@@ -111,7 +111,7 @@ const AnnualHerdRevenue = ({
                             <tr>
                                 <td className="px-6 py-4">
                                     <div className="text-white text-sm font-medium">Total Duration</div>
-                                    <div className="text-slate-400 text-xs">{treeData.years} Years</div>
+                                    <div className="text-slate-400 text-xs">{Math.ceil((treeData.durationMonths || treeData.years * 12) / 12)} Years</div>
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                     <div className="text-white text-sm font-medium">Final Herd</div>

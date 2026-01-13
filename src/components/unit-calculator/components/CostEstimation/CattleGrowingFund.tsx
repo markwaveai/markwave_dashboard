@@ -62,8 +62,9 @@ const CattleGrowingFund = ({
             const rowData: any = {
                 monthName: monthNames[currentCalendarMonth],
                 costs: {},
+                ages: {}, // Store ages for display
                 totalMonthlyCost: 0,
-                isValidMonth: currentAbsoluteMonth <= (treeData.startYear * 12 + treeData.startMonth + (treeData.years * 12))
+                isValidMonth: currentAbsoluteMonth <= (treeData.startYear * 12 + treeData.startMonth + (treeData.durationMonths || treeData.years * 12))
             };
 
             if (rowData.isValidMonth) {
@@ -71,6 +72,7 @@ const CattleGrowingFund = ({
                     const buffaloAbsoluteBirth = (child.birthYear as number) * 12 + (child.birthMonth as number || 0);
                     if (buffaloAbsoluteBirth <= currentAbsoluteMonth) {
                         const ageInMonths = (currentAbsoluteMonth - buffaloAbsoluteBirth) + 1;
+                        rowData.ages[child.id] = ageInMonths; // Debug: Store age
                         const bracketIndex = costBrackets.findIndex((b: any) => ageInMonths >= b.start && ageInMonths <= b.end);
                         if (bracketIndex !== -1) {
                             const bracket = costBrackets[bracketIndex];
@@ -78,13 +80,15 @@ const CattleGrowingFund = ({
                             childActiveBrackets[child.id].add(shortLabel);
                             let duration = bracket.end - bracket.start + 1;
                             if (bracket.end === 999) duration = 12;
-                            const monthlyRate = bracket.cost / duration;
+                            const monthlyRate = (bracket.cost / duration) * (treeData.units || 1); // Scale by units
                             rowData.costs[child.id] = monthlyRate;
                             rowData.totalMonthlyCost += monthlyRate;
                             childTotalCosts[child.id] = (childTotalCosts[child.id] || 0) + monthlyRate;
                             totalYearlyCaringCost += monthlyRate;
                         } else {
                             rowData.costs[child.id] = 0;
+                            // Ensure age is stored even if 0 cost
+                            rowData.ages[child.id] = ageInMonths;
                             if (costBrackets[0].cost === 0 && ageInMonths <= 12) {
                                 const shortLabel = costBrackets[0].label.replace(' months', 'm').replace('months', 'm');
                                 childActiveBrackets[child.id].add(shortLabel);
@@ -154,7 +158,7 @@ const CattleGrowingFund = ({
                 <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between items-center text-center">
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Caring Cost</p>
                     <div className="text-base font-bold text-rose-600 mt-0.5">{formatCurrency(totalYearlyCaringCost)}</div>
-                    <p className="text-[9px] text-rose-600/70 mt-0.5 font-bold">{activeChildren.length} Active Children</p>
+                    <p className="text-[9px] text-rose-600/70 mt-0.5 font-bold">{activeChildren.length * (treeData.units || 1)} Active Children ({treeData.units || 1} Units)</p>
                     <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-rose-500" />
                 </div>
                 {/* Annual Revenue */}
@@ -204,14 +208,18 @@ const CattleGrowingFund = ({
                                     <td className="sticky left-0 bg-white z-10 p-2 text-[11px] font-bold text-slate-700 border-r border-slate-200">{row.monthName}</td>
                                     {activeChildren.map(child => {
                                         const cost = row.costs[child.id];
+                                        const age = row.ages[child.id];
                                         return (
-                                            <td key={child.id} className="p-2 text-center text-[11px] border-r border-slate-200 last:border-r-0 font-medium">
+                                            <td key={child.id} className="p-2 text-center text-[11px] border-r border-slate-200 last:border-r-0 font-medium" title={`Age: ${age} months`}>
                                                 {cost === null ? (
                                                     <span className="text-slate-300 font-normal">-</span>
                                                 ) : (
-                                                    <span className={cost > 0 ? 'text-slate-900' : 'text-slate-400'}>
-                                                        {cost > 0 ? formatCurrency(cost) : '₹0'}
-                                                    </span>
+                                                    <div className="flex flex-col items-center justify-center">
+                                                        <span className={cost > 0 ? 'text-slate-900' : 'text-slate-400'}>
+                                                            {cost > 0 ? formatCurrency(cost) : '₹0'}
+                                                        </span>
+                                                        <span className="text-[9px] text-slate-400 mt-0.5">({age}m)</span>
+                                                    </div>
                                                 )}
                                             </td>
                                         );

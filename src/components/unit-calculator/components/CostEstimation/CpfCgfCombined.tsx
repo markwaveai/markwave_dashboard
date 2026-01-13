@@ -56,7 +56,8 @@ const CpfCgfCombined = ({
     const isCpfApplicableForMonth = (buffalo: any, yearIndex: number, monthIndex: number) => {
         // Global Limit Check
         const absoluteStart = startYear * 12 + (treeData.startMonth || 0);
-        const absoluteEnd = absoluteStart + (treeData.years * 12) - 1;
+        const totalDuration = treeData.durationMonths || (treeData.years * 12);
+        const absoluteEnd = absoluteStart + Math.min(120, totalDuration) - 1;
         const { year, month, absMonth: currentAbsolute } = getCalendarDate(yearIndex, monthIndex);
 
         if (currentAbsolute < absoluteStart || currentAbsolute > absoluteEnd) return false;
@@ -114,7 +115,7 @@ const CpfCgfCombined = ({
     for (let m = 0; m < 12; m++) {
         // All 12 months in a simulation year are inherently valid unless beyond global end
         const { absMonth, month } = getCalendarDate(selectedYearIndex, m);
-        const globalEnd = startYear * 12 + (treeData.startMonth || 0) + (treeData.years * 12) - 1;
+        const globalEnd = startYear * 12 + (treeData.startMonth || 0) + (treeData.durationMonths || (treeData.years * 12)) - 1;
         const isValid = absMonth <= globalEnd;
 
         const cgf = isValid ? calculateCgfForMonth(selectedYearIndex, m) : 0;
@@ -141,7 +142,7 @@ const CpfCgfCombined = ({
     for (let yIndex = 0; yIndex <= selectedYearIndex; yIndex++) {
         for (let m = 0; m < 12; m++) {
             const { absMonth } = getCalendarDate(yIndex, m);
-            const globalEnd = startYear * 12 + (treeData.startMonth || 0) + (treeData.years * 12) - 1;
+            const globalEnd = startYear * 12 + (treeData.startMonth || 0) + (treeData.durationMonths || (treeData.years * 12)) - 1;
 
             if (absMonth <= globalEnd) {
                 cumulativeCgf += calculateCgfForMonth(yIndex, m);

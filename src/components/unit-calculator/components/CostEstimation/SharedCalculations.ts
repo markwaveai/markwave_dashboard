@@ -133,8 +133,13 @@ export const calculateMonthlyRevenueForBuffalo = (acquisitionMonth: number, curr
 
 export const calculateYearlyCPFCost = (treeData: any, buffaloDetails: any, calculateAgeInMonths: (buffalo: any, y: number, m: number) => number) => {
     const cpfCostByYear: any = {};
+    const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
+    const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
+    const absoluteEnd = absoluteStart + totalSimMonths - 1;
+    const endYearVal = Math.floor(absoluteEnd / 12);
+    const durationYears = endYearVal - treeData.startYear + 1;
 
-    for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+    for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
         let totalCPFCost = 0;
 
         for (let unit = 1; unit <= treeData.units; unit++) {
@@ -194,7 +199,13 @@ export const calculateDetailedMonthlyRevenue = (
     const investorMonthlyRevenue: any = {};
     const buffaloValuesByYear: any = {};
 
-    for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+    const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
+    const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
+    const absoluteEnd = absoluteStart + totalSimMonths - 1;
+    const endYearVal = Math.floor(absoluteEnd / 12);
+    const durationYears = endYearVal - treeData.startYear + 1;
+
+    for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
         monthlyRevenue[year] = {};
         investorMonthlyRevenue[year] = {};
         buffaloValuesByYear[year] = {};
@@ -206,7 +217,7 @@ export const calculateDetailedMonthlyRevenue = (
     }
 
     Object.values(buffaloDetails).forEach((buffalo: any) => {
-        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+        for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
             const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
 
             if (!buffaloValuesByYear[year][buffalo.id]) {

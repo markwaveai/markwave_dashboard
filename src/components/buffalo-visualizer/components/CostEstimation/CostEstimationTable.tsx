@@ -730,7 +730,12 @@ const CostEstimationTableContent = ({
         Object.values(buffaloDetails).forEach((buffalo: any) => {
             if (year >= buffalo.birthYear) {
                 const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
-                const value = getBuffaloValueByAge(ageInMonths);
+                let value = getBuffaloValueByAge(ageInMonths);
+
+                // Override: 0-12 months value is 0 in the first year only
+                if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
+                    value = 0;
+                }
 
                 if (ageInMonths >= 41) {
                     ageGroups['41+ months'].count++;

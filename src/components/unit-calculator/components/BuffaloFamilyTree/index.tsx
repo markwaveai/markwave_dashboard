@@ -10,7 +10,7 @@ export default function BuffaloFamilyTree() {
     // Initialize with current date
     // Initialize with default date: Jan 1, 2026
     const [units, setUnits] = useState(1);
-    const [years, setYears] = useState(10);
+    const [durationMonths, setDurationMonths] = useState(120); // Default 10 years (120 months)
     const [startYear, setStartYear] = useState(2026);
     const [startMonth, setStartMonth] = useState(0);
     const [startDay, setStartDay] = useState(1);
@@ -45,7 +45,7 @@ export default function BuffaloFamilyTree() {
     // Load from local storage on mount
     useEffect(() => {
         try {
-            const savedData = localStorage.getItem('buffalo_tree_data');
+            const savedData = localStorage.getItem('unit_calc_tree_data');
             if (savedData) {
                 const parsed = JSON.parse(savedData);
                 // Also restore config
@@ -53,7 +53,8 @@ export default function BuffaloFamilyTree() {
                 if (parsed.startMonth !== undefined) setStartMonth(parsed.startMonth);
                 if (parsed.startDay) setStartDay(parsed.startDay);
                 if (parsed.units) setUnits(parsed.units);
-                if (parsed.years) setYears(parsed.years);
+                if (parsed.durationMonths) setDurationMonths(parsed.durationMonths);
+                else if (parsed.years) setDurationMonths(parsed.years * 12); // Backwards compatibility
 
                 // Need to restore treeData but ensure it's valid
                 setTreeData(parsed);
@@ -66,7 +67,7 @@ export default function BuffaloFamilyTree() {
     // Save to local storage whenever treeData changes
     useEffect(() => {
         if (treeData) {
-            localStorage.setItem('buffalo_tree_data', JSON.stringify({
+            localStorage.setItem('unit_calc_tree_data', JSON.stringify({
                 ...treeData,
                 // Ensure config is saved too if it's not part of treeData (it is, but double check)
             }));
@@ -270,7 +271,7 @@ export default function BuffaloFamilyTree() {
     const runSimulation = () => {
         setLoading(true);
         {
-            const totalYears = Number(years);
+            const totalMonthsDuration = durationMonths;
             const herd: any[] = [];
 
             // Create initial buffaloes (2 per unit) with staggered acquisition
@@ -327,7 +328,7 @@ export default function BuffaloFamilyTree() {
             // End Date = July 2026 + 120 months = June 2036.
             // Calendar Years: 2026, ... 2036 (11 years).
 
-            const totalMonthsDuration = totalYears * 12;
+            // const totalMonthsDuration = totalYears * 12; // REMOVED
             const endYearValue = startYear + Math.floor((startMonth + totalMonthsDuration - 1) / 12);
             const yearsToSimulate = endYearValue - startYear + 1;
 
@@ -692,7 +693,7 @@ export default function BuffaloFamilyTree() {
 
             setTreeData({
                 units,
-                years,
+                durationMonths,
                 startYear,
                 startMonth,
                 startDay,
@@ -706,7 +707,7 @@ export default function BuffaloFamilyTree() {
                     totalNetRevenueWithCaring: totalNetRevenue - totalCaringCost,
                     roi: (totalNetRevenue - totalCaringCost) + totalAssetValue,
                     totalAssetValue: totalAssetValue,
-                    duration: totalYears
+                    duration: totalMonthsDuration / 12
                 },
                 lineages: {} // Will be populated below
             });
@@ -753,10 +754,10 @@ export default function BuffaloFamilyTree() {
 
     // Reset function
     const resetSimulation = () => {
-        localStorage.removeItem('buffalo_tree_data');
+        localStorage.removeItem('unit_calc_tree_data');
         setTreeData(null);
         setUnits(1);
-        setYears(10);
+        setDurationMonths(120); // Default 10 years
         setStartYear(2026);
         setStartMonth(0);
         setStartDay(1);
@@ -904,8 +905,8 @@ export default function BuffaloFamilyTree() {
                 <HeaderControls
                     units={units}
                     setUnits={setUnits}
-                    years={years}
-                    setYears={setYears}
+                    durationMonths={durationMonths}
+                    setDurationMonths={setDurationMonths}
                     startYear={startYear}
                     setStartYear={setStartYear}
                     startMonth={startMonth}

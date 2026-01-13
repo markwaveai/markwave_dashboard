@@ -45,7 +45,7 @@ export default function BuffaloFamilyTree() {
     // Load from local storage on mount
     useEffect(() => {
         try {
-            const savedData = localStorage.getItem('buffalo_tree_data');
+            const savedData = localStorage.getItem('buffalo_viz_tree_data');
             if (savedData) {
                 const parsed = JSON.parse(savedData);
                 // Also restore config
@@ -66,7 +66,7 @@ export default function BuffaloFamilyTree() {
     // Save to local storage whenever treeData changes
     useEffect(() => {
         if (treeData) {
-            localStorage.setItem('buffalo_tree_data', JSON.stringify({
+            localStorage.setItem('buffalo_viz_tree_data', JSON.stringify({
                 ...treeData,
                 // Ensure config is saved too if it's not part of treeData (it is, but double check)
             }));
@@ -752,7 +752,7 @@ export default function BuffaloFamilyTree() {
 
     // Reset function
     const resetSimulation = () => {
-        localStorage.removeItem('buffalo_tree_data');
+        localStorage.removeItem('buffalo_viz_tree_data');
         setTreeData(null);
         setUnits(1);
         setYears(10);
