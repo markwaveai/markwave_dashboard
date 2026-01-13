@@ -1,29 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './UserTabs.css';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin, Calculator, MonitorPlay, ChevronLeft, ChevronRight, ChevronDown, Shield as ShieldIcon, LifeBuoy, UserMinus } from 'lucide-react';
+import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, UserMinus } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  setActiveTab,
   toggleSidebar,
   setSidebarOpen,
   setShowAdminDetails,
   setReferralModalOpen,
   setEditReferralModal,
-  setProofModal,
-  setRejectionModal,
   setCreationRole,
 } from '../../store/slices/uiSlice';
 
-import {
-  fetchPendingUnits,
-  approveOrder,
-  rejectOrder,
-  updateTrackingData,
-} from '../../store/slices/ordersSlice';
+
+
+
 import {
   fetchReferralUsers,
   fetchExistingCustomers,
@@ -41,19 +35,6 @@ import ReferralModal from '../modals/ReferralModal';
 import EditReferralModal from '../modals/EditReferralModal';
 import RejectionModal from '../modals/RejectionModal';
 import LogoutModal from '../modals/LogoutModal';
-// import UserChoiceModal from '../modals/UserChoiceModal'; // Removed in favor of Speed Dial
-import OrdersPageSkeleton from '../common/skeletons/OrdersPageSkeleton';
-import ProductsPageSkeleton from '../common/skeletons/ProductsPageSkeleton';
-import UsersPageSkeleton from '../common/skeletons/UsersPageSkeleton';
-import TrackingPageSkeleton from '../common/skeletons/TrackingPageSkeleton';
-import BuffaloVizSkeleton from '../common/skeletons/BuffaloVizSkeleton';
-import EmiCalculatorSkeleton from '../common/skeletons/EmiCalculatorSkeleton';
-import TablePageSkeleton from '../common/TablePageSkeleton';
-
-// Lazy Load Tabs
-const BuffaloVisualizationTab = React.lazy(() => import('../sidebar-tabs/BuffaloVisualizationTab'));
-const EmiCalculatorTab = React.lazy(() => import('../sidebar-tabs/EmiCalculatorTab'));
-const AcfCalculatorTab = React.lazy(() => import('../sidebar-tabs/AcfCalculatorTab'));
 
 interface UserTabsProps {
   adminMobile?: string;
@@ -70,34 +51,42 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Local State for Admin Name (dynamic fetch)
+  // Local State
   const [displayAdminName, setDisplayAdminName] = useState(adminName);
   const [adminReferralCode, setAdminReferralCode] = useState<string>('');
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  // Local State for Sidebar Submenu
-  const [isUserManagementOpen, setIsUserManagementOpen] = useState(
-    location.pathname.includes('/referrals') || location.pathname.includes('/investors')
-  );
-
-  const [isFabExpanded, setIsFabExpanded] = useState(false);
-
-  // UI State from Redux
-  const { isSidebarOpen } = useAppSelector((state: RootState) => state.ui);
-  const { referral: showModal, editReferral: { isOpen: showEditModal, user: editingUser }, creationRole } = useAppSelector((state: RootState) => state.ui.modals);
-
-
-  // Business Logic State from Redux
-  const { referralUsers, existingCustomers } = useAppSelector((state: RootState) => state.users);
-  const trackingData = useAppSelector((state: RootState) => state.orders.trackingData);
-
-  // Dashboard State
   const [currentDashboard, setCurrentDashboard] = useState<'animalkart' | 'farmvest'>(() => {
-    // Try to restore from localStorage if needed, or default to animalkart
     if (location.pathname.startsWith('/farmvest')) return 'farmvest';
     return 'animalkart';
   });
 
-  // Determine active tab for Sidebar highlighting based on path
+  const [formData, setFormData] = useState({
+    mobile: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    refered_by_mobile: '',
+    refered_by_name: '',
+    referral_code: '',
+    role: 'Investor',
+    is_test: 'false',
+  });
+
+  const [editFormData, setEditFormData] = useState({
+    mobile: '',
+    first_name: '',
+    last_name: '',
+    refered_by_mobile: '',
+    refered_by_name: '',
+  });
+
+  // UI State from Redux
+  const { isSidebarOpen } = useAppSelector((state: RootState) => state.ui);
+  const { creationRole } = useAppSelector((state: RootState) => state.ui.modals);
+  const { editReferral: { user: editingUser } } = useAppSelector((state: RootState) => state.ui.modals);
+
+  // Determine active tab
   const currentPath = location.pathname;
   let activeTab = 'orders';
   if (currentPath.includes('/user-management')) activeTab = 'user-management';
@@ -114,30 +103,20 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/farmvest/employees')) activeTab = 'farmvest-employees';
   else if (currentPath.includes('/farmvest/farms')) activeTab = 'farmvest-farms';
 
-  const [formData, setFormData] = useState({
-    mobile: '',
-    first_name: '',
-    last_name: '',
-    email: '', // Added optional email
-    refered_by_mobile: '',
-    refered_by_name: '',
-    referral_code: '', // Added for API compliance
-    role: 'Investor',
-    is_test: 'false',
-  });
+  const handleChoiceSelection = useCallback((type: 'investor' | 'referral') => {
+    setFormData(prev => ({
 
-  const [editFormData, setEditFormData] = useState({
-    mobile: '',
-    first_name: '',
-    last_name: '',
-    refered_by_mobile: '',
-    refered_by_name: '',
-  });
-
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+      ...prev,
+      role: type === 'investor' ? 'Investor' : 'Employee',
+      refered_by_mobile: adminMobile || '',
+      refered_by_name: displayAdminName || '',
+      referral_code: adminReferralCode || '',
+      is_test: 'false'
+    }));
+    dispatch(setReferralModalOpen(true));
+  }, [adminMobile, displayAdminName, adminReferralCode, dispatch]);
 
   useEffect(() => {
-    // Initial state check
     if (window.innerWidth <= 768) {
       dispatch(setSidebarOpen(false));
     } else {
@@ -148,15 +127,12 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       if (window.innerWidth <= 768) {
         dispatch(setSidebarOpen(false));
       }
-      // On desktop, we don't force open/close to allow user preference (collapsed vs open)
-      // to persist during resize
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [dispatch]);
 
-  // Fetch Admin Details to get latest name
   useEffect(() => {
     const fetchAdminDetails = async () => {
       try {
@@ -169,36 +145,26 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           } else if (user.name) {
             fullName = user.name;
           }
-          if (fullName) {
-            setDisplayAdminName(fullName);
-          }
-          if (user.referral_code) {
-            setAdminReferralCode(user.referral_code);
-          }
+          if (fullName) setDisplayAdminName(fullName);
+          if (user.referral_code) setAdminReferralCode(user.referral_code);
         }
       } catch (error) {
         console.error('Failed to fetch admin details:', error);
       }
     };
 
-    if (adminMobile) {
-      fetchAdminDetails();
-    }
+    if (adminMobile) fetchAdminDetails();
   }, [adminMobile]);
 
-  // Handle cross-component creation trigger
   useEffect(() => {
     if (creationRole) {
       handleChoiceSelection(creationRole === 'Investor' ? 'investor' : 'referral');
       dispatch(setCreationRole(null));
     }
-  }, [creationRole, dispatch]);
+  }, [creationRole, dispatch, handleChoiceSelection]);
 
-
-  // Check if we have a session
   const hasSession = !!adminMobile;
 
-  // Fetch data based on active route
   useEffect(() => {
     if (location.pathname === '/user-management' && hasSession && adminMobile) {
       dispatch(fetchReferralUsers());
@@ -207,46 +173,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       dispatch(fetchProducts());
     }
   }, [location.pathname, dispatch, adminMobile, hasSession]);
-
-  const getSortIcon = (key: string, currentSortConfig: any) => {
-    if (currentSortConfig.key !== key) return '';
-    return currentSortConfig.direction === 'asc' ? '↑' : '↓';
-  };
-
-  const handleApproveClick = async (unitId: string) => {
-    try {
-      if (!adminMobile) return;
-      await dispatch(approveOrder({ unitId, adminMobile })).unwrap();
-      alert('Order approved successfully!');
-    } catch (error) {
-      console.error('Error approving order:', error);
-      alert('Failed to approve order.');
-    }
-  };
-  const handleReject = (unitId: string) => {
-    dispatch(setRejectionModal({ isOpen: true, unitId }));
-  };
-
-  const handleCreateClick = () => {
-    setIsFabExpanded(!isFabExpanded);
-  };
-
-  const handleChoiceSelection = (type: 'investor' | 'referral') => {
-    setIsFabExpanded(false);
-    setFormData(prev => ({
-      ...prev,
-      role: type === 'investor' ? 'Investor' : 'Employee',
-      refered_by_mobile: adminMobile || '',
-      refered_by_name: displayAdminName || '',
-      referral_code: adminReferralCode || '',
-      is_test: 'false'
-    }));
-    dispatch(setReferralModalOpen(true));
-  };
-
-  const handleCloseModal = () => {
-    dispatch(setReferralModalOpen(false));
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -260,13 +186,11 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
   const fetchReferrerDetails = async (mobile: string, isEditMode: boolean = false) => {
     if (!mobile || mobile.length < 10) return;
-
     try {
       const response = await axios.get(API_ENDPOINTS.getUserDetails(mobile));
       if (response.data && response.data.user) {
         const user = response.data.user;
         let fullName = '';
-
         if (user.first_name || user.last_name) {
           fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
         } else if (user.name) {
@@ -274,15 +198,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         }
 
         if (isEditMode) {
-          setEditFormData(prev => ({
-            ...prev,
-            refered_by_name: fullName
-          }));
+          setEditFormData(prev => ({ ...prev, refered_by_name: fullName }));
         } else {
-          setFormData(prev => ({
-            ...prev,
-            refered_by_name: fullName
-          }));
+          setFormData(prev => ({ ...prev, refered_by_name: fullName }));
         }
       }
     } catch (error) {
@@ -302,15 +220,11 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     e.preventDefault();
     try {
       const result = await dispatch(createReferralUser(formData)).unwrap();
-
-      // Check checks handled in thunk rejection or success
       if (result.message === 'User already exists') {
         alert('User already exists with this mobile number.');
       } else {
         alert('User created successfully!');
       }
-
-      // Close modal and reset form
       dispatch(setReferralModalOpen(false));
       setFormData({
         mobile: '',
@@ -323,28 +237,13 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         role: 'Investor',
         is_test: 'false',
       });
-
-      // Refresh relevant data
       if (formData.role === 'Employee') {
         dispatch(fetchFarmvestEmployees());
       }
-
     } catch (error: any) {
-
       console.error('Error creating user:', error);
       alert(error || 'Error creating user. Please try again.');
     }
-  };
-
-  const handleRowClick = (user: any) => {
-    setEditFormData({
-      mobile: user.mobile,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      refered_by_mobile: user.refered_by_mobile || '',
-      refered_by_name: user.refered_by_name || '',
-    });
-    dispatch(setEditReferralModal({ isOpen: true, user }));
   };
 
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -355,17 +254,13 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.put(API_ENDPOINTS.updateUser(editingUser.mobile), {
+      await axios.put(API_ENDPOINTS.updateUser(editingUser.mobile), {
         first_name: editFormData.first_name,
         last_name: editFormData.last_name,
         refered_by_mobile: editFormData.refered_by_mobile,
         refered_by_name: editFormData.refered_by_name,
       });
-
-      console.log('User updated:', response.data);
       alert('User updated successfully!');
-
-      // Close modal and reset form
       dispatch(setEditReferralModal({ isOpen: false }));
       setEditFormData({
         mobile: '',
@@ -374,8 +269,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         refered_by_mobile: '',
         refered_by_name: '',
       });
-
-      // Refresh the referral users list
       const refreshResponse = await axios.get(API_ENDPOINTS.getReferrals());
       dispatch(setReferralUsers(refreshResponse.data.users || []));
     } catch (error) {
@@ -384,134 +277,36 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     }
   };
 
-  const handleCloseEditModal = () => {
-    dispatch(setEditReferralModal({ isOpen: false }));
-  };
-
-  // Helper to format date/time
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    const date = now.toLocaleDateString('en-GB').replace(/\//g, '-');
-    const time = now.toLocaleTimeString('en-GB');
-    return { date, time };
-  };
-
-  // Initialize tracking for a buffalo if not present
-  const getTrackingForBuffalo = (orderId: string, buffaloNum: number, initialStatus: string) => {
-    const key = `${orderId}-${buffaloNum}`;
-
-    // Lazy initialization logic inside render or handler usually, but here accessing state directly
-    // If not exists, return default based on paymentStatus
-    if (trackingData[key]) {
-      return trackingData[key];
-    }
-
-    // Default mapping - Always start at Stage 1
-    let stageId = 1; // Order Placed
-    const history: any = {
-      1: { date: '24-05-2025', time: '10:30:00' } // Mock initial
-    };
-
-    // Note: Previous logic to auto-advance based on paymentStatus is removed 
-    // to allow full manual "Update" flow from the start.
-
-    // We return a transient object if not in state, but ideally we should set state.
-    // However, to avoid infinite loops, we'll return this derived state.
-    // The "Update" action will commit it to state.
-    return { currentStageId: stageId, history };
-  };
-
-  const handleStageUpdate = (orderId: string, buffaloNum: number, nextStageId: number) => {
-    const key = `${orderId}-${buffaloNum}`;
-    const { date, time } = getCurrentDateTime();
-    dispatch(updateTrackingData({ key, stageId: nextStageId, date, time }));
-  };
-
-  const handleViewProof = (transaction: any, investor: any) => {
-    dispatch(setProofModal({ isOpen: true, data: { ...transaction, name: investor.name } }));
-  };
-
-  const handleCloseProofModal = () => {
-    dispatch(setProofModal({ isOpen: false }));
-  };
-
   return (
     <div className="app-container">
-      {/* Mobile Sidebar Overlay */}
-      <div
-        className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`}
-        onClick={() => dispatch(setSidebarOpen(false))}
-      />
+      <div className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`} onClick={() => dispatch(setSidebarOpen(false))} />
 
-      {/* Global Header - Top Full Width */}
       {hasSession && (
         <header className="app-header">
-          {/* Left: Mobile Toggle, Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <button
-              className="sidebar-toggle-btn"
-              onClick={() => dispatch(toggleSidebar())}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                padding: '12px 16px',
-                height: 'auto',
-                width: 'auto',
-                filter: 'drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25))'
-              }}
-            >
+            <button className="sidebar-toggle-btn" onClick={() => dispatch(toggleSidebar())}>
               {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-
-            <img
-              src="/header-logo.png"
-              alt="Markwave Logo"
-              className="header-logo"
-              style={{ marginLeft: '0px' }}
-            />
+            <img src="/header-logo.png" alt="Markwave Logo" className="header-logo" />
           </div>
 
-          {/* Center: Title / Switcher */}
           <div className="header-center-title">
             <div className="dashboard-switcher">
-              <button
-                className={`switch-btn ${currentDashboard === 'animalkart' ? 'active' : ''}`}
-                onClick={() => {
-                  setCurrentDashboard('animalkart');
-                  navigate('/orders');
-                }}
-              >
+              <button className={`switch-btn ${currentDashboard === 'animalkart' ? 'active' : ''}`} onClick={() => { setCurrentDashboard('animalkart'); navigate('/orders'); }}>
                 Animalkart Dashboard
               </button>
-              <button
-                className={`switch-btn ${currentDashboard === 'farmvest' ? 'active' : ''}`}
-                onClick={() => {
-                  setCurrentDashboard('farmvest');
-                  navigate('/farmvest/employees');
-                }}
-              >
+              <button className={`switch-btn ${currentDashboard === 'farmvest' ? 'active' : ''}`} onClick={() => { setCurrentDashboard('farmvest'); navigate('/farmvest/employees'); }}>
                 FarmVest Dashboard
               </button>
             </div>
           </div>
 
-          {/* Right Status & Profile */}
           <div className="header-right">
             <div className="status-pill">
               <div className="status-dot-green"></div>
               <span className="status-text">Online</span>
             </div>
-
-            {/* Admin Profile in Header (Right of Online) */}
-            <div
-              onClick={() => dispatch(setShowAdminDetails(true))}
-              className="admin-header-profile"
-            >
+            <div onClick={() => dispatch(setShowAdminDetails(true))} className="admin-header-profile">
               <div className="admin-name-container">
                 <span className="admin-name-text">{displayAdminName}</span>
               </div>
@@ -523,46 +318,20 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         </header>
       )}
 
-      {/* Main Layout Body (Row: Sidebar + Content) */}
       <div className="layout-body">
-        {/* Sidebar */}
-        <nav
-          className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
-          onClick={() => dispatch(toggleSidebar())}
-        >
+        <nav className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`} onClick={() => dispatch(toggleSidebar())}>
           <div className="sidebar-header">
-            <button
-              className="sidebar-close-btn-mobile"
-              onClick={(e) => {
-                e.stopPropagation();
-                dispatch(setSidebarOpen(false));
-              }}
-            >
+            <button className="sidebar-close-btn-mobile" onClick={(e) => { e.stopPropagation(); dispatch(setSidebarOpen(false)); }}>
               <X size={20} />
             </button>
-            <img
-              src="/header-logo.png"
-              alt="Markwave Logo"
-              className="header-logo-sidebar"
-              style={{ height: '28px' }}
-            />
+            <img src="/header-logo.png" alt="Markwave Logo" className="header-logo-sidebar" style={{ height: '28px' }} />
           </div>
           <ul className="sidebar-menu" style={{ marginTop: '10px' }}>
-            {/* Sidebar Toggle Button at the top */}
-
-
             {currentDashboard === 'animalkart' ? (
               <>
                 {hasSession && (
-                  /* Dashboard (Orders) */
                   <li>
-                    <button
-                      className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate('/orders');
-                      }}
-                    >
+                    <button className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/orders'); }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                         <LayoutDashboard size={18} />
                         <span className="nav-text">Orders</span>
@@ -570,17 +339,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                     </button>
                   </li>
                 )}
-
                 {hasSession && (
-                  /* User Management (Single Link) */
                   <li>
-                    <button
-                      className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate('/user-management');
-                      }}
-                    >
+                    <button className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                         <Users size={18} />
                         <span className="nav-text">User Management</span>
@@ -588,17 +349,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                     </button>
                   </li>
                 )}
-
                 {hasSession && (
-                  /* Products */
                   <li>
-                    <button
-                      className={`nav-item ${activeTab === 'products' ? 'active-main' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate('/products');
-                      }}
-                    >
+                    <button className={`nav-item ${activeTab === 'products' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/products'); }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                         <ShoppingBag size={18} />
                         <span className="nav-text">Products</span>
@@ -606,153 +359,64 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                     </button>
                   </li>
                 )}
-
-                {/* Buffalo Visualization */}
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/buffalo-viz', { state: { fromDashboard: true } });
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/buffalo-viz', { state: { fromDashboard: true } }); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <MonitorPlay size={18} />
                       <span className="nav-text">Buffalo Vis</span>
                     </div>
                   </button>
                 </li>
-
-                {/* Unit Calculator */}
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'unit-calculator' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/unit-calculator', { state: { fromDashboard: true } });
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'unit-calculator' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/unit-calculator', { state: { fromDashboard: true } }); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <Calculator size={18} />
                       <span className="nav-text">Unit Calculator</span>
                     </div>
                   </button>
                 </li>
-
-                {/* EMI Calculator */}
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/emi-calculator', { state: { fromDashboard: true } });
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/emi-calculator', { state: { fromDashboard: true } }); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <Calculator size={18} />
                       <span className="nav-text">EMI Calculator</span>
                     </div>
                   </button>
                 </li>
-                {/* EMI Calculator
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/emi-calculator', { state: { fromDashboard: true } });
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Calculator size={18} />
-                      <span className="nav-text">EMI Calculator</span>
-                    </div>
-                  </button>
-                </li> */}
-
-                {/* ACF Calculator */}
-                <li>
-                  <button
-                    className={`nav-item ${activeTab === 'acf' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/acf-calculator', { state: { fromDashboard: true } });
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'acf' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/acf-calculator', { state: { fromDashboard: true } }); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <Calculator size={18} />
                       <span className="nav-text">ACF Calculator</span>
                     </div>
                   </button>
                 </li>
-
-                {/* Privacy Policy */}
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'privacy' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/privacy-policy', { state: { fromDashboard: true } });
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'privacy' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/privacy-policy', { state: { fromDashboard: true } }); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <ShieldIcon size={18} />
                       <span className="nav-text">Privacy & Policy</span>
                     </div>
                   </button>
                 </li>
-
-                {/* Referral Landing Page */}
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'referral-landing' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/referral-landing', {
-                        state: {
-                          fromDashboard: true,
-                          adminReferralCode: adminReferralCode // Pass code
-                        }
-                      });
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'referral-landing' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/referral-landing', { state: { fromDashboard: true, adminReferralCode } }); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <UserCheck size={18} />
                       <span className="nav-text">Referral Page</span>
                     </div>
                   </button>
                 </li>
-
-
-                {/* Deactivate User Page */}
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'deactivate-user' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/deactivate-user', {
-                        state: {
-                          fromDashboard: true,
-                        }
-                      });
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'deactivate-user' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/deactivate-user', { state: { fromDashboard: true } }); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <UserMinus size={18} />
                       <span className="nav-text">Deactivate User</span>
                     </div>
                   </button>
                 </li>
-
-                {/* Support */}
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'support' ? 'active-main' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/support', { state: { fromDashboard: true } });
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'support' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/support', { state: { fromDashboard: true } }); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <LifeBuoy size={18} />
                       <span className="nav-text">Support</span>
@@ -761,16 +425,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 </li>
               </>
             ) : (
-              // Farmvest Dashboard Modules
               <>
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'farmvest-employees' ? 'active' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/farmvest/employees');
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'farmvest-employees' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/farmvest/employees'); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <Users size={18} />
                       <span className="nav-text">Employees</span>
@@ -778,13 +435,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                   </button>
                 </li>
                 <li>
-                  <button
-                    className={`nav-item ${activeTab === 'farmvest-farms' ? 'active' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/farmvest/farms');
-                    }}
-                  >
+                  <button className={`nav-item ${activeTab === 'farmvest-farms' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/farmvest/farms'); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <TreePine size={18} />
                       <span className="nav-text">Farms</span>
@@ -797,13 +448,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
           {hasSession && (
             <div className="sidebar-footer">
-              <button
-                className="nav-item logout"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsLogoutModalOpen(true);
-                }}
-              >
+              <button className="nav-item logout" onClick={(e) => { e.stopPropagation(); setIsLogoutModalOpen(true); }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <LogOut size={18} />
                   <span className="nav-text">Logout</span>
@@ -813,69 +458,27 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           )}
         </nav>
 
-        {/* Main Content Area */}
         <main className="main-content">
           {children}
-
-          {/* Floating Action Button - Context Aware */}
           {hasSession && activeTab === 'user-management' && (
             <div className="fab-container">
-              <button
-                className="fab-main-btn"
-                onClick={() => handleChoiceSelection('investor')}
-                title="Add New Investor"
-                aria-label="Add New Investor"
-              >
-                +
-              </button>
+              <button className="fab-main-btn" onClick={() => handleChoiceSelection('investor')} title="Add New Investor" aria-label="Add New Investor">+</button>
             </div>
           )}
-
-
         </main>
       </div>
 
-      {
-        hasSession && (
-          <>
-            <ReferralModal
-              formData={formData}
-              onInputChange={handleInputChange}
-              onBlur={handleReferralMobileBlur}
-              onSubmit={handleSubmit}
-              adminReferralCode={adminReferralCode}
-              canEditReferralCode={true} // Allow editing in User Management
-            />
-
-            <EditReferralModal
-              editFormData={editFormData}
-              onInputChange={handleEditInputChange}
-              onBlur={handleEditReferralMobileBlur}
-              onSubmit={handleEditSubmit}
-            />
-
-            <ImageNamesModal />
-
-            <AdminDetailsModal
-              adminName={displayAdminName}
-              adminMobile={adminMobile}
-              adminRole={adminRole}
-              lastLogin={lastLogin}
-              presentLogin={presentLogin}
-              adminReferralCode={adminReferralCode}
-            />
-
-            <RejectionModal />
-
-            <LogoutModal
-              isOpen={isLogoutModalOpen}
-              onClose={() => setIsLogoutModalOpen(false)}
-              onConfirm={onLogout!}
-            />
-          </>
-        )
-      }
-    </div >
+      {hasSession && (
+        <>
+          <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralMobileBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} canEditReferralCode={true} />
+          <EditReferralModal editFormData={editFormData} onInputChange={handleEditInputChange} onBlur={handleEditReferralMobileBlur} onSubmit={handleEditSubmit} />
+          <ImageNamesModal />
+          <AdminDetailsModal adminName={displayAdminName} adminMobile={adminMobile} adminRole={adminRole} lastLogin={lastLogin} presentLogin={presentLogin} adminReferralCode={adminReferralCode} />
+          <RejectionModal />
+          <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />
+        </>
+      )}
+    </div>
   );
 };
 

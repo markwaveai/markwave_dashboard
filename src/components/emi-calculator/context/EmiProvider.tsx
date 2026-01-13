@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, ReactNode } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+
 import { EmiContext, EmiRow, YearlyRow, AcfRow } from './EmiContext';
 
 // Constants
@@ -100,7 +101,8 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Simulation Core
     // Generates the schedule array
-    const simulateConfig = (pAmount: number, pRate: number, pMonths: number, pUnits: number, pCpf: boolean, pCgf: boolean) => {
+    const simulateConfig = useCallback((pAmount: number, pRate: number, pMonths: number, pUnits: number, pCpf: boolean, pCgf: boolean) => {
+
         const principal = pAmount;
         const monthlyRate = pRate / 12 / 100;
 
@@ -288,10 +290,12 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             });
         }
         return { rows, emi: emiLocal };
-    };
+    }, []);
+
 
     // Herd Simulation for Asset Valuations
-    const simulateHerd = (tenureMonths: number, unitCount: number) => {
+    const simulateHerd = useCallback((tenureMonths: number, unitCount: number) => {
+
         const orderMonthBuff1 = 1;
         const orderMonthBuff2 = 7;
 
@@ -317,9 +321,11 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // We return the ages for a SINGLE unit now, to avoid massive array creation crash.
         // multi-unit scaling happens in calculateAssetValueFromSimulation
         return offspringAges;
-    };
+    }, []);
 
-    const calculateAssetValueFromSimulation = (singleUnitOffspringAges: number[], pUnits: number) => {
+
+    const calculateAssetValueFromSimulation = useCallback((singleUnitOffspringAges: number[], pUnits: number) => {
+
         const adultValue = 175000 * 2 * pUnits;
 
         let singleUnitOffspringValue = 0;
@@ -329,7 +335,8 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // Total = Adults + (Single Unit Offspring Total * Unit Count)
         return adultValue + (singleUnitOffspringValue * pUnits);
-    }
+    }, []);
+
 
     // Precise Simulation for Asset Valuation (Matching Buffalo Vis)
     const calculateProjectedAssetValue = (targetYearIndex: number, unitCount: number) => {
@@ -339,7 +346,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const startYear = new Date().getFullYear(); // Or fixed 2026? Let's use 2026 to match Vis defaults if needed, but current year is safer.
         // Actually, Buffalo Vis default is 2026. Let's stick to dynamic current year for Calculator context.
         const startMonth = 0; // Jan
-        const startDay = 1;
+
 
         const totalYears = targetYearIndex;
         const herd: any[] = [];
@@ -485,7 +492,8 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Helper check: does this rate result in ZERO total loss?
         const isSafe = (r: number) => {
             const { rows } = simulateConfig(pAmount, r, pMonths, pUnits, pCpf, pCgf);
-            const tLoss = rows.reduce((acc, row) => acc + row.loss, 0);
+            const tLoss = rows.reduce((acc: number, row: EmiRow) => acc + row.loss, 0);
+
             return tLoss < 1.0; // Tolerance for floating point noise
         };
 
@@ -534,11 +542,12 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setSchedule(rows);
 
         // Calculate Totals
-        const tRev = rows.reduce((acc, r) => acc + r.revenue, 0);
-        const tCpf = rows.reduce((acc, r) => acc + r.cpf, 0);
-        const tCgf = rows.reduce((acc, r) => acc + r.cgf, 0);
-        const tProfit = rows.reduce((acc, r) => acc + r.profit, 0);
-        const tLoss = rows.reduce((acc, r) => acc + r.loss, 0);
+        const tRev = rows.reduce((acc: number, r: EmiRow) => acc + r.revenue, 0);
+        const tCpf = rows.reduce((acc: number, r: EmiRow) => acc + r.cpf, 0);
+        const tCgf = rows.reduce((acc: number, r: EmiRow) => acc + r.cgf, 0);
+        const tProfit = rows.reduce((acc: number, r: EmiRow) => acc + r.profit, 0);
+        const tLoss = rows.reduce((acc: number, r: EmiRow) => acc + r.loss, 0);
+
 
         // Net Cash is usually Profit - Loss
         setTotalRevenue(tRev);
@@ -550,7 +559,8 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // Derived financial totals
         // const tPrincip = rows.reduce((acc, r) => acc + r.principal, 0); // Should match amount roughly
-        const tInt = rows.reduce((acc, r) => acc + r.interest, 0);
+        const tInt = rows.reduce((acc: number, r: EmiRow) => acc + r.interest, 0);
+
 
         setTotalPayment(calcEmi * months);
         setTotalInterest(tInt);
@@ -568,14 +578,15 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             const end = Math.min((i + 1) * 12, rows.length);
             const chunk = rows.slice(start, end);
 
-            const yEmi = chunk.reduce((s, r) => s + r.emi, 0);
-            const yRev = chunk.reduce((s, r) => s + r.revenue, 0);
-            const yCpf = chunk.reduce((s, r) => s + r.cpf, 0);
-            const yCgf = chunk.reduce((s, r) => s + r.cgf, 0);
-            const yProfit = chunk.reduce((s, r) => s + r.profit, 0);
-            const yLoss = chunk.reduce((s, r) => s + r.loss, 0);
-            const yPrincipal = chunk.reduce((s, r) => s + r.principal, 0);
-            const yInterest = chunk.reduce((s, r) => s + r.interest, 0);
+            const yEmi = chunk.reduce((s: number, r: EmiRow) => s + r.emi, 0);
+            const yRev = chunk.reduce((s: number, r: EmiRow) => s + r.revenue, 0);
+            const yCpf = chunk.reduce((s: number, r: EmiRow) => s + r.cpf, 0);
+            const yCgf = chunk.reduce((s: number, r: EmiRow) => s + r.cgf, 0);
+            const yProfit = chunk.reduce((s: number, r: EmiRow) => s + r.profit, 0);
+            const yLoss = chunk.reduce((s: number, r: EmiRow) => s + r.loss, 0);
+            const yPrincipal = chunk.reduce((s: number, r: EmiRow) => s + r.principal, 0);
+            const yInterest = chunk.reduce((s: number, r: EmiRow) => s + r.interest, 0);
+
             const lastBalance = chunk[chunk.length - 1].balance;
             const lastLoanPool = chunk[chunk.length - 1].loanPoolBalance;
 
@@ -592,13 +603,15 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 balance: lastBalance, // Balance at end of year
                 loanPoolBalance: lastLoanPool,
                 totalPayment: yEmi + yCpf + yCgf,
-                debitFromBalance: chunk.reduce((s, r) => s + (r.emiFromLoanPool + r.cpfFromLoanPool + r.cgfFromLoanPool), 0),
+                debitFromBalance: chunk.reduce((s: number, r: EmiRow) => s + (r.emiFromLoanPool + r.cpfFromLoanPool + r.cgfFromLoanPool), 0),
+
                 netCash: yProfit - yLoss
             });
         }
         setYearlySchedule(yearly);
 
-    }, [amount, rate, months, units, cpfEnabled, cgfEnabled]);
+    }, [amount, rate, months, units, cpfEnabled, cgfEnabled, simulateConfig, simulateHerd, calculateAssetValueFromSimulation]);
+
 
     // --- ACF Derived Data ---
     const acfMonthlyInstallment = useMemo(() => {
