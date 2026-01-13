@@ -443,8 +443,8 @@ const CostEstimationTableContent = ({
                         if (revenue > 0) {
                             monthlyRevenue[year][month].total += revenue;
                             monthlyRevenue[year][month].buffaloes[buffalo.id] = revenue;
-                            // Investor Revenue is Total across all units
-                            investorMonthlyRevenue[year][month] += revenue; // Do not scale by units again
+                            // Investor Revenue is Total across all units. BuffaloDetails is 1 unit, so we MUST scale.
+                            investorMonthlyRevenue[year][month] += revenue * treeData.units;
                         }
                     }
                 }
@@ -476,7 +476,8 @@ const CostEstimationTableContent = ({
                     totalValue += getBuffaloValueByAge(ageInMonths);
                 }
             });
-            return totalValue;
+            // Scale by units because buffaloDetails represents a single unit's herd
+            return totalValue * treeData.units;
         };
 
         // Helper to get calendar date from simulation index
@@ -730,21 +731,21 @@ const CostEstimationTableContent = ({
 
             const yearData = yearlyData.find((d: any) => d.year === year);
 
-            // Do not scale by units again, as buffaloDetails contains full population
-            const scaledTotalAssetValue = totalAssetValue;
+            // Scale by units as buffaloDetails contains only unit 1
+            const scaledTotalAssetValue = totalAssetValue * treeData.units;
 
-            // Scale age categories - No scaling needed
+            // Scale age categories
             const scaledAgeCategories: any = {};
             Object.keys(ageCategories).forEach(key => {
                 scaledAgeCategories[key] = {
-                    count: ageCategories[key].count,
-                    value: ageCategories[key].value
+                    count: ageCategories[key].count * treeData.units,
+                    value: ageCategories[key].value * treeData.units
                 };
             });
 
             assetValues.push({
                 year: year,
-                totalBuffaloes: (yearData?.totalBuffaloes || 0),
+                totalBuffaloes: (yearData?.totalBuffaloes || 0), // Already scaled in yearlyData
                 ageCategories: scaledAgeCategories,
                 totalAssetValue: scaledTotalAssetValue,
                 motherBuffaloes: scaledAgeCategories['41+ months'].count

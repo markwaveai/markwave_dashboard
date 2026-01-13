@@ -80,6 +80,8 @@ export interface EmiContextType {
     setAcfTenureMonths: (val: number) => void;
     acfProjectionYear: number;
     setAcfProjectionYear: (val: number) => void;
+    acfRevenueProjectionYear: number;
+    setAcfRevenueProjectionYear: (val: number) => void;
     acfMonthlyInstallment: number;
     acfTotalInvestment: number;
     acfTotalBenefit: number;

@@ -109,9 +109,15 @@ const HeaderControls = ({
                                     type="number"
                                     min="1"
                                     max="999"
-                                    className="w-14 bg-transparent text-sm font-bold text-slate-700 text-center focus:outline-none"
+                                    className="w-14 bg-transparent text-sm font-bold text-slate-700 text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     value={units}
-                                    onChange={(e) => handleNumberChange(e.target.value, setUnits)}
+                                    onWheel={(e) => (e.target as HTMLElement).blur()}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        // Strictly prevent negative values
+                                        if (val.includes('-')) return;
+                                        handleNumberChange(val, setUnits);
+                                    }}
                                     onBlur={() => handleBlur(setUnits, units, 1)}
                                 />
                             </div>

@@ -4,6 +4,7 @@ import { Wallet, Calendar, PiggyBank, Briefcase } from 'lucide-react';
 import { clsx } from 'clsx';
 import HoverGradientStatCard from '../stats/HoverGradientStatCard';
 import AssetProjectionCard from './AssetProjectionCard';
+import RevenueProjectionCard from './RevenueProjectionCard';
 
 const AcfStatsGrid = () => {
     const {
@@ -15,6 +16,8 @@ const AcfStatsGrid = () => {
         calculateProjectedAssetValue: calculateProjection, // Destructure with alias if needed or direct
         acfProjectionYear,
         setAcfProjectionYear,
+        acfRevenueProjectionYear,
+        setAcfRevenueProjectionYear,
         formatCurrency
     } = useEmi();
 
@@ -24,7 +27,7 @@ const AcfStatsGrid = () => {
         calculateProjection ? calculateProjection(acfProjectionYear, acfUnits) : { totalAssetValue: 0, totalBuffaloes: 0 };
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             <HoverGradientStatCard
                 label="Total Investment"
                 value={acfTotalInvestment}
@@ -40,6 +43,13 @@ const AcfStatsGrid = () => {
                 year={acfProjectionYear}
                 onYearChange={setAcfProjectionYear}
                 buffaloCount={projectedBuffaloCount}
+                formatCurrency={formatCurrency}
+            />
+
+            <RevenueProjectionCard
+                yearIndex={acfRevenueProjectionYear}
+                onYearChange={setAcfRevenueProjectionYear}
+                units={acfUnits}
                 formatCurrency={formatCurrency}
             />
 

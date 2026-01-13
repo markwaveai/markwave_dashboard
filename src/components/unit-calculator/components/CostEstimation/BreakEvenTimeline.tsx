@@ -124,7 +124,7 @@ const BreakEvenTimeline: React.FC<any> = ({
                                                 <span className="text-sm font-medium text-slate-600">{formatCurrency(data.assetValue)}</span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <span className={`text-sm font-bold ${isBreakEven ? 'text-emerald-700' : 'text-indigo-600'}`}>${formatCurrency(data.cumulativeRevenueWithCPF + data.assetValue)}</span>
+                                                <span className={`text-sm font-bold ${isBreakEven ? 'text-emerald-700' : 'text-indigo-600'}`}>{formatCurrency(data.cumulativeRevenueWithCPF + data.assetValue)}</span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col items-center">

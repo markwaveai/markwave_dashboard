@@ -20,6 +20,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [acfUnits, setAcfUnits] = useState(1);
     const [acfTenureMonths, setAcfTenureMonths] = useState(30); // 11 or 30
     const [acfProjectionYear, setAcfProjectionYear] = useState(1);
+    const [acfRevenueProjectionYear, setAcfRevenueProjectionYear] = useState(1);
 
     // --- Simulation Results State ---
     const [schedule, setSchedule] = useState<EmiRow[]>([]);
@@ -650,6 +651,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             acfUnits, setAcfUnits,
             acfTenureMonths, setAcfTenureMonths,
             acfProjectionYear, setAcfProjectionYear,
+            acfRevenueProjectionYear, setAcfRevenueProjectionYear,
 
             // ACF Results
             acfMonthlyInstallment,
