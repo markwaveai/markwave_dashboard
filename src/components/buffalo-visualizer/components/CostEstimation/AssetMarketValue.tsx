@@ -86,7 +86,12 @@ const AssetMarketValue = ({
 
             if (buffalo.birthYear < year || (buffalo.birthYear === year && (buffalo.birthMonth || 0) <= targetMonth)) {
                 const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
-                const value = getBuffaloValueByAge(ageInMonths);
+                let value = getBuffaloValueByAge(ageInMonths);
+
+                // Override: 0-12 months value is 0 in the first year only
+                if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
+                    value = 0;
+                }
 
                 if (ageInMonths >= 41) {
                     ageGroups['41+ months'].count++;
@@ -220,7 +225,7 @@ const AssetMarketValue = ({
                                                     {ageGroup}
                                                 </td>
                                                 <td className="px-6 py-3 font-medium text-slate-600 text-center border-r border-slate-100">
-                                                    {formatCurrency(data.unitValue)}
+                                                    {ageGroup === '0-12 months' && Number(selectedYear) === Number(treeData.startYear) ? formatCurrency(0) : formatCurrency(data.unitValue)}
                                                 </td>
                                                 <td className="px-6 py-3 font-bold text-slate-700 text-center border-r border-slate-100">
                                                     {data.count}

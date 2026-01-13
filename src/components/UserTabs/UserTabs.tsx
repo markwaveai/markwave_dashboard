@@ -110,6 +110,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/support')) activeTab = 'support';
   else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
   else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
+  else if (currentPath.includes('/unit-calculator')) activeTab = 'unit-calculator';
   else if (currentPath.includes('/farmvest/employees')) activeTab = 'farmvest-employees';
   else if (currentPath.includes('/farmvest/farms')) activeTab = 'farmvest-farms';
 
@@ -622,6 +623,37 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                   </button>
                 </li>
 
+            {/* Unit Calculator */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'unit-calculator' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/unit-calculator', { state: { fromDashboard: true } });
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Calculator size={18} />
+                  <span className="nav-text">Unit Calculator</span>
+                </div>
+              </button>
+            </li>
+
+            {/* EMI Calculator */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/emi-calculator', { state: { fromDashboard: true } });
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Calculator size={18} />
+                  <span className="nav-text">EMI Calculator</span>
+                </div>
+              </button>
+            </li>
                 {/* EMI Calculator */}
                 <li>
                   <button

@@ -13,6 +13,7 @@ import ProductsTab from './components/sidebar-tabs/ProductsTab';
 import BuffaloVisualizationTab from './components/sidebar-tabs/BuffaloVisualizationTab';
 import EmiCalculatorTab from './components/sidebar-tabs/EmiCalculatorTab';
 import AcfCalculatorTab from './components/sidebar-tabs/AcfCalculatorTab';
+import UnitCalculatorTab from './components/sidebar-tabs/UnitCalculatorTab';
 
 // FarmVest Components
 // (Moved below all static imports)
@@ -225,6 +226,14 @@ function App() {
           <ConditionalLayoutWrapper>
             <React.Suspense fallback={<BuffaloVizSkeleton />}>
               <BuffaloVisualizationTab />
+            </React.Suspense>
+          </ConditionalLayoutWrapper>
+        } />
+
+        <Route path="/unit-calculator" element={
+          <ConditionalLayoutWrapper>
+            <React.Suspense fallback={<BuffaloVizSkeleton />}>
+              <UnitCalculatorTab />
             </React.Suspense>
           </ConditionalLayoutWrapper>
         } />
