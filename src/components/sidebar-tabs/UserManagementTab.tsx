@@ -30,17 +30,21 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
         });
     }, [setSearchParams]);
 
-    // Combine and deduplicate users
+    // Combine and deduplicate users, filtering out Employees for the Animalkart view
     const allUsersMerged = useMemo(() => {
         const combined = [...existingCustomers, ...referralUsers];
-        // Deduplicate by mobile
+        // Deduplicate by mobile and filter out Employees
         const seen = new Set();
         return combined.filter(user => {
             if (!user.mobile || seen.has(user.mobile)) return false;
+            // Filter out employees as they are moved to Farmvest
+            if (user.role === 'Employee') return false;
+
             seen.add(user.mobile);
             return true;
         });
     }, [existingCustomers, referralUsers]);
+
 
     // Custom Search Function
     const searchFn = useCallback((item: any, query: string) => {

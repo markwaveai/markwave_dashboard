@@ -42,36 +42,54 @@ export default function BuffaloFamilyTree() {
         }
     }, [startYear, startMonth]);
 
-    // Load from local storage on mount
+    // Load config from local storage on mount
     useEffect(() => {
         try {
-            const savedData = localStorage.getItem('buffalo_viz_tree_data');
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                // Also restore config
-                if (parsed.startYear) setStartYear(parsed.startYear);
-                if (parsed.startMonth !== undefined) setStartMonth(parsed.startMonth);
-                if (parsed.startDay) setStartDay(parsed.startDay);
-                if (parsed.units) setUnits(parsed.units);
-                if (parsed.years) setYears(parsed.years);
+            const savedConfig = localStorage.getItem('buffalo_sim_config');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                if (config.units) setUnits(config.units);
+                if (config.years) setYears(config.years);
+                if (config.startYear) setStartYear(config.startYear);
+                if (config.startMonth !== undefined) setStartMonth(config.startMonth);
+                if (config.startDay) setStartDay(config.startDay);
 
-                // Need to restore treeData but ensure it's valid
-                setTreeData(parsed);
+                // Trigger an initial simulation after a short delay to ensure state updates are applied
+                setTimeout(() => {
+                    setShouldAutoRun(true);
+                }, 100);
             }
         } catch (e) {
-            console.error("Failed to load tree data", e);
+            console.error("Failed to load simulation config", e);
         }
     }, []);
 
-    // Save to local storage whenever treeData changes
+    const [shouldAutoRun, setShouldAutoRun] = useState(false);
+
     useEffect(() => {
-        if (treeData) {
-            localStorage.setItem('buffalo_viz_tree_data', JSON.stringify({
-                ...treeData,
-                // Ensure config is saved too if it's not part of treeData (it is, but double check)
-            }));
+        if (shouldAutoRun) {
+            runSimulation();
+            setShouldAutoRun(false);
         }
-    }, [treeData]);
+    }, [shouldAutoRun]);
+
+    // Save only config to local storage whenever it changes
+    useEffect(() => {
+        try {
+            const config = {
+                units,
+                years,
+                startYear,
+                startMonth,
+                startDay,
+                hasSimulation: !!treeData
+            };
+            localStorage.setItem('buffalo_sim_config', JSON.stringify(config));
+        } catch (e) {
+            // This is just for config, so it shouldn't fail, but good to have
+            console.warn("Failed to save simulation config", e);
+        }
+    }, [units, years, startYear, startMonth, startDay, treeData]);
 
     // Staggered revenue configuration
     const revenueConfig = {
@@ -752,7 +770,8 @@ export default function BuffaloFamilyTree() {
 
     // Reset function
     const resetSimulation = () => {
-        localStorage.removeItem('buffalo_viz_tree_data');
+        localStorage.removeItem('buffalo_sim_config');
+        localStorage.removeItem('buffalo_tree_data'); // Clean up old large data
         setTreeData(null);
         setUnits(1);
         setYears(10);

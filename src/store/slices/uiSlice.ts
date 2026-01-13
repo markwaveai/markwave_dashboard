@@ -18,8 +18,10 @@ export interface UIState {
             isOpen: boolean;
             unitId: string | null;
         };
+        creationRole: 'Investor' | 'Employee' | null;
     };
 }
+
 
 const getInitialActiveTab = (): UIState['activeTab'] => {
     const saved = localStorage.getItem('activeTab');
@@ -47,8 +49,10 @@ const initialState: UIState = {
             isOpen: false,
             unitId: null,
         },
+        creationRole: null,
     },
 };
+
 
 const uiSlice = createSlice({
     name: 'ui',
@@ -87,8 +91,12 @@ const uiSlice = createSlice({
                 state.modals.rejection.unitId = action.payload.unitId;
             }
         },
+        setCreationRole: (state, action: PayloadAction<'Investor' | 'Employee' | null>) => {
+            state.modals.creationRole = action.payload;
+        },
     },
 });
+
 
 export const {
     setActiveTab,
@@ -99,7 +107,9 @@ export const {
     setEditReferralModal,
     setProofModal,
     setRejectionModal,
+    setCreationRole,
 } = uiSlice.actions;
+
 
 export const uiReducer = uiSlice.reducer;
 export default uiSlice.reducer;

@@ -15,7 +15,9 @@ import {
   setEditReferralModal,
   setProofModal,
   setRejectionModal,
+  setCreationRole,
 } from '../../store/slices/uiSlice';
+
 import {
   fetchPendingUnits,
   approveOrder,
@@ -29,6 +31,8 @@ import {
   setReferralUsers
 } from '../../store/slices/usersSlice';
 import { fetchProducts } from '../../store/slices/productsSlice';
+import { fetchEmployees as fetchFarmvestEmployees } from '../../store/slices/farmvest/employees';
+
 
 // Extracted Components
 import ImageNamesModal from '../modals/ImageNamesModal';
@@ -79,11 +83,19 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
   // UI State from Redux
   const { isSidebarOpen } = useAppSelector((state: RootState) => state.ui);
-  const { referral: showModal, editReferral: { isOpen: showEditModal, user: editingUser } } = useAppSelector((state: RootState) => state.ui.modals);
+  const { referral: showModal, editReferral: { isOpen: showEditModal, user: editingUser }, creationRole } = useAppSelector((state: RootState) => state.ui.modals);
+
 
   // Business Logic State from Redux
   const { referralUsers, existingCustomers } = useAppSelector((state: RootState) => state.users);
   const trackingData = useAppSelector((state: RootState) => state.orders.trackingData);
+
+  // Dashboard State
+  const [currentDashboard, setCurrentDashboard] = useState<'animalkart' | 'farmvest'>(() => {
+    // Try to restore from localStorage if needed, or default to animalkart
+    if (location.pathname.startsWith('/farmvest')) return 'farmvest';
+    return 'animalkart';
+  });
 
   // Determine active tab for Sidebar highlighting based on path
   const currentPath = location.pathname;
@@ -99,6 +111,8 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
   else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
   else if (currentPath.includes('/unit-calculator')) activeTab = 'unit-calculator';
+  else if (currentPath.includes('/farmvest/employees')) activeTab = 'farmvest-employees';
+  else if (currentPath.includes('/farmvest/farms')) activeTab = 'farmvest-farms';
 
   const [formData, setFormData] = useState({
     mobile: '',
@@ -171,6 +185,15 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       fetchAdminDetails();
     }
   }, [adminMobile]);
+
+  // Handle cross-component creation trigger
+  useEffect(() => {
+    if (creationRole) {
+      handleChoiceSelection(creationRole === 'Investor' ? 'investor' : 'referral');
+      dispatch(setCreationRole(null));
+    }
+  }, [creationRole, dispatch]);
+
 
   // Check if we have a session
   const hasSession = !!adminMobile;
@@ -301,7 +324,13 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         is_test: 'false',
       });
 
+      // Refresh relevant data
+      if (formData.role === 'Employee') {
+        dispatch(fetchFarmvestEmployees());
+      }
+
     } catch (error: any) {
+
       console.error('Error creating user:', error);
       alert(error || 'Error creating user. Please try again.');
     }
@@ -447,12 +476,28 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
             />
           </div>
 
-          {/* Center: Title */}
-          {/* Centered Title */}
+          {/* Center: Title / Switcher */}
           <div className="header-center-title">
-            <h6 className="header-brand-text">
-              Animalkart Dashboard
-            </h6>
+            <div className="dashboard-switcher">
+              <button
+                className={`switch-btn ${currentDashboard === 'animalkart' ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentDashboard('animalkart');
+                  navigate('/orders');
+                }}
+              >
+                Animalkart Dashboard
+              </button>
+              <button
+                className={`switch-btn ${currentDashboard === 'farmvest' ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentDashboard('farmvest');
+                  navigate('/farmvest/employees');
+                }}
+              >
+                FarmVest Dashboard
+              </button>
+            </div>
           </div>
 
           {/* Right Status & Profile */}
@@ -506,75 +551,77 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
             {/* Sidebar Toggle Button at the top */}
 
 
-            {hasSession && (
-              /* Dashboard (Orders) */
-              <li>
-                <button
-                  className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate('/orders');
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                    <LayoutDashboard size={18} />
-                    <span className="nav-text">Orders</span>
-                  </div>
-                </button>
-              </li>
-            )}
+            {currentDashboard === 'animalkart' ? (
+              <>
+                {hasSession && (
+                  /* Dashboard (Orders) */
+                  <li>
+                    <button
+                      className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/orders');
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                        <LayoutDashboard size={18} />
+                        <span className="nav-text">Orders</span>
+                      </div>
+                    </button>
+                  </li>
+                )}
 
-            {hasSession && (
-              /* User Management (Single Link) */
-              <li>
-                <button
-                  className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate('/user-management');
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                    <Users size={18} />
-                    <span className="nav-text">User Management</span>
-                  </div>
-                </button>
-              </li>
-            )}
+                {hasSession && (
+                  /* User Management (Single Link) */
+                  <li>
+                    <button
+                      className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/user-management');
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                        <Users size={18} />
+                        <span className="nav-text">User Management</span>
+                      </div>
+                    </button>
+                  </li>
+                )}
 
-            {hasSession && (
-              /* Products */
-              <li>
-                <button
-                  className={`nav-item ${activeTab === 'products' ? 'active-main' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate('/products');
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                    <ShoppingBag size={18} />
-                    <span className="nav-text">Products</span>
-                  </div>
-                </button>
-              </li>
-            )}
+                {hasSession && (
+                  /* Products */
+                  <li>
+                    <button
+                      className={`nav-item ${activeTab === 'products' ? 'active-main' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/products');
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                        <ShoppingBag size={18} />
+                        <span className="nav-text">Products</span>
+                      </div>
+                    </button>
+                  </li>
+                )}
 
-            {/* Buffalo Visualization */}
-            <li>
-              <button
-                className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/buffalo-viz', { state: { fromDashboard: true } });
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                  <MonitorPlay size={18} />
-                  <span className="nav-text">Buffalo Vis</span>
-                </div>
-              </button>
-            </li>
+                {/* Buffalo Visualization */}
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/buffalo-viz', { state: { fromDashboard: true } });
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <MonitorPlay size={18} />
+                      <span className="nav-text">Buffalo Vis</span>
+                    </div>
+                  </button>
+                </li>
 
             {/* Unit Calculator */}
             <li>
@@ -607,96 +654,145 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 </div>
               </button>
             </li>
+                {/* EMI Calculator */}
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/emi-calculator', { state: { fromDashboard: true } });
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <Calculator size={18} />
+                      <span className="nav-text">EMI Calculator</span>
+                    </div>
+                  </button>
+                </li>
 
-            {/* ACF Calculator */}
-            <li>
-              <button
-                className={`nav-item ${activeTab === 'acf' ? 'active-main' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/acf-calculator', { state: { fromDashboard: true } });
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                  <Calculator size={18} />
-                  <span className="nav-text">ACF Calculator</span>
-                </div>
-              </button>
-            </li>
+                {/* ACF Calculator */}
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'acf' ? 'active-main' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/acf-calculator', { state: { fromDashboard: true } });
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <Calculator size={18} />
+                      <span className="nav-text">ACF Calculator</span>
+                    </div>
+                  </button>
+                </li>
 
-            {/* Privacy Policy */}
-            <li>
-              <button
-                className={`nav-item ${activeTab === 'privacy' ? 'active-main' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/privacy-policy', { state: { fromDashboard: true } });
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                  <ShieldIcon size={18} />
-                  <span className="nav-text">Privacy & Policy</span>
-                </div>
-              </button>
-            </li>
+                {/* Privacy Policy */}
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'privacy' ? 'active-main' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/privacy-policy', { state: { fromDashboard: true } });
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <ShieldIcon size={18} />
+                      <span className="nav-text">Privacy & Policy</span>
+                    </div>
+                  </button>
+                </li>
 
-            {/* Referral Landing Page */}
-            <li>
-              <button
-                className={`nav-item ${activeTab === 'referral-landing' ? 'active-main' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/referral-landing', {
-                    state: {
-                      fromDashboard: true,
-                      adminReferralCode: adminReferralCode // Pass code
-                    }
-                  });
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                  <UserCheck size={18} />
-                  <span className="nav-text">Referral Page</span>
-                </div>
-              </button>
-            </li>
+                {/* Referral Landing Page */}
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'referral-landing' ? 'active-main' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/referral-landing', {
+                        state: {
+                          fromDashboard: true,
+                          adminReferralCode: adminReferralCode // Pass code
+                        }
+                      });
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <UserCheck size={18} />
+                      <span className="nav-text">Referral Page</span>
+                    </div>
+                  </button>
+                </li>
 
 
-            {/* Deactivate User Page */}
-            <li>
-              <button
-                className={`nav-item ${activeTab === 'deactivate-user' ? 'active-main' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/deactivate-user', {
-                    state: {
-                      fromDashboard: true,
-                    }
-                  });
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                  <UserMinus size={18} />
-                  <span className="nav-text">Deactivate User</span>
-                </div>
-              </button>
-            </li>
+                {/* Deactivate User Page */}
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'deactivate-user' ? 'active-main' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/deactivate-user', {
+                        state: {
+                          fromDashboard: true,
+                        }
+                      });
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <UserMinus size={18} />
+                      <span className="nav-text">Deactivate User</span>
+                    </div>
+                  </button>
+                </li>
 
-            {/* Support */}
-            <li>
-              <button
-                className={`nav-item ${activeTab === 'support' ? 'active-main' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/support', { state: { fromDashboard: true } });
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                  <LifeBuoy size={18} />
-                  <span className="nav-text">Support</span>
-                </div>
-              </button>
-            </li>
+                {/* Support */}
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'support' ? 'active-main' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/support', { state: { fromDashboard: true } });
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <LifeBuoy size={18} />
+                      <span className="nav-text">Support</span>
+                    </div>
+                  </button>
+                </li>
+              </>
+            ) : (
+              // Farmvest Dashboard Modules
+              <>
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'farmvest-employees' ? 'active' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/farmvest/employees');
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <Users size={18} />
+                      <span className="nav-text">Employees</span>
+                    </div>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className={`nav-item ${activeTab === 'farmvest-farms' ? 'active' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/farmvest/farms');
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <TreePine size={18} />
+                      <span className="nav-text">Farms</span>
+                    </div>
+                  </button>
+                </li>
+              </>
+            )}
           </ul>
 
           {hasSession && (
@@ -721,35 +817,21 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         <main className="main-content">
           {children}
 
-          {/* Floating Action Button with Speed Dial Options */}
+          {/* Floating Action Button - Context Aware */}
           {hasSession && activeTab === 'user-management' && (
-            <>
-              <div className={`fab-overlay ${isFabExpanded ? 'open' : ''}`} onClick={() => setIsFabExpanded(false)} />
-              <div className={`fab-container ${isFabExpanded ? 'expanded' : ''}`}>
-                <div className="fab-options">
-                  <button
-                    className="fab-option-btn referral-employee"
-                    onClick={() => handleChoiceSelection('investor')}
-                  >
-                    Add Investor
-                  </button>
-                  <button
-                    className="fab-option-btn employee"
-                    onClick={() => handleChoiceSelection('referral')}
-                  >
-                    Add Employee
-                  </button>
-                </div>
-                <button
-                  className="fab-main-btn"
-                  onClick={handleCreateClick}
-                  aria-label="Toggle user creation menu"
-                >
-                  {isFabExpanded ? '×' : '+'}
-                </button>
-              </div>
-            </>
+            <div className="fab-container">
+              <button
+                className="fab-main-btn"
+                onClick={() => handleChoiceSelection('investor')}
+                title="Add New Investor"
+                aria-label="Add New Investor"
+              >
+                +
+              </button>
+            </div>
           )}
+
+
         </main>
       </div>
 
