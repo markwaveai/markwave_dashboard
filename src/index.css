@@ -261,7 +261,7 @@ body {
   height: 16rem;
 }
 
-.error {
+.page-error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
