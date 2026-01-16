@@ -106,6 +106,9 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const principal = pAmount;
         const monthlyRate = pRate / 12 / 100;
 
+        // Use effective units (default to 1) for calculations so user doesn't see zero stats
+        const effectiveUnits = pUnits > 0 ? pUnits : 1;
+
         let emiLocal = 0;
         if (monthlyRate === 0) {
             emiLocal = principal / (pMonths > 0 ? pMonths : 1);
@@ -121,7 +124,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const perUnitBase = 350000.0;
         const perUnitCpf = CPF_PER_UNIT_YEARLY;
         const requiredPerUnit = perUnitBase + (pCpf ? perUnitCpf : 0.0);
-        const requiredCapital = requiredPerUnit * pUnits;
+        const requiredCapital = requiredPerUnit * effectiveUnits;
 
         // Excess loan amount becomes "Loan Pool" (Working Capital)
         let loanPool = principal > requiredCapital ? (principal - requiredCapital) : 0.0;
@@ -146,14 +149,49 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 if (cpfStart <= pMonths) calfCpfStartMonths.push(cpfStart);
 
                 // Revenue Start (Direct)
-                const revStart = bm + 33;
+                const revStart = bm + 32;
                 if (revStart <= pMonths) calfRevenueStartMonths.push(revStart);
 
                 // Grand Births (Gen 2)
-                const firstGrandBaby = bm + 36;
+                const firstGrandBaby = bm + 32;
                 if (firstGrandBaby <= pMonths) {
                     for (let gb = firstGrandBaby; gb <= pMonths; gb += 12) {
                         allBirthMonths.push(gb);
+
+                        // CPF Start (Grand)
+                        const cpfStartGrand = gb + 24;
+                        if (cpfStartGrand <= pMonths) calfCpfStartMonths.push(cpfStartGrand);
+
+                        // Revenue Start (Grand)
+                        const revStartGrand = gb + 32;
+                        if (revStartGrand <= pMonths) calfRevenueStartMonths.push(revStartGrand);
+
+                        // Gen 3 (Great Grand)
+                        const firstGreatGrand = gb + 32;
+                        if (firstGreatGrand <= pMonths) {
+                            for (let ggb = firstGreatGrand; ggb <= pMonths; ggb += 12) {
+                                allBirthMonths.push(ggb);
+
+                                const cpfStartGGB = ggb + 24;
+                                if (cpfStartGGB <= pMonths) calfCpfStartMonths.push(cpfStartGGB);
+
+                                const revStartGGB = ggb + 32;
+                                if (revStartGGB <= pMonths) calfRevenueStartMonths.push(revStartGGB);
+
+                                // Gen 4 (Great Great Grand) - Just in case for 120 months
+                                const firstGen4 = ggb + 32;
+                                if (firstGen4 <= pMonths) {
+                                    for (let g4 = firstGen4; g4 <= pMonths; g4 += 12) {
+                                        allBirthMonths.push(g4);
+                                        const cpfStartG4 = g4 + 24;
+                                        if (cpfStartG4 <= pMonths) calfCpfStartMonths.push(cpfStartG4);
+                                        // Revenue gen 4
+                                        const revStartG4 = g4 + 32;
+                                        if (revStartG4 <= pMonths) calfRevenueStartMonths.push(revStartG4);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -184,7 +222,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     }
                 }
             }
-            const cgf = cgfPerUnit * pUnits;
+            const cgf = cgfPerUnit * effectiveUnits;
 
             // Revenue
             let revenuePerUnit = 0;
@@ -194,19 +232,20 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             for (const startMonth of calfRevenueStartMonths) {
                 revenuePerUnit += getRevenueForCalf(m, startMonth);
             }
-            const revenue = revenuePerUnit * pUnits;
+            const revenue = revenuePerUnit * effectiveUnits;
 
             // CPF
             let cpf = 0;
             if (pCpf) {
                 if (m > 12) {
                     // Adult CPFs
-                    if (m >= orderMonthBuff1) cpf += monthlyCpfPerAnimal * pUnits;
-                    if (m >= orderMonthBuff2 + 12) cpf += monthlyCpfPerAnimal * pUnits;
+                    if (m >= orderMonthBuff1) cpf += monthlyCpfPerAnimal * effectiveUnits;
+                    if (m >= orderMonthBuff2 + 12) cpf += monthlyCpfPerAnimal * effectiveUnits;
+
 
                     // Calf CPFs
                     for (const start of calfCpfStartMonths) {
-                        if (m >= start) cpf += monthlyCpfPerAnimal * pUnits;
+                        if (m >= start) cpf += monthlyCpfPerAnimal * effectiveUnits;
                     }
                 }
             }
@@ -307,7 +346,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 offspringAges.push((tenureMonths - bm) + 1); // Age in months at end
 
                 // Grand
-                const firstGrand = bm + 36;
+                const firstGrand = bm + 32;
                 if (firstGrand <= tenureMonths) {
                     for (let gb = firstGrand; gb <= tenureMonths; gb += 12) {
                         offspringAges.push((tenureMonths - gb) + 1);
@@ -325,8 +364,8 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 
     const calculateAssetValueFromSimulation = useCallback((singleUnitOffspringAges: number[], pUnits: number) => {
-
-        const adultValue = 175000 * 2 * pUnits;
+        const effectiveUnits = pUnits > 0 ? pUnits : 1;
+        const adultValue = 175000 * 2 * effectiveUnits;
 
         let singleUnitOffspringValue = 0;
         for (const age of singleUnitOffspringAges) {
@@ -334,7 +373,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
 
         // Total = Adults + (Single Unit Offspring Total * Unit Count)
-        return adultValue + (singleUnitOffspringValue * pUnits);
+        return adultValue + (singleUnitOffspringValue * effectiveUnits);
     }, []);
 
 
@@ -352,8 +391,10 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const herd: any[] = [];
         const offspringCounts: any = {};
 
+        const effectiveUnitCount = unitCount > 0 ? unitCount : 1;
+
         // 1. Initial Herd Creation
-        for (let u = 0; u < unitCount; u++) {
+        for (let u = 0; u < effectiveUnitCount; u++) {
             // First buffalo (Jan)
             const id1 = `U${u + 1}A`;
             const absAcq1 = startYear * 12 + startMonth;
@@ -479,43 +520,80 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 
 
+    // Long Term State
+    const [totalRevenueLongTerm, setTotalRevenueLongTerm] = useState(0);
+    const [totalCpfLongTerm, setTotalCpfLongTerm] = useState(0);
+    const [totalCgfLongTerm, setTotalCgfLongTerm] = useState(0);
+    const [totalAssetValueLongTerm, setTotalAssetValueLongTerm] = useState(0);
+    const [totalNetCashLongTerm, setTotalNetCashLongTerm] = useState(0);
+    const [totalAssetValue120, setTotalAssetValue120] = useState(0);
+
     // --- Effects to Update State ---
     useEffect(() => {
+        // 1. Regular Simulation (User defined months, usually 60)
         const { rows, emi: calcEmi } = simulateConfig(amount, rate, months, units, cpfEnabled, cgfEnabled);
 
         setEmi(calcEmi);
         setSchedule(rows);
 
-        // Calculate Totals
+        // Calculate Totals for Regular Simulation
         const tRev = rows.reduce((acc: number, r: EmiRow) => acc + r.revenue, 0);
         const tCpf = rows.reduce((acc: number, r: EmiRow) => acc + r.cpf, 0);
         const tCgf = rows.reduce((acc: number, r: EmiRow) => acc + r.cgf, 0);
         const tProfit = rows.reduce((acc: number, r: EmiRow) => acc + r.profit, 0);
         const tLoss = rows.reduce((acc: number, r: EmiRow) => acc + r.loss, 0);
 
-
-        // Net Cash is usually Profit - Loss
         setTotalRevenue(tRev);
         setTotalCpf(tCpf);
         setTotalCgf(tCgf);
         setTotalProfit(tProfit);
         setTotalLoss(tLoss);
         setTotalNetCash(tProfit - tLoss);
-
-        // Derived financial totals
-        // const tPrincip = rows.reduce((acc, r) => acc + r.principal, 0); // Should match amount roughly
-        const tInt = rows.reduce((acc: number, r: EmiRow) => acc + r.interest, 0);
-
-
         setTotalPayment(calcEmi * months);
+        // const tInt = rows.reduce((acc: number, r: EmiRow) => acc + r.interest, 0);
+        // Correct Total Interest calculation: Total Payment - Principal Amount
+        // BUT wait, emi * months could be slightly different due to rounding or last installment logic
+        // Let's use the sum of interest column for accuracy
+        const tInt = rows.reduce((acc: number, r: EmiRow) => acc + r.interest, 0);
         setTotalInterest(tInt);
 
-        // Asset Value
+        // Asset Value (Regular)
         const herdAges = simulateHerd(months, units);
         const assetVal = calculateAssetValueFromSimulation(herdAges, units);
         setTotalAssetValue(assetVal);
 
-        // Yearly Schedule Generation
+        // 2. Long Term Simulation (61-120 Months)
+        // We run a simulation for 120 months regardless of user loan tenure, to get the future stats.
+        // We assume the loan is paid off by month 60 (or whatever user set), but revenue continues.
+        // However, `simulateConfig` logic is tied to loan tenure for EMI.
+        // For purely Revenue/CPF/Asset projection, we can treat it as a 120 month scenario where loan might end earlier.
+        // Actually, let's just run `simulateConfig` with 120 months.
+        // The EMI/Loan logic inside might behave weirdly if we just extend pMonths, so let's be careful.
+        // If we want purely "Revenue/CPF/Asset" for 61-120, we can run a 120 month sim.
+
+        const longTermMonths = 120; // 10 Years
+        const { rows: longrows } = simulateConfig(amount, rate, longTermMonths, units, cpfEnabled, cgfEnabled);
+
+        // Filter for months 61 to 120
+        const futureRows = longrows.filter(r => r.month > 60 && r.month <= 120);
+
+        const ltRev = futureRows.reduce((acc: number, r: EmiRow) => acc + r.revenue, 0);
+        const ltCpf = futureRows.reduce((acc: number, r: EmiRow) => acc + r.cpf, 0);
+        const ltCgf = futureRows.reduce((acc: number, r: EmiRow) => acc + r.cgf, 0);
+
+        setTotalRevenueLongTerm(ltRev);
+        setTotalCpfLongTerm(ltCpf);
+        setTotalCgfLongTerm(ltCgf);
+        setTotalNetCashLongTerm(ltRev - ltCpf - ltCgf);
+
+        // Asset Value Growth (61-120 Months) = Value @ 120 - Value @ 60
+        const { totalAssetValue: assetVal120 } = calculateProjectedAssetValue(10, units);
+        const { totalAssetValue: assetVal60 } = calculateProjectedAssetValue(5, units);
+        setTotalAssetValueLongTerm(assetVal120 - assetVal60);
+        setTotalAssetValue120(assetVal120);
+
+
+        // Yearly Schedule Generation (for the regular schedule)
         const yearly: YearlyRow[] = [];
         const numYears = Math.ceil(months / 12);
         for (let i = 0; i < numYears; i++) {
@@ -611,6 +689,15 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             simulateHerd,
             calculateAssetValueFromSimulation,
             calculateProjectedAssetValue, // Export new function
+
+            // Long Term
+            totalRevenueLongTerm,
+            totalCpfLongTerm,
+            totalCgfLongTerm,
+            totalAssetValueLongTerm,
+            totalNetCashLongTerm,
+            totalAssetValue120,
+
 
             // ACF State
             acfUnits, setAcfUnits,

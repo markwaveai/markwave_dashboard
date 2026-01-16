@@ -16,7 +16,7 @@ const ResultCard = () => {
     } = useEmi();
 
     const cpfPerUnitYearly = 15000.0;
-    const year2MonthlyCpf = cpfEnabled ? (cpfPerUnitYearly / 12) * units : 0;
+    const year2MonthlyCpf = cpfEnabled ? (cpfPerUnitYearly / 12) * (units > 0 ? units : 1) : 0;
     const displayMonthlyPayment = emi; // Flutter screenshot shows EMI as main Monthly Payment
 
     return (

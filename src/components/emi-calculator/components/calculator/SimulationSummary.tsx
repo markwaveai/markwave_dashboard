@@ -36,25 +36,24 @@ const GenericCard: React.FC<GenericCardProps> = ({ label, value, colorClass, bor
 
     return (
         <div className={clsx(
-            "p-3.5 sm:p-5 rounded-[24px] flex flex-col justify-between h-[140px] transition-all hover:scale-[1.02] border relative overflow-hidden",
+            "p-3 sm:p-4 rounded-[20px] flex flex-row items-center gap-3 sm:gap-4 h-[90px] transition-all hover:scale-[1.02] border relative overflow-hidden",
             colorClass,
             borderClass,
             shadowClass
         )}>
-            <div className="flex justify-start">
-                <div className={clsx(
-                    "grid place-items-center rounded-xl bg-white/60 backdrop-blur-md shadow-sm w-9 h-9 sm:w-10 sm:h-10",
-                    iconColorClass
-                )}>
-                    {typeof Icon === 'string' ? (
-                        <img src={Icon} alt="icon" className="w-4 h-4 sm:w-5 sm:h-5 object-contain" />
-                    ) : (
-                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 opacity-90" />
-                    )}
-                </div>
+            <div className={clsx(
+                "grid place-items-center rounded-xl bg-white/60 backdrop-blur-md shadow-sm w-10 h-10 shrink-0",
+                iconColorClass
+            )}>
+                {typeof Icon === 'string' ? (
+                    <img src={Icon} alt="icon" className="w-5 h-5 object-contain" />
+                ) : (
+                    <Icon className="w-5 h-5 opacity-90" />
+                )}
             </div>
-            <div className="space-y-0 relative z-10">
-                <div className="text-[11px] sm:text-[13px] font-semibold text-gray-900 tracking-tight leading-tight mb-0.5">{label}</div>
+
+            <div className="flex flex-col min-w-0 relative z-10">
+                <div className="text-[11px] sm:text-[13px] font-semibold text-gray-900 tracking-tight leading-tight mb-0.5 truncate">{label}</div>
                 <div className={clsx(
                     "font-extrabold tracking-tighter flex items-baseline gap-0.5",
                     isSuperLarge ? "text-[11px] sm:text-[13px]" :
@@ -105,8 +104,15 @@ const SimulationSummary = () => {
         totalInterest,
         emi,
         rate,
+
         cgfEnabled,
-        months
+        months,
+        totalRevenueLongTerm,
+        totalCpfLongTerm,
+        totalCgfLongTerm,
+        totalAssetValueLongTerm,
+        totalNetCashLongTerm,
+        totalAssetValue120,
     } = useEmi();
 
     // Specific logic: If CGF is enabled, show 0 to the user as requested.
@@ -115,10 +121,11 @@ const SimulationSummary = () => {
     return (
         <div className="space-y-12 mt-12 px-2 pb-8">
             {/* Summary Grid - Responsive across all breakpoints */}
+            {/* 0-60 Months Row */}
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                 <GenericCard
-                    label="Total Revenue"
-                    value={totalRevenue}
+                    label="Revenue (0-60 Months)"
+                    value={totalRevenue - totalPayment - totalCpf - totalCgf}
                     colorClass="bg-[#E8F5E9] text-[#2E7D32]" // Green
                     borderClass="border-[#A5D6A7]"
                     shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
@@ -149,7 +156,7 @@ const SimulationSummary = () => {
                     iconColorClass="text-[#7B1FA2]"
                 />
                 <GenericCard
-                    label="Total CPF"
+                    label="CPF (0-60 Months)"
                     value={totalCpf}
                     colorClass="bg-[#FFFDE7] text-[#FBC02D]" // Yellow
                     borderClass="border-[#FFF9C4]"
@@ -158,7 +165,7 @@ const SimulationSummary = () => {
                     iconColorClass="text-[#FBC02D]"
                 />
                 <GenericCard
-                    label="Total CGF"
+                    label="CGF (0-60 Months)"
                     value={displayCgf}
                     colorClass="bg-[#EFEBE9] text-[#5D4037]" // Brown
                     borderClass="border-[#D7CCC8]"
@@ -194,9 +201,74 @@ const SimulationSummary = () => {
                     iconColorClass="text-[#00695C]"
                 />
                 <GenericCard
-                    label="Asset Value"
+                    label="Asset Value (0-60 Months)"
                     value={totalAssetValue}
                     colorClass="bg-[#E8EAF6] text-[#283593]" // Indigo
+                    borderClass="border-[#C5CAE9]"
+                    shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
+                    icon="/buffalo_icon.png"
+                    iconColorClass="text-[#283593]"
+                />
+            </div>
+
+            {/* 61-120 Months Row */}
+            <h3 className="text-lg font-bold text-gray-800 pb-1 mb-1 mt-1 border-b border-gray-100">Projected 61-120 Months</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                <GenericCard
+                    label="Revenue (61-120 Months)"
+                    value={totalRevenueLongTerm - totalCpfLongTerm - totalCgfLongTerm}
+                    colorClass="bg-[#E8F5E9] text-[#2E7D32]"
+                    borderClass="border-[#A5D6A7]"
+                    shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
+                    icon={IndianRupee}
+                    iconColorClass="text-[#2E7D32]"
+                />
+                <GenericCard
+                    label="CPF (61-120 Months)"
+                    value={totalCpfLongTerm}
+                    colorClass="bg-[#FFFDE7] text-[#FBC02D]"
+                    borderClass="border-[#FFF9C4]"
+                    shadowClass="shadow-[0_4px_15px_rgb(251,192,45,0.1)]"
+                    icon={PawPrint}
+                    iconColorClass="text-[#FBC02D]"
+                />
+                <GenericCard
+                    label="CGF (61-120 Months)"
+                    value={!cgfEnabled ? 0 : totalCgfLongTerm}
+                    colorClass="bg-[#EFEBE9] text-[#5D4037]"
+                    borderClass="border-[#D7CCC8]"
+                    shadowClass="shadow-[0_4px_15px_rgb(93,64,55,0.1)]"
+                    icon={Sprout}
+                    iconColorClass="text-[#5D4037]"
+                />
+
+                <GenericCard
+                    label="Asset Value (61-120 Months)"
+                    value={totalAssetValueLongTerm}
+                    colorClass="bg-[#E8EAF6] text-[#283593]"
+                    borderClass="border-[#C5CAE9]"
+                    shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
+                    icon="/buffalo_icon.png"
+                    iconColorClass="text-[#283593]"
+                />
+            </div>
+
+            {/* 10 Year Summary Row */}
+            <h3 className="text-lg font-bold text-gray-800 pb-1 mb-1 mt-1 border-b border-gray-100">10 Year Summary</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                <GenericCard
+                    label="10 Years Total Revenue"
+                    value={(totalRevenue - totalPayment - totalCpf - totalCgf) + (totalRevenueLongTerm - totalCpfLongTerm - totalCgfLongTerm)}
+                    colorClass="bg-[#E8F5E9] text-[#2E7D32]"
+                    borderClass="border-[#A5D6A7]"
+                    shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
+                    icon={IndianRupee}
+                    iconColorClass="text-[#2E7D32]"
+                />
+                <GenericCard
+                    label="Total Asset Value (10 Years)"
+                    value={totalAssetValue120}
+                    colorClass="bg-[#E8EAF6] text-[#283593]"
                     borderClass="border-[#C5CAE9]"
                     shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
                     icon="/buffalo_icon.png"

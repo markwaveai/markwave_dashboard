@@ -71,6 +71,13 @@ export interface EmiContextType {
     totalLoss: number;
     totalNetCash: number;
     totalAssetValue: number;
+    // Long Term (61-120 Months)
+    totalRevenueLongTerm: number;
+    totalCpfLongTerm: number;
+    totalCgfLongTerm: number;
+    totalAssetValueLongTerm: number;
+    totalNetCashLongTerm: number;
+    totalAssetValue120: number;
     simulateHerd: (tenure: number, unitCount: number) => number[];
     calculateAssetValueFromSimulation: (ages: number[], units: number) => number;
     calculateProjectedAssetValue: (targetYearIndex: number, unitCount: number) => { totalAssetValue: number, totalBuffaloes: number };

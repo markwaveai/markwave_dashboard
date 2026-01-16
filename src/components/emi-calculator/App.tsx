@@ -79,7 +79,7 @@ const EmiDashboard = () => {
                   formatCurrency={formatCurrency}
                 />
                 <HoverGradientStatCard
-                  label="Projected Asset"
+                  label="Projected Asset (0-60 Months)"
                   value={totalAssetValue}
                   prefix="₹"
                   icon="/buffalo_icon.png"

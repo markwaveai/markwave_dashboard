@@ -39,8 +39,9 @@ const InputCard = () => {
 
     const perUnitBase = 350000.0;
     const perUnitCpf = 15000.0;
-    const requiredBase = perUnitBase * units;
-    const requiredCpf = cpfEnabled ? perUnitCpf * units : 0;
+    const effectiveUnits = units > 0 ? units : 1;
+    const requiredBase = perUnitBase * effectiveUnits;
+    const requiredCpf = cpfEnabled ? perUnitCpf * effectiveUnits : 0;
     const totalRequired = requiredBase + requiredCpf;
     const surplus = amount - totalRequired;
 
@@ -154,7 +155,10 @@ const InputCard = () => {
                         onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
                         onChange={(e) => {
                             const val = e.target.value;
-                            if (val === '') setUnits(0);
+                            if (val === '') {
+                                setUnits(0);
+                                setAmount(UNIT_COST);
+                            }
                             else {
                                 let num = Number(val);
                                 // Limit units to equivalent of 10 Crores (10Cr / 4L = 250)
