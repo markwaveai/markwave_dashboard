@@ -530,16 +530,18 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                             </th>
                             <th className="th-proof">Payment Image Proof</th>
                             <th>Amount</th>
+                            <th>Total Cost</th>
+                            <th>Coins Redeemed</th>
                             {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <th>Actions</th>}
                             {statusFilter === 'REJECTED' && <th>Rejected Reason</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {ordersLoading ? (
-                            <TableSkeleton cols={currentCols} rows={10} />
+                            <TableSkeleton cols={currentCols + 2} rows={10} />
                         ) : pendingUnits.length === 0 ? (
                             <tr>
-                                <td colSpan={currentCols} className="no-data-row">
+                                <td colSpan={currentCols + 2} className="no-data-row">
                                     No orders found matching filters.
                                 </td>
                             </tr>
@@ -697,6 +699,8 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                 ) : '-'}
                                             </td>
                                             <td>{tx.amount ?? '-'}</td>
+                                            <td>{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString()}` : '-'}</td>
+                                            <td>{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString() : '0'}</td>
                                             {statusFilter === 'REJECTED' && <td>
                                                 {unit.rejectedReason || 'No reason provided'}
                                             </td>}
@@ -726,7 +730,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
                                         {expandedOrderId === unit.id && (
                                             <tr className="tracking-expanded-row">
-                                                <td colSpan={currentCols} className="tracking-expanded-cell">
+                                                <td colSpan={currentCols + 2} className="tracking-expanded-cell">
                                                     <div className="order-expand-animation tracking-expand-container">
                                                         <div className="tracking-interface-container" style={{ display: 'block' }}>
                                                             {/* Sidebar removed */}
