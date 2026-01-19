@@ -58,9 +58,10 @@ export const farmvestService = {
     staticLogin: async (mobile_number: string, otp: string) => {
         try {
             // This call will usage the API Key via the interceptor (since no token exists yet)
-            const response = await farmvestApi.post('/api/admin/static_login', {
+            const response = await farmvestApi.post('/auth/static_login', {
                 mobile_number,
-                otp
+                otp,
+                is_test: true
             });
             return response.data;
         } catch (error) {

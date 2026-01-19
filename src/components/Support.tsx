@@ -97,7 +97,7 @@ const FAQS: FAQ[] = [
     {
         question: 'What rewards do I get for referrals?',
         answer:
-            'You earn 5% of the unit cost (excluding CPF) in coins for every unit your friend purchases. These coins can be accumulated to unlock more units.',
+            'You earn coins for every unit your friend purchases (excluding CPF). These coins can be accumulated to unlock more units.',
     },
     {
         question: 'Are the referral rewards cumulative?',

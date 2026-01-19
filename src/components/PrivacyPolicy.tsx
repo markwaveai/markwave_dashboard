@@ -22,7 +22,7 @@ const DEFAULT_CONTENT = `
         <li><strong>Account Management:</strong> To verify your identity via OTP and manage your profile.</li>
         <li><strong>Transaction Processing:</strong> To verify manual payments for buffalo units and provide invoices for "Paid" orders.</li>
         <li><strong>Investment Projections:</strong> To display personalized income projections And Asset Market Value </li>
-        <li><strong>Rewards Program:</strong> To calculate and credit the 5% referral reward as coins to your AnimalKart account.</li>
+        <li><strong>Rewards Program:</strong>To calculate and credit the applicable referral reward as coins to your AnimalKart account.</li>
         <li><strong>Communication:</strong> To notify you regarding payment verification outcomes and order status updates.</li>
     </ul>
 
@@ -80,7 +80,7 @@ const DEFAULT_CONTENT = `
     <h2>2. Referral Program & Coin Conversion</h2>
     <ul>
         <li><strong>Earning Eligibility:</strong> Coins can only be earned through successful referrals where the referred user completes a purchase.</li>
-        <li><strong>Reward Rate:</strong> The referrer earns exactly 5% of the total purchase amount made by the referred user.</li>
+        <li><strong>Reward Rate:</strong> The referrer earns coins based on the total purchase value of the referred user.</li>
         <li><strong>Coin Valuation:</strong> The application operates on a fixed conversion rate where 1 Coin is equal to ₹1.</li>
         <li><strong>Usage Restrictions:</strong> Coins are non-transferable and cannot be withdrawn or converted directly into cash.</li>
     </ul>
