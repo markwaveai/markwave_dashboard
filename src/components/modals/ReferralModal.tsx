@@ -73,6 +73,21 @@ const ReferralModal: React.FC<ReferralModalProps> = (props) => {
                             />
                         </div>
 
+                        <div className="form-group">
+                            <label className="form-label">
+                                Role
+                            </label>
+                            <select
+                                name="role"
+                                value={formData.role}
+                                onChange={onInputChange}
+                                className="form-input"
+                            >
+                                <option value="Investor">Investor</option>
+                                <option value="Employee">Employee</option>
+                            </select>
+                        </div>
+
                         <div className="flex flex-col sm:flex-row gap-4">
                             <div className="form-col">
                                 <label className="form-label">

@@ -205,7 +205,19 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result = await dispatch(createReferralUser(formData)).unwrap();
+      const payload = {
+        mobile: formData.mobile,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        referral_code: formData.referral_code,
+        role: formData.role,
+        refered_by_mobile: formData.refered_by_mobile,
+        refered_by_name: formData.refered_by_name,
+        isabletoreferr: formData.role === 'Employee',
+        isTestAccount: formData.is_test === 'true',
+      };
+      const result = await dispatch(createReferralUser(payload)).unwrap();
       if (result.message === 'User already exists') {
         alert('User already exists with this mobile number.');
       } else {
