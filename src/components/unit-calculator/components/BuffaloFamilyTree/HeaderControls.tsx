@@ -253,7 +253,7 @@ const HeaderControls = ({
 
                         <div className="flex flex-col items-center">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                                {isCGFEnabled ? "Net (+CGF)" : "Net Rev"}
+                                {isCGFEnabled ? "Net (+CPF+CGF)" : "Net (+CPF)"}
                             </span>
                             <span className={`text-sm font-black ${isCGFEnabled ? 'text-emerald-600' : 'text-emerald-600'}`}>
                                 {formatLargeCurrency(isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)}
