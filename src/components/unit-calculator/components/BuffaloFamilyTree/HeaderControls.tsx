@@ -102,7 +102,7 @@ const HeaderControls = ({
                     <div className="flex items-center bg-white border border-slate-100 rounded-xl px-2 py-1 shadow-sm h-full min-h-[42px]">
 
                         {/* Units Input */}
-                        <div className="flex flex-col items-center px-4 border-r border-slate-100 min-w-[5rem]">
+                        <div className="flex flex-col items-center px-1 min-w-[3rem]">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Units</span>
                             <div className="flex items-center">
                                 <input
@@ -124,9 +124,9 @@ const HeaderControls = ({
                         </div>
 
                         {/* Start Date Picker */}
-                        <div className="flex flex-col items-center px-4 border-r border-slate-100 min-w-[7rem]">
+                        <div className="flex flex-col items-center px-1 min-w-[3.5rem]">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Start</span>
-                            <div className="relative w-24 flex justify-center">
+                            <div className="relative w-20 flex justify-center">
                                 <DatePicker
                                     selected={new Date(startYear, startMonth, 1)}
                                     onChange={(date: Date | null) => {
@@ -150,9 +150,9 @@ const HeaderControls = ({
                         </div>
 
                         {/* End Date Picker - Month/Year Selection */}
-                        <div className="flex flex-col items-center px-4 border-r border-slate-100 min-w-[7rem]">
+                        <div className="flex flex-col items-center px-1 min-w-[3.5rem]">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
-                            <div className="relative w-24 flex justify-center">
+                            <div className="relative w-20 flex justify-center">
                                 <DatePicker
                                     selected={(() => {
                                         const endDate = new Date(startYear, startMonth + durationMonths - 1); // -1 because duration includes start month
@@ -187,11 +187,11 @@ const HeaderControls = ({
                         </div>
 
                         {/* Initial Investment & CPF Combined */}
-                        <div className="flex flex-col items-center px-4">
+                        <div className="flex flex-col items-center px-1">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Initial Inv</span>
                             <div className="flex flex-col items-center leading-none">
-                                <span className="text-sm font-black text-slate-800">{formatLargeCurrency(initialBuffaloCost)}</span>
-                                <span className="text-[9px] font-bold text-blue-600 mt-0.5">CPF: {formatLargeCurrency(initialCpfCost)}</span>
+                                <span className="text-sm font-black text-slate-800">{formatLargeCurrency(totalInitialInvestment)}</span>
+                                <span className="text-[9px] font-bold text-blue-600 mt-0.5 whitespace-nowrap">CPF: {formatLargeCurrency(initialCpfCost)}</span>
                             </div>
                         </div>
 
