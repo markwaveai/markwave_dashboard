@@ -110,7 +110,9 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
                                     <td className="non-verified-td">{user.first_name || '-'}</td>
                                     <td className="non-verified-td">{user.last_name || '-'}</td>
                                     <td className="non-verified-td">{user.mobile}</td>
-                                    <td className="non-verified-td">{user.role}</td>
+                                    <td className="non-verified-td">
+                                        {user.role === 'SpecialCategory' ? 'Special Category' : user.role}
+                                    </td>
                                     <td className="non-verified-td">{user.refered_by_name || '-'}</td>
                                     <td className="non-verified-td">{user.refered_by_mobile || '-'}</td>
                                     <td className="non-verified-td">

@@ -178,7 +178,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                                                 }`}>
-                                                {user.role || 'Investor'}
+                                                {user.role === 'SpecialCategory' ? 'Special Category' : (user.role || 'Investor')}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">

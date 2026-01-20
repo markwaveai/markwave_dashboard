@@ -105,8 +105,8 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
   const handleChoiceSelection = useCallback((type: 'investor' | 'referral') => {
     setFormData(prev => ({
-
       ...prev,
+      mobile: '',
       role: type === 'investor' ? 'Investor' : 'Employee',
       refered_by_mobile: adminMobile || '',
       refered_by_name: displayAdminName || '',
@@ -214,7 +214,8 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         role: formData.role,
         refered_by_mobile: formData.refered_by_mobile,
         refered_by_name: formData.refered_by_name,
-        isabletoreferr: formData.role === 'Employee',
+        isabletorefer: formData.role === 'Employee' || formData.role === 'SpecialCategory',
+        isabletoreferr: formData.role === 'Employee' || formData.role === 'SpecialCategory',
         isTestAccount: formData.is_test === 'true',
       };
       const result = await dispatch(createReferralUser(payload)).unwrap();
@@ -235,7 +236,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         role: 'Investor',
         is_test: 'false',
       });
-      if (formData.role === 'Employee') {
+      if (formData.role === 'Employee' || formData.role === 'SpecialCategory') {
         dispatch(fetchFarmvestEmployees());
       }
     } catch (error: any) {
@@ -504,7 +505,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
       {hasSession && (
         <>
-          <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralMobileBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} canEditReferralCode={true} />
+          <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralMobileBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} />
           <EditReferralModal editFormData={editFormData} onInputChange={handleEditInputChange} onBlur={handleEditReferralMobileBlur} onSubmit={handleEditSubmit} />
           <ImageNamesModal />
           <AdminDetailsModal adminName={displayAdminName} adminMobile={adminMobile} adminRole={adminRole} lastLogin={lastLogin} presentLogin={presentLogin} adminReferralCode={adminReferralCode} />
