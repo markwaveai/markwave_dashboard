@@ -698,9 +698,9 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                     </button>
                                                 ) : '-'}
                                             </td>
-                                            <td>{tx.amount ?? '-'}</td>
-                                            <td>{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString()}` : '-'}</td>
-                                            <td>{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString() : '0'}</td>
+                                            <td>{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
+                                            <td>{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
+                                            <td>{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
                                             {statusFilter === 'REJECTED' && <td>
                                                 {unit.rejectedReason || 'No reason provided'}
                                             </td>}
