@@ -295,12 +295,16 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             'PAYMENT_SUBMITTED': 2,
             'PAYMENT_VERIFICATION_PENDING': 2,
             'PAYMENT_VERIFIED': 3,
-            'APPROVED': 3,
-            'BOUGHT': 4, // Corrected per user request
-            'IN_QUARANTINE': 5,
-            'IN_TRANSIT': 6,
-            'DELIVERED_TO_FARM': 7,
-            'DELIVERED': 7 // Added per requirement
+            'ORDER_APPROVED': 4,
+
+            'ORDER_CONFIRMED': 4, // Added per user request
+            'APPROVED': 4, // Alias if needed
+            'BUFFALOS_BOUGHT': 5,
+            'BOUGHT': 5,
+            'IN_QUARANTINE': 6,
+            'IN_TRANSIT': 7,
+            'DELIVERED_TO_FARM': 8,
+            'DELIVERED': 8
         };
 
         realTrackingData.timeline.forEach((item: any) => {
@@ -310,20 +314,21 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                     const dateObj = new Date(item.timestamp);
                     const dateStr = dateObj.toLocaleDateString('en-GB').replace(/\//g, '-');
                     const timeStr = dateObj.toLocaleTimeString('en-GB');
-                    history[sId] = { date: dateStr, time: timeStr };
+                    history[sId] = { date: dateStr, time: timeStr, description: item.description };
+                } else if (item.description) {
+                    history[sId] = { date: '-', time: '-', description: item.description };
                 }
                 // Update current stage to be the next after the last completed one
                 if (item.status === 'COMPLETED') {
                     maxStageId = Math.max(maxStageId, sId + 1);
-                    if (sId === 7) maxStageId = 7; // Stop at 7? Or 8? keeping 7 as max based on old logic cleanup
                 } else if (item.status === 'IN_PROGRESS') {
                     maxStageId = Math.max(maxStageId, sId);
                 }
             }
         });
 
-        // If maxStageId > 7, clamp it (unless we want to show 'Completed' state distinctly)
-        if (maxStageId > 7) maxStageId = 7;
+        // If maxStageId > 8, clamp it (unless we want to show 'Completed' state distinctly)
+        if (maxStageId > 9) maxStageId = 9;
 
         return { currentStageId: maxStageId, history };
     }, [realTrackingData]);
@@ -332,11 +337,11 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
         // Map nextStageId to Backend Status
         // Stages: 1:Placed, 2:PaymentPending, 3:Approved, 4:Market, 5:Quarantine, 6:Transit, 7:Delivered
         let status = '';
-        if (nextStageId === 4) status = 'BOUGHT';
-        else if (nextStageId === 5) status = 'IN_QUARANTINE';
-        else if (nextStageId === 6) status = 'IN_TRANSIT';
-        else if (nextStageId === 7) status = 'DELIVERED';
-        else if (nextStageId === 3) status = 'APPROVED';
+        if (nextStageId === 5) status = 'BOUGHT';
+        else if (nextStageId === 6) status = 'IN_QUARANTINE';
+        else if (nextStageId === 7) status = 'IN_TRANSIT';
+        else if (nextStageId === 8) status = 'DELIVERED';
+        else if (nextStageId === 4) status = 'APPROVED'; // Fallback if explicit call needed
 
         if (!status) {
             // If nextStageId is 8 (after Delivered), we might just allow it if we want to "Complete" the order visually?
@@ -392,16 +397,15 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
     };
 
     const trackingStages = [
-        { id: 1, label: 'Order Placed' },
-        { id: 2, label: 'Payment Pending' },
-        { id: 3, label: 'Order Approved' },
-        { id: 4, label: 'Order in Market' },
-        { id: 5, label: 'Order in Quarantine' },
-        { id: 6, label: 'In Transit' },
-        { id: 7, label: 'Order Delivered' }
+        { id: 1, label: 'Order Placed', description: 'Order placed successfully.' },
+        { id: 2, label: 'Payment Submitted', description: 'Payment details submitted by customer.' },
+        { id: 3, label: 'Payment Verified', description: 'Payment verified and order approved.' },
+        { id: 4, label: 'Order Confirmed', description: 'Order approved for procurement.' },
+        { id: 5, label: 'In Market', description: 'Buffalos purchased from market.' }, // User requested label change previously
+        { id: 6, label: 'In Quarantine', description: 'Animals in quarantine for health check.' },
+        { id: 7, label: 'In Transit', description: 'Animals in transit to farm.' },
+        { id: 8, label: 'Delivered to Farm', description: 'Animals delivered to farm.' }
     ];
-
-
 
     // Pagination
     const totalPages = Math.ceil((totalCount || 0) / pageSize);
@@ -530,16 +534,18 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                             </th>
                             <th className="th-proof">Payment Image Proof</th>
                             <th>Amount</th>
+                            <th>Total Cost</th>
+                            <th>Coins Redeemed</th>
                             {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <th>Actions</th>}
                             {statusFilter === 'REJECTED' && <th>Rejected Reason</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {ordersLoading ? (
-                            <TableSkeleton cols={currentCols} rows={10} />
+                            <TableSkeleton cols={currentCols + 2} rows={10} />
                         ) : pendingUnits.length === 0 ? (
                             <tr>
-                                <td colSpan={currentCols} className="no-data-row">
+                                <td colSpan={currentCols + 2} className="no-data-row">
                                     No orders found matching filters.
                                 </td>
                             </tr>
@@ -696,7 +702,9 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                     </button>
                                                 ) : '-'}
                                             </td>
-                                            <td>{tx.amount ?? '-'}</td>
+                                            <td>{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
+                                            <td>{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
+                                            <td>{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
                                             {statusFilter === 'REJECTED' && <td>
                                                 {unit.rejectedReason || 'No reason provided'}
                                             </td>}
@@ -726,7 +734,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
                                         {expandedOrderId === unit.id && (
                                             <tr className="tracking-expanded-row">
-                                                <td colSpan={currentCols} className="tracking-expanded-cell">
+                                                <td colSpan={currentCols + 2} className="tracking-expanded-cell">
                                                     <div className="order-expand-animation tracking-expand-container">
                                                         <div className="tracking-interface-container" style={{ display: 'block' }}>
                                                             {/* Sidebar removed */}
@@ -802,27 +810,36 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
                                                                                                         <div className={`tracking-timeline-content-col ${isLast ? 'last' : ''}`}>
                                                                                                             <div className="tracking-timeline-header">
-                                                                                                                <div className={`tracking-timeline-label ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
-                                                                                                                    {stage.label}
+                                                                                                                <div className="tracking-timeline-details-text">
+                                                                                                                    <div className={`tracking-timeline-label ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
+                                                                                                                        {stage.label}
+                                                                                                                    </div>
+                                                                                                                    <div className="tracking-timeline-desc">
+                                                                                                                        {/* Only show description if time/date is present ("along with time only") */}
+                                                                                                                        {(tracker.history[stage.id]?.date && tracker.history[stage.id]?.date !== '-') ? `(${tracker.history[stage.id]?.description || stage.description})` : null}
+                                                                                                                    </div>
                                                                                                                 </div>
 
-                                                                                                                {isCurrent && stage.id >= 3 && stage.id < 7 && (
+                                                                                                                {/* Show button only if previous step is completed and we are waiting for the next action */}
+                                                                                                                {(isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8 && (
                                                                                                                     <button
                                                                                                                         className="tracking-update-btn"
                                                                                                                         onClick={() => handleStageUpdateLocal(unit.id, cycleNum, stage.id + 1)}
                                                                                                                     >
                                                                                                                         {(() => {
                                                                                                                             const nextId = stage.id + 1;
-                                                                                                                            if (nextId === 4) return 'Move to Market';
-                                                                                                                            if (nextId === 5) return 'Move to Quarantine';
-                                                                                                                            if (nextId === 6) return 'Start Transit';
-                                                                                                                            if (nextId === 7) return 'Confirm Delivery';
+
+                                                                                                                            if (nextId === 5) return 'Bought';
+                                                                                                                            if (nextId === 6) return 'In Quarantine';
+                                                                                                                            if (nextId === 7) return 'In Transit';
+                                                                                                                            if (nextId === 8) return 'Delivered';
                                                                                                                             return 'Update';
                                                                                                                         })()}
                                                                                                                     </button>
                                                                                                                 )}
 
-                                                                                                                {isStepCompleted && (
+                                                                                                                {/* Show Completed Badge only if step is completed AND button is NOT shown */}
+                                                                                                                {isStepCompleted && !((isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8) && (
                                                                                                                     <span className="tracking-completed-badge">
                                                                                                                         {stage.id === 7 ? 'Delivered' : 'Completed'}
                                                                                                                     </span>

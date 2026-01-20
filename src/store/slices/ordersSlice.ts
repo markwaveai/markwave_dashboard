@@ -139,7 +139,7 @@ export interface OrdersState {
     trackingData: {
         [key: string]: {
             currentStageId: number;
-            history: { [stageId: number]: { date: string, time: string } };
+            history: { [stageId: number]: { date: string, time: string, description?: string } };
         }
     };
     totalCount: number;

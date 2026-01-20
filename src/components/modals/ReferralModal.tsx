@@ -17,16 +17,15 @@ interface ReferralModalProps {
         is_test?: string;
     };
     onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    onBlur: () => void;
+    onBlur: (field: string) => void;
     onSubmit: (e: React.FormEvent) => void;
     adminReferralCode?: string;
     canEditReferralCode?: boolean;
+    errors?: Record<string, string>;
 }
 
-
-
 const ReferralModal: React.FC<ReferralModalProps> = (props) => {
-    const { formData, onInputChange, onBlur, onSubmit, canEditReferralCode } = props;
+    const { formData, onInputChange, onBlur, onSubmit, canEditReferralCode, errors } = props;
     const dispatch = useAppDispatch();
     const showModal = useAppSelector((state: RootState) => state.ui.modals.referral);
 
@@ -67,10 +66,27 @@ const ReferralModal: React.FC<ReferralModalProps> = (props) => {
                                 name="mobile"
                                 value={formData.mobile}
                                 onChange={onInputChange}
+                                onBlur={() => onBlur('mobile')}
                                 required
                                 placeholder="Enter mobile number"
-                                className="form-input"
+                                className={`form-input ${errors?.mobile ? 'input-error' : ''}`}
                             />
+                            {errors?.mobile && <span className="error-message">{errors.mobile}</span>}
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">
+                                Role
+                            </label>
+                            <select
+                                name="role"
+                                value={formData.role}
+                                onChange={onInputChange}
+                                className="form-input"
+                            >
+                                <option value="Investor">Investor</option>
+                                <option value="Employee">Employee</option>
+                            </select>
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4">
@@ -83,10 +99,12 @@ const ReferralModal: React.FC<ReferralModalProps> = (props) => {
                                     name="first_name"
                                     value={formData.first_name}
                                     onChange={onInputChange}
+                                    onBlur={() => onBlur('first_name')}
                                     required
                                     placeholder="First Name"
-                                    className="form-input"
+                                    className={`form-input ${errors?.first_name ? 'input-error' : ''}`}
                                 />
+                                {errors?.first_name && <span className="error-message">{errors.first_name}</span>}
                             </div>
                             <div className="form-col">
                                 <label className="form-label">
@@ -97,10 +115,12 @@ const ReferralModal: React.FC<ReferralModalProps> = (props) => {
                                     name="last_name"
                                     value={formData.last_name}
                                     onChange={onInputChange}
+                                    onBlur={() => onBlur('last_name')}
                                     required
                                     placeholder="Last Name"
-                                    className="form-input"
+                                    className={`form-input ${errors?.last_name ? 'input-error' : ''}`}
                                 />
+                                {errors?.last_name && <span className="error-message">{errors.last_name}</span>}
                             </div>
                         </div>
 
@@ -114,9 +134,11 @@ const ReferralModal: React.FC<ReferralModalProps> = (props) => {
                                 name="email"
                                 value={formData.email || ''} // Handle undefined
                                 onChange={onInputChange}
+                                onBlur={() => onBlur('email')}
                                 placeholder="Enter email address"
-                                className="form-input"
+                                className={`form-input ${errors?.email ? 'input-error' : ''}`}
                             />
+                            {errors?.email && <span className="error-message">{errors.email}</span>}
                         </div>
 
                         <div className="referrer-section">

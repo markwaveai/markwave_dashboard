@@ -58,7 +58,7 @@ const EditReferralModal: React.FC<EditReferralModalProps> = ({
                         <input
                             type="text"
                             name="role"
-                            value={editingUser.role || 'Investor'}
+                            value={editingUser.role === 'SpecialCategory' ? 'Special Category' : (editingUser.role || 'Investor')}
                             disabled
                             className="edit-referral-input edit-referral-input-disabled"
                         />

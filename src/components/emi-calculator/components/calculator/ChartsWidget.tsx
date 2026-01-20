@@ -261,7 +261,7 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, yearlySche
                     <p className="text-gray-500 text-xs font-bold mb-1">{label}</p>
                     <div className="space-y-0.5">
                         <p className="text-sm font-bold text-gray-800">
-                            Monthly EMI : <span className="font-mono">₹{formatCurrency(data.amount)}</span>
+                            Yearly EMI : <span className="font-mono">₹{formatCurrency(data.amount)}</span>
                         </p>
                         {data.cpf > 0 && (
                             <p className="text-xs font-semibold text-gray-600">

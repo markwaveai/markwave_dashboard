@@ -231,7 +231,7 @@ const Employees: React.FC = () => {
                                         <td className="px-4 py-3">
                                             {employee.roles?.map((role: string) => (
                                                 <span key={role} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold mr-1">
-                                                    {role}
+                                                    {role === 'SpecialCategory' ? 'Special Category' : role}
                                                 </span>
                                             )) || '-'}
                                         </td>
