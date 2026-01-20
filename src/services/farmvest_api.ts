@@ -58,9 +58,10 @@ export const farmvestService = {
     staticLogin: async (mobile_number: string, otp: string) => {
         try {
             // This call will usage the API Key via the interceptor (since no token exists yet)
-            const response = await farmvestApi.post('/api/admin/static_login', {
+           const response = await farmvestApi.post('/auth/static_login', {
                 mobile_number,
-                otp
+                otp,
+                is_test: true
             });
             return response.data;
         } catch (error) {
@@ -101,6 +102,29 @@ export const farmvestService = {
             return response.data;
         } catch (error) {
             console.error(`Error deleting farmvest employee ${id}:`, error);
+            throw error;
+        }
+    },
+    getShedsByFarm: async (farmId: number) => {
+        try {
+            const url = `/api/admin/available_sheds/${farmId}`;
+            console.log(`[FarmVest] Fetching sheds from: ${url}`);
+            const response = await farmvestApi.get(url);
+            // If response.data is the list, return it.
+            // If response.data.data is the list (common pattern), return that.
+            // Let's return response.data for now and handle parsing in the component as we are not 100% sure of the structure.
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching sheds for farm ${farmId}:`, error);
+            throw error;
+        }
+    },
+    createFarm: async (farmData: { farm_name: string; location: string; total_buffaloes_count: number }) => {
+        try {
+            const response = await farmvestApi.post('/api/admin/farm', farmData);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating farm:', error);
             throw error;
         }
     }

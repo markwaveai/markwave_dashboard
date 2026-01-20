@@ -42,6 +42,7 @@ import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSk
 // FarmVest Components (Lazy Loaded)
 const FarmVestEmployees = React.lazy(() => import('./FarmvestComponents/Employees'));
 const FarmVestFarms = React.lazy(() => import('./FarmvestComponents/Farms'));
+const FarmVestFarmDetails = React.lazy(() => import('./FarmvestComponents/FarmDetails'));
 
 interface Session {
   mobile: string;
@@ -254,6 +255,14 @@ function App() {
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
             <React.Suspense fallback={<OrdersPageSkeleton />}>
               <FarmVestFarms />
+            </React.Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/farmvest/farms/:id" element={
+          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
+            <React.Suspense fallback={<OrdersPageSkeleton />}>
+              <FarmVestFarmDetails />
             </React.Suspense>
           </ProtectedRoute>
         } />
