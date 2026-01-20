@@ -1,15 +1,18 @@
 import React, { useEffect, useCallback, useState, useMemo, memo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import type { RootState } from '../store';
 import { fetchFarms } from '../store/slices/farmvest/farms';
 import { useTableSortAndSearch } from '../hooks/useTableSortAndSearch';
 import Pagination from '../components/common/Pagination';
 import TableSkeleton from '../components/common/TableSkeleton';
+import { farmvestService } from '../services/farmvest_api';
+import AddFarmModal from './AddFarmModal';
 import './Farms.css';
 
 // Memoized table row with defensive checks
-const FarmRow = memo(({ farm, index, currentPage, itemsPerPage }: any) => {
+// Memoized table row with defensive checks
+const FarmRow = memo(({ farm, index, currentPage, itemsPerPage, onFarmClick }: any) => {
     if (!farm) return null;
 
     // Safely calculate serial number
@@ -19,7 +22,7 @@ const FarmRow = memo(({ farm, index, currentPage, itemsPerPage }: any) => {
     return (
         <tr className="bg-white border-b hover:bg-gray-50 transition-colors duration-150">
             <td className="px-4 py-3 text-center text-gray-400 font-medium">{sNo}</td>
-            <td className="px-4 py-3 font-semibold text-gray-900">
+            <td className="px-4 py-3 font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => onFarmClick && onFarmClick(farm)}>
                 {farm.farm_name || '-'}
             </td>
             <td className="px-4 py-3 text-gray-600">
@@ -38,6 +41,7 @@ const FarmRow = memo(({ farm, index, currentPage, itemsPerPage }: any) => {
 
 const Farms: React.FC = () => {
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
     const { farms, loading: farmsLoading, error: farmsError } = useAppSelector((state: RootState) => {
         // Safe selector fallback
         const farmState = state.farmvestFarms || { farms: [], loading: false, error: null };
@@ -66,6 +70,19 @@ const Farms: React.FC = () => {
 
     // Local State for search
     const [searchTerm, setSearchTerm] = useState('');
+    const [isAddFarmModalOpen, setIsAddFarmModalOpen] = useState(false);
+
+    const handleFarmNameClick = useCallback((farm: any) => {
+        if (!farm || !farm.id) return;
+
+        // Navigate to details page
+        navigate(`/farmvest/farms/${farm.id}`, { state: { farm } });
+    }, [navigate]);
+
+    // Removed old modal state and logic
+
+
+
 
 
     // Effect: Trigger fetch when location changes
@@ -162,12 +179,19 @@ const Farms: React.FC = () => {
                 <div>
                     <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">FarmVest Management</h2>
                     <div className="text-sm text-gray-500 font-medium flex items-center gap-2 mt-1">
-                        <span className={`inline-block w-2 h-2 rounded-full ${farmsLoading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`}></span>
-                        <span>{location} Operations • {farms.length} Farms Loaded</span>
+                        {/* <span className={`inline-block w-2 h-2 rounded-full ${farmsLoading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`}></span> */}
+                        {/* <span>{location} Operations • {farms.length} Farms Loaded</span> */}
                     </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                    <button
+                        onClick={() => setIsAddFarmModalOpen(true)}
+                        className="px-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md flex items-center gap-2"
+                    >
+                        <span>+</span> Add Farm
+                    </button>
+
                     {/* Location Selector */}
                     <div className="relative w-full sm:w-56">
                         <select
@@ -175,7 +199,7 @@ const Farms: React.FC = () => {
                             value={location}
                             onChange={handleLocationChange}
                         >
-                            <option value="KURNOOL">KURNOOL (Default)</option>
+                            <option value="KURNOOL">KURNOOL </option>
                             <option value="HYDERABAD">HYDERABAD</option>
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
@@ -227,7 +251,7 @@ const Farms: React.FC = () => {
                     <table className="farms-table w-full text-sm text-left border-collapse">
                         <thead className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase font-bold tracking-widest text-gray-400">
                             <tr>
-                                <th className="px-6 py-5 text-center">Reference</th>
+                                <th className="px-6 py-5 text-center">S.no</th>
                                 <th className="px-6 py-5 cursor-pointer hover:bg-gray-100/50 transition-colors group" onClick={() => requestSort('farm_name')}>
                                     <div className="flex items-center gap-2">Farm Name <span className="text-blue-500 opacity-60">{getSortIcon('farm_name')}</span></div>
                                 </th>
@@ -258,6 +282,7 @@ const Farms: React.FC = () => {
                                         index={index}
                                         currentPage={currentPage}
                                         itemsPerPage={itemsPerPage}
+                                        onFarmClick={handleFarmNameClick}
                                     />
                                 ))
                             )}
@@ -275,7 +300,27 @@ const Farms: React.FC = () => {
                     </div>
                 )}
             </div>
-        </div>
+
+
+
+            <AddFarmModal
+                isOpen={isAddFarmModalOpen}
+                onClose={() => setIsAddFarmModalOpen(false)}
+                initialLocation={location}
+                onSuccess={(newLocation) => {
+                    // Refresh data, potentially switching location if needed
+                    if (newLocation !== location) {
+                        setSearchParams(prev => {
+                            const next = new URLSearchParams(prev);
+                            next.set('location', newLocation);
+                            return next;
+                        });
+                    } else {
+                        dispatch(fetchFarms(location));
+                    }
+                }}
+            />
+        </div >
     );
 };
 
