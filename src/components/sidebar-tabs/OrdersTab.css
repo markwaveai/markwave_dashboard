@@ -1,7 +1,7 @@
 /* Orders Tab Styles */
 
 .orders-dashboard {
-    margin-top: -10px;
+    padding: 2rem;
 }
 
 .orders-header {
@@ -1005,6 +1005,19 @@
 .tracking-timeline-time {
     font-size: 11px;
     color: #94a3b8;
+}
+
+.tracking-timeline-desc {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.tracking-timeline-details-text {
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- CONSOLIDATED RESPONSIVENESS (Mobile, Tablet, PC, TV) --- */
