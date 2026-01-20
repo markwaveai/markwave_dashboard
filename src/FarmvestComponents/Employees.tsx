@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import type { RootState } from '../store';
@@ -20,6 +20,7 @@ const Employees: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [selectedEmployee, setSelectedEmployee] = React.useState<any>(null);
+    const [selectedRole, setSelectedRole] = useState('');
 
     const {
         employees,
@@ -59,8 +60,8 @@ const Employees: React.FC = () => {
     const [searchTerm, setSearchTerm] = React.useState('');
 
     useEffect(() => {
-        dispatch(fetchEmployees());
-    }, [dispatch]);
+        dispatch(fetchEmployees(selectedRole));
+    }, [dispatch, selectedRole]);
 
     const setCurrentPage = useCallback((page: number) => {
         setSearchParams(prev => {
@@ -143,6 +144,21 @@ const Employees: React.FC = () => {
                         <span className="text-xl leading-none">+</span>
                         Add Employee
                     </button>
+
+                    {/* Role Filter */}
+                    <select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        style={{ height: '42px' }}
+                    >
+                        <option value="">All Roles</option>
+                        <option value="FARM_MANAGER">Farm Manager</option>
+                        <option value="SUPERVISOR">Supervisor</option>
+                        <option value="DOCTOR">Doctor</option>
+                        <option value="ASSISTANT_DOCTOR">Assistant Doctor</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
 
                     {/* Search Input */}
                     <div className="w-full md:w-auto relative">

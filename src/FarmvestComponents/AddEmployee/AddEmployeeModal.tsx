@@ -29,6 +29,8 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose }) 
 
     const [farms, setFarms] = useState<any[]>([]);
     const [farmsLoading, setFarmsLoading] = useState(false);
+    const [sheds, setSheds] = useState<any[]>([]);
+    const [shedsLoading, setShedsLoading] = useState(false);
 
     // Fetch farms based on location
     useEffect(() => {
@@ -42,8 +44,9 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose }) 
                 const farmList = Array.isArray(response) ? response : (response.data || []);
                 setFarms(farmList);
 
-                // Reset farm_id when location changes to avoid cross-location IDs
-                setFormData(prev => ({ ...prev, farm_id: '' }));
+                // Reset farm_id when location changes
+                setFormData(prev => ({ ...prev, farm_id: '', shed_id: '' }));
+                setSheds([]);
             } catch (error) {
                 console.error(`Error loading farms for ${formData.location}:`, error);
                 setFarms([]);
@@ -54,6 +57,35 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose }) 
 
         fetchFarmsByLocation();
     }, [formData.location, isOpen]);
+
+    // Fetch sheds based on farm_id
+    useEffect(() => {
+        if (!isOpen || !formData.farm_id) {
+            setSheds([]);
+            return;
+        }
+
+        const fetchShedsByFarm = async () => {
+            setShedsLoading(true);
+            try {
+                const response = await farmvestService.getAvailableSheds(Number(formData.farm_id));
+                // API response might be { status: 200, data: [...] } or just [...]
+                // Adjust based on actual API response structure
+                const shedList = Array.isArray(response) ? response : (response.data || []);
+                setSheds(shedList);
+
+                // Reset shed_id when farm changes
+                setFormData(prev => ({ ...prev, shed_id: '' }));
+            } catch (error) {
+                console.error(`Error loading sheds for farm ${formData.farm_id}:`, error);
+                setSheds([]);
+            } finally {
+                setShedsLoading(false);
+            }
+        };
+
+        fetchShedsByFarm();
+    }, [formData.farm_id, isOpen]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -237,16 +269,37 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose }) 
                         {/* Conditional Shed ID for Supervisor */}
                         {formData.role === 'SUPERVISOR' && (
                             <div className="form-group animate-fadeIn">
-                                <label><Hash size={14} /> Shed ID *</label>
-                                <input
-                                    type="text"
-                                    name="shed_id"
-                                    value={formData.shed_id}
-                                    onChange={handleInputChange}
-                                    required
-                                    placeholder="Enter shed ID (e.g. 2)"
-                                    className="form-input"
-                                />
+                                <label><Hash size={14} /> Select Shed *</label>
+                                <div className="relative">
+                                    <select
+                                        name="shed_id"
+                                        value={formData.shed_id}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-select"
+                                        disabled={shedsLoading || !formData.farm_id || sheds.length === 0}
+                                    >
+                                        <option value="">
+                                            {!formData.farm_id
+                                                ? 'Select a farm first...'
+                                                : shedsLoading
+                                                    ? 'Loading sheds...'
+                                                    : sheds.length === 0
+                                                        ? 'No sheds available'
+                                                        : 'Choose a shed...'}
+                                        </option>
+                                        {sheds.map(shed => (
+                                            <option key={shed.id} value={shed.id}>
+                                                {shed.shed_id}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {shedsLoading && (
+                                        <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                                            <Loader2 size={16} className="animate-spin text-blue-500" />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>

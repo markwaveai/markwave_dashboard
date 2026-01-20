@@ -4,9 +4,9 @@ import { FarmvestEmployee } from '../../../types/farmvest';
 
 export const fetchEmployees = createAsyncThunk(
     'farmvestEmployees/fetchEmployees',
-    async (_, { rejectWithValue }) => {
+    async (role: string | undefined, { rejectWithValue }) => {
         try {
-            const response = await farmvestService.getEmployees();
+            const response = await farmvestService.getEmployees(role);
             if (response.status === 200) {
                 return response.data;
             }
@@ -23,7 +23,7 @@ export const createEmployee = createAsyncThunk(
         try {
             const response = await farmvestService.createEmployee(employeeData);
             // Refresh list after creation
-            dispatch(fetchEmployees());
+            dispatch(fetchEmployees(undefined));
             return response;
         } catch (error: any) {
             const message = error.response?.data?.message || error.message || 'Failed to create employee';
@@ -38,7 +38,7 @@ export const deleteEmployee = createAsyncThunk(
         try {
             const response = await farmvestService.deleteEmployee(id);
             // Refresh list after deletion
-            dispatch(fetchEmployees());
+            dispatch(fetchEmployees(undefined));
             return response;
         } catch (error: any) {
             const message = error.response?.data?.message || error.message || 'Failed to delete employee';
