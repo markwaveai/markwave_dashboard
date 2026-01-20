@@ -58,9 +58,10 @@ export const farmvestService = {
     staticLogin: async (mobile_number: string, otp: string) => {
         try {
             // This call will usage the API Key via the interceptor (since no token exists yet)
-            const response = await farmvestApi.post('/api/admin/static_login', {
+            const response = await farmvestApi.post('/auth/static_login', {
                 mobile_number,
-                otp
+                otp,
+                is_test: true
             });
             return response.data;
         } catch (error) {
@@ -68,9 +69,10 @@ export const farmvestService = {
             throw error;
         }
     },
-    getEmployees: async () => {
+    getEmployees: async (role?: string) => {
         try {
-            const response = await farmvestApi.get('/api/admin/get_all_employees');
+            const query = role && role !== '' ? `?role=${role}` : '';
+            const response = await farmvestApi.get(`/api/admin/get_all_employees${query}`);
             return response.data;
         } catch (error) {
             console.error('Error fetching farmvest employees:', error);
@@ -101,6 +103,15 @@ export const farmvestService = {
             return response.data;
         } catch (error) {
             console.error(`Error deleting farmvest employee ${id}:`, error);
+            throw error;
+        }
+    },
+    getAvailableSheds: async (farm_id: number) => {
+        try {
+            const response = await farmvestApi.get(`/api/admin/available_sheds/${farm_id}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching sheds for farm ${farm_id}:`, error);
             throw error;
         }
     }
