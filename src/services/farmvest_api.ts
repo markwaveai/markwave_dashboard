@@ -112,6 +112,9 @@ export const farmvestService = {
             return response.data;
         } catch (error) {
             console.error(`Error fetching sheds for farm ${farm_id}:`, error);
+            throw error;
+        }
+    },
     getShedsByFarm: async (farmId: number) => {
         try {
             const url = `/api/admin/available_sheds/${farmId}`;
