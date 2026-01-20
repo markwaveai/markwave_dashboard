@@ -60,6 +60,8 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     return 'animalkart';
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const [formData, setFormData] = useState({
     mobile: '',
     first_name: '',
@@ -162,11 +164,90 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+
+    // Mobile validation: Only allow numbers and max 10 digits
+    if (name === 'mobile') {
+      if (value && (!/^\d*$/.test(value) || value.length > 10)) {
+        return;
+      }
+    }
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData({ ...formData, [name]: checked ? 'true' : 'false' });
     } else {
       setFormData({ ...formData, [name]: value });
+      // Clear error when user types
+      if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: '' }));
+      }
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // Mobile Validation
+    if (!formData.mobile) {
+      newErrors.mobile = 'Mobile number is required';
+    } else if (!/^\d{10}$/.test(formData.mobile)) {
+      newErrors.mobile = 'Mobile number must be 10 digits';
+    }
+
+    // Name Validation
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    } else if (formData.first_name.length < 2) {
+      newErrors.first_name = 'First name must be at least 2 characters';
+    }
+
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
+    } else if (formData.last_name.length < 2) {
+      newErrors.last_name = 'Last name must be at least 2 characters';
+    }
+
+    // Email Validation (Optional but must be valid if present)
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateField = (name: string, value: string) => {
+    let error = '';
+    switch (name) {
+      case 'mobile':
+        if (!value) error = 'Mobile number is required';
+        else if (!/^\d{10}$/.test(value)) error = 'Mobile number must be 10 digits';
+        break;
+      case 'first_name':
+        if (!value.trim()) error = 'First name is required';
+        else if (value.length < 2) error = 'First name must be at least 2 characters';
+        break;
+      case 'last_name':
+        if (!value.trim()) error = 'Last name is required';
+        else if (value.length < 2) error = 'Last name must be at least 2 characters';
+        break;
+      case 'email':
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email format';
+        break;
+    }
+    return error;
+  };
+
+  const handleReferralFieldBlur = (field: string) => {
+    const value = formData[field as keyof typeof formData] || '';
+    const error = validateField(field, value);
+    setErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+
+    if (field === 'mobile' && !error) {
+      fetchReferrerDetails(formData.refered_by_mobile, false);
     }
   };
 
@@ -194,9 +275,10 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     }
   };
 
-  const handleReferralMobileBlur = () => {
-    fetchReferrerDetails(formData.refered_by_mobile, false);
-  };
+  // Removed legacy single blur handler since we now handle per field
+  // const handleReferralMobileBlur = () => {
+  //   fetchReferrerDetails(formData.refered_by_mobile, false);
+  // };
 
   const handleEditReferralMobileBlur = () => {
     fetchReferrerDetails(editFormData.refered_by_mobile, true);
@@ -204,6 +286,11 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       const payload = {
         mobile: formData.mobile,
@@ -235,6 +322,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         role: 'Investor',
         is_test: 'false',
       });
+      setErrors({});
       if (formData.role === 'Employee') {
         dispatch(fetchFarmvestEmployees());
       }
@@ -504,7 +592,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
       {hasSession && (
         <>
-          <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralMobileBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} canEditReferralCode={true} />
+          <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralFieldBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} canEditReferralCode={true} errors={errors} />
           <EditReferralModal editFormData={editFormData} onInputChange={handleEditInputChange} onBlur={handleEditReferralMobileBlur} onSubmit={handleEditSubmit} />
           <ImageNamesModal />
           <AdminDetailsModal adminName={displayAdminName} adminMobile={adminMobile} adminRole={adminRole} lastLogin={lastLogin} presentLogin={presentLogin} adminReferralCode={adminReferralCode} />
