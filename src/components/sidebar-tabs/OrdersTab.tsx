@@ -87,6 +87,20 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 
     const [searchParams, setSearchParams] = useSearchParams();
 
+    // Tooltip State
+    const [tooltipInfo, setTooltipInfo] = useState<{ tx: any; top: number; left: number } | null>(null);
+
+    const findVal = (obj: any, keys: string[], partials: string[]) => {
+        if (!obj) return '-';
+        for (const k of keys) {
+            if (obj[k]) return obj[k];
+        }
+        const foundKey = Object.keys(obj).find(k =>
+            partials.some(p => k.toLowerCase().includes(p))
+        );
+        return foundKey ? obj[foundKey] : '-';
+    };
+
     // Sync URL Filters to Redux State
     useEffect(() => {
         const pageParam = searchParams.get('page');
@@ -275,11 +289,14 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 
         // Dynamic Stages from Backend
         const dynamicStages = realTrackingData.timeline.map((item: any) => {
-            // Format Label
+            // Format Label from 'stage' field
             let label = '';
+
             if (item.stage === 'BUFFALOS_BOUGHT') {
                 label = 'Purchased in Market';
             } else {
+                // Basic formatting: replace underscores with spaces and Title Case
+                // e.g. "ORDER_PLACED" -> "Order Placed"
                 label = item.stage
                     .split('_')
                     .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -290,7 +307,8 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                 id: item.id,
                 label: label,
                 description: item.description,
-                rawStage: item.stage // Keep for updates
+                status: item.status, // Store status for badge logic
+                rawStage: item.stage
             };
         }).sort((a: any, b: any) => a.id - b.id);
 
@@ -300,65 +318,47 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                 if (item.timestamp) {
                     const dateObj = new Date(item.timestamp);
                     const dateStr = dateObj.toLocaleDateString('en-GB').replace(/\//g, '-');
-                    const timeStr = dateObj.toLocaleTimeString('en-GB');
+                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false }); // Based on image 10:25:51
                     history[sId] = { date: dateStr, time: timeStr, description: item.description };
                 } else if (item.description) {
                     history[sId] = { date: '-', time: '-', description: item.description };
                 }
 
-                // Update current stage
+                // Determine current max stage based on completion
                 if (item.status === 'COMPLETED') {
+                    // If stage N is completed, we are at least at N+1 (waiting for next) or N if it's the last one
                     maxStageId = Math.max(maxStageId, sId + 1);
-                } else if (item.status === 'IN_PROGRESS') {
-                    maxStageId = Math.max(maxStageId, sId);
                 }
             }
         });
 
-        // Ensure maxStageId doesn't exceed available stages
+        // Clamp maxStageId
         if (dynamicStages.length > 0) {
             const lastId = dynamicStages[dynamicStages.length - 1].id;
-            if (maxStageId > lastId + 1) maxStageId = lastId + 1; // Allow one step past last for full completion? Or just clamp to lastId?
-            // Typically if stage 8 is completed, currentStageId might become 9. 
-            // If we clamp to <= 9 or similar.
-            if (maxStageId > 9) maxStageId = 9;
+            if (maxStageId > lastId + 1) maxStageId = lastId + 1;
         }
 
         return { currentStageId: maxStageId, history, stages: dynamicStages };
     }, [realTrackingData]);
 
     const handleStageUpdateLocal = async (orderId: string, buffaloNum: number, nextStageId: number) => {
-        // Map nextStageId to Backend Status
+        // Map nextStageId to Specific Backend Status required by user
         let status = '';
 
-        // Dynamic Lookup
-        if (realTrackingData && realTrackingData.timeline) {
-            const targetStage = realTrackingData.timeline.find((t: any) => t.id === nextStageId);
-            if (targetStage) {
-                status = targetStage.stage;
-            }
-        }
-
-        // Fallback if not found dynamically
-        if (!status) {
-            if (nextStageId === 5) status = 'BUFFALOS_BOUGHT';
-            else if (nextStageId === 6) status = 'IN_QUARANTINE';
-            else if (nextStageId === 7) status = 'IN_TRANSIT';
-            else if (nextStageId === 8) status = 'DELIVERED_TO_FARM';
-            else if (nextStageId === 4) status = 'ORDER_APPROVED';
-        }
+        if (nextStageId === 5) status = 'BOUGHT';
+        else if (nextStageId === 6) status = 'IN_QUARANTINE';
+        else if (nextStageId === 7) status = 'IN_TRANSIT';
+        else if (nextStageId === 8) status = 'DELIVERED';
 
         if (!status) {
-            // If nextStageId is 8 (after Delivered), we might just allow it if we want to "Complete" the order visually?
-            // But API has no status for it.
-            alert("Update restricted for this stage. Please complete Payment verification via the main 'Approve' button.");
+            alert("Update not allowed for this stage.");
             return;
         }
 
         const payload = {
             orderId: orderId,
             status: status,
-            buffaloId: String(buffaloNum), // Always send buffaloId
+            buffaloId: String(buffaloNum),
             adminMobile: adminMobile,
             description: "",
             location: ""
@@ -379,7 +379,6 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             const data = await response.json();
             if (data.status === 'success') {
                 // Refresh tracking data
-                // Manually re-fetch
                 const refreshResponse = await fetch(API_ENDPOINTS.getOrderStatus(), {
                     method: 'POST',
                     headers: {
@@ -400,17 +399,6 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             alert("Error updating status");
         }
     };
-
-    const trackingStages = [
-        { id: 1, label: 'Order Placed', description: 'Order placed successfully.' },
-        { id: 2, label: 'Payment Submitted', description: 'Payment details submitted by customer.' },
-        { id: 3, label: 'Payment Verified', description: 'Payment verified and order approved.' },
-        { id: 4, label: 'Order Approved', description: 'Order approved for procurement.' },
-        { id: 5, label: 'Purchased in Market', description: 'Buffalos purchased from market.' },
-        { id: 6, label: 'In Quarantine', description: 'Animals in quarantine for health check.' },
-        { id: 7, label: 'In Transit', description: 'Animals are on the way to the farm.' },
-        { id: 8, label: 'Delivered to Farm', description: 'Delivered' }
-    ];
 
     // Pagination
     const totalPages = Math.ceil((totalCount || 0) / pageSize);
@@ -624,74 +612,32 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                             </td>
                                             <td className="payment-type-cell">
                                                 {tx.paymentType === 'BANK_TRANSFER' || tx.paymentType === 'CHEQUE' ? (
-                                                    <div className="bank-transfer-hover-container">
+                                                    <div
+                                                        className="bank-transfer-hover-container"
+                                                        onMouseEnter={(e) => {
+                                                            const rect = e.currentTarget.getBoundingClientRect();
+                                                            const viewportHeight = window.innerHeight;
+                                                            // Default: Center vertically relative to trigger
+                                                            let top = rect.top + (rect.height / 2);
+
+                                                            // Adjust if near bottom (assume tooltip height ~250px)
+                                                            if (top + 125 > viewportHeight) {
+                                                                top = viewportHeight - 140;
+                                                            }
+                                                            // Adjust if near top
+                                                            if (top - 125 < 0) {
+                                                                top = 140;
+                                                            }
+
+                                                            setTooltipInfo({
+                                                                tx,
+                                                                top,
+                                                                left: rect.right + 10
+                                                            });
+                                                        }}
+                                                        onMouseLeave={() => setTooltipInfo(null)}
+                                                    >
                                                         <span>{tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cheque'}</span>
-                                                        <div className="bank-details-tooltip">
-                                                            <div className="tooltip-title">Payment Details</div>
-                                                            {(() => {
-                                                                const findVal = (obj: any, keys: string[], partials: string[]) => {
-                                                                    if (!obj) return '-';
-                                                                    for (const k of keys) {
-                                                                        if (obj[k]) return obj[k];
-                                                                    }
-                                                                    const foundKey = Object.keys(obj).find(k =>
-                                                                        partials.some(p => k.toLowerCase().includes(p))
-                                                                    );
-                                                                    return foundKey ? obj[foundKey] : '-';
-                                                                };
-
-                                                                const isCheque = tx.paymentType === 'CHEQUE';
-
-                                                                return (
-                                                                    <>
-                                                                        <div className="tooltip-item">
-                                                                            <span className="tooltip-label">Bank Name:</span>
-                                                                            <span className="tooltip-value">{findVal(tx, ['bank_name', 'bankName', 'bank_details'], ['bank'])}</span>
-                                                                        </div>
-                                                                        <div className="tooltip-item">
-                                                                            <span className="tooltip-label">{isCheque ? 'Cheque No:' : 'A/C Number:'}</span>
-                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                                                                <span className="tooltip-value">
-                                                                                    {isCheque
-                                                                                        ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
-                                                                                        : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no'])
-                                                                                    }
-                                                                                </span>
-                                                                                {isCheque && (
-                                                                                    <UTRCopyButton value={findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])} />
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="tooltip-item">
-                                                                            <span className="tooltip-label">{isCheque ? 'Cheque Date:' : 'UTR:'}</span>
-                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                                                                <span className="tooltip-value">
-                                                                                    {isCheque
-                                                                                        ? findVal(tx, ['cheque_date', 'date'], ['date'])
-                                                                                        : findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
-                                                                                    }
-                                                                                </span>
-                                                                                {!isCheque && (
-                                                                                    <UTRCopyButton value={findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])} />
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                        {!isCheque && (
-                                                                            <div className="tooltip-item">
-                                                                                <span className="tooltip-label">IFSC:</span>
-                                                                                <span className="tooltip-value">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {tx.transferMode && (
-                                                                            <div className="tooltip-item">
-                                                                                <span className="tooltip-label">Mode:</span>
-                                                                                <span className="tooltip-value">{tx.transferMode}</span>
-                                                                            </div>
-                                                                        )}
-                                                                    </>
-                                                                );
-                                                            })()}
-                                                        </div>
                                                     </div>
                                                 ) : (
                                                     tx.paymentType || '-'
@@ -768,8 +714,8 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                                             const currentStageId = tracker.currentStageId;
                                                                             const isExpanded = expandedTrackerKeys[trackerKey] !== false;
 
-                                                                            // Use dynamic stages if available, else fallback
-                                                                            const timelineStages = (tracker.stages && tracker.stages.length > 0) ? tracker.stages : trackingStages;
+                                                                            // Use dynamic stages
+                                                                            const timelineStages = tracker.stages || [];
 
                                                                             return (
                                                                                 <div key={cycleNum} className="tracking-buffalo-card" style={{ marginBottom: '20px' }}>
@@ -808,7 +754,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                                                                             {!isLast && (
                                                                                                                 <div className={`tracking-timeline-line ${isStepCompleted ? 'completed' : 'pending'}`} />
                                                                                                             )}
-                                                                                                            <div className={`tracking-timeline-dot ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
+                                                                                                            <div className={`tracking-timeline-dot ${isStepCompleted ? 'completed' : 'pending'}`}>
                                                                                                                 {isStepCompleted ? '✓' : stage.id}
                                                                                                             </div>
                                                                                                         </div>
@@ -816,7 +762,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                                                                         <div className={`tracking-timeline-content-col ${isLast ? 'last' : ''}`}>
                                                                                                             <div className="tracking-timeline-header">
                                                                                                                 <div className="tracking-timeline-details-text">
-                                                                                                                    <div className={`tracking-timeline-label ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
+                                                                                                                    <div className={`tracking-timeline-label ${isStepCompleted ? 'completed' : 'pending'}`}>
                                                                                                                         {stage.label}
                                                                                                                     </div>
                                                                                                                     <div className="tracking-timeline-desc">
@@ -834,7 +780,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                                                                                         {(() => {
                                                                                                                             const nextId = stage.id + 1;
 
-                                                                                                                            if (nextId === 5) return 'Bought';
+                                                                                                                            if (nextId === 5) return 'Update Buffaloes purchased';
                                                                                                                             if (nextId === 6) return 'In Quarantine';
                                                                                                                             if (nextId === 7) return 'In Transit';
                                                                                                                             if (nextId === 8) return 'Delivered';
@@ -843,8 +789,8 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                                                                                     </button>
                                                                                                                 )}
 
-                                                                                                                {/* Show Completed Badge only if step is completed AND button is NOT shown */}
-                                                                                                                {isStepCompleted && !((isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8) && (
+                                                                                                                {/* Show Completed Badge only if step is completed via API AND button is NOT shown */}
+                                                                                                                {stage.status === 'COMPLETED' && !((isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8) && (
                                                                                                                     <span className="tracking-completed-badge">
                                                                                                                         {stage.id === 7 ? 'Delivered' : 'Completed'}
                                                                                                                     </span>
@@ -887,6 +833,74 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                     });
                 }}
             />
+
+            {/* Floating Tooltip */}
+            {tooltipInfo && (() => {
+                const { tx, top, left } = tooltipInfo;
+                const isCheque = tx.paymentType === 'CHEQUE';
+                return (
+                    <div
+                        className="bank-details-tooltip"
+                        style={{
+                            visibility: 'visible',
+                            opacity: 1,
+                            position: 'fixed',
+                            top: top,
+                            left: left,
+                            transform: 'translateY(-50%)',
+                            zIndex: 9999
+                        }}
+                        onMouseEnter={() => { }}
+                        onMouseLeave={() => setTooltipInfo(null)}
+                    >
+                        <div className="tooltip-title">Payment Details</div>
+                        <div className="tooltip-item">
+                            <span className="tooltip-label">Bank Name:</span>
+                            <span className="tooltip-value">{findVal(tx, ['bank_name', 'bankName', 'bank_details'], ['bank'])}</span>
+                        </div>
+                        <div className="tooltip-item">
+                            <span className="tooltip-label">{isCheque ? 'Cheque No:' : 'A/C Number:'}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                <span className="tooltip-value">
+                                    {isCheque
+                                        ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
+                                        : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no'])
+                                    }
+                                </span>
+                                {isCheque && (
+                                    <UTRCopyButton value={findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])} />
+                                )}
+                            </div>
+                        </div>
+                        <div className="tooltip-item">
+                            <span className="tooltip-label">{isCheque ? 'Cheque Date:' : 'UTR:'}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                <span className="tooltip-value">
+                                    {isCheque
+                                        ? findVal(tx, ['cheque_date', 'date'], ['date'])
+                                        : findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
+                                    }
+                                </span>
+                                {!isCheque && (
+                                    <UTRCopyButton value={findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])} />
+                                )}
+                            </div>
+                        </div>
+                        {!isCheque && (
+                            <div className="tooltip-item">
+                                <span className="tooltip-label">IFSC:</span>
+                                <span className="tooltip-value">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
+                            </div>
+                        )}
+                        {tx.transferMode && (
+                            <div className="tooltip-item">
+                                <span className="tooltip-label">Mode:</span>
+                                <span className="tooltip-value">{tx.transferMode}</span>
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
         </div>
     );
 };

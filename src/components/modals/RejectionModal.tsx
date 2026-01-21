@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { setRejectionModal } from '../../store/slices/uiSlice';
+import { setRejectionModal, setSnackbar } from '../../store/slices/uiSlice';
 import { rejectOrder } from '../../store/slices/ordersSlice';
 import './RejectionModal.css';
 
@@ -52,11 +52,11 @@ const RejectionModal: React.FC = () => {
                 reason: trimmedReason
             })).unwrap();
 
-            alert('Order rejected successfully!');
+            dispatch(setSnackbar({ message: 'Order rejected successfully!', type: 'error' }));
             dispatch(setRejectionModal({ isOpen: false, unitId: null }));
         } catch (error) {
             console.error('Error rejecting order:', error);
-            alert('Failed to reject order.');
+            dispatch(setSnackbar({ message: 'Failed to reject order.', type: 'error' }));
         } finally {
             setIsSubmitting(false);
         }

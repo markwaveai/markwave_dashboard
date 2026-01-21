@@ -13,6 +13,7 @@ import {
   setReferralModalOpen,
   setEditReferralModal,
   setCreationRole,
+  setSnackbar,
 } from '../../store/slices/uiSlice';
 
 
@@ -33,6 +34,7 @@ import EditReferralModal from '../modals/EditReferralModal';
 import RejectionModal from '../modals/RejectionModal';
 import ApprovalModal from '../modals/ApprovalModal';
 import LogoutModal from '../modals/LogoutModal';
+import Snackbar from '../common/Snackbar';
 
 interface UserTabsProps {
   adminMobile?: string;
@@ -84,7 +86,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   });
 
   // UI State from Redux
-  const { isSidebarOpen } = useAppSelector((state: RootState) => state.ui);
+  const { isSidebarOpen, snackbar } = useAppSelector((state: RootState) => state.ui);
   const { creationRole } = useAppSelector((state: RootState) => state.ui.modals);
   const { editReferral: { user: editingUser } } = useAppSelector((state: RootState) => state.ui.modals);
 
@@ -114,6 +116,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       refered_by_mobile: adminMobile || '',
       refered_by_name: displayAdminName || '',
       referral_code: adminReferralCode || '',
+
       is_test: 'false'
     }));
     dispatch(setReferralModalOpen(true));
@@ -600,6 +603,11 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           <RejectionModal />
           <ApprovalModal />
           <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />
+          <Snackbar
+            message={snackbar.message}
+            type={snackbar.type as 'success' | 'error' | null}
+            onClose={() => dispatch(setSnackbar({ message: null, type: null }))}
+          />
         </>
       )}
     </div>

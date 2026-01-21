@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { setApprovalModal } from '../../store/slices/uiSlice';
+import { setApprovalModal, setSnackbar } from '../../store/slices/uiSlice';
 import { approveOrder } from '../../store/slices/ordersSlice';
 import './ApprovalModal.css';
 
@@ -43,12 +43,12 @@ const ApprovalModal: React.FC = () => {
                 comment,
             })).unwrap();
 
-            alert('Order approved successfully!');
+            dispatch(setSnackbar({ message: 'Order approved successfully!', type: 'success' }));
             dispatch(setApprovalModal({ isOpen: false, unitId: null }));
             setComment('');
         } catch (error) {
             console.error('Error approving order:', error);
-            alert('Failed to approve order.');
+            dispatch(setSnackbar({ message: 'Failed to approve order.', type: 'error' }));
         } finally {
             setIsSubmitting(false);
         }
@@ -65,7 +65,7 @@ const ApprovalModal: React.FC = () => {
                 </div>
 
                 <div className="approval-modal-body">
-                    
+
 
                     <div className="admin-profile-card">
                         <div className="approved-by-label">Approved By:</div>

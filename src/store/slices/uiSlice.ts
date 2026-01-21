@@ -24,6 +24,10 @@ export interface UIState {
         };
         creationRole: 'Investor' | 'Employee' | null;
     };
+    snackbar: {
+        message: string | null;
+        type: 'success' | 'error' | null;
+    };
 }
 
 
@@ -58,6 +62,10 @@ const initialState: UIState = {
             unitId: null,
         },
         creationRole: null,
+    },
+    snackbar: {
+        message: null,
+        type: null,
     },
 };
 
@@ -108,6 +116,9 @@ const uiSlice = createSlice({
         setCreationRole: (state, action: PayloadAction<'Investor' | 'Employee' | null>) => {
             state.modals.creationRole = action.payload;
         },
+        setSnackbar: (state, action: PayloadAction<{ message: string | null; type: 'success' | 'error' | null }>) => {
+            state.snackbar = action.payload;
+        },
     },
 });
 
@@ -123,6 +134,7 @@ export const {
     setRejectionModal,
     setApprovalModal,
     setCreationRole,
+    setSnackbar,
 } = uiSlice.actions;
 
 
