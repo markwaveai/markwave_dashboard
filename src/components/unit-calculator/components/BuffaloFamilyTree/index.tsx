@@ -11,11 +11,31 @@ export default function BuffaloFamilyTree() {
     // Initialize with current date
     // Initialize with default date: Jan 1, 2026
     const [searchParams, setSearchParams] = useSearchParams();
-    const viewParam = searchParams.get('tab');
-    const unitsParam = searchParams.get('units');
-    const monthsParam = searchParams.get('months');
-    const yearParam = searchParams.get('year');
-    const monthParam = searchParams.get('month');
+
+    // Obfuscation helpers
+    const encodeParams = (data: any) => {
+        try {
+            return btoa(JSON.stringify(data));
+        } catch (e) {
+            return "";
+        }
+    };
+
+    const decodeParams = (encoded: string | null) => {
+        if (!encoded) return null;
+        try {
+            return JSON.parse(atob(encoded));
+        } catch (e) {
+            return null;
+        }
+    };
+
+    const p = decodeParams(searchParams.get('p'));
+    const viewParam = p?.tab;
+    const unitsParam = p?.units;
+    const monthsParam = p?.months;
+    const yearParam = p?.year;
+    const monthParam = p?.month;
 
     // Initialize state from URL params if present
     const [units, setUnits] = useState(unitsParam ? parseInt(unitsParam) : 1);
@@ -34,17 +54,19 @@ export default function BuffaloFamilyTree() {
 
     // Update URL params when state changes
     useEffect(() => {
-        const params: any = {};
-        if (activeTab === "costEstimation") params.tab = "revenue-projection";
-        if (units !== 1) params.units = units.toString();
-        if (durationMonths !== 120) params.months = durationMonths.toString();
-        if (startYear !== 2026) params.year = startYear.toString();
-        if (startMonth !== 0) params.month = startMonth.toString();
+        const config: any = {};
+        if (activeTab === "costEstimation") config.tab = "revenue-projection";
+        if (units !== 1) config.units = units.toString();
+        if (durationMonths !== 120) config.months = durationMonths.toString();
+        if (startYear !== 2026) config.year = startYear.toString();
+        if (startMonth !== 0) config.month = startMonth.toString();
 
-        // Only set if they changed from defaults or we have a tab forced
-        if (Object.keys(params).length > 0) {
-            setSearchParams(params, { replace: true });
-        } else if (searchParams.toString() !== "") {
+        const encoded = encodeParams(config);
+        const currentP = searchParams.get('p');
+
+        if (encoded && encoded !== currentP) {
+            setSearchParams({ p: encoded }, { replace: true });
+        } else if (!encoded && currentP) {
             setSearchParams({}, { replace: true });
         }
     }, [activeTab, units, durationMonths, startYear, startMonth]);
