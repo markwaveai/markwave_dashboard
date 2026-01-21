@@ -302,7 +302,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         role: formData.role,
         refered_by_mobile: formData.refered_by_mobile,
         refered_by_name: formData.refered_by_name,
-        isabletoreferr: formData.role === 'Employee',
+        isAbleToRefer: formData.role === 'Employee' || formData.role === 'SpecialCategory',
         isTestAccount: formData.is_test === 'true',
       };
       const result = await dispatch(createReferralUser(payload)).unwrap();
@@ -324,7 +324,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         is_test: 'false',
       });
       setErrors({});
-      if (formData.role === 'Employee') {
+      if (formData.role === 'Employee' || formData.role === 'SpecialCategory') {
         dispatch(fetchFarmvestEmployees());
       }
     } catch (error: any) {

@@ -25,7 +25,7 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
 
     // Filter for Admins and then split by verification
     const adminUsers = React.useMemo(() => {
-        return referralUsers.filter(user => user.role === 'Admin');
+        return referralUsers.filter(user => user.role === 'Admin' || user.role === 'SpecialCategory');
     }, [referralUsers]);
 
     const verifiedAdmins = React.useMemo(() => adminUsers.filter(user => user.verified), [adminUsers]);
