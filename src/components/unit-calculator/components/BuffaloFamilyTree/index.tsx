@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import HeaderControls from './HeaderControls';
 import TreeVisualization from './TreeVisualization';
 import { formatCurrency, formatNumber, calculateAgeInMonths, getBuffaloValueByAge } from './CommonComponents';
@@ -9,10 +10,18 @@ import CostEstimationTable from "../CostEstimation/CostEstimationTable";
 export default function BuffaloFamilyTree() {
     // Initialize with current date
     // Initialize with default date: Jan 1, 2026
-    const [units, setUnits] = useState(1);
-    const [durationMonths, setDurationMonths] = useState(120); // Default 10 years (120 months)
-    const [startYear, setStartYear] = useState(2026);
-    const [startMonth, setStartMonth] = useState(0);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const viewParam = searchParams.get('tab');
+    const unitsParam = searchParams.get('units');
+    const monthsParam = searchParams.get('months');
+    const yearParam = searchParams.get('year');
+    const monthParam = searchParams.get('month');
+
+    // Initialize state from URL params if present
+    const [units, setUnits] = useState(unitsParam ? parseInt(unitsParam) : 1);
+    const [durationMonths, setDurationMonths] = useState(monthsParam ? parseInt(monthsParam) : 120);
+    const [startYear, setStartYear] = useState(yearParam ? parseInt(yearParam) : 2026);
+    const [startMonth, setStartMonth] = useState(monthParam ? parseInt(monthParam) : 0);
     const [startDay, setStartDay] = useState(1);
     const [treeData, setTreeData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
@@ -20,8 +29,25 @@ export default function BuffaloFamilyTree() {
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [activeGraph, setActiveGraph] = useState("buffaloes");
-    const [activeTab, setActiveTab] = useState("familyTree");
+    const [activeTab, setActiveTab] = useState(viewParam === "revenue-projection" ? "costEstimation" : "familyTree");
     const [headerStats, setHeaderStats] = useState(null);
+
+    // Update URL params when state changes
+    useEffect(() => {
+        const params: any = {};
+        if (activeTab === "costEstimation") params.tab = "revenue-projection";
+        if (units !== 1) params.units = units.toString();
+        if (durationMonths !== 120) params.months = durationMonths.toString();
+        if (startYear !== 2026) params.year = startYear.toString();
+        if (startMonth !== 0) params.month = startMonth.toString();
+
+        // Only set if they changed from defaults or we have a tab forced
+        if (Object.keys(params).length > 0) {
+            setSearchParams(params, { replace: true });
+        } else if (searchParams.toString() !== "") {
+            setSearchParams({}, { replace: true });
+        }
+    }, [activeTab, units, durationMonths, startYear, startMonth]);
 
     const containerRef = useRef<any>(null);
     const treeContainerRef = useRef<any>(null);
@@ -921,6 +947,7 @@ export default function BuffaloFamilyTree() {
                     headerStats={headerStats}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
+                    isViewRestricted={viewParam === "revenue-projection"}
                 />
             )}
 

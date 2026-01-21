@@ -25,7 +25,8 @@ const HeaderControls = ({
     loading,
     headerStats,
     activeTab,
-    setActiveTab
+    setActiveTab,
+    isViewRestricted
 }: {
     units: number;
     setUnits: (val: number) => void;
@@ -45,6 +46,7 @@ const HeaderControls = ({
     headerStats: any;
     activeTab: string;
     setActiveTab: (val: string) => void;
+    isViewRestricted?: boolean;
 }) => {
     const monthNames = ["January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"];
@@ -202,7 +204,7 @@ const HeaderControls = ({
 
 
                 {/* Center Section: View Toggle */}
-                {treeData && (
+                {treeData && !isViewRestricted && (
                     <div className="bg-white p-0.5 sm:p-1 rounded-xl border border-slate-100 shadow-sm flex items-center gap-0.5 sm:gap-1">
                         <button
                             className={`px-2 py-0.5 sm:px-3 sm:py-1 text-[8px] sm:text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200 flex flex-col items-center leading-none gap-0.5 ${activeTab === "familyTree"
