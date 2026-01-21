@@ -31,6 +31,7 @@ import AdminDetailsModal from '../modals/AdminDetailsModal';
 import ReferralModal from '../modals/ReferralModal';
 import EditReferralModal from '../modals/EditReferralModal';
 import RejectionModal from '../modals/RejectionModal';
+import ApprovalModal from '../modals/ApprovalModal';
 import LogoutModal from '../modals/LogoutModal';
 
 interface UserTabsProps {
@@ -597,6 +598,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           <ImageNamesModal />
           <AdminDetailsModal adminName={displayAdminName} adminMobile={adminMobile} adminRole={adminRole} lastLogin={lastLogin} presentLogin={presentLogin} adminReferralCode={adminReferralCode} />
           <RejectionModal />
+          <ApprovalModal />
           <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />
         </>
       )}

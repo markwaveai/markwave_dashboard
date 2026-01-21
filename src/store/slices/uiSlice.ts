@@ -18,6 +18,10 @@ export interface UIState {
             isOpen: boolean;
             unitId: string | null;
         };
+        approval: {
+            isOpen: boolean;
+            unitId: string | null;
+        };
         creationRole: 'Investor' | 'Employee' | null;
     };
 }
@@ -46,6 +50,10 @@ const initialState: UIState = {
             data: null,
         },
         rejection: {
+            isOpen: false,
+            unitId: null,
+        },
+        approval: {
             isOpen: false,
             unitId: null,
         },
@@ -91,6 +99,12 @@ const uiSlice = createSlice({
                 state.modals.rejection.unitId = action.payload.unitId;
             }
         },
+        setApprovalModal: (state, action: PayloadAction<{ isOpen: boolean; unitId?: string | null }>) => {
+            state.modals.approval.isOpen = action.payload.isOpen;
+            if (action.payload.unitId !== undefined) {
+                state.modals.approval.unitId = action.payload.unitId;
+            }
+        },
         setCreationRole: (state, action: PayloadAction<'Investor' | 'Employee' | null>) => {
             state.modals.creationRole = action.payload;
         },
@@ -107,6 +121,7 @@ export const {
     setEditReferralModal,
     setProofModal,
     setRejectionModal,
+    setApprovalModal,
     setCreationRole,
 } = uiSlice.actions;
 

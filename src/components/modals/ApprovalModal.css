@@ -1,4 +1,4 @@
-.rejection-modal-overlay {
+.approval-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -14,12 +14,12 @@
     transition: all 0.2s ease-in-out;
 }
 
-.rejection-modal-overlay.open {
+.approval-modal-overlay.open {
     opacity: 1;
     visibility: visible;
 }
 
-.rejection-modal-card {
+.approval-modal-card {
     background: white;
     width: 90%;
     max-width: 500px;
@@ -30,39 +30,39 @@
     transition: transform 0.2s ease-in-out;
 }
 
-.rejection-modal-overlay.open .rejection-modal-card {
+.approval-modal-overlay.open .approval-modal-card {
     transform: scale(1);
 }
 
-.rejection-modal-header {
+.approval-modal-header {
     padding: 24px 24px 0;
 }
 
-.rejection-modal-header h3 {
+.approval-modal-header h3 {
     margin: 0 0 8px;
     font-size: 1.25rem;
     font-weight: 600;
     color: #111827;
 }
 
-.rejection-modal-header p {
+.approval-modal-header p {
     margin: 0;
     font-size: 0.875rem;
     color: #6b7280;
     line-height: 1.4;
 }
 
-.rejection-modal-body {
+.approval-modal-body {
     padding: 24px;
     color: #4b5563;
 }
 
-/* New Profile Card Styles */
+/* Profile Card Styles (Mirrors RejectionModal) */
 .admin-profile-card {
     margin-bottom: 20px;
 }
 
-.rejected-by-label {
+.approved-by-label {
     font-size: 13px;
     font-weight: 500;
     color: #6b7280;
@@ -95,26 +95,7 @@
 
 /* End Profile Card Styles */
 
-.rejection-textarea {
-    width: 100%;
-    min-height: 120px;
-    padding: 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    resize: vertical;
-    font-family: inherit;
-    font-size: 0.95rem;
-    color: #1f2937;
-    transition: border-color 0.2s;
-}
-
-.rejection-textarea:focus {
-    outline: none;
-    border-color: #3b82f6;
-    ring: 2px solid #93c5fd;
-}
-
-.rejection-modal-footer {
+.approval-modal-footer {
     padding: 16px 24px;
     background-color: #f9fafb;
     border-top: 1px solid #e5e7eb;
@@ -123,7 +104,7 @@
     gap: 12px;
 }
 
-.rejection-btn {
+.approval-btn {
     padding: 8px 16px;
     border-radius: 6px;
     font-size: 0.875rem;
@@ -132,27 +113,28 @@
     transition: all 0.2s;
 }
 
-.rejection-btn-cancel {
+.approval-btn-cancel {
     background-color: white;
     border: 1px solid #d1d5db;
     color: #374151;
 }
 
-.rejection-btn-cancel:hover:not(:disabled) {
+.approval-btn-cancel:hover:not(:disabled) {
     background-color: #f3f4f6;
 }
 
-.rejection-btn-submit {
-    background-color: #ef4444;
+.approval-btn-submit {
+    background-color: #10b981;
+    /* Green for approve */
     border: 1px solid transparent;
     color: white;
 }
 
-.rejection-btn-submit:hover:not(:disabled) {
-    background-color: #dc2626;
+.approval-btn-submit:hover:not(:disabled) {
+    background-color: #059669;
 }
 
-.rejection-btn:disabled {
+.approval-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }

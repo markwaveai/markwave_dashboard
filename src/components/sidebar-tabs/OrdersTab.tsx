@@ -14,7 +14,7 @@ import {
     setActiveUnitIndex,
     setInitialTracking
 } from '../../store/slices/ordersSlice';
-import { setProofModal } from '../../store/slices/uiSlice';
+import { setProofModal, setRejectionModal, setApprovalModal } from '../../store/slices/uiSlice';
 import Pagination from '../common/Pagination';
 import { API_ENDPOINTS } from '../../config/api';
 import './OrdersTab.css';
@@ -53,14 +53,9 @@ const UTRCopyButton: React.FC<{ value: string }> = ({ value }) => {
 };
 
 interface OrdersTabProps {
-    handleApproveClick: (unitId: string) => void;
-    handleReject: (unitId: string) => void;
 }
 
-const OrdersTab: React.FC<OrdersTabProps> = ({
-    handleApproveClick,
-    handleReject
-}) => {
+const OrdersTab: React.FC<OrdersTabProps> = () => {
     const dispatch = useAppDispatch();
 
     // Redux State
@@ -133,22 +128,12 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
     // Local state to track which specific order action is processing
     const [processingAction, setProcessingAction] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null);
 
-    const handleApproveWrapper = async (id: string) => {
-        setProcessingAction({ id, type: 'approve' });
-        try {
-            await handleApproveClick(id);
-        } finally {
-            setProcessingAction(null);
-        }
+    const handleApproveWrapper = (id: string) => {
+        dispatch(setApprovalModal({ isOpen: true, unitId: id }));
     };
 
-    const handleRejectWrapper = async (id: string) => {
-        setProcessingAction({ id, type: 'reject' });
-        try {
-            await handleReject(id);
-        } finally {
-            setProcessingAction(null);
-        }
+    const handleRejectWrapper = (id: string) => {
+        dispatch(setRejectionModal({ isOpen: true, unitId: id }));
     };
 
     useEffect(() => {
@@ -283,32 +268,34 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
     // Construct history object from real data
     const getTrackingForBuffalo = useCallback(() => {
-        if (!realTrackingData || !realTrackingData.timeline) return { currentStageId: 1, history: {} };
+        if (!realTrackingData || !realTrackingData.timeline) return { currentStageId: 1, history: {}, stages: [] };
 
         const history: any = {};
         let maxStageId = 1;
 
-        // Map backend stages to frontend IDs
-        // BACKEND: ORDER_PLACED, PAYMENT_SUBMITTED, PAYMENT_VERIFIED, BUFFALOS_BOUGHT, IN_QUARANTINE, IN_TRANSIT, DELIVERED_TO_FARM
-        const stageMap: Record<string, number> = {
-            'ORDER_PLACED': 1,
-            'PAYMENT_SUBMITTED': 2,
-            'PAYMENT_VERIFICATION_PENDING': 2,
-            'PAYMENT_VERIFIED': 3,
-            'ORDER_APPROVED': 4,
+        // Dynamic Stages from Backend
+        const dynamicStages = realTrackingData.timeline.map((item: any) => {
+            // Format Label
+            let label = '';
+            if (item.stage === 'BUFFALOS_BOUGHT') {
+                label = 'Purchased in Market';
+            } else {
+                label = item.stage
+                    .split('_')
+                    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+            }
 
-            'ORDER_CONFIRMED': 4, // Added per user request
-            'APPROVED': 4, // Alias if needed
-            'BUFFALOS_BOUGHT': 5,
-            'BOUGHT': 5,
-            'IN_QUARANTINE': 6,
-            'IN_TRANSIT': 7,
-            'DELIVERED_TO_FARM': 8,
-            'DELIVERED': 8
-        };
+            return {
+                id: item.id,
+                label: label,
+                description: item.description,
+                rawStage: item.stage // Keep for updates
+            };
+        }).sort((a: any, b: any) => a.id - b.id);
 
         realTrackingData.timeline.forEach((item: any) => {
-            const sId = stageMap[item.stage];
+            const sId = item.id;
             if (sId) {
                 if (item.timestamp) {
                     const dateObj = new Date(item.timestamp);
@@ -318,7 +305,8 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                 } else if (item.description) {
                     history[sId] = { date: '-', time: '-', description: item.description };
                 }
-                // Update current stage to be the next after the last completed one
+
+                // Update current stage
                 if (item.status === 'COMPLETED') {
                     maxStageId = Math.max(maxStageId, sId + 1);
                 } else if (item.status === 'IN_PROGRESS') {
@@ -327,21 +315,38 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             }
         });
 
-        // If maxStageId > 8, clamp it (unless we want to show 'Completed' state distinctly)
-        if (maxStageId > 9) maxStageId = 9;
+        // Ensure maxStageId doesn't exceed available stages
+        if (dynamicStages.length > 0) {
+            const lastId = dynamicStages[dynamicStages.length - 1].id;
+            if (maxStageId > lastId + 1) maxStageId = lastId + 1; // Allow one step past last for full completion? Or just clamp to lastId?
+            // Typically if stage 8 is completed, currentStageId might become 9. 
+            // If we clamp to <= 9 or similar.
+            if (maxStageId > 9) maxStageId = 9;
+        }
 
-        return { currentStageId: maxStageId, history };
+        return { currentStageId: maxStageId, history, stages: dynamicStages };
     }, [realTrackingData]);
 
     const handleStageUpdateLocal = async (orderId: string, buffaloNum: number, nextStageId: number) => {
         // Map nextStageId to Backend Status
-        // Stages: 1:Placed, 2:PaymentPending, 3:Approved, 4:Market, 5:Quarantine, 6:Transit, 7:Delivered
         let status = '';
-        if (nextStageId === 5) status = 'BOUGHT';
-        else if (nextStageId === 6) status = 'IN_QUARANTINE';
-        else if (nextStageId === 7) status = 'IN_TRANSIT';
-        else if (nextStageId === 8) status = 'DELIVERED';
-        else if (nextStageId === 4) status = 'APPROVED'; // Fallback if explicit call needed
+
+        // Dynamic Lookup
+        if (realTrackingData && realTrackingData.timeline) {
+            const targetStage = realTrackingData.timeline.find((t: any) => t.id === nextStageId);
+            if (targetStage) {
+                status = targetStage.stage;
+            }
+        }
+
+        // Fallback if not found dynamically
+        if (!status) {
+            if (nextStageId === 5) status = 'BUFFALOS_BOUGHT';
+            else if (nextStageId === 6) status = 'IN_QUARANTINE';
+            else if (nextStageId === 7) status = 'IN_TRANSIT';
+            else if (nextStageId === 8) status = 'DELIVERED_TO_FARM';
+            else if (nextStageId === 4) status = 'ORDER_APPROVED';
+        }
 
         if (!status) {
             // If nextStageId is 8 (after Delivered), we might just allow it if we want to "Complete" the order visually?
@@ -400,11 +405,11 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
         { id: 1, label: 'Order Placed', description: 'Order placed successfully.' },
         { id: 2, label: 'Payment Submitted', description: 'Payment details submitted by customer.' },
         { id: 3, label: 'Payment Verified', description: 'Payment verified and order approved.' },
-        { id: 4, label: 'Order Confirmed', description: 'Order approved for procurement.' },
-        { id: 5, label: 'In Market', description: 'Buffalos purchased from market.' }, // User requested label change previously
+        { id: 4, label: 'Order Approved', description: 'Order approved for procurement.' },
+        { id: 5, label: 'Purchased in Market', description: 'Buffalos purchased from market.' },
         { id: 6, label: 'In Quarantine', description: 'Animals in quarantine for health check.' },
-        { id: 7, label: 'In Transit', description: 'Animals in transit to farm.' },
-        { id: 8, label: 'Delivered to Farm', description: 'Animals delivered to farm.' }
+        { id: 7, label: 'In Transit', description: 'Animals are on the way to the farm.' },
+        { id: 8, label: 'Delivered to Farm', description: 'Delivered' }
     ];
 
     // Pagination
@@ -763,8 +768,8 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                             const currentStageId = tracker.currentStageId;
                                                                             const isExpanded = expandedTrackerKeys[trackerKey] !== false;
 
-                                                                            // For all Cycles, show all stages.
-                                                                            const timelineStages = trackingStages;
+                                                                            // Use dynamic stages if available, else fallback
+                                                                            const timelineStages = (tracker.stages && tracker.stages.length > 0) ? tracker.stages : trackingStages;
 
                                                                             return (
                                                                                 <div key={cycleNum} className="tracking-buffalo-card" style={{ marginBottom: '20px' }}>
@@ -785,7 +790,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
                                                                                     {isExpanded && (
                                                                                         <div className="tracking-timeline-container order-expand-animation">
-                                                                                            {timelineStages.map((stage, sIdx) => {
+                                                                                            {timelineStages.map((stage: any, sIdx: number) => {
                                                                                                 const isLast = sIdx === timelineStages.length - 1;
                                                                                                 const isStepCompleted = stage.id < currentStageId;
                                                                                                 const isCurrent = stage.id === currentStageId;

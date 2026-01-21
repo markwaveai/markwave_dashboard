@@ -50,9 +50,9 @@ export const fetchPendingUnits = createAsyncThunk(
 
 export const approveOrder = createAsyncThunk(
     'orders/approveOrder',
-    async ({ unitId, adminMobile }: { unitId: string; adminMobile: string }, { dispatch, rejectWithValue, getState }) => {
+    async ({ unitId, adminMobile, comment }: { unitId: string; adminMobile: string; comment?: string }, { dispatch, rejectWithValue, getState }) => {
         try {
-            await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId }, {
+            await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId, comment }, {
                 headers: { 'X-Admin-Mobile': adminMobile }
             });
             // Refresh list after success, preserving filters
@@ -140,6 +140,7 @@ export interface OrdersState {
         [key: string]: {
             currentStageId: number;
             history: { [stageId: number]: { date: string, time: string, description?: string } };
+            stages?: Array<{ id: number; label: string; description: string; rawStage?: string }>;
         }
     };
     totalCount: number;

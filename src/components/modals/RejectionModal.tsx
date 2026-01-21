@@ -8,9 +8,23 @@ import './RejectionModal.css';
 const RejectionModal: React.FC = () => {
     const dispatch = useAppDispatch();
     const { isOpen, unitId } = useAppSelector((state: RootState) => state.ui.modals.rejection);
-    const { adminMobile } = useAppSelector((state: RootState) => state.auth);
+    const { adminMobile, adminRole } = useAppSelector((state: RootState) => state.auth);
+    const { adminProfile } = useAppSelector((state: RootState) => state.users);
+
     const [reason, setReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Derived Name Logic
+    const realName = React.useMemo(() => {
+        if (adminProfile) {
+            const { first_name, last_name, name } = adminProfile;
+            if (first_name || last_name) {
+                return `${first_name || ''} ${last_name || ''}`.trim();
+            }
+            if (name) return name;
+        }
+        return 'Admin';
+    }, [adminProfile]);
 
     // Reset reason when modal opens/closes
     useEffect(() => {
@@ -60,6 +74,16 @@ const RejectionModal: React.FC = () => {
 
                 <form onSubmit={handleSubmit}>
                     <div className="rejection-modal-body">
+                        <div className="admin-profile-card">
+                            <div className="rejected-by-label">Rejected By:</div>
+                            <div className="admin-info-simple">
+                                <div className="admin-name-large">{realName}</div>
+                                <div className="admin-mobile-simple">{adminMobile}</div>
+                                <div className="admin-role-text">{adminRole || 'Admin'}</div>
+                            </div>
+                        </div>
+
+
                         <textarea
                             className="rejection-textarea"
                             placeholder="Type rejection reason here..."
@@ -89,8 +113,8 @@ const RejectionModal: React.FC = () => {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
