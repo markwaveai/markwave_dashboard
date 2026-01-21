@@ -92,18 +92,18 @@ const HeaderControls = ({
     }, [units, durationMonths, startYear, startMonth, startDay]);
 
     return (
-        <div className="bg-white border-b border-slate-200 px-2 py-2 sm:px-4 sm:py-3 pb-4 sm:pb-8 z-[80] relative">
-            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center lg:justify-between gap-2 sm:gap-4">
+        <div className="bg-white border-b border-slate-200 px-2 py-1.5 sm:px-4 sm:py-2 pb-1.5 sm:pb-2 z-[80] relative">
+            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center lg:justify-between gap-1 sm:gap-2">
 
                 {/* Left Section: Configuration & Actions */}
                 <div className="flex items-center gap-2 sm:gap-4">
 
                     {/* Unified Left Card */}
-                    <div className="flex items-center bg-white border border-slate-100 rounded-xl px-1 sm:px-2 py-1 shadow-sm h-full min-h-[36px] sm:min-h-[42px]">
+                    <div className="flex items-center bg-white border border-slate-100 rounded-xl px-1 sm:px-2 py-1 shadow-sm h-full min-h-[32px] sm:min-h-[36px]">
 
                         {/* Units Input */}
                         <div className="flex flex-col items-center px-0.5 sm:px-1 min-w-[2.5rem] sm:min-w-[3rem]">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Units</span>
+                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Units</span>
                             <div className="flex items-center">
                                 <input
                                     type="number"
@@ -125,7 +125,7 @@ const HeaderControls = ({
 
                         {/* Start Date Picker */}
                         <div className="flex flex-col items-center px-0.5 sm:px-1 min-w-[3.5rem] sm:min-w-[4rem]">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Start</span>
+                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Start</span>
                             <div className="relative w-20 sm:w-24 flex justify-center">
                                 <DatePicker
                                     selected={new Date(startYear, startMonth, 1)}
@@ -151,7 +151,7 @@ const HeaderControls = ({
 
                         {/* End Date Picker - Month/Year Selection */}
                         <div className="flex flex-col items-center px-0.5 sm:px-1 min-w-[3.5rem] sm:min-w-[4rem]">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
+                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">End Date</span>
                             <div className="relative w-20 sm:w-24 flex justify-center">
                                 <DatePicker
                                     selected={(() => {
@@ -188,10 +188,10 @@ const HeaderControls = ({
 
                         {/* Initial Investment & CPF Combined */}
                         <div className="flex flex-col items-center px-0.5 sm:px-1">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Initial Inv</span>
+                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Initial Inv</span>
                             <div className="flex flex-col items-center leading-none">
                                 <span className="text-xs sm:text-sm font-black text-slate-800">{formatLargeCurrency(totalInitialInvestment)}</span>
-                                <span className="text-[8px] sm:text-[9px] font-bold text-blue-600 mt-0.5 whitespace-nowrap">CPF: {formatLargeCurrency(initialCpfCost)}</span>
+                                <span className="text-[8px] sm:text-[9px] font-bold text-blue-600 mt-0 whitespace-nowrap">CPF: {formatLargeCurrency(initialCpfCost)}</span>
                             </div>
                         </div>
 
@@ -205,7 +205,7 @@ const HeaderControls = ({
                 {treeData && (
                     <div className="bg-white p-0.5 sm:p-1 rounded-xl border border-slate-100 shadow-sm flex items-center gap-0.5 sm:gap-1">
                         <button
-                            className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[8px] sm:text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200 flex flex-col items-center leading-none gap-0.5 ${activeTab === "familyTree"
+                            className={`px-2 py-0.5 sm:px-3 sm:py-1 text-[8px] sm:text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200 flex flex-col items-center leading-none gap-0.5 ${activeTab === "familyTree"
                                 ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100'
                                 : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-50'
                                 }`}
@@ -215,7 +215,7 @@ const HeaderControls = ({
                             <span>View</span>
                         </button>
                         <button
-                            className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[8px] sm:text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200 flex flex-col items-center leading-none gap-0.5 ${activeTab === "costEstimation"
+                            className={`px-2 py-0.5 sm:px-3 sm:py-1 text-[8px] sm:text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200 flex flex-col items-center leading-none gap-0.5 ${activeTab === "costEstimation"
                                 ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100'
                                 : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-50'
                                 }`}
@@ -230,14 +230,14 @@ const HeaderControls = ({
 
                 {/* Right Section: Summary Stats */}
                 {treeData && treeData.summaryStats && (
-                    <div className="flex items-center gap-2 sm:gap-3 bg-white px-1.5 sm:px-2 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 min-h-[36px] sm:min-h-[42px]">
+                    <div className="flex items-center gap-2 sm:gap-3 bg-white px-1.5 sm:px-2 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 min-h-[32px] sm:min-h-[36px]">
 
 
 
 
 
                         <div className="flex flex-col items-center">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
+                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Buffaloes</span>
                             <span className="text-xs sm:text-sm font-black text-slate-800">{treeData.summaryStats.totalBuffaloes}</span>
                         </div>
 
@@ -245,14 +245,14 @@ const HeaderControls = ({
 
                         {/* Asset Value - Added */}
                         <div className="flex flex-col items-center">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Val</span>
+                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Asset Val</span>
                             <span className="text-xs sm:text-sm font-black text-blue-600">{formatLargeCurrency(treeData.summaryStats.totalAssetValue)}</span>
                         </div>
 
                         <div className="w-px h-6 sm:h-8 bg-slate-200" />
 
                         <div className="flex flex-col items-center">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">
                                 {isCGFEnabled ? "Net (+CPF+CGF)" : "Net (+CPF)"}
                             </span>
                             <span className={`text-xs sm:text-sm font-black ${isCGFEnabled ? 'text-emerald-600' : 'text-emerald-600'}`}>
@@ -275,7 +275,7 @@ const HeaderControls = ({
                         <div className="w-px h-6 sm:h-8 bg-slate-200" />
 
                         <div className="flex flex-col items-center">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total ROI</span>
+                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Total ROI</span>
                             <span className="text-xs sm:text-sm font-black text-slate-900">
                                 {formatLargeCurrency(
                                     (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) +
