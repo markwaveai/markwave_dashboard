@@ -20,7 +20,7 @@ export default function BuffaloFamilyTree() {
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [activeGraph, setActiveGraph] = useState("buffaloes");
-    const [activeTab, setActiveTab] = useState("familyTree");
+    const [activeTab, setActiveTab] = useState("costEstimation");
     const [headerStats, setHeaderStats] = useState(null);
 
     const containerRef = useRef<any>(null);
@@ -761,7 +761,7 @@ export default function BuffaloFamilyTree() {
         setStartYear(2026);
         setStartMonth(0);
         setStartDay(1);
-        setActiveTab("familyTree");
+        setActiveTab("costEstimation");
         setZoom(1);
         setPosition({ x: 0, y: 0 });
     };
@@ -947,7 +947,7 @@ export default function BuffaloFamilyTree() {
                             treeData={scaledTreeData}
                             activeGraph={activeGraph}
                             setActiveGraph={setActiveGraph}
-                            onBack={() => setActiveTab("familyTree")}
+                            onBack={() => setActiveTab("costEstimation")}
                             setHeaderStats={setHeaderStats}
                         />
                     </div>

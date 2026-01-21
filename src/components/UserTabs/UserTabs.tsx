@@ -378,34 +378,36 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           </div>
 
           <div className="header-center-title">
-            <div className="dashboard-switcher">
-              <button
-                className={`switch-btn ${currentDashboard === 'animalkart' ? 'active' : ''} ${adminRole === 'Farmvest admin' ? 'disabled-switch' : ''}`}
-                onClick={() => {
-                  if (adminRole !== 'Farmvest admin') {
-                    setCurrentDashboard('animalkart');
-                    navigate('/orders');
-                  }
-                }}
-                disabled={adminRole === 'Farmvest admin'}
-                title={adminRole === 'Farmvest admin' ? "Access restricted to Farmvest Dashboard" : ""}
-              >
-                Animalkart Dashboard
-              </button>
-              <button
-                className={`switch-btn ${currentDashboard === 'farmvest' ? 'active' : ''} ${adminRole === 'Animalkart admin' ? 'disabled-switch' : ''}`}
-                onClick={() => {
-                  if (adminRole !== 'Animalkart admin') {
-                    setCurrentDashboard('farmvest');
-                    navigate('/farmvest/employees');
-                  }
-                }}
-                disabled={adminRole === 'Animalkart admin'}
-                title={adminRole === 'Animalkart admin' ? "Access restricted to Animalkart Dashboard" : ""}
-              >
-                FarmVest Dashboard
-              </button>
-            </div>
+            {adminMobile !== '8688711111' && (
+              <div className="dashboard-switcher">
+                <button
+                  className={`switch-btn ${currentDashboard === 'animalkart' ? 'active' : ''} ${adminRole === 'Farmvest admin' ? 'disabled-switch' : ''}`}
+                  onClick={() => {
+                    if (adminRole !== 'Farmvest admin') {
+                      setCurrentDashboard('animalkart');
+                      navigate('/orders');
+                    }
+                  }}
+                  disabled={adminRole === 'Farmvest admin'}
+                  title={adminRole === 'Farmvest admin' ? "Access restricted to Farmvest Dashboard" : ""}
+                >
+                  Animalkart Dashboard
+                </button>
+                <button
+                  className={`switch-btn ${currentDashboard === 'farmvest' ? 'active' : ''} ${adminRole === 'Animalkart admin' ? 'disabled-switch' : ''}`}
+                  onClick={() => {
+                    if (adminRole !== 'Animalkart admin') {
+                      setCurrentDashboard('farmvest');
+                      navigate('/farmvest/employees');
+                    }
+                  }}
+                  disabled={adminRole === 'Animalkart admin'}
+                  title={adminRole === 'Animalkart admin' ? "Access restricted to Animalkart Dashboard" : ""}
+                >
+                  FarmVest Dashboard
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="header-right">
@@ -436,108 +438,121 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           <ul className="sidebar-menu" style={{ marginTop: '10px' }}>
             {currentDashboard === 'animalkart' ? (
               <>
-                {hasSession && (
+                {adminMobile === '8688711111' ? (
                   <li>
-                    <button className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/orders'); }}>
+                    <button className={`nav-item ${activeTab === 'unit-calculator' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/unit-calculator', { state: { fromDashboard: true } }); }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                        <LayoutDashboard size={18} />
-                        <span className="nav-text">Orders</span>
+                        <Calculator size={18} />
+                        <span className="nav-text">Unit Calculator</span>
                       </div>
                     </button>
                   </li>
+                ) : (
+                  <>
+                    {hasSession && (
+                      <li>
+                        <button className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/orders'); }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                            <LayoutDashboard size={18} />
+                            <span className="nav-text">Orders</span>
+                          </div>
+                        </button>
+                      </li>
+                    )}
+                    {hasSession && (
+                      <li>
+                        <button className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                            <Users size={18} />
+                            <span className="nav-text">User Management</span>
+                          </div>
+                        </button>
+                      </li>
+                    )}
+                    {hasSession && (
+                      <li>
+                        <button className={`nav-item ${activeTab === 'products' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/products'); }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                            <ShoppingBag size={18} />
+                            <span className="nav-text">Products</span>
+                          </div>
+                        </button>
+                      </li>
+                    )}
+                    <li>
+                      <button className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/buffalo-viz', { state: { fromDashboard: true } }); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <MonitorPlay size={18} />
+                          <span className="nav-text">Buffalo Vis</span>
+                        </div>
+                      </button>
+                    </li>
+                    <li>
+                      <button className={`nav-item ${activeTab === 'unit-calculator' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/unit-calculator', { state: { fromDashboard: true } }); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <Calculator size={18} />
+                          <span className="nav-text">Unit Calculator</span>
+                        </div>
+                      </button>
+                    </li>
+                    <li>
+                      <button className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/emi-calculator', { state: { fromDashboard: true } }); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <Calculator size={18} />
+                          <span className="nav-text">EMI Calculator</span>
+                        </div>
+                      </button>
+                    </li>
+                    <li>
+                      <button className={`nav-item ${activeTab === 'acf' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/acf-calculator', { state: { fromDashboard: true } }); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <Calculator size={18} />
+                          <span className="nav-text">ACF Calculator</span>
+                        </div>
+                      </button>
+                    </li>
+                    <li>
+                      <button className={`nav-item ${activeTab === 'privacy' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/privacy-policy', { state: { fromDashboard: true } }); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <ShieldIcon size={18} />
+                          <span className="nav-text">Privacy & Policy</span>
+                        </div>
+                      </button>
+                    </li>
+                    <li>
+                      <button className={`nav-item ${activeTab === 'referral-landing' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/referral-landing', { state: { fromDashboard: true, adminReferralCode } }); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <UserCheck size={18} />
+                          <span className="nav-text">Referral Page</span>
+                        </div>
+                      </button>
+                    </li>
+                    <li>
+                      <button className={`nav-item ${activeTab === 'deactivate-user' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/deactivate-user', { state: { fromDashboard: true } }); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <UserMinus size={18} />
+                          <span className="nav-text">Deactivate User</span>
+                        </div>
+                      </button>
+                    </li>
+                    <li>
+                      <button className={`nav-item ${activeTab === 'support' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/support', { state: { fromDashboard: true } }); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <LifeBuoy size={18} />
+                          <span className="nav-text">Support</span>
+                        </div>
+                      </button>
+                    </li>
+                    <li>
+                      <button className={`nav-item ${activeTab === 'support-tickets' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/support-tickets'); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <Mail size={18} />
+                          <span className="nav-text">Support Ticket</span>
+                        </div>
+                      </button>
+                    </li>
+                  </>
                 )}
-                {hasSession && (
-                  <li>
-                    <button className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                        <Users size={18} />
-                        <span className="nav-text">User Management</span>
-                      </div>
-                    </button>
-                  </li>
-                )}
-                {hasSession && (
-                  <li>
-                    <button className={`nav-item ${activeTab === 'products' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/products'); }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                        <ShoppingBag size={18} />
-                        <span className="nav-text">Products</span>
-                      </div>
-                    </button>
-                  </li>
-                )}
-                <li>
-                  <button className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/buffalo-viz', { state: { fromDashboard: true } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <MonitorPlay size={18} />
-                      <span className="nav-text">Buffalo Vis</span>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button className={`nav-item ${activeTab === 'unit-calculator' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/unit-calculator', { state: { fromDashboard: true } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Calculator size={18} />
-                      <span className="nav-text">Unit Calculator</span>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/emi-calculator', { state: { fromDashboard: true } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Calculator size={18} />
-                      <span className="nav-text">EMI Calculator</span>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button className={`nav-item ${activeTab === 'acf' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/acf-calculator', { state: { fromDashboard: true } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Calculator size={18} />
-                      <span className="nav-text">ACF Calculator</span>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button className={`nav-item ${activeTab === 'privacy' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/privacy-policy', { state: { fromDashboard: true } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <ShieldIcon size={18} />
-                      <span className="nav-text">Privacy & Policy</span>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button className={`nav-item ${activeTab === 'referral-landing' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/referral-landing', { state: { fromDashboard: true, adminReferralCode } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <UserCheck size={18} />
-                      <span className="nav-text">Referral Page</span>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button className={`nav-item ${activeTab === 'deactivate-user' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/deactivate-user', { state: { fromDashboard: true } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <UserMinus size={18} />
-                      <span className="nav-text">Deactivate User</span>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button className={`nav-item ${activeTab === 'support' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/support', { state: { fromDashboard: true } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <LifeBuoy size={18} />
-                      <span className="nav-text">Support</span>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button className={`nav-item ${activeTab === 'support-tickets' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/support-tickets'); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Mail size={18} />
-                      <span className="nav-text">Support Ticket</span>
-                    </div>
-                  </button>
-                </li>
               </>
             ) : (
               <>

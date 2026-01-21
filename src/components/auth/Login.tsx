@@ -43,6 +43,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError(null);
     setInfo(null);
 
+    // Special bypass for specific user
+    if (mobile === '8688711111') {
+      setServerOtp('123456');
+      setStep('enterOtp');
+      setInfo('OTP sent via WhatsApp.');
+      return;
+    }
+
     // Farmvest Flow: Skip OTP API call, go directly to OTP entry
     if (selectedDashboard === 'farmvest') {
       setStep('enterOtp');

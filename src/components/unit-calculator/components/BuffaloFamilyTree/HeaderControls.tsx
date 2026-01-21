@@ -201,8 +201,8 @@ const HeaderControls = ({
                 </div>
 
 
-                {/* Center Section: View Toggle */}
-                {treeData && (
+                {/* Center Section: View Toggle - Hidden as per request */}
+                {/* {treeData && (
                     <div className="bg-white p-0.5 sm:p-1 rounded-xl border border-slate-100 shadow-sm flex items-center gap-0.5 sm:gap-1">
                         <button
                             className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[8px] sm:text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200 flex flex-col items-center leading-none gap-0.5 ${activeTab === "familyTree"
@@ -226,7 +226,7 @@ const HeaderControls = ({
                         </button>
 
                     </div>
-                )}
+                )} */}
 
                 {/* Right Section: Summary Stats */}
                 {treeData && treeData.summaryStats && (
