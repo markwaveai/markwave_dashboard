@@ -121,9 +121,7 @@ function App() {
 
     // Determine default path based on role
     let defaultPath = '/orders';
-    if (newSession.mobile === '8688711111') {
-      defaultPath = '/unit-calculator';
-    } else if (newSession.role === 'Farmvest admin') {
+    if (newSession.role === 'Farmvest admin') {
       defaultPath = '/farmvest/employees';
     } else if (newSession.role === 'Animalkart admin') {
       defaultPath = '/orders';
@@ -152,7 +150,7 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/login" element={
-          session ? <Navigate to={session.mobile === '8688711111' ? "/unit-calculator" : "/orders"} replace /> : <Login onLogin={handleLogin} />
+          session ? <Navigate to="/orders" replace /> : <Login onLogin={handleLogin} />
         } />
 
         {/* Protected Dashboard Routes */}
@@ -280,8 +278,8 @@ function App() {
         } />
 
         {/* Default redirect to orders or login */}
-        <Route path="/" element={<Navigate to={session ? (session.mobile === '8688711111' ? "/unit-calculator" : "/orders") : "/login"} replace />} />
-        <Route path="*" element={<Navigate to={session ? (session.mobile === '8688711111' ? "/unit-calculator" : "/orders") : "/login"} replace />} />
+        <Route path="/" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
+        <Route path="*" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
       </Routes>
     </div>
   );
@@ -305,13 +303,10 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
 
   // Role-based route protection
   const path = location.pathname;
-  if (session.mobile === '8688711111') {
-    if (path !== '/unit-calculator' && !['/support', '/support-tickets', '/privacy-policy'].includes(path)) {
-      return <Navigate to="/unit-calculator" replace />;
-    }
-  } else if (session.role === 'Farmvest admin' && !path.startsWith('/farmvest') && !['/support', '/support-tickets', '/privacy-policy'].includes(path)) {
+  if (session.role === 'Farmvest admin' && !path.startsWith('/farmvest') && !['/support', '/support-tickets', '/privacy-policy'].includes(path)) {
     return <Navigate to="/farmvest/employees" replace />;
-  } else if (session.role === 'Animalkart admin' && path.startsWith('/farmvest')) {
+  }
+  if (session.role === 'Animalkart admin' && path.startsWith('/farmvest')) {
     return <Navigate to="/orders" replace />;
   }
 
