@@ -875,9 +875,9 @@ const CostEstimationTableContent = ({
         <div className="flex flex-col h-full overflow-hidden relative bg-slate-50">
             {/* Top Navigation Bar */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-[60] shadow-sm">
-                <div className="flex flex-col items-center py-2 max-w-7xl mx-auto">
+                <div className="flex flex-col items-center justify-center py-0.5 md:py-2 max-w-7xl mx-auto gap-0.5">
                     {/* Tabs - Single Row, Scroll if needed but hidden bar */}
-                    <div className="flex items-center justify-start md:justify-center gap-1 overflow-x-auto w-full px-2 py-1 no-scrollbar whitespace-nowrap">
+                    <div className="flex items-center justify-start md:justify-center gap-1 overflow-x-auto w-full px-1 md:px-2 py-0.5 no-scrollbar whitespace-nowrap">
                         {TAB_CONFIG.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -886,14 +886,14 @@ const CostEstimationTableContent = ({
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`
-                                  flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border flex-shrink-0
+                                  flex items-center gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[10px] md:text-xs font-semibold transition-all duration-200 border flex-shrink-0
                                   ${isActive
                                             ? 'bg-slate-900 text-white border-slate-900 shadow-md transform scale-105'
                                             : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300'
                                         }
                                 `}
                                 >
-                                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                                    <Icon className={`w-3 h-3 md:w-3.5 md:h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                                     <span>{tab.label}</span>
                                 </button>
 
@@ -902,12 +902,12 @@ const CostEstimationTableContent = ({
                     </div>
 
                     {["Monthly Revenue Break", "Cattle Growing Fund", "CPF + CGF", "Asset Market Value"].includes(activeTab) && (
-                        <div className="flex items-center gap-3 px-4 py-2 border-l border-slate-200">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Year</span>
+                        <div className="flex items-center gap-1.5 md:gap-3 px-1 md:px-4 py-0 md:py-2 md:border-l border-slate-200 shrink-0 w-full justify-center">
+                            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Year</span>
                             <select
                                 value={globalYearIndex}
                                 onChange={(e) => setGlobalYearIndex(Number(e.target.value))}
-                                className="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm hover:border-slate-300 transition-colors"
+                                className="bg-white border border-slate-200 text-slate-700 text-[10px] md:text-xs font-bold rounded-lg px-2 py-1 md:px-2 md:py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm hover:border-slate-300 transition-colors"
                             >
                                 {Array.from({ length: simulationYearsCount }).map((_, i) => {
                                     // Calculate month range for this SIMULATION year (12-month chunk)
@@ -938,7 +938,7 @@ const CostEstimationTableContent = ({
                 {/* Dashboard Header */}
 
 
-                <div className="w-full max-w-7xl mx-auto px-8 pt-16 pb-8">
+                <div className="w-full max-w-7xl mx-auto px-2 md:px-8 pt-4 md:pt-8 pb-24 md:pb-8">
 
 
 
@@ -1076,12 +1076,13 @@ const CostEstimationTableContent = ({
                     </div>
 
                     {/* CPF Explanation Note - Sticky Footer */}
-                    <div className="mt-8 border-t border-slate-200 bg-white/95 backdrop-blur-sm p-4">
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3 shadow-sm">
-                            <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                    {/* CPF Explanation Note - Sticky Footer */}
+                    <div className="mt-4 md:mt-8 border-t border-slate-200 bg-white/95 backdrop-blur-sm p-2 md:p-4">
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 md:p-4 flex gap-2 md:gap-3 shadow-sm items-start md:items-center">
+                            <Info className="h-4 w-4 md:h-5 md:w-5 text-blue-600 flex-shrink-0 mt-0.5 md:mt-0" aria-hidden="true" />
                             <div>
-                                <h3 className="text-sm font-semibold text-blue-900">Cattle Protection Fund (CPF): Income Guarantee & Asset Security</h3>
-                                <p className="mt-1 text-sm text-blue-700 leading-relaxed">
+                                <h3 className="text-xs md:text-sm font-semibold text-blue-900 leading-tight md:leading-normal">Cattle Protection Fund (CPF): Income Guarantee & Asset Security</h3>
+                                <p className="mt-0.5 md:mt-1 text-[10px] md:text-sm text-blue-700 leading-tight md:leading-relaxed">
                                     Your income is guaranteed through the Cattle Protection Fund. This safety measure secures your animals,
                                     decreases revenue risk, and ensures growing assets. It is a vital step for long-term stability.
                                 </p>

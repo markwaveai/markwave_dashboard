@@ -393,7 +393,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 disabled={adminRole === 'Farmvest admin'}
                 title={adminRole === 'Farmvest admin' ? "Access restricted to Farmvest Dashboard" : ""}
               >
-                Animalkart Dashboard
+                Animalkart <span className="hide-mobile">Dashboard</span>
               </button>
               <button
                 className={`switch-btn ${currentDashboard === 'farmvest' ? 'active' : ''} ${adminRole === 'Animalkart admin' ? 'disabled-switch' : ''}`}
@@ -406,7 +406,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 disabled={adminRole === 'Animalkart admin'}
                 title={adminRole === 'Animalkart admin' ? "Access restricted to Animalkart Dashboard" : ""}
               >
-                FarmVest Dashboard
+                FarmVest <span className="hide-mobile">Dashboard</span>
               </button>
             </div>
           </div>

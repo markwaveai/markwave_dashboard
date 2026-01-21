@@ -348,45 +348,42 @@ const MonthlyRevenueBreak = ({
             {unitBuffaloes.length > 0 ? (
                 <>
                     {/* 1. Top Summary Cards - KPI Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                    <div className="flex overflow-x-auto pb-1 gap-1.5 md:grid md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 md:pb-0 no-scrollbar -mt-2 md:mt-0">
 
                         {/* Annual Revenue */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Annual Revenue</p>
+                                <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Annual Rev</p>
                                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
                                     {formatCurrency(unitBuffaloes.reduce((sum: number, buffalo: any) => {
                                         return sum + Array.from({ length: 12 }).reduce((monthSum: number, _, mIndex: number) => {
-                                            const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
-                                            return monthSum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0);
+                                            return monthSum + (monthlyRevenue[treeData.startYear + Math.floor((treeData.startMonth + mIndex) / 12)]?.[(treeData.startMonth + mIndex) % 12]?.total || 0);
                                         }, 0);
-                                    }, 0) * (treeData.units || 1))}
+                                    }, 0))}
                                 </h3>
                             </div>
-                            <div className="mt-1 flex items-center justify-center text-[9px] font-bold text-emerald-600 bg-emerald-50 w-fit px-1 py-0.5 rounded">
-                                {(treeData.units || 1)} Unit{(treeData.units || 1) > 1 ? 's' : ''} Total
-                            </div>
+                            <p className="hidden md:block text-[9px] text-slate-400 mt-1">{treeData.units} Unit Total</p>
+                            <p className="md:hidden text-[7px] text-slate-400 leading-none mt-0.5">{treeData.units} Unit</p>
                         </div>
 
                         {/* Annual CPF Cost */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Annual CPF</p>
-                                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Annual CPF</p>
+                                <h3 className="text-xs md:text-base font-bold text-slate-900 mt-0.5">
                                     {formatCurrency(cpfCost.annualCPFCost * (treeData.units || 1))}
                                 </h3>
                             </div>
-                            <div className="mt-1 flex items-center justify-center text-[9px] font-bold text-amber-600 bg-amber-50 w-fit px-1 py-0.5 rounded">
-                                {cpfCost.milkProducingBuffaloesWithCPF * (treeData.units || 1)} Active
-                            </div>
+                            <p className="hidden md:block text-[9px] text-amber-600/70 font-bold mt-1 bg-amber-50 rounded px-1">{cpfCost.milkProducingBuffaloesWithCPF} Active</p>
+                            <p className="md:hidden text-[7px] text-amber-600/70 font-bold mt-0.5 leading-none">{cpfCost.milkProducingBuffaloesWithCPF} Act</p>
                         </div>
 
                         {/* Net Annual Revenue */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
+                        <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
                             <div className="relative z-10 h-full flex flex-col justify-between items-center">
                                 <div className="flex flex-col items-center">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Net Annual</p>
-                                    <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                    <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Net Annual</p>
+                                    <h3 className="text-xs md:text-base font-bold text-slate-900 mt-0.5">
                                         {formatCurrency(((unitBuffaloes as any[]).reduce((sum: number, buffalo: any) => {
                                             return sum + (Array.from({ length: 12 }) as any[]).reduce((monthSum: number, _, mIndex: number) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
@@ -395,38 +392,29 @@ const MonthlyRevenueBreak = ({
                                         }, 0) * (treeData.units || 1)) - (cpfCost.annualCPFCost * (treeData.units || 1)))}
                                     </h3>
                                 </div>
-                                <div className="mt-1 flex items-center justify-center text-[9px] text-slate-400">
-                                    {(() => {
-                                        const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (selectedYearIndex * 12);
-                                        const sYear = Math.floor(startAbs / 12);
-                                        const sMonth = startAbs % 12;
-                                        const sDate = new Date(sYear, sMonth, 1);
-                                        const eDate = new Date(sYear, sMonth + 11, 1);
-                                        const startStr = sDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                                        const endStr = eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                                        return `${startStr} - ${endStr}`;
-                                    })()}
-                                </div>
+                                <p className="hidden md:block text-[9px] text-slate-400 mt-1">Jan {selectedYear} - Dec {selectedYear}</p>
+                                <p className="md:hidden text-[7px] text-slate-400 mt-0.5 leading-none">{selectedYear}</p>
                             </div>
                             <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-emerald-500" />
                         </div>
 
                         {/* Cumulative Net */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Cumulative Net (Total)</p>
-                                <h3 className="text-base font-bold text-indigo-600 mt-0.5">
+                                <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Cumul. Net</p>
+                                <h3 className="text-xs md:text-base font-bold text-indigo-600 mt-0.5">
                                     {formatCurrency(cumulativeNetRevenue * (treeData.units || 1))}
                                 </h3>
                             </div>
-
+                            <p className="hidden md:block text-[9px] text-slate-400 mt-1">Inception to Date</p>
+                            <p className="md:hidden text-[7px] text-slate-400 mt-0.5 leading-none">Total</p>
                         </div>
 
                         {/* Asset Value */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Asset Value</p>
-                                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Asset Val</p>
+                                <h3 className="text-xs md:text-base font-bold text-slate-900 mt-0.5">
                                     {formatCurrency(
                                         allUnitBuffaloes.reduce((sum: number, buffalo: any) => {
                                             const { year, month } = getCalendarDate(selectedYearIndex, 11);
@@ -451,7 +439,7 @@ const MonthlyRevenueBreak = ({
                                     )}
                                 </h3>
                             </div>
-                            <p className="text-[9px] text-slate-400 mt-1">End                 {(() => {
+                            <p className="hidden md:block text-[9px] text-slate-400 mt-1">End                 {(() => {
                                 const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (selectedYearIndex * 12);
                                 const sYear = Math.floor(startAbs / 12);
                                 const sMonth = startAbs % 12;
@@ -483,15 +471,15 @@ const MonthlyRevenueBreak = ({
                             <table className="w-full text-sm text-left">
                                 <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
                                     <tr>
-                                        <th className="sticky left-0 z-20 w-24 min-w-[6rem] px-4 py-4 font-bold border-r border-slate-100 bg-slate-50">Month</th>
+                                        <th className="sticky left-0 z-20 w-16 md:w-24 min-w-[4rem] md:min-w-[6rem] px-1 py-1 md:px-4 md:py-4 font-bold border-r border-slate-100 bg-slate-50 text-[9px] md:text-xs">Month</th>
                                         {unitBuffaloes.map((buffalo: any) => (
-                                            <th key={buffalo.id} className="px-4 py-4 font-semibold text-center border-r border-slate-100 min-w-[80px]">
-                                                <div className="text-slate-800 text-base">{buffalo.id}</div>
+                                            <th key={buffalo.id} className="px-1 py-1 md:px-4 md:py-4 font-semibold text-center border-r border-slate-100 min-w-[50px] md:min-w-[80px]">
+                                                <div className="text-slate-800 text-[10px] md:text-base">{buffalo.id}</div>
                                             </th>
                                         ))}
-                                        <th className="sticky right-[10rem] z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 border-l border-slate-200 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]">Total</th>
-                                        <th className="sticky right-[5rem] z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700 border-l border-slate-200">CPF</th>
-                                        <th className="sticky right-0 z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-emerald-50 text-emerald-700 border-l border-slate-200">Net</th>
+                                        <th className="relative md:sticky right-auto md:right-[10rem] z-10 md:z-20 w-14 md:w-20 min-w-[3.5rem] md:min-w-[5rem] px-1 py-1 md:px-2 md:py-4 font-bold text-center bg-slate-100 text-slate-700 md:border-l border-slate-200 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] text-[9px] md:text-xs">Total</th>
+                                        <th className="relative md:sticky right-auto md:right-[5rem] z-10 md:z-20 w-10 md:w-20 min-w-[2.5rem] md:min-w-[5rem] px-0.5 py-1 md:px-2 md:py-4 font-bold text-center bg-amber-50 text-amber-700 md:border-l border-slate-200 text-[9px] md:text-xs">CPF</th>
+                                        <th className="relative md:sticky right-0 z-10 md:z-20 w-10 md:w-20 min-w-[2.5rem] md:min-w-[5rem] px-0.5 py-1 md:px-2 md:py-4 font-bold text-center bg-emerald-50 text-emerald-700 md:border-l border-slate-200 text-[9px] md:text-xs">Net</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -506,7 +494,7 @@ const MonthlyRevenueBreak = ({
                                         return (
                                             <React.Fragment key={mIndex}>
                                                 <tr className={`group hover:bg-slate-50 transition-colors ${mIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                                                    <td className={`sticky left-0 z-10 px-4 py-3 font-medium text-slate-900 border-r border-slate-100 ${rowBg}`}>
+                                                    <td className={`sticky left-0 z-10 px-1 py-1 md:px-4 md:py-3 font-medium text-slate-900 border-r border-slate-100 text-[9px] md:text-sm ${rowBg}`}>
                                                         {monthName}
                                                     </td>
                                                     {unitBuffaloes.map((buffalo: any, bIndex: any) => {
@@ -542,14 +530,14 @@ const MonthlyRevenueBreak = ({
                                                                 const totalRev = revenue * units;
                                                                 displayText = (
                                                                     <div className="flex flex-col items-center leading-none">
-                                                                        <span className="text-[10px] text-slate-500">{formatCurrency(revenue)} × {units}</span>
-                                                                        <span className="font-bold text-slate-800 border-t border-slate-300 mt-0.5 pt-0.5" >{formatCurrency(totalRev)}</span>
+                                                                        <span className="text-[7px] md:text-[10px] text-slate-500 whitespace-nowrap">{formatCurrency(revenue)} × {units}</span>
+                                                                        <span className="font-bold text-slate-800 border-t border-slate-300 mt-0.5 pt-0.5 text-[8px] md:text-sm" >{formatCurrency(totalRev)}</span>
                                                                     </div>
                                                                 );
                                                             } else {
                                                                 displayText = (
                                                                     <div className="flex flex-col items-center leading-none">
-                                                                        <span>{formatCurrency(revenue)}</span>
+                                                                        <span className="text-[9px] md:text-sm">{formatCurrency(revenue)}</span>
                                                                     </div>
                                                                 );
                                                             }
@@ -565,8 +553,8 @@ const MonthlyRevenueBreak = ({
                                                                 cellClass = "text-rose-400 text-xs font-medium bg-rose-50";
                                                                 displayText = (
                                                                     <div className="flex flex-col items-center leading-none">
-                                                                        <span>CPF</span>
-                                                                        <span className="text-[9px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
+                                                                        <span className="text-[9px] md:text-xs">CPF</span>
+                                                                        <span className="text-[7px] md:text-[9px] text-slate-400 font-normal whitespace-nowrap">({monthDiff + 1}th mo)</span>
                                                                     </div>
                                                                 );
                                                             } else if (monthDiff >= 32) {
@@ -586,8 +574,8 @@ const MonthlyRevenueBreak = ({
                                                                     cellClass = "text-slate-500 text-xs font-medium bg-slate-100";
                                                                     displayText = (
                                                                         <div className="flex flex-col items-center leading-none">
-                                                                            <span>{buffalo.id}{childIndex} Child (born)</span>
-                                                                            <span className="text-[9px] text-slate-400 font-normal">({currentSimMonthIndex}th month)</span>
+                                                                            <span className="text-[8px] md:text-xs text-center">{buffalo.id}{childIndex} Child (born)</span>
+                                                                            <span className="text-[7px] md:text-[9px] text-slate-400 font-normal whitespace-nowrap">({currentSimMonthIndex}th mo)</span>
                                                                         </div>
                                                                     );
                                                                 } else if (monthDiff < 34) {
@@ -636,10 +624,12 @@ const MonthlyRevenueBreak = ({
                                                             </td>
                                                         );
                                                     })}
-                                                    <td className={`sticky right-[10rem] z-10 px-2 py-3 text-center font-bold text-slate-700 border-l border-slate-200 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
-                                                        {formatCurrency(unitTotal)}
+                                                    <td className="relative md:sticky right-auto md:right-[10rem] z-0 md:z-10 px-1 py-1 md:px-2 md:py-3 font-bold text-center bg-slate-100 md:bg-slate-50 text-slate-800 md:border-l border-slate-200 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] text-[9px] md:text-sm">
+                                                        <div className="flex flex-col items-center leading-none">
+                                                            {formatCurrency(unitTotal)}
+                                                        </div>
                                                     </td>
-                                                    <td className={`sticky right-[5rem] z-10 px-2 py-3 text-center font-medium text-amber-600 border-l border-slate-200 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
+                                                    <td className="relative md:sticky right-auto md:right-[5rem] z-0 md:z-10 px-0.5 py-1 md:px-2 md:py-3 font-medium text-center bg-amber-50 text-amber-700 md:border-l border-slate-200 text-[9px] md:text-sm">
                                                         {monthlyCpfValue > 0 ? (
                                                             (treeData.units || 1) > 1 ? (
                                                                 <div className="flex flex-col items-center leading-none">
@@ -651,7 +641,7 @@ const MonthlyRevenueBreak = ({
                                                             )
                                                         ) : "-"}
                                                     </td>
-                                                    <td className={`sticky right-0 z-10 px-2 py-3 text-center font-bold border-l border-slate-200 ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
+                                                    <td className={`relative md:sticky right-0 z-0 md:z-10 px-0.5 py-1 md:px-2 md:py-3 font-bold text-center border-l md:border-l border-slate-200 text-[9px] md:text-sm ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
                                                         {formatCurrency(netRevenue)}
                                                     </td>
 

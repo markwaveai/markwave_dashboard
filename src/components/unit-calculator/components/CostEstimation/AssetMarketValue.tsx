@@ -212,29 +212,30 @@ const AssetMarketValue = ({
             <div className="w-full mb-8 space-y-4">
 
                 {/* 1. Value Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 max-w-4xl">
-                    <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                <div className="flex overflow-x-auto pb-1 gap-1.5 md:grid md:grid-cols-3 max-w-4xl md:pb-0 no-scrollbar -mt-2 md:mt-0">
+                    <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Asset Value</p>
-                            <h3 className="text-base font-bold text-slate-900 mt-0.5">{formatCurrency(detailedValue.totalValue || 0)}</h3>
+                            <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Asset Value</p>
+                            <h3 className="text-xs md:text-base font-bold text-slate-900 mt-0.5">{formatCurrency(detailedValue.totalValue || 0)}</h3>
                         </div>
-                        <p className="text-[9px] text-slate-400 mt-1">Year {selectedYear}</p>
+                        <p className="hidden md:block text-[9px] text-slate-400 mt-1">Year {selectedYear}</p>
+                        <p className="md:hidden text-[7px] text-slate-400 mt-0.5 leading-none">Yr {selectedYear}</p>
                     </div>
 
-                    <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                    <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Mother Buffaloes</p>
-                            <h3 className="text-base font-bold text-indigo-600 mt-0.5">{detailedValue.motherCount}</h3>
+                            <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Mothers</p>
+                            <h3 className="text-xs md:text-base font-bold text-indigo-600 mt-0.5">{detailedValue.motherCount}</h3>
                         </div>
-                        {/* <p className="text-[9px] text-slate-400 mt-1">Age &ge; 24 months</p> */}
+                        <p className="hidden md:block text-[9px] text-slate-400 mt-1">Active</p>
                     </div>
 
-                    <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                    <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Calves</p>
-                            <h3 className="text-base font-bold text-emerald-600 mt-0.5">{detailedValue.calfCount}</h3>
+                            <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Calves</p>
+                            <h3 className="text-xs md:text-base font-bold text-emerald-600 mt-0.5">{detailedValue.calfCount}</h3>
                         </div>
-                        {/* <p className="text-[9px] text-slate-400 mt-1">Age &lt; 24 months</p> */}
+                        <p className="hidden md:block text-[9px] text-slate-400 mt-1">Active</p>
                     </div>
                 </div>
 
@@ -248,11 +249,11 @@ const AssetMarketValue = ({
                         <table className="w-full border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
-                                    <th className="px-6 py-4 font-bold border-r border-slate-100 w-1/5">Age Group</th>
-                                    <th className="px-6 py-4 font-bold border-r border-slate-100 text-center w-1/5">Unit Value</th>
-                                    <th className="px-6 py-4 font-bold border-r border-slate-100 text-center w-1/5">Count</th>
-                                    <th className="px-6 py-4 font-bold border-r border-slate-100 text-center w-1/5">Total Value</th>
-                                    <th className="px-6 py-4 font-bold text-center w-1/5">% of Total</th>
+                                    <th className="px-1 py-2 md:px-6 md:py-4 font-bold border-r border-slate-100 w-1/5 text-[8px] md:text-xs">Age Grp</th>
+                                    <th className="px-1 py-2 md:px-6 md:py-4 font-bold border-r border-slate-100 text-center w-1/5 text-[8px] md:text-xs">Val/Unit</th>
+                                    <th className="px-1 py-2 md:px-6 md:py-4 font-bold border-r border-slate-100 text-center w-1/5 text-[8px] md:text-xs">Count</th>
+                                    <th className="px-1 py-2 md:px-6 md:py-4 font-bold border-r border-slate-100 text-center w-1/5 text-[8px] md:text-xs">Total</th>
+                                    <th className="px-1 py-2 md:px-6 md:py-4 font-bold text-center w-1/5 text-[8px] md:text-xs">%</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -265,19 +266,19 @@ const AssetMarketValue = ({
                                                 key={ageGroup}
                                                 className={`hover:bg-slate-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
                                             >
-                                                <td className="px-6 py-3 font-medium text-slate-900 border-r border-slate-100">
-                                                    {ageGroup}
+                                                <td className="px-1 py-2 md:px-6 md:py-3 font-medium text-slate-900 border-r border-slate-100 text-[9px] md:text-base">
+                                                    {ageGroup.replace(' months', 'm')}
                                                 </td>
-                                                <td className="px-6 py-3 font-medium text-slate-600 text-center border-r border-slate-100">
+                                                <td className="px-1 py-2 md:px-6 md:py-3 font-medium text-slate-600 text-center border-r border-slate-100 text-[9px] md:text-base">
                                                     {ageGroup === '0-12 months' && selectedYearIndex === 0 ? formatCurrency(0) : formatCurrency(data.unitValue)}
                                                 </td>
-                                                <td className="px-6 py-3 font-bold text-slate-700 text-center border-r border-slate-100">
+                                                <td className="px-1 py-2 md:px-6 md:py-3 font-bold text-slate-700 text-center border-r border-slate-100 text-[9px] md:text-base">
                                                     {data.count}
                                                 </td>
-                                                <td className="px-6 py-3 font-bold text-emerald-600 text-center border-r border-slate-100">
+                                                <td className="px-1 py-2 md:px-6 md:py-3 font-bold text-emerald-600 text-center border-r border-slate-100 text-[9px] md:text-base">
                                                     {formatCurrency(data.value)}
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
+                                                <td className="px-1 py-2 md:px-6 md:py-3 text-center">
                                                     <div className="flex items-center gap-2 justify-center">
                                                         <span className="text-xs font-semibold text-slate-500 w-10 text-right">
                                                             {detailedValue.totalValue > 0 ? ((data.value / detailedValue.totalValue) * 100).toFixed(1) : 0}%
@@ -296,13 +297,13 @@ const AssetMarketValue = ({
                             </tbody>
                             <tfoot className="bg-slate-800 text-white">
                                 <tr>
-                                    <td className="px-6 py-4 font-bold border-r border-slate-700">Total</td>
-                                    <td className="px-6 py-4 font-bold text-center border-r border-slate-700">-</td>
-                                    <td className="px-6 py-4 font-bold text-center border-r border-slate-700">{detailedValue.totalCount}</td>
-                                    <td className="px-6 py-4 font-bold text-emerald-400 text-center border-r border-slate-700">
+                                    <td className="px-1 py-2 md:px-6 md:py-4 font-bold border-r border-slate-700 text-[9px] md:text-base">Total</td>
+                                    <td className="px-1 py-2 md:px-6 md:py-4 font-bold text-center border-r border-slate-700 text-[9px] md:text-base">-</td>
+                                    <td className="px-1 py-2 md:px-6 md:py-4 font-bold text-center border-r border-slate-700 text-[9px] md:text-base">{detailedValue.totalCount}</td>
+                                    <td className="px-1 py-2 md:px-6 md:py-4 font-bold text-emerald-400 text-center border-r border-slate-700 text-[9px] md:text-base">
                                         {formatCurrency(detailedValue.totalValue || 0)}
                                     </td>
-                                    <td className="px-6 py-4 font-bold text-center">100%</td>
+                                    <td className="px-1 py-2 md:px-6 md:py-4 font-bold text-center text-[9px] md:text-base">100%</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -320,29 +321,29 @@ const AssetMarketValue = ({
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
                                     <tr>
-                                        <th className="px-4 py-3 font-bold border-r border-slate-100">Year</th>
-                                        <th className="px-4 py-3 font-bold border-r border-slate-100 text-center">Total</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">0-12m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">13-18m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">19-24m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">25-34m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">35-40m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">41+m</th>
-                                        <th className="px-4 py-3 font-bold text-right">Value</th>
+                                        <th className="px-2 py-2 md:px-4 md:py-3 font-bold border-r border-slate-100 text-[9px] md:text-xs">Year</th>
+                                        <th className="px-2 py-2 md:px-4 md:py-3 font-bold border-r border-slate-100 text-center text-[9px] md:text-xs">Total</th>
+                                        <th className="px-1 py-2 md:px-4 md:py-3 font-medium border-r border-slate-100 text-center text-slate-400 text-[8px] md:text-xs">0-12m</th>
+                                        <th className="px-1 py-2 md:px-4 md:py-3 font-medium border-r border-slate-100 text-center text-slate-400 text-[8px] md:text-xs">13-18m</th>
+                                        <th className="px-1 py-2 md:px-4 md:py-3 font-medium border-r border-slate-100 text-center text-slate-400 text-[8px] md:text-xs">19-24m</th>
+                                        <th className="px-1 py-2 md:px-4 md:py-3 font-medium border-r border-slate-100 text-center text-slate-400 text-[8px] md:text-xs">25-34m</th>
+                                        <th className="px-1 py-2 md:px-4 md:py-3 font-medium border-r border-slate-100 text-center text-slate-400 text-[8px] md:text-xs">35-40m</th>
+                                        <th className="px-1 py-2 md:px-4 md:py-3 font-medium border-r border-slate-100 text-center text-slate-400 text-[8px] md:text-xs">41+m</th>
+                                        <th className="px-2 py-2 md:px-4 md:py-3 font-bold text-right text-[9px] md:text-xs">Value</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {assetMarketValue.map((asset: any, yearIndex: number) => (
                                         <tr key={yearIndex} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-4 py-3 font-semibold text-slate-900 border-r border-slate-100">Year {yearIndex + 1}</td>
-                                            <td className="px-4 py-3 font-bold text-center text-slate-800 border-r border-slate-100">{asset.totalBuffaloes}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['0-12 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['13-18 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['19-24 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['25-34 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['35-40 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['41+ months']?.count || 0}</td>
-                                            <td className="px-4 py-3 font-bold text-right text-emerald-600">{formatCurrency(asset.totalAssetValue || 0)}</td>
+                                            <td className="px-2 py-2 md:px-4 md:py-3 font-semibold text-slate-900 border-r border-slate-100 text-[9px] md:text-sm">Yr {yearIndex + 1}</td>
+                                            <td className="px-2 py-2 md:px-4 md:py-3 font-bold text-center text-slate-800 border-r border-slate-100 text-[9px] md:text-sm">{asset.totalBuffaloes}</td>
+                                            <td className="px-1 py-2 md:px-4 md:py-3 text-center border-r border-slate-100 text-slate-500 text-[9px] md:text-sm">{asset.ageCategories?.['0-12 months']?.count || 0}</td>
+                                            <td className="px-1 py-2 md:px-4 md:py-3 text-center border-r border-slate-100 text-slate-500 text-[9px] md:text-sm">{asset.ageCategories?.['13-18 months']?.count || 0}</td>
+                                            <td className="px-1 py-2 md:px-4 md:py-3 text-center border-r border-slate-100 text-slate-500 text-[9px] md:text-sm">{asset.ageCategories?.['19-24 months']?.count || 0}</td>
+                                            <td className="px-1 py-2 md:px-4 md:py-3 text-center border-r border-slate-100 text-slate-500 text-[9px] md:text-sm">{asset.ageCategories?.['25-34 months']?.count || 0}</td>
+                                            <td className="px-1 py-2 md:px-4 md:py-3 text-center border-r border-slate-100 text-slate-500 text-[9px] md:text-sm">{asset.ageCategories?.['35-40 months']?.count || 0}</td>
+                                            <td className="px-1 py-2 md:px-4 md:py-3 text-center border-r border-slate-100 text-slate-500 text-[9px] md:text-sm">{asset.ageCategories?.['41+ months']?.count || 0}</td>
+                                            <td className="px-2 py-2 md:px-4 md:py-3 font-bold text-right text-emerald-600 text-[8px] md:text-sm">{formatCurrency(asset.totalAssetValue || 0)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -354,7 +355,7 @@ const AssetMarketValue = ({
                 {/* 4. Price Schedule Grid */}
                 <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 border-dashed">
                     <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Price Schedule Reference</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                    <div className="flex overflow-x-auto pb-2 gap-3 md:grid md:grid-cols-4 lg:grid-cols-7 md:pb-0 no-scrollbar">
                         {[
                             { age: '0-12m', price: '₹10k', desc: 'Calf' },
                             { age: '13-18m', price: '₹25k', desc: 'Growing' },
@@ -363,10 +364,10 @@ const AssetMarketValue = ({
                             { age: '35-40m', price: '₹1.5L', desc: 'Prime' },
                             { age: '41+m', price: '₹1.75L', desc: 'Peak/Proven' }
                         ].map((item, index) => (
-                            <div key={index} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center">
-                                <div className="text-xs font-semibold text-slate-500 mb-0.5">{item.age}</div>
-                                <div className="text-sm font-bold text-slate-900">{item.price}</div>
-                                <div className="text-[10px] text-slate-400 mt-0.5">{item.desc}</div>
+                            <div key={index} className="flex-none min-w-[80px] bg-white p-2 md:p-3 rounded-lg border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center">
+                                <div className="text-[10px] md:text-xs font-semibold text-slate-500 mb-0.5">{item.age}</div>
+                                <div className="text-xs md:text-sm font-bold text-slate-900">{item.price}</div>
+                                <div className="text-[9px] md:text-[10px] text-slate-400 mt-0.5">{item.desc}</div>
                             </div>
                         ))}
                     </div>
