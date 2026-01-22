@@ -2,10 +2,14 @@ import React from 'react';
 import './App.css';
 import BuffaloFamilyTree from './components/BuffaloFamilyTree';
 
-export const UnitCalculatorApp: React.FC = () => {
+interface UnitCalculatorAppProps {
+    tree?: boolean;
+}
+
+export const UnitCalculatorApp: React.FC<UnitCalculatorAppProps> = ({ tree = true }) => {
     return (
         <div className="App unit-calculator-root">
-            <BuffaloFamilyTree />
+            <BuffaloFamilyTree tree={tree} />
         </div>
     );
 };

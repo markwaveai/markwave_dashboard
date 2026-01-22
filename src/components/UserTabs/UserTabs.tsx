@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './UserTabs.css';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, UserMinus, Mail } from 'lucide-react';
+import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, UserMinus, Mail, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   toggleSidebar,
   setSidebarOpen,
@@ -63,6 +63,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     return 'animalkart';
   });
 
+  // Sidebar Sub-menu States
+  const [isUnitCalcOpen, setIsUnitCalcOpen] = useState(false);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
@@ -103,10 +106,17 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/support')) activeTab = 'support';
   else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
   else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
-  else if (currentPath.includes('/unit-calculator')) activeTab = 'unit-calculator';
+  else if (currentPath.includes('/unit-calculator')) {
+    activeTab = 'unit-calculator';
+    // Auto-open dropdown if active
+    if (!isUnitCalcOpen) {
+      // We can't set state during render, but useEffect below handles it? 
+      // No, we'll initialize or use useEffect.
+    }
+  }
   else if (currentPath.includes('/farmvest/employees')) activeTab = 'farmvest-employees';
   else if (currentPath.includes('/farmvest/farms')) activeTab = 'farmvest-farms';
-  else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
+  else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets'; // Added support-tickets active state
 
   const handleChoiceSelection = useCallback((type: 'investor' | 'referral') => {
     setFormData(prev => ({
@@ -138,6 +148,13 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [dispatch]);
+
+  useEffect(() => {
+    // Open Unit Calc dropdown if we are on a child route
+    if (location.pathname.includes('/unit-calculator')) {
+      setIsUnitCalcOpen(true);
+    }
+  }, [location.pathname]);
 
   const { adminProfile } = useAppSelector((state: RootState) => state.users);
 
@@ -478,12 +495,48 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                   </button>
                 </li>
                 <li>
-                  <button className={`nav-item ${activeTab === 'unit-calculator' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/unit-calculator', { state: { fromDashboard: true } }); }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                      <Calculator size={18} />
-                      <span className="nav-text">Unit Calculator</span>
-                    </div>
-                  </button>
+                  <div className="nav-item-container">
+                    <button
+                      className={`nav-item ${activeTab === 'unit-calculator' ? 'active-main' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsUnitCalcOpen(!isUnitCalcOpen);
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                        <Calculator size={18} />
+                        <span className="nav-text">Unit Calculator</span>
+                      </div>
+                      {isUnitCalcOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </button>
+
+                    {isUnitCalcOpen && (
+                      <ul style={{ paddingLeft: '34px', marginTop: '4px', listStyle: 'none' }}>
+                        <li style={{ marginBottom: '4px' }}>
+                          <Link
+                            className={`nav-item ${location.pathname.includes('/73d2a') ? 'active' : ''}`}
+                            style={{ padding: '8px 12px', fontSize: '0.9em', textDecoration: 'none' }}
+                            to="/unit-calculator/73d2a"
+                            state={{ fromDashboard: true, authorizedNavigation: true }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <span className="nav-text">With Tree</span>
+                          </Link>
+                        </li>
+                        <li style={{ marginBottom: '4px' }}>
+                          <Link
+                            className={`nav-item ${location.pathname.includes('/92f1b') ? 'active' : ''}`}
+                            style={{ padding: '8px 12px', fontSize: '0.9em', textDecoration: 'none' }}
+                            to="/unit-calculator/92f1b"
+                            state={{ fromDashboard: true, authorizedNavigation: true }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <span className="nav-text">Without Tree</span>
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
+                  </div>
                 </li>
                 <li>
                   <button className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/emi-calculator', { state: { fromDashboard: true } }); }}>
@@ -594,23 +647,25 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         </main>
       </div>
 
-      {hasSession && (
-        <>
-          <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralFieldBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} canEditReferralCode={true} errors={errors} />
-          <EditReferralModal editFormData={editFormData} onInputChange={handleEditInputChange} onBlur={handleEditReferralMobileBlur} onSubmit={handleEditSubmit} />
-          <ImageNamesModal />
-          <AdminDetailsModal adminName={displayAdminName} adminMobile={adminMobile} adminRole={adminRole} lastLogin={lastLogin} presentLogin={presentLogin} adminReferralCode={adminReferralCode} />
-          <RejectionModal />
-          <ApprovalModal />
-          <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />
-          <Snackbar
-            message={snackbar.message}
-            type={snackbar.type as 'success' | 'error' | null}
-            onClose={() => dispatch(setSnackbar({ message: null, type: null }))}
-          />
-        </>
-      )}
-    </div>
+      {
+        hasSession && (
+          <>
+            <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralFieldBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} canEditReferralCode={true} errors={errors} />
+            <EditReferralModal editFormData={editFormData} onInputChange={handleEditInputChange} onBlur={handleEditReferralMobileBlur} onSubmit={handleEditSubmit} />
+            <ImageNamesModal />
+            <AdminDetailsModal adminName={displayAdminName} adminMobile={adminMobile} adminRole={adminRole} lastLogin={lastLogin} presentLogin={presentLogin} adminReferralCode={adminReferralCode} />
+            <RejectionModal />
+            <ApprovalModal />
+            <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />
+            <Snackbar
+              message={snackbar.message}
+              type={snackbar.type as 'success' | 'error' | null}
+              onClose={() => dispatch(setSnackbar({ message: null, type: null }))}
+            />
+          </>
+        )
+      }
+    </div >
   );
 };
 

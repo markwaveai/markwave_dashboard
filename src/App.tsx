@@ -187,13 +187,23 @@ function App() {
           </ConditionalLayoutWrapper>
         } />
 
-        <Route path="/unit-calculator" element={
+        <Route path="/unit-calculator/73d2a" element={
           <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
             <React.Suspense fallback={<BuffaloVizSkeleton />}>
-              <UnitCalculatorTab />
+              <UnitCalculatorTab tree={true} />
             </React.Suspense>
           </ConditionalLayoutWrapper>
         } />
+
+        <Route path="/unit-calculator/92f1b" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <React.Suspense fallback={<BuffaloVizSkeleton />}>
+              <UnitCalculatorTab tree={false} />
+            </React.Suspense>
+          </ConditionalLayoutWrapper>
+        } />
+
+        <Route path="/unit-calculator" element={<Navigate to="/unit-calculator/73d2a" replace />} />
 
         <Route path="/emi-calculator" element={
           <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
@@ -326,7 +336,21 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
 
 const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { children: React.ReactNode, session: Session | null, handleLogout: () => void }) => {
   const location = useLocation();
-  const shouldShowLayout = location.state?.fromDashboard && session;
+
+  // Dashboard paths that should show layout if logged in
+  const dashboardPaths = [
+    '/unit-calculator',
+    '/emi-calculator',
+    '/acf-calculator',
+    '/buffalo-viz',
+    '/referral-landing',
+    '/deactivate-user',
+    '/privacy-policy',
+    '/support'
+  ];
+
+  const isDashboardPath = dashboardPaths.some(path => location.pathname.startsWith(path));
+  const shouldShowLayout = (location.state?.fromDashboard || isDashboardPath) && session;
 
   if (shouldShowLayout) {
     return (

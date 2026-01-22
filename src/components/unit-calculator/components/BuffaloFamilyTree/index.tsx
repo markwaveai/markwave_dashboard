@@ -7,7 +7,11 @@ import { formatCurrency, formatNumber, calculateAgeInMonths, getBuffaloValueByAg
 import CostEstimationTable from "../CostEstimation/CostEstimationTable";
 
 
-export default function BuffaloFamilyTree() {
+interface BuffaloFamilyTreeProps {
+    tree?: boolean;
+}
+
+export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProps) {
     // Initialize with current date
     // Initialize with default date: Jan 1, 2026
     const [searchParams, setSearchParams] = useSearchParams();
@@ -49,17 +53,30 @@ export default function BuffaloFamilyTree() {
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [activeGraph, setActiveGraph] = useState("buffaloes");
-    const [activeTab, setActiveTab] = useState(viewParam === "revenue-projection" ? "costEstimation" : "familyTree");
+    const [activeTab, setActiveTab] = useState(() => {
+        if (!tree) return "costEstimation";
+        return viewParam === "revenue-projection" ? "costEstimation" : "familyTree";
+    });
     const [headerStats, setHeaderStats] = useState(null);
 
     // Update URL params when state changes
     useEffect(() => {
         const config: any = {};
-        if (activeTab === "costEstimation") config.tab = "revenue-projection";
+        // activeTab sync disabled per user request to keep URLs clean
+        // if (activeTab === "costEstimation") config.tab = "revenue-projection";
+
         if (units !== 1) config.units = units.toString();
         if (durationMonths !== 120) config.months = durationMonths.toString();
         if (startYear !== 2026) config.year = startYear.toString();
         if (startMonth !== 0) config.month = startMonth.toString();
+
+        // Check if config is empty
+        if (Object.keys(config).length === 0) {
+            if (searchParams.get('p')) {
+                setSearchParams({}, { replace: true });
+            }
+            return;
+        }
 
         const encoded = encodeParams(config);
         const currentP = searchParams.get('p');
@@ -69,7 +86,7 @@ export default function BuffaloFamilyTree() {
         } else if (!encoded && currentP) {
             setSearchParams({}, { replace: true });
         }
-    }, [activeTab, units, durationMonths, startYear, startMonth]);
+    }, [units, durationMonths, startYear, startMonth]);
 
     const containerRef = useRef<any>(null);
     const treeContainerRef = useRef<any>(null);
@@ -969,7 +986,7 @@ export default function BuffaloFamilyTree() {
                     headerStats={headerStats}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
-                    isViewRestricted={viewParam === "revenue-projection"}
+                    isViewRestricted={!tree}
                 />
             )}
 
