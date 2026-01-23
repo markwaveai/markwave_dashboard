@@ -49,7 +49,7 @@ const RejectionModal: React.FC = () => {
             await dispatch(rejectOrder({
                 unitId,
                 adminMobile,
-                reason: trimmedReason
+                comments: trimmedReason
             })).unwrap();
 
             dispatch(setSnackbar({ message: 'Order rejected successfully!', type: 'error' }));

@@ -50,9 +50,9 @@ export const fetchPendingUnits = createAsyncThunk(
 
 export const approveOrder = createAsyncThunk(
     'orders/approveOrder',
-    async ({ unitId, adminMobile, comment }: { unitId: string; adminMobile: string; comment?: string }, { dispatch, rejectWithValue, getState }) => {
+    async ({ unitId, adminMobile, comments }: { unitId: string; adminMobile: string; comments?: string }, { dispatch, rejectWithValue, getState }) => {
         try {
-            await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId, comment }, {
+            await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId, comments }, {
                 headers: { 'X-Admin-Mobile': adminMobile }
             });
             // Refresh list after success, preserving filters
@@ -75,9 +75,9 @@ export const approveOrder = createAsyncThunk(
 
 export const rejectOrder = createAsyncThunk(
     'orders/rejectOrder',
-    async ({ unitId, adminMobile, reason }: { unitId: string; adminMobile: string; reason: string }, { dispatch, rejectWithValue, getState }) => {
+    async ({ unitId, adminMobile, comments }: { unitId: string; adminMobile: string; comments?: string }, { dispatch, rejectWithValue, getState }) => {
         try {
-            await axios.post(API_ENDPOINTS.rejectUnit(), { orderId: unitId, reason }, {
+            await axios.post(API_ENDPOINTS.rejectUnit(), { orderId: unitId, comments }, {
                 headers: { 'X-Admin-Mobile': adminMobile }
             });
             // Refresh list after success, preserving filters

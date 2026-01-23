@@ -40,7 +40,7 @@ const ApprovalModal: React.FC = () => {
             await dispatch(approveOrder({
                 unitId,
                 adminMobile,
-                comment,
+                comments: comment,
             })).unwrap();
 
             dispatch(setSnackbar({ message: 'Order approved successfully!', type: 'success' }));
