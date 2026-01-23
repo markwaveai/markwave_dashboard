@@ -697,7 +697,9 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 
                                                                             if (targetDate) {
                                                                                 const scheduledDate = new Date(targetDate);
+                                                                                scheduledDate.setHours(0, 0, 0, 0);
                                                                                 const today = new Date();
+                                                                                today.setHours(0, 0, 0, 0);
                                                                                 const diffTime = scheduledDate.getTime() - today.getTime();
                                                                                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                                                                                 daysRemaining = diffDays;
