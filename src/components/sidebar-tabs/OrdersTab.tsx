@@ -280,23 +280,18 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         }
     }, [expandedOrderId]);
 
-    // Construct history object from real data
-    const getTrackingForBuffalo = useCallback(() => {
-        if (!realTrackingData || !realTrackingData.timeline) return { currentStageId: 1, history: {}, stages: [] };
+    // Process specific phase/cycle stages from the new API structure
+    const processPhaseStages = useCallback((phaseData: any) => {
+        if (!phaseData || !phaseData.stages) return { currentStageId: 1, history: {}, stages: [] };
 
         const history: any = {};
         let maxStageId = 1;
 
-        // Dynamic Stages from Backend
-        const dynamicStages = realTrackingData.timeline.map((item: any) => {
-            // Format Label from 'stage' field
+        const dynamicStages = phaseData.stages.map((item: any) => {
             let label = '';
-
             if (item.stage === 'BUFFALOS_BOUGHT') {
-                label = 'Purchased in Market';
+                label = 'Buffaloes Bought';
             } else {
-                // Basic formatting: replace underscores with spaces and Title Case
-                // e.g. "ORDER_PLACED" -> "Order Placed"
                 label = item.stage
                     .split('_')
                     .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -307,48 +302,45 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                 id: item.id,
                 label: label,
                 description: item.description,
-                status: item.status, // Store status for badge logic
+                status: item.status,
                 rawStage: item.stage
             };
         }).sort((a: any, b: any) => a.id - b.id);
 
-        realTrackingData.timeline.forEach((item: any) => {
+        phaseData.stages.forEach((item: any) => {
             const sId = item.id;
             if (sId) {
                 if (item.timestamp) {
                     const dateObj = new Date(item.timestamp);
                     const dateStr = dateObj.toLocaleDateString('en-GB').replace(/\//g, '-');
-                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false }); // Based on image 10:25:51
+                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false });
                     history[sId] = { date: dateStr, time: timeStr, description: item.description };
                 } else if (item.description) {
                     history[sId] = { date: '-', time: '-', description: item.description };
                 }
 
-                // Determine current max stage based on completion
                 if (item.status === 'COMPLETED') {
-                    // If stage N is completed, we are at least at N+1 (waiting for next) or N if it's the last one
                     maxStageId = Math.max(maxStageId, sId + 1);
                 }
             }
         });
 
-        // Clamp maxStageId
         if (dynamicStages.length > 0) {
             const lastId = dynamicStages[dynamicStages.length - 1].id;
             if (maxStageId > lastId + 1) maxStageId = lastId + 1;
         }
 
         return { currentStageId: maxStageId, history, stages: dynamicStages };
-    }, [realTrackingData]);
+    }, []);
 
-    const handleStageUpdateLocal = async (orderId: string, buffaloNum: number, nextStageId: number) => {
+    const handleStageUpdateLocal = async (orderId: string, buffaloIds: string[], nextStageId: number) => {
         // Map nextStageId to Specific Backend Status required by user
         let status = '';
 
-        if (nextStageId === 5) status = 'BOUGHT';
-        else if (nextStageId === 6) status = 'IN_QUARANTINE';
-        else if (nextStageId === 7) status = 'IN_TRANSIT';
-        else if (nextStageId === 8) status = 'DELIVERED';
+        if (nextStageId === 5) status = 'PLACED_TO_MARKET';
+        else if (nextStageId === 6) status = 'BOUGHT';
+        else if (nextStageId === 7) status = 'IN_QUARANTINE';
+        else if (nextStageId === 8) status = 'IN_TRANSIT';
 
         if (!status) {
             alert("Update not allowed for this stage.");
@@ -358,7 +350,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         const payload = {
             orderId: orderId,
             status: status,
-            buffaloId: String(buffaloNum),
+            buffaloIds: buffaloIds, // LIST of IDs
             adminMobile: adminMobile,
             description: "",
             location: ""
@@ -549,7 +541,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                 const inv = entry.investor || {};
                                 const serialNumber = (page - 1) * pageSize + index + 1;
 
-                                const isExpandable = unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved';
+                                const isExpandable = (unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved') && statusFilter === 'PAID';
 
                                 return (
                                     <React.Fragment key={`${unit.id || 'order'}-${index}`}>
@@ -691,46 +683,68 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                             {/* Sidebar removed */}
                                                             <div className="tracking-main-content" style={{ width: '100%' }}>
                                                                 <div className="order-expand-animation tracking-buffalo-grid">
-                                                                    {(() => {
-                                                                        const totalUnits = parseFloat(String(unit.numUnits || 0));
-                                                                        // Logic: Always 2 Cycles.
-                                                                        // Cycle 1: 50% of units.
-                                                                        // Cycle 2: 50% of units.
-                                                                        // e.g. 5 units -> 2.5 units per cycle.
-                                                                        const cycleUnits = totalUnits / 2;
 
-                                                                        return [1, 2].map(cycleNum => {
-                                                                            // Calculate buffaloes for this cycle (Unit * 2 buffaloes/unit)
-                                                                            const buffaloesInCycle = cycleUnits * 2;
+                                                                    {realTrackingData?.deliveryPhases ? (
+                                                                        realTrackingData.deliveryPhases.map((phase: any, index: number) => {
+                                                                            const cycleNum = phase.phase;
+                                                                            const tracker = processPhaseStages(phase);
+                                                                            const TRACKING_WINDOW_DAYS = 15; // Set to 200 to enable early. Standard is 15.
+
+                                                                            // Tracking enablement logic based on scheduledDate
+                                                                            let isTrackingEnabled = true;
+                                                                            let daysRemaining = 0;
+                                                                            const targetDate = phase.scheduledDate || phase.scheduled_date;
+
+                                                                            if (targetDate) {
+                                                                                const scheduledDate = new Date(targetDate);
+                                                                                const today = new Date();
+                                                                                const diffTime = scheduledDate.getTime() - today.getTime();
+                                                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                                                daysRemaining = diffDays;
+                                                                                // Enable only if within window (or date passed)
+                                                                                if (diffDays > TRACKING_WINDOW_DAYS) {
+                                                                                    isTrackingEnabled = false;
+                                                                                }
+                                                                            }
+
+                                                                            const currentStageId = tracker.currentStageId;
+                                                                            const isExpanded = isTrackingEnabled && (expandedTrackerKeys[`${unit.id}-${cycleNum}`] !== false);
+                                                                            const timelineStages = tracker.stages || [];
+                                                                            const buffaloIds = phase.buffaloIds || [];
+
+
 
                                                                             // Text formatting
-                                                                            const buffaloText = buffaloesInCycle === 1
-                                                                                ? '(1 Buffalo, 1 Calf)'
-                                                                                : `(${buffaloesInCycle} Buffaloes, ${buffaloesInCycle} Calves)`;
+                                                                            const buffaloCount = buffaloIds.length;
+                                                                            const buffaloText = buffaloCount === 1
+                                                                                ? '(1 Buffalo)'
+                                                                                : `(${buffaloCount} Buffaloes)`;
 
-                                                                            // cycleNum matches buffaloNum concept (1 or 2)
                                                                             const trackerKey = `${unit.id}-${cycleNum}`;
-                                                                            const tracker = trackingData[trackerKey] || getTrackingForBuffalo();
-                                                                            const currentStageId = tracker.currentStageId;
-                                                                            const isExpanded = expandedTrackerKeys[trackerKey] !== false;
-
-                                                                            // Use dynamic stages
-                                                                            const timelineStages = tracker.stages || [];
 
                                                                             return (
                                                                                 <div key={cycleNum} className="tracking-buffalo-card" style={{ marginBottom: '20px' }}>
                                                                                     <div className="tracking-buffalo-title">
-                                                                                        <span>{`Cycle ${cycleNum} (${cycleUnits} ${cycleUnits === 1 ? 'Unit' : 'Units'} - ${buffaloText})`}</span>
-                                                                                        <div className="header-actions">
-                                                                                            <button
-                                                                                                onClick={() => setExpandedTrackerKeys(prev => ({ ...prev, [trackerKey]: !isExpanded }))}
-                                                                                                className="tracking-individual-expand-btn"
-                                                                                            >
-                                                                                                {isExpanded ? 'Minimize' : 'Expand'}
-                                                                                                <span className={`tracking-chevron ${isExpanded ? 'up' : 'down'}`}>
-                                                                                                    {isExpanded ? '▲' : '▼'}
+                                                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                                            <span>{`Cycle ${cycleNum} ${buffaloText}`}</span>
+                                                                                            {!isTrackingEnabled && (
+                                                                                                <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>
+                                                                                                    Tracking starts in {daysRemaining - TRACKING_WINDOW_DAYS} days ({new Date(targetDate).toLocaleDateString()})
                                                                                                 </span>
-                                                                                            </button>
+                                                                                            )}
+                                                                                        </div>
+                                                                                        <div className="header-actions">
+                                                                                            {isTrackingEnabled && (
+                                                                                                <button
+                                                                                                    onClick={() => setExpandedTrackerKeys(prev => ({ ...prev, [trackerKey]: !isExpanded }))}
+                                                                                                    className="tracking-individual-expand-btn"
+                                                                                                >
+                                                                                                    {isExpanded ? 'Minimize' : 'Expand'}
+                                                                                                    <span className={`tracking-chevron ${isExpanded ? 'up' : 'down'}`}>
+                                                                                                        {isExpanded ? '▲' : '▼'}
+                                                                                                    </span>
+                                                                                                </button>
+                                                                                            )}
                                                                                         </div>
                                                                                     </div>
 
@@ -775,15 +789,15 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                                                                                 {(isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8 && (
                                                                                                                     <button
                                                                                                                         className="tracking-update-btn"
-                                                                                                                        onClick={() => handleStageUpdateLocal(unit.id, cycleNum, stage.id + 1)}
+                                                                                                                        onClick={() => handleStageUpdateLocal(unit.id, buffaloIds, stage.id + 1)}
                                                                                                                     >
                                                                                                                         {(() => {
                                                                                                                             const nextId = stage.id + 1;
 
-                                                                                                                            if (nextId === 5) return 'Update Buffaloes purchased';
-                                                                                                                            if (nextId === 6) return 'In Quarantine';
-                                                                                                                            if (nextId === 7) return 'In Transit';
-                                                                                                                            if (nextId === 8) return 'Delivered';
+                                                                                                                            if (nextId === 5) return 'Update Placed to Market';
+                                                                                                                            if (nextId === 6) return 'Update Bought';
+                                                                                                                            if (nextId === 7) return 'Update In Quarantine';
+                                                                                                                            if (nextId === 8) return 'Update In Transit';
                                                                                                                             return 'Update';
                                                                                                                         })()}
                                                                                                                     </button>
@@ -805,7 +819,8 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                                                 </div>
                                                                             );
                                                                         })
-                                                                    })()}
+                                                                    ) : null
+                                                                    }
                                                                 </div>
                                                             </div>
                                                         </div>

@@ -3,7 +3,6 @@
     font-family: 'Inter', sans-serif;
     color: #000000;
     background-color: #f3f6fc;
-    /* Light blueish gray background like reference */
 }
 
 /* Navbar */
@@ -13,7 +12,6 @@
     align-items: center;
     padding: 12px 5%;
     background: #1e293b;
-    /* Main Dashboard Header Color */
     color: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -30,7 +28,6 @@
 .landing-brand img {
     height: 32px;
     filter: brightness(0) invert(1);
-    /* Make logo white if it's not and background is dark */
 }
 
 .landing-nav-links {
@@ -57,14 +54,11 @@
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
     padding: 6px 10px;
-    /* Reduced padding */
     border-radius: 6px;
     font-size: 0.85rem;
-    /* Reduced font size */
     outline: none;
     cursor: pointer;
     width: 150px;
-    /* Fixed small width */
 }
 
 .location-selector option {
@@ -72,6 +66,7 @@
     color: #333;
 }
 
+/* Promo banner */
 .promo-banner {
     background: #eef2ff;
     color: #000000;
@@ -82,17 +77,14 @@
 }
 
 /* Hero Section */
-/* Hero Section */
 .landing-hero {
     display: flex;
     flex-wrap: wrap;
     max-width: 1400px;
     margin: 0 auto;
     padding: 40px 40px;
-    /* Reduced top padding */
     gap: 40px;
     align-items: stretch;
-    /* Stretch to same height */
     justify-content: space-between;
 }
 
@@ -104,7 +96,6 @@
 }
 
 .hero-header-placeholder {
-    /* If we ever put text back, this keeps structure */
     flex: 0 0 auto;
 }
 
@@ -113,31 +104,22 @@
     position: relative;
     width: 100%;
     height: 100%;
-    /* Fill the height */
     display: flex;
     overflow: hidden;
-    /* Ensure animation stays within bounds */
     border-radius: 20px;
-    /* Applied here instead of image for clean overflow */
 }
 
 .hero-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* Cover the area */
     display: block;
     animation: slowZoom 20s infinite alternate ease-in-out;
 }
 
 @keyframes slowZoom {
-    0% {
-        transform: scale(1);
-    }
-
-    100% {
-        transform: scale(1.1);
-    }
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
 }
 
 /* Form Section */
@@ -154,7 +136,6 @@
     border-radius: 20px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
     height: 100%;
-    /* Fill the stretched container */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -183,16 +164,16 @@
     color: #059669;
     font-size: 0.85rem;
     font-weight: 600;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     background: #ecfdf5;
     padding: 6px 12px;
     border-radius: 20px;
-    display: inline-flex;
 }
 
+/* Inputs */
 .landing-input {
     width: 100%;
     padding: 14px 20px;
@@ -208,19 +189,84 @@
 .landing-input:focus {
     border-color: #238E8B;
     background: white;
-    box-shadow: 0 0 0 3px rgba(35, 142, 139, 0.1);
+    box-shadow: 0 0 0 3px rgba(35, 142, 139, 0.12);
 }
 
+/* Main button */
 .referral-btn {
     background-color: #238E8B !important;
     color: white !important;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease-in-out;
 }
 
 .referral-btn:hover {
     background-color: #1b726f !important;
+    transform: translateY(-1px);
 }
 
+/* ✅ Updated Mode Switch (Premium look) */
+.mode-switch {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 6px;
+    border-radius: 16px;
+    background: #f1f5f9;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: #334155;
+    transition: all 0.25s ease;
+}
+
+.mode-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.mode-btn.active {
+    background: #111827;
+    color: white;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.mode-btn.danger.active {
+    background: #ef4444;
+    box-shadow: 0 10px 20px rgba(239, 68, 68, 0.25);
+}
+
+/* ✅ Confirm/Success/Error Modal animations */
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Applies to modal container */
+.fixed.inset-0.z-50.flex.items-center.justify-center.p-4.bg-black\/50.backdrop-blur-sm > div {
+    animation: popIn 0.2s ease-out;
+}
+
+/* ✅ Snackbar style upgrade */
+.snackbar {
+    animation: popIn 0.25s ease-out;
+}
+
+/* Service Features */
 .service-features {
     list-style: none;
     padding: 0;
@@ -239,12 +285,12 @@
 
 .feature-icon {
     color: #84cc16;
-    /* Lime/Green check */
     width: 18px;
     height: 18px;
     flex-shrink: 0;
 }
 
+/* WhatsApp Float */
 .whatsapp-float {
     position: fixed;
     bottom: 30px;
@@ -267,47 +313,39 @@
     transform: scale(1.05);
 }
 
+/* Responsive */
 @media (max-width: 1024px) {
     .landing-hero {
         flex-direction: column;
         padding: 40px 20px;
         gap: 30px;
         align-items: center;
-        /* Center items in column mode */
     }
 
     .hero-content {
         width: 100%;
         min-width: auto;
-        /* Reset min-width */
     }
 
     .hero-image-container {
         height: 350px;
-        /* Fixed height for tablet/mobile to ensure visibility */
         width: 100%;
     }
 
     .landing-navbar {
-        /* Keep row layout for header even on tablet if space permits, 
-           or stack if very small. Let's try row with wrap for safety but per request 'responsive' usually implies 'native app look' */
         flex-direction: row;
         padding: 12px 20px;
     }
 
     .hero-form-container {
         flex: auto;
-        /* Reset fixed flex basis */
         width: 100%;
         max-width: 500px;
-        /* Limit width for readability */
     }
 
     .trial-form-card {
         padding: 24px;
-        /* Reduced padding on card */
         height: auto;
-        /* Allow height to fit content */
     }
 }
 
@@ -322,7 +360,6 @@
 
     .hero-image-container {
         height: 250px;
-        /* Smaller height for mobile */
     }
 
     .landing-hero {
@@ -331,5 +368,15 @@
 
     .hero-form-container {
         max-width: 100%;
+    }
+
+    .trial-form-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .mode-btn {
+        font-size: 13px;
+        padding: 10px 10px;
     }
 }

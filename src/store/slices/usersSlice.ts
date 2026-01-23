@@ -69,6 +69,32 @@ export const deactivateConfirm = createAsyncThunk(
     }
 );
 
+export const activateRequestOtp = createAsyncThunk(
+    'users/activateRequestOtp',
+    async (payload: { mobile: string; channel: string; }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(API_ENDPOINTS.requestReactivationOtp(), payload);
+            return response.data;
+        } catch (error: any) {
+            const msg = error?.response?.data?.message || 'Failed to send OTP';
+            return rejectWithValue(msg);
+        }
+    }
+);
+
+export const activateConfirm = createAsyncThunk(
+    'users/activateConfirm',
+    async (payload: { mobile: string; otp: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(API_ENDPOINTS.confirmReactivation(), payload);
+            return response.data;
+        } catch (error: any) {
+            const msg = error?.response?.data?.message || 'Failed to activate account';
+            return rejectWithValue(msg);
+        }
+    }
+);
+
 export const fetchAdminProfile = createAsyncThunk(
     'users/fetchAdminProfile',
     async (mobile: string, { rejectWithValue }) => {
@@ -95,6 +121,12 @@ export interface UsersState {
         success: boolean;
         message: string | null;
     };
+    activation: {
+        loading: boolean;
+        error: string | null;
+        success: boolean;
+        message: string | null;
+    };
     adminProfile: any | null;
 }
 
@@ -107,6 +139,12 @@ const initialState: UsersState = {
     error: null,
     actionLoading: false,
     deactivation: {
+        loading: false,
+        error: null,
+        success: false,
+        message: null,
+    },
+    activation: {
         loading: false,
         error: null,
         success: false,
@@ -127,6 +165,14 @@ const usersSlice = createSlice({
         },
         resetDeactivationState: (state) => {
             state.deactivation = {
+                loading: false,
+                error: null,
+                success: false,
+                message: null,
+            };
+        },
+        resetActivationState: (state) => {
+            state.activation = {
                 loading: false,
                 error: null,
                 success: false,
@@ -214,6 +260,38 @@ const usersSlice = createSlice({
             state.deactivation.error = action.payload as string;
         });
 
+        // Activate Request OTP
+        builder.addCase(activateRequestOtp.pending, (state) => {
+            state.activation.loading = true;
+            state.activation.error = null;
+            state.activation.message = null;
+        });
+        builder.addCase(activateRequestOtp.fulfilled, (state, action: PayloadAction<any>) => {
+            state.activation.loading = false;
+            state.activation.success = true;
+            state.activation.message = action.payload.message;
+        });
+        builder.addCase(activateRequestOtp.rejected, (state, action) => {
+            state.activation.loading = false;
+            state.activation.error = action.payload as string;
+        });
+
+        // Activate Confirm
+        builder.addCase(activateConfirm.pending, (state) => {
+            state.activation.loading = true;
+            state.activation.error = null;
+            state.activation.message = null;
+        });
+        builder.addCase(activateConfirm.fulfilled, (state, action: PayloadAction<any>) => {
+            state.activation.loading = false;
+            state.activation.success = true;
+            state.activation.message = action.payload.message;
+        });
+        builder.addCase(activateConfirm.rejected, (state, action) => {
+            state.activation.loading = false;
+            state.activation.error = action.payload as string;
+        });
+
         // Fetch Admin Profile
         builder.addCase(fetchAdminProfile.pending, (state) => {
             // Option to handle loading state specifically for admin profile if needed
@@ -227,6 +305,6 @@ const usersSlice = createSlice({
     }
 });
 
-export const { setReferralUsers, setExistingCustomers, resetDeactivationState } = usersSlice.actions;
+export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState } = usersSlice.actions;
 export const usersReducer = usersSlice.reducer;
 export default usersSlice.reducer;
