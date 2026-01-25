@@ -224,8 +224,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
     if (!formData.last_name.trim()) {
       newErrors.last_name = 'Last name is required';
-    } else if (formData.last_name.length < 2) {
-      newErrors.last_name = 'Last name must be at least 2 characters';
     }
 
     // Email Validation (Optional but must be valid if present)
@@ -250,7 +248,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         break;
       case 'last_name':
         if (!value.trim()) error = 'Last name is required';
-        else if (value.length < 2) error = 'Last name must be at least 2 characters';
         break;
       case 'email':
         if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email format';
@@ -322,7 +319,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         role: formData.role,
         refered_by_mobile: formData.refered_by_mobile,
         refered_by_name: formData.refered_by_name,
-        isabletoreferr: formData.role === 'Employee' || formData.role === 'SpecialCategory',
+        isAbleToRefer: formData.role === 'Employee' || formData.role === 'SpecialCategory',
         isTestAccount: formData.is_test === 'true',
       };
       const result = await dispatch(createReferralUser(payload)).unwrap();
