@@ -319,7 +319,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         role: formData.role,
         refered_by_mobile: formData.refered_by_mobile,
         refered_by_name: formData.refered_by_name,
-        isabletoreferr: formData.role === 'Employee' || formData.role === 'SpecialCategory',
+        isAbleToRefer: formData.role === 'Employee' || formData.role === 'SpecialCategory',
         isTestAccount: formData.is_test === 'true',
       };
       const result = await dispatch(createReferralUser(payload)).unwrap();
