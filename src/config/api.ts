@@ -1,12 +1,12 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
-    const productionUrl = process.env.REACT_APP_PRODUCTION_URL || 'https://animalkart-stagging-services-jn6cma3vvq-el.a.run.app';
+    const productionUrl = 'https://animalkart-stagging-services-jn6cma3vvq-el.a.run.app';
 
     // Only use CORS proxy in local development
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return productionUrl;
     } else {
-      const corsUrl = process.env.REACT_APP_CORS_URL || 'https://cors-612299373064.asia-south1.run.app';
+      const corsUrl = 'https://cors-612299373064.asia-south1.run.app';
       return `${corsUrl}/${productionUrl}`;
     }
   }
