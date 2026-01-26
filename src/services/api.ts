@@ -7,10 +7,10 @@ const api = axios.create({
 });
 
 export const userService = {
-  getUsers: async (): Promise<User[]> => {
+  getUsers: async (params?: any): Promise<{ users: User[], total?: number }> => {
     try {
-      const response = await api.get<{status: string, statuscode: number, users: User[]}>(API_ENDPOINTS.getUsers());
-      return response.data.users;
+      const response = await api.get<{ status: string, statuscode: number, users: User[], total?: number }>(API_ENDPOINTS.getUsers(), { params });
+      return { users: response.data.users, total: response.data.total };
     } catch (error) {
       console.error('Error fetching users:', error);
       throw error;
@@ -19,7 +19,7 @@ export const userService = {
 
   getReferrals: async (): Promise<User[]> => {
     try {
-      const response = await api.get<{status: string, statuscode: number, users: User[]}>(API_ENDPOINTS.getReferrals());
+      const response = await api.get<{ status: string, statuscode: number, users: User[] }>(API_ENDPOINTS.getReferrals());
       return response.data.users;
     } catch (error) {
       console.error('Error fetching referrals:', error);
@@ -27,12 +27,32 @@ export const userService = {
     }
   },
 
-  getUserDetails: async (mobile: string): Promise<User> => {
+  getUserDetails: async (mobile: string): Promise<any> => {
     try {
-      const response = await api.get<User>(API_ENDPOINTS.getUserDetails(mobile));
+      const response = await api.get<any>(API_ENDPOINTS.getUserDetails(mobile));
       return response.data;
     } catch (error) {
       console.error('Error fetching user details:', error);
+      throw error;
+    }
+  },
+
+  getNetwork: async (params?: any): Promise<any> => {
+    try {
+      const response = await api.get<any>(API_ENDPOINTS.getReferrals(), { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching network:', error);
+      throw error;
+    }
+  },
+
+  getNetworkUserDetails: async (mobile: string): Promise<any> => {
+    try {
+      const response = await api.get<any>(API_ENDPOINTS.getReferrals() + `/${mobile}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching network user details:', error);
       throw error;
     }
   },

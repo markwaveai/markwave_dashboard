@@ -65,6 +65,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
   // Sidebar Sub-menu States
   const [isUnitCalcOpen, setIsUnitCalcOpen] = useState(false);
+  const [isUserMgmtOpen, setIsUserMgmtOpen] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -153,6 +154,10 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     // Open Unit Calc dropdown if we are on a child route
     if (location.pathname.includes('/unit-calculator')) {
       setIsUnitCalcOpen(true);
+    }
+    // Open User Mgmt dropdown if we are on a child route or main route
+    if (location.pathname.includes('/user-management')) {
+      setIsUserMgmtOpen(true);
     }
   }, [location.pathname]);
 
@@ -465,12 +470,44 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 )}
                 {hasSession && (
                   <li>
-                    <button className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                        <Users size={18} />
-                        <span className="nav-text">User Management</span>
-                      </div>
-                    </button>
+                    <div className="nav-item-container">
+                      <button
+                        className={`nav-item ${activeTab === 'user-management' ? 'active-main' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsUserMgmtOpen(!isUserMgmtOpen);
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                          <Users size={18} />
+                          <span className="nav-text">User Management</span>
+                        </div>
+                        {isUserMgmtOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </button>
+
+                      {isUserMgmtOpen && (
+                        <ul style={{ paddingLeft: '34px', marginTop: '4px', listStyle: 'none' }}>
+                          <li style={{ marginBottom: '4px' }}>
+                            <button
+                              className={`nav-item ${location.pathname === '/user-management' ? 'active' : ''}`}
+                              style={{ padding: '8px 12px', fontSize: '0.9em', textDecoration: 'none', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
+                              onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}
+                            >
+                              <span className="nav-text">All Users</span>
+                            </button>
+                          </li>
+                          <li style={{ marginBottom: '4px' }}>
+                            <button
+                              className={`nav-item ${location.pathname === '/user-management/network' ? 'active' : ''}`}
+                              style={{ padding: '8px 12px', fontSize: '0.9em', textDecoration: 'none', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
+                              onClick={(e) => { e.stopPropagation(); navigate('/user-management/network'); }}
+                            >
+                              <span className="nav-text">Network</span>
+                            </button>
+                          </li>
+                        </ul>
+                      )}
+                    </div>
                   </li>
                 )}
                 {hasSession && (

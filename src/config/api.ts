@@ -1,6 +1,6 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
-    const productionUrl = 'https://animalkart-stagging-services-jn6cma3vvq-el.a.run.app';
+    const productionUrl = 'http://0.0.0.0:8000';
 
     // Only use CORS proxy in local development
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -16,7 +16,7 @@ export const API_ENDPOINTS = {
   getUsers: () => `${API_CONFIG.getBaseUrl()}/users/customers`,
   getReferrals: () => `${API_CONFIG.getBaseUrl()}/users/referrals`,
   createUser: () => `${API_CONFIG.getBaseUrl()}/users/referral-signup`,
-  getUserDetails: (mobile: string) => `${API_CONFIG.getBaseUrl()}/users/${mobile}`,
+  getUserDetails: (mobile: string) => `${API_CONFIG.getBaseUrl()}/users/customers/${mobile}`,
   verifyUser: () => `${API_CONFIG.getBaseUrl()}/users/verify`,
   updateUser: (mobile: string) => `${API_CONFIG.getBaseUrl()}/users/${mobile}`,
   getProducts: () => `${API_CONFIG.getBaseUrl()}/products`,

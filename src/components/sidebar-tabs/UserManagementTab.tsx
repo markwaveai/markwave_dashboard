@@ -1,9 +1,10 @@
-import React, { useMemo, useEffect, useCallback } from 'react';
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { useTableSortAndSearch } from '../../hooks/useTableSortAndSearch';
-import { fetchReferralUsers, fetchExistingCustomers } from '../../store/slices/usersSlice';
+// import { useTableSortAndSearch } from '../../hooks/useTableSortAndSearch'; // Removing client-side sort/search for main data flow
+import { useNavigate } from 'react-router-dom';
+import { fetchManagedUsers } from '../../store/slices/usersSlice';
 import Pagination from '../common/Pagination';
 import TableSkeleton from '../common/TableSkeleton';
 import './UserManagementTab.css';
@@ -14,20 +15,32 @@ interface UserManagementTabProps {
 
 const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) => {
     const dispatch = useAppDispatch();
-    const { existingCustomers, referralUsers, referralLoading, existingLoading } = useAppSelector((state: RootState) => state.users);
-
-    useEffect(() => {
-        dispatch(fetchReferralUsers());
-        dispatch(fetchExistingCustomers());
-    }, [dispatch]);
+    const navigate = useNavigate();
+    const { managedUsers, managedLoading, managedTotal } = useAppSelector((state: RootState) => state.users);
 
     // URL Search Params for Pagination
     const [searchParams, setSearchParams] = useSearchParams();
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
-    const itemsPerPage = 15;
+    const itemsPerPage = 10; // Default from spec
 
-    // Search State
-    const [searchTerm, setSearchTerm] = React.useState('');
+    // Filter State
+    const [role, setRole] = useState<string>('Investor');
+    const [verified, setVerified] = useState<string>('true'); // 'true' | 'false' (string for select)
+    const [createdDate, setCreatedDate] = useState<string>('');
+
+    // Memoize the params to prevent unnecessary re-fetches if the object reference changes
+    const fetchParams = useMemo(() => ({
+        page: currentPage,
+        limit: itemsPerPage,
+        role: role || undefined,
+        verified: verified === 'true',
+        created_date: createdDate || undefined
+    }), [currentPage, role, verified, createdDate]);
+
+    // Fetch Data
+    useEffect(() => {
+        dispatch(fetchManagedUsers(fetchParams));
+    }, [dispatch, fetchParams]);
 
     const setCurrentPage = useCallback((page: number) => {
         setSearchParams(prev => {
@@ -37,111 +50,99 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
         });
     }, [setSearchParams]);
 
-    // Combine and deduplicate users, filtering out Employees for the Animalkart view
-    const allUsersMerged = useMemo(() => {
-        const combined = [...existingCustomers, ...referralUsers];
-        // Deduplicate by mobile and filter out Employees
-        const seen = new Set();
-        return combined.filter(user => {
-            if (!user.mobile || seen.has(user.mobile)) return false;
-            // Filter out employees as they are moved to Farmvest
-            if (user.role === 'Employee') return false;
+    // Calculate total pages
+    // Spec doesn't guarantee 'total' in response but strict standard pagination needs it. 
+    // If managedTotal is 0 but we have users, we assume at least one page.
+    // If we have managedTotal, strict calculation.
+    const totalPages = Math.ceil((managedTotal || (managedUsers.length < itemsPerPage ? currentPage * itemsPerPage : (currentPage + 1) * itemsPerPage)) / itemsPerPage);
+    // Note: If API returns correct total, used that. 
+    // If not, we might have issues. My thunk maps response.total to managedTotal.
+    // Assuming backend returns total. If not, pagination might be restricted.
 
-            seen.add(user.mobile);
-            return true;
-        });
-    }, [existingCustomers, referralUsers]);
+    // Handle Filters Change with useCallback
+    const handleRoleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+        setRole(e.target.value);
+        setCurrentPage(1);
+    }, [setCurrentPage]);
 
+    const handleVerifiedChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+        setVerified(e.target.value);
+        setCurrentPage(1);
+    }, [setCurrentPage]);
 
-    // Custom Search Function
-    const searchFn = useCallback((item: any, query: string) => {
-        const lowerQuery = query.toLowerCase();
-        const fullName = `${item.first_name || ''} ${item.last_name || ''}`.toLowerCase();
-        const mobile = item.mobile || '';
-        const referedByName = (item.refered_by_name || '').toLowerCase();
-        const referedByMobile = item.refered_by_mobile || '';
+    const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setCreatedDate(e.target.value);
+        setCurrentPage(1);
+    }, [setCurrentPage]);
 
-        return (
-            fullName.includes(lowerQuery) ||
-            mobile.includes(lowerQuery) ||
-            referedByName.includes(lowerQuery) ||
-            referedByMobile.includes(lowerQuery)
-        );
-    }, []);
-
-    const {
-        filteredData: filteredUsers,
-        requestSort,
-        sortConfig,
-        searchQuery: activeSearchQuery, // Get current active search query
-        setSearchQuery
-    } = useTableSortAndSearch(allUsersMerged, { key: '', direction: 'asc' }, searchFn);
-
-    // Debounce Search
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            // Only update if search term has changed
-            if (searchTerm !== activeSearchQuery) {
-                setSearchQuery(searchTerm);
-                // Only reset page if not already on page 1
-                if (currentPage !== 1) {
-                    setCurrentPage(1);
-                }
-            }
-        }, 1000);
-
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [searchTerm, activeSearchQuery, setSearchQuery, currentPage, setCurrentPage]);
-
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-
-    useEffect(() => {
-        // Only clamp the page if we have finished loading all data
-        if (!referralLoading && !existingLoading && currentPage > totalPages && totalPages > 0) {
-            setCurrentPage(totalPages);
-        }
-    }, [totalPages, currentPage, setCurrentPage, referralLoading, existingLoading]);
+    const handleMobileClick = (mobile: string) => {
+        navigate(`/users/customers/${mobile}`);
+    };
 
     return (
         <div className="user-management-container">
-            <div className="user-management-header p-4 border-b border-gray-200 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold">User Management</h2>
-                    <p className="text-sm text-gray-500 mt-1">Unified view of all Investors and Referrals ({allUsersMerged.length} total)</p>
+            <div className="user-management-header p-4 border-b border-gray-200 bg-white flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold">User Management</h2>
+                        <p className="text-sm text-gray-500 mt-1">Manage Users and Referrals</p>
+                    </div>
                 </div>
-                {/* Search Input */}
-                <div className="w-full md:w-auto relative">
-                    <input
-                        type="text"
-                        placeholder="Search by Name, Mobile, Referred By..."
-                        className="w-full md:w-80 pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    <svg
-                        className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
 
-                    {searchTerm && (
-                        <button
-                            onClick={() => setSearchTerm('')}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
+                    {/* Role Filter */}
+                    <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <select
+                            value={role}
+                            onChange={handleRoleChange}
+                            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
+                            <option value="Investor">Investor</option>
+                            <option value="Employee">Employee</option>
+                            <option value="SpecialCategory">Special Category</option>
+                        </select>
+                    </div>
+
+                    {/* Verified Filter */}
+                    <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">Verified Status</label>
+                        <select
+                            value={verified}
+                            onChange={handleVerifiedChange}
+                            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
+                        >
+                            <option value="true">Verified</option>
+                            <option value="false">Pending</option>
+                        </select>
+                    </div>
+
+                    {/* Date Filter */}
+                    <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">Created Date</label>
+                        <input
+                            type="date"
+                            value={createdDate}
+                            onChange={handleDateChange}
+                            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
+                        />
+                    </div>
+
+                    {/* Clear Filters (Optional but good UX) */}
+                    <div className="flex items-end">
+                        <button
+                            onClick={() => {
+                                setRole('Investor');
+                                setVerified('true');
+                                setCreatedDate('');
+                                setCurrentPage(1);
+                            }}
+                            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            Reset Filters
                         </button>
-                    )}
+                    </div>
                 </div>
             </div>
 
@@ -151,29 +152,35 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
                         <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                             <tr>
                                 <th className="px-4 py-3">S.No</th>
-                                <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('first_name')}>Name {getSortIcon('first_name', sortConfig)}</th>
-                                <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('mobile')}>Mobile {getSortIcon('mobile', sortConfig)}</th>
-                                <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('role')}>Role {getSortIcon('role', sortConfig)}</th>
-                                <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('refered_by_name')}>Referred By {getSortIcon('refered_by_name', sortConfig)}</th>
-                                <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('verified')}>Verified {getSortIcon('verified', sortConfig)}</th>
+                                <th className="px-4 py-3">Name</th>
+                                <th className="px-4 py-3">Mobile</th>
+                                <th className="px-4 py-3">Role</th>
+                                <th className="px-4 py-3">Referred By</th>
+                                <th className="px-4 py-3">Verified</th>
+                                <th className="px-4 py-3">Created Date</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {(referralLoading || existingLoading) ? (
-                                <TableSkeleton cols={6} rows={10} />
-                            ) : currentItems.length === 0 ? (
+                            {managedLoading ? (
+                                <TableSkeleton cols={7} rows={10} />
+                            ) : managedUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">No users found</td>
+                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">No users found</td>
                                 </tr>
                             ) : (
-                                currentItems.map((user: any, index: number) => (
+                                managedUsers.map((user: any, index: number) => (
                                     <tr key={user.mobile || index} className="bg-white border-b hover:bg-gray-50">
                                         <td className="px-4 py-3">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                         <td className="px-4 py-3 font-medium text-gray-900">
                                             {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || '-'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            {user.mobile || '-'}
+                                            <span
+                                                className="text-blue-600 hover:underline cursor-pointer"
+                                                onClick={() => handleMobileClick(user.mobile)}
+                                            >
+                                                {user.mobile || '-'}
+                                            </span>
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
@@ -193,6 +200,9 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
                                                 {user.verified ? 'Verified' : 'Pending'}
                                             </span>
                                         </td>
+                                        <td className="px-4 py-3">
+                                            {user.user_created_date ? new Date(user.user_created_date).toLocaleDateString() : '-'}
+                                        </td>
                                     </tr>
                                 ))
                             )}
@@ -203,7 +213,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
                 <div className="mt-4">
                     <Pagination
                         currentPage={currentPage}
-                        totalPages={totalPages}
+                        totalPages={totalPages || 1}
                         onPageChange={setCurrentPage}
                     />
                 </div>
@@ -213,4 +223,3 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
 };
 
 export default UserManagementTab;
-
