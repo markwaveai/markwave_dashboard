@@ -24,6 +24,7 @@ import SupportTicketsTab from './components/sidebar-tabs/SupportTicketsTab';
 // Public Pages
 import ReferralLandingPage from './components/public/ReferralLandingPage';
 import DeactivateUserPage from './components/public/DeactivateUserPage';
+import FarmvestUserActivationPage from './components/public/FarmvestUserActivationPage';
 
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
@@ -233,6 +234,12 @@ function App() {
           </ConditionalLayoutWrapper>
         } />
 
+        <Route path="/farmvest/user-activation" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <FarmvestUserActivationPage />
+          </ConditionalLayoutWrapper>
+        } />
+
         <Route path="/support-tickets" element={
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
             <SupportTicketsTab />
@@ -345,6 +352,7 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
     '/buffalo-viz',
     '/referral-landing',
     '/deactivate-user',
+    '/farmvest/user-activation',
     '/privacy-policy',
     '/support'
   ];

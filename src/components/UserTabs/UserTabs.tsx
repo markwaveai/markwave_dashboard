@@ -116,6 +116,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   }
   else if (currentPath.includes('/farmvest/employees')) activeTab = 'farmvest-employees';
   else if (currentPath.includes('/farmvest/farms')) activeTab = 'farmvest-farms';
+  else if (currentPath.includes('/farmvest/user-activation')) activeTab = 'farmvest-activation';
   else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets'; // Added support-tickets active state
 
   const handleChoiceSelection = useCallback((type: 'investor' | 'referral') => {
@@ -607,6 +608,14 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <TreePine size={18} />
                       <span className="nav-text">Farms</span>
+                    </div>
+                  </button>
+                </li>
+                <li>
+                  <button className={`nav-item ${activeTab === 'farmvest-activation' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/farmvest/user-activation'); }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <UserCheck size={18} />
+                      <span className="nav-text">User Activation</span>
                     </div>
                   </button>
                 </li>

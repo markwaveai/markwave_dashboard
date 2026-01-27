@@ -7,7 +7,7 @@ export const fetchEmployees = createAsyncThunk(
     async (role: string | undefined, { rejectWithValue }) => {
         try {
             const response = await farmvestService.getEmployees(role);
-            if (response.status === 200) {
+            if (response.status === 200 || response.status === 'success') {
                 return response.data;
             }
             return rejectWithValue(response.message || 'Failed to fetch employees');

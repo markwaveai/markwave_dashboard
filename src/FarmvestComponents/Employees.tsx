@@ -76,12 +76,12 @@ const Employees: React.FC = () => {
         const lowerQuery = query.toLowerCase();
         const fullName = `${item.first_name || ''} ${item.last_name || ''}`.toLowerCase();
         const email = (item.email || '').toLowerCase();
-        const mobile = item.mobile || '';
+        const phone = item.phone_number || '';
 
         return (
             fullName.includes(lowerQuery) ||
             email.includes(lowerQuery) ||
-            mobile.includes(lowerQuery)
+            phone.includes(lowerQuery)
         );
     }, []);
 
@@ -124,47 +124,17 @@ const Employees: React.FC = () => {
             <div className="employees-header p-4 border-b border-gray-200 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center justify-between w-full md:w-auto gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold">FarmVest Employees</h2>
-                        <p className="text-sm text-gray-500 mt-1">Manage all employees and supervisors ({employees.length} total)</p>
+                        <h2 className="text-2xl font-bold">FarmVest Investors</h2>
+                        <p className="text-sm text-gray-500 mt-1">Manage all investors ({employees.length} total)</p>
                     </div>
-                    <button
-                        onClick={handleAddEmployee}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm md:hidden"
-                    >
-                        <span>+</span>
-                        Add
-                    </button>
                 </div>
 
                 <div className="flex items-center gap-4 w-full md:w-auto">
-                    <button
-                        onClick={handleAddEmployee}
-                        className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold items-center gap-2 transition-all active:scale-95 shadow-md"
-                    >
-                        <span className="text-xl leading-none">+</span>
-                        Add Employee
-                    </button>
-
-                    {/* Role Filter */}
-                    <select
-                        value={selectedRole}
-                        onChange={(e) => setSelectedRole(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                        style={{ height: '42px' }}
-                    >
-                        <option value="">All Roles</option>
-                        <option value="FARM_MANAGER">Farm Manager</option>
-                        <option value="SUPERVISOR">Supervisor</option>
-                        <option value="DOCTOR">Doctor</option>
-                        <option value="ASSISTANT_DOCTOR">Assistant Doctor</option>
-                        <option value="ADMIN">Admin</option>
-                    </select>
-
                     {/* Search Input */}
                     <div className="w-full md:w-auto relative">
                         <input
                             type="text"
-                            placeholder="Search by Name, Email, Mobile..."
+                            placeholder="Search by Name, Email, Phone..."
                             className="w-full md:w-80 pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -201,9 +171,9 @@ const Employees: React.FC = () => {
                                 <th className="px-4 py-3 text-center">S.No</th>
                                 <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('first_name')}>Name {getSortIcon('first_name')}</th>
                                 <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('email')}>Email {getSortIcon('email')}</th>
-                                <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('mobile')}>Mobile {getSortIcon('mobile')}</th>
-                                <th className="px-4 py-3">Roles</th>
-                                <th className="px-4 py-3 text-center cursor-pointer" onClick={() => requestSort('is_active')}>Status {getSortIcon('is_active')}</th>
+                                <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('phone_number')}>Phone {getSortIcon('phone_number')}</th>
+                                <th className="px-4 py-3 cursor-pointer" onClick={() => requestSort('total_investment')}>Investment {getSortIcon('total_investment')}</th>
+                                <th className="px-4 py-3 text-center cursor-pointer" onClick={() => requestSort('active_status')}>Status {getSortIcon('active_status')}</th>
                                 <th className="px-4 py-3 text-center">Actions</th>
                             </tr>
                         </thead>
@@ -213,7 +183,7 @@ const Employees: React.FC = () => {
                                 <TableSkeleton cols={6} rows={10} />
                             ) : currentItems.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">No employees found</td>
+                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">No investors found</td>
                                 </tr>
                             ) : (
                                 currentItems.map((employee: any, index: number) => (
@@ -226,19 +196,16 @@ const Employees: React.FC = () => {
                                             {employee.email || '-'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            {employee.mobile || '-'}
+                                            {employee.phone_number || '-'}
                                         </td>
-                                        <td className="px-4 py-3">
-                                            {employee.roles?.map((role: string) => (
-                                                <span key={role} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold mr-1">
-                                                    {role === 'SpecialCategory' ? 'Special Category' : role}
-                                                </span>
-                                            )) || '-'}
+                                        <td className="px-4 py-3 font-medium text-green-600">
+                                            {/* Format as currency if needed, assuming simple number for now or INR */}
+                                            {employee.total_investment ? `₹${employee.total_investment.toLocaleString()}` : '₹0'}
                                         </td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${employee.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${employee.active_status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                                 }`}>
-                                                {employee.is_active ? 'Active' : 'Inactive'}
+                                                {employee.active_status ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-center">
@@ -248,7 +215,7 @@ const Employees: React.FC = () => {
                                                     e.stopPropagation();
                                                     handleDeleteClick(employee);
                                                 }}
-                                                title="Delete Employee"
+                                                title="Delete Investor"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
