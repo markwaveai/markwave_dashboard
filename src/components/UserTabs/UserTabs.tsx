@@ -96,7 +96,8 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   // Determine active tab
   const currentPath = location.pathname;
   let activeTab = 'orders';
-  if (currentPath.includes('/user-management')) activeTab = 'user-management';
+  if (currentPath.includes('/user-management/network')) activeTab = 'network';
+  else if (currentPath.includes('/user-management')) activeTab = 'user-management';
   else if (currentPath.includes('/products')) activeTab = 'products';
   else if (currentPath.includes('/buffalo-viz')) activeTab = 'buffaloViz';
   else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
@@ -467,12 +468,26 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 )}
                 {hasSession && (
                   <li>
-                    <button className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                        <Users size={18} />
-                        <span className="nav-text">User Management</span>
-                      </div>
-                    </button>
+                    {hasSession && (
+                      <li>
+                        <button className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                            <Users size={18} />
+                            <span className="nav-text">User Management</span>
+                          </div>
+                        </button>
+                      </li>
+                    )}
+                    {hasSession && (
+                      <li>
+                        <button className={`nav-item ${activeTab === 'network' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management/network'); }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                            <Users size={18} />
+                            <span className="nav-text">Network</span>
+                          </div>
+                        </button>
+                      </li>
+                    )}
                   </li>
                 )}
                 {hasSession && (

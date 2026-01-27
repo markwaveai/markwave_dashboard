@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
+import { userService } from '../../services/api';
+import { UserParams } from '../../types';
 
 // Async Thunks
 export const fetchReferralUsers = createAsyncThunk(
@@ -11,6 +13,56 @@ export const fetchReferralUsers = createAsyncThunk(
             return response.data.users || [];
         } catch (error: any) {
             return rejectWithValue('Failed to fetch referral users');
+        }
+    }
+);
+
+
+
+export const fetchManagedUsers = createAsyncThunk(
+    'users/fetchManagedUsers',
+    async (params: UserParams, { rejectWithValue }) => {
+        try {
+            const response = await userService.getUsers(params);
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch users');
+        }
+    }
+);
+
+export const fetchNetworkUserDetails = createAsyncThunk(
+    'users/fetchNetworkUserDetails',
+    async (mobile: string, { rejectWithValue }) => {
+        try {
+            const response = await userService.getNetworkUserDetails(mobile);
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch network user details');
+        }
+    }
+);
+
+export const fetchNetwork = createAsyncThunk(
+    'users/fetchNetwork',
+    async (params: UserParams, { rejectWithValue }) => {
+        try {
+            const response = await userService.getNetwork(params);
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch network data');
+        }
+    }
+);
+
+export const fetchCustomerDetails = createAsyncThunk(
+    'users/fetchCustomerDetails',
+    async (mobile: string, { rejectWithValue }) => {
+        try {
+            const response = await userService.getUserDetails(mobile);
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch customer details');
         }
     }
 );
@@ -110,6 +162,24 @@ export const fetchAdminProfile = createAsyncThunk(
 export interface UsersState {
     referralUsers: any[];
     existingCustomers: any[];
+    managedUsers: any[];
+    managedTotal: number;
+    managedLoading: boolean;
+    managedError: string | null;
+    customerDetails: any | null;
+    customerDetailsLoading: boolean;
+    customerDetailsError: string | null;
+    network: {
+        stats: any | null;
+        users: any[];
+        loading: boolean;
+        error: string | null;
+    };
+    networkUserDetails: {
+        data: any | null; // Using any to match the response structure
+        loading: boolean;
+        error: string | null;
+    };
     referralLoading: boolean;
     existingLoading: boolean;
     loading: boolean; // Computed loading state
@@ -133,6 +203,24 @@ export interface UsersState {
 const initialState: UsersState = {
     referralUsers: [],
     existingCustomers: [],
+    managedUsers: [],
+    managedTotal: 0,
+    managedLoading: false,
+    managedError: null,
+    customerDetails: null,
+    customerDetailsLoading: false,
+    customerDetailsError: null,
+    network: {
+        stats: null,
+        users: [],
+        loading: false,
+        error: null,
+    },
+    networkUserDetails: {
+        data: null,
+        loading: false,
+        error: null,
+    },
     referralLoading: false,
     existingLoading: false,
     loading: false,
@@ -179,6 +267,11 @@ const usersSlice = createSlice({
                 message: null,
             };
         },
+        clearCustomerDetails: (state) => {
+            state.customerDetails = null;
+            state.customerDetailsLoading = false;
+            state.customerDetailsError = null;
+        },
     },
     extraReducers: (builder) => {
         // Fetch Referral Users
@@ -213,6 +306,64 @@ const usersSlice = createSlice({
             state.existingLoading = false;
             state.loading = state.referralLoading;
             state.error = action.payload as string;
+        });
+
+        // Fetch Managed Users (Server-side Pagination)
+        builder.addCase(fetchManagedUsers.pending, (state) => {
+            state.managedLoading = true;
+            state.managedError = null;
+        });
+        builder.addCase(fetchManagedUsers.fulfilled, (state, action) => {
+            state.managedLoading = false;
+            state.managedUsers = action.payload.users;
+            state.managedTotal = action.payload.total || 0;
+        });
+        builder.addCase(fetchManagedUsers.rejected, (state, action) => {
+            state.managedLoading = false;
+            state.managedError = action.payload as string;
+        });
+
+        // Fetch Customer Details
+        builder.addCase(fetchCustomerDetails.pending, (state) => {
+            state.customerDetailsLoading = true;
+            state.customerDetailsError = null;
+        });
+        builder.addCase(fetchCustomerDetails.fulfilled, (state, action) => {
+            state.customerDetailsLoading = false;
+            state.customerDetails = action.payload;
+        });
+        builder.addCase(fetchCustomerDetails.rejected, (state, action) => {
+            state.customerDetailsLoading = false;
+            state.customerDetailsError = action.payload as string;
+        });
+
+        // Fetch Network
+        builder.addCase(fetchNetwork.pending, (state) => {
+            state.network.loading = true;
+            state.network.error = null;
+        });
+        builder.addCase(fetchNetwork.fulfilled, (state, action) => {
+            state.network.loading = false;
+            state.network.stats = action.payload.stats;
+            state.network.users = action.payload.users;
+        });
+        builder.addCase(fetchNetwork.rejected, (state, action) => {
+            state.network.loading = false;
+            state.network.error = action.payload as string;
+        });
+
+        // Fetch Network User Details
+        builder.addCase(fetchNetworkUserDetails.pending, (state) => {
+            state.networkUserDetails.loading = true;
+            state.networkUserDetails.error = null;
+        });
+        builder.addCase(fetchNetworkUserDetails.fulfilled, (state, action) => {
+            state.networkUserDetails.loading = false;
+            state.networkUserDetails.data = action.payload;
+        });
+        builder.addCase(fetchNetworkUserDetails.rejected, (state, action) => {
+            state.networkUserDetails.loading = false;
+            state.networkUserDetails.error = action.payload as string;
         });
 
         // Create Referral User
@@ -305,6 +456,7 @@ const usersSlice = createSlice({
     }
 });
 
-export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState } = usersSlice.actions;
+
+export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState, clearCustomerDetails } = usersSlice.actions;
 export const usersReducer = usersSlice.reducer;
 export default usersSlice.reducer;

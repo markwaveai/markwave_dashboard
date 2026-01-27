@@ -17,6 +17,9 @@ import EmiCalculatorTab from './components/sidebar-tabs/EmiCalculatorTab';
 import AcfCalculatorTab from './components/sidebar-tabs/AcfCalculatorTab';
 import UnitCalculatorTab from './components/sidebar-tabs/UnitCalculatorTab';
 import SupportTicketsTab from './components/sidebar-tabs/SupportTicketsTab';
+import CustomerDetailsPage from './components/pages/CustomerDetailsPage';
+import NetworkTab from './components/sidebar-tabs/NetworkTab';
+import NetworkUserDetailsPage from './components/pages/NetworkUserDetailsPage';
 
 // FarmVest Components
 // (Moved below all static imports)
@@ -172,11 +175,23 @@ function App() {
           </ProtectedRoute>
         } />
 
+        <Route path="/users/customers/:mobile" element={
+          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
+            <CustomerDetailsPage />
+          </ProtectedRoute>
+        } />
+
         <Route path="/products" element={
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
             <React.Suspense fallback={<ProductsPageSkeleton />}>
               <ProductsTab />
             </React.Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/user-management/network" element={
+          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
+            <NetworkTab />
           </ProtectedRoute>
         } />
 
@@ -305,6 +320,11 @@ function App() {
 
         {/* Default redirect to orders or login */}
         <Route path="/" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
+        <Route path="/user-management/network/:mobile" element={
+          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
+            <NetworkUserDetailsPage />
+          </ProtectedRoute>
+        } />
         <Route path="*" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
       </Routes>
     </div>
