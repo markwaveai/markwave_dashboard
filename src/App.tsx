@@ -4,25 +4,23 @@ import { setSession as setReduxSession } from './store/slices/authSlice';
 import { fetchAdminProfile } from './store/slices/usersSlice';
 import { RootState } from './store';
 import React, { useState, useCallback, useEffect } from 'react';
-import HealthStatus from './components/HealthStatus';
-import UserTabs from './components/UserTabs/UserTabs';
+import HealthStatus from './components/common/HealthStatus';
+import UserTabs from './components/Users/components/UserTabs';
 import Login from './components/auth/Login';
 
 // Tabs
-import OrdersTab from './components/sidebar-tabs/OrdersTab';
-import UserManagementTab from './components/sidebar-tabs/UserManagementTab';
-import ProductsTab from './components/sidebar-tabs/ProductsTab';
-import BuffaloVisualizationTab from './components/sidebar-tabs/BuffaloVisualizationTab';
-import EmiCalculatorTab from './components/sidebar-tabs/EmiCalculatorTab';
-import AcfCalculatorTab from './components/sidebar-tabs/AcfCalculatorTab';
-import UnitCalculatorTab from './components/sidebar-tabs/UnitCalculatorTab';
-import SupportTicketsTab from './components/sidebar-tabs/SupportTicketsTab';
-import CustomerDetailsPage from './components/pages/CustomerDetailsPage';
-import NetworkTab from './components/sidebar-tabs/NetworkTab';
-import NetworkUserDetailsPage from './components/pages/NetworkUserDetailsPage';
-
-// FarmVest Components RE MOVED
-
+// Tabs
+import OrdersTab from './components/Orders/OrdersTab';
+import UserManagementTab from './components/Users/UserManagement';
+import ProductsTab from './components/products/ProductsTab';
+import BuffaloVisualizationTab from './components/BuffaloViz/BuffaloVisualizationTab';
+import EmiCalculatorTab from './components/Calculators/Emi/EmiCalculatorTab';
+import AcfCalculatorTab from './components/Calculators/Acf/AcfCalculatorTab';
+import UnitCalculatorTab from './components/Calculators/Unit/UnitCalculatorTab';
+import SupportTicketsTab from './components/Support/SupportTicketsTab';
+import CustomerDetailsPage from './components/Users/CustomerDetails';
+import NetworkTab from './components/Users/Network';
+import NetworkUserDetailsPage from './components/Users/NetworkUserDetails';
 
 // Public Pages
 import ReferralLandingPage from './components/public/ReferralLandingPage';
@@ -32,8 +30,8 @@ import DeactivateUserPage from './components/public/DeactivateUserPage';
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
 
 // Privacy
-import PrivacyPolicy from './components/PrivacyPolicy';
-import Support from './components/Support';
+import PrivacyPolicy from './components/public/PrivacyPolicy';
+import Support from './components/Support/Support';
 
 // Skeletons
 import OrdersPageSkeleton from './components/common/skeletons/OrdersPageSkeleton';

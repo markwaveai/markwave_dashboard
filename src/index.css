@@ -3,8 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "./components/emi-calculator/index.css";
-@import "./components/buffalo-visualizer/index.css";
+@import "./components/Calculators/Emi/index.css";
+@import "./components/BuffaloViz/index.css";
 
 body {
   margin: 0;
