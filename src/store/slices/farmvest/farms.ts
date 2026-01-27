@@ -6,21 +6,35 @@ export const fetchFarms = createAsyncThunk(
     'farmvestFarms/fetchFarms',
     async (location: string, { rejectWithValue }) => {
         try {
-            console.log(`[FarmVest] Fetching farms for location: ${location}`);
-            const response = await farmvestService.getFarms(location);
+            console.log(`[FarmVest] Fetching all farms to filter by location: ${location}`);
+            // Use the new getAllFarms API
+            const response = await farmvestService.getAllFarms();
 
             // Log the raw response for debugging in the user's browser
-            console.log(`[FarmVest] Response for ${location}:`, response);
+            console.log(`[FarmVest] Response for getAllFarms:`, response);
 
-            // Defensive check: handle both { status: 200, data: [...] } and directly [...]
+            let allFarms: FarmvestFarm[] = [];
+
+            // Normalize response data
             if (response && (response.status === 200 || response.status === "200")) {
-                const data = response.data;
-                return Array.isArray(data) ? data : [];
+                allFarms = Array.isArray(response.data) ? response.data : [];
             } else if (Array.isArray(response)) {
-                return response;
+                allFarms = response;
             } else if (response && Array.isArray(response.data)) {
-                return response.data;
+                allFarms = response.data;
             }
+
+            // Client-side filtering by location
+            // If location is provided, filter the farms. Case-insensitive comparison.
+            if (location) {
+                const normalizedLocation = location.toUpperCase();
+                return allFarms.filter(farm =>
+                    farm.location && farm.location.toUpperCase() === normalizedLocation
+                );
+            }
+
+            // If no location specified, return all (though the thunk requires location string currently)
+            return allFarms;
 
             return rejectWithValue(response?.message || `Failed to fetch farms for ${location}`);
         } catch (error: any) {

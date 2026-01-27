@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { farmvestService } from '../services/farmvest_api';
 import './FarmDetails.css';
+import ShedPositionsModal from './ShedPositionsModal';
 
 const FarmDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -25,7 +26,7 @@ const FarmDetails: React.FC = () => {
                 // If we didn't get farm details from router state, we might want to fetch farm details too
                 // But for now we focus on sheds
 
-                const data = await farmvestService.getShedsByFarm(parseInt(id));
+                const data = await farmvestService.getShedList(parseInt(id));
 
                 let shedsList: any[] = [];
                 if (Array.isArray(data)) {
@@ -60,6 +61,14 @@ const FarmDetails: React.FC = () => {
 
     // If farm name wasn't passed, we might update it if the API returned it (not guaranteed by this specific endpoint though)
 
+    const [selectedShed, setSelectedShed] = useState<any>(null);
+    const [isShedModalOpen, setIsShedModalOpen] = useState(false);
+
+    const handleShedClick = (shed: any) => {
+        setSelectedShed(shed);
+        setIsShedModalOpen(true);
+    };
+
     return (
         <div className="farm-details-container animate-fadeIn">
             <div className="farm-details-header">
@@ -72,9 +81,22 @@ const FarmDetails: React.FC = () => {
                         </div>
                     )}
                 </div>
-                <button className="back-button" onClick={() => navigate(-1)}>
-                    <span>←</span> Back to Farms
-                </button>
+                <div className="farm-header-right-actions">
+                    <button className="back-button" onClick={() => navigate(-1)}>
+                        <span>←</span> Back to Farms
+                    </button>
+
+                    <div className="manager-details-section">
+                        <div className="manager-entry">
+                            <span className="info-label">Manager Name:</span>
+                            {/* <span className="info-value">{initialFarm?.manager_name || 'Manager Name'}</span> */}
+                        </div>
+                        <div className="manager-entry">
+                            <span className="info-label">Phone No:</span>
+                            {/* <span className="info-value">{initialFarm?.mobile_number || initialFarm?.manager_phone || '+91 9999999999'}</span> */}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {loading ? (
@@ -108,20 +130,41 @@ const FarmDetails: React.FC = () => {
             ) : (
                 <div className="sheds-grid-container">
                     {sheds.map((shed: any, idx: number) => (
-                        <div key={shed.id || idx} className="shed-detail-card">
+                        <div
+                            key={shed.id || idx}
+                            className="shed-detail-card cursor-pointer hover:shadow-lg transition-shadow"
+                            onClick={() => handleShedClick(shed)}
+                        >
                             <div className="shed-card-header">
-                                <div className="shed-icon-large">🛖</div>
-                            </div>
+                                <div className="shed-identity-group">
+                                    <div className="shed-icon-large">🛖</div>
+                                    <h3 className="shed-name-title">
+                                        {shed.shed_name || shed.name || `Shed Unit ${idx + 1}`}
+                                    </h3>
+                                    {shed.shed_id && (
+                                        <div className="shed-id-badge-inline">
+                                            {shed.shed_id}
+                                        </div>
+                                    )}
+                                </div>
 
-                            <h3 className="shed-name-title">
-                                {shed.shed_id || shed.name || `Shed Unit ${idx + 1}`}
-                            </h3>
+                                <div className="shed-supervisor-compact">
+                                    <div className="supervisor-entry-compact">
+                                        <span className="card-info-label-sm">Supervisor Name:</span>
+                                        {/* <span className="card-info-value-sm">{shed.supervisor_name || 'Supervisor Name'}</span> */}
+                                    </div>
+                                    <div className="supervisor-entry-compact">
+                                        <span className="card-info-label-sm">Phone No:</span>
+                                        {/* <span className="card-info-value-sm">{shed.supervisor_phone || shed.mobile_number || '+91 9999999999'}</span> */}
+                                    </div>
+                                </div>
+                            </div>
 
                             <div className="shed-stats">
                                 <div className="stat-row">
                                     <span className="stat-label">Capacity</span>
                                     <span className="stat-value text-emerald-600">
-                                        {shed.capacity || shed.unit_count || '-'}
+                                        {shed.capacity !== undefined ? shed.capacity : '-'}
                                     </span>
                                 </div>
                                 <div className="stat-row">
@@ -131,9 +174,10 @@ const FarmDetails: React.FC = () => {
                                     </span>
                                 </div>
                                 <div className="stat-row">
-                                    <span className="stat-label">Available Slots</span>
+                                    <span className="stat-label">Available Positions</span>
                                     <span className="stat-value text-purple-600">
-                                        {shed.available_slots !== undefined ? shed.available_slots : '-'}
+                                        {shed.available_positions !== undefined ? shed.available_positions :
+                                            (shed.available_slots !== undefined ? shed.available_slots : '-')}
                                     </span>
                                 </div>
                                 <div className="stat-row">
@@ -146,6 +190,17 @@ const FarmDetails: React.FC = () => {
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* Shed Positions Modal */}
+            {selectedShed && (
+                <ShedPositionsModal
+                    isOpen={isShedModalOpen}
+                    onClose={() => setIsShedModalOpen(false)}
+                    shedId={selectedShed.id || selectedShed.shed_id}
+                    shedName={selectedShed.shed_name || selectedShed.name || 'Shed Details'}
+                    capacity={300} // Forced to 300 per user request (75 rows * 4 cols)
+                />
             )}
         </div>
     );
