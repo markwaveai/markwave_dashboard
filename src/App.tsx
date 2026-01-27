@@ -21,13 +21,12 @@ import CustomerDetailsPage from './components/pages/CustomerDetailsPage';
 import NetworkTab from './components/sidebar-tabs/NetworkTab';
 import NetworkUserDetailsPage from './components/pages/NetworkUserDetailsPage';
 
-// FarmVest Components
-// (Moved below all static imports)
+// FarmVest Components RE MOVED
+
 
 // Public Pages
 import ReferralLandingPage from './components/public/ReferralLandingPage';
 import DeactivateUserPage from './components/public/DeactivateUserPage';
-import FarmvestUserActivationPage from './components/public/FarmvestUserActivationPage';
 
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
@@ -43,11 +42,7 @@ import ProductsPageSkeleton from './components/common/skeletons/ProductsPageSkel
 import BuffaloVizSkeleton from './components/common/skeletons/BuffaloVizSkeleton';
 import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSkeleton';
 
-// FarmVest Components (Lazy Loaded)
-const FarmVestEmployees = React.lazy(() => import('./FarmvestComponents/Employees'));
-const FarmVestFarms = React.lazy(() => import('./FarmvestComponents/Farms'));
-const FarmVestFarmDetails = React.lazy(() => import('./FarmvestComponents/FarmDetails'));
-const FarmVestEmployeeDetails = React.lazy(() => import('./FarmvestComponents/EmployeeDetailsPage'));
+
 
 interface Session {
   mobile: string;
@@ -124,11 +119,8 @@ function App() {
       presentLogin: newSession.currentLoginTime || new Date().toLocaleString(),
     }));
 
-    // Determine default path based on role
     let defaultPath = '/orders';
-    if (newSession.role === 'Farmvest admin') {
-      defaultPath = '/farmvest/employees';
-    } else if (newSession.role === 'Animalkart admin') {
+    if (newSession.role === 'Animalkart admin') {
       defaultPath = '/orders';
     }
 
@@ -144,7 +136,7 @@ function App() {
     setSession(null);
   };
 
-  const isAdmin = session?.role === 'Admin' || session?.role === 'Animalkart admin' || session?.role === 'Farmvest admin';
+  const isAdmin = session?.role === 'Admin' || session?.role === 'Animalkart admin';
 
   const getSortIcon = (key: string, currentSortConfig: any) => {
     if (currentSortConfig.key !== key) return '';
@@ -250,11 +242,7 @@ function App() {
           </ConditionalLayoutWrapper>
         } />
 
-        <Route path="/farmvest/user-activation" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <FarmvestUserActivationPage />
-          </ConditionalLayoutWrapper>
-        } />
+
 
         <Route path="/support-tickets" element={
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
@@ -262,38 +250,7 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* FarmVest Routes */}
-        <Route path="/farmvest/employees" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <React.Suspense fallback={<UsersPageSkeleton />}>
-              <FarmVestEmployees />
-            </React.Suspense>
-          </ProtectedRoute>
-        } />
 
-        <Route path="/farmvest/employees/:id" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <React.Suspense fallback={<UsersPageSkeleton />}>
-              <FarmVestEmployeeDetails />
-            </React.Suspense>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/farmvest/farms" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <React.Suspense fallback={<OrdersPageSkeleton />}>
-              <FarmVestFarms />
-            </React.Suspense>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/farmvest/farms/:id" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <React.Suspense fallback={<OrdersPageSkeleton />}>
-              <FarmVestFarmDetails />
-            </React.Suspense>
-          </ProtectedRoute>
-        } />
 
         {/* Backward Compatibility Redirects */}
         <Route path="/dashboard/orders" element={<Navigate to="/orders" replace />} />
@@ -349,9 +306,6 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
 
   // Role-based route protection
   const path = location.pathname;
-  if (session.role === 'Farmvest admin' && !path.startsWith('/farmvest') && !['/support', '/support-tickets', '/privacy-policy'].includes(path)) {
-    return <Navigate to="/farmvest/employees" replace />;
-  }
   if (session.role === 'Animalkart admin' && path.startsWith('/farmvest')) {
     return <Navigate to="/orders" replace />;
   }
@@ -381,7 +335,6 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
     '/buffalo-viz',
     '/referral-landing',
     '/deactivate-user',
-    '/farmvest/user-activation',
     '/privacy-policy',
     '/support'
   ];
