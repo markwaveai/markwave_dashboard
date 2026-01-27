@@ -27,6 +27,7 @@ import NetworkUserDetailsPage from './components/pages/NetworkUserDetailsPage';
 // Public Pages
 import ReferralLandingPage from './components/public/ReferralLandingPage';
 import DeactivateUserPage from './components/public/DeactivateUserPage';
+import FarmvestUserActivationPage from './components/public/FarmvestUserActivationPage';
 
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
@@ -46,6 +47,7 @@ import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSk
 const FarmVestEmployees = React.lazy(() => import('./FarmvestComponents/Employees'));
 const FarmVestFarms = React.lazy(() => import('./FarmvestComponents/Farms'));
 const FarmVestFarmDetails = React.lazy(() => import('./FarmvestComponents/FarmDetails'));
+const FarmVestEmployeeDetails = React.lazy(() => import('./FarmvestComponents/EmployeeDetailsPage'));
 
 interface Session {
   mobile: string;
@@ -248,6 +250,12 @@ function App() {
           </ConditionalLayoutWrapper>
         } />
 
+        <Route path="/farmvest/user-activation" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <FarmvestUserActivationPage />
+          </ConditionalLayoutWrapper>
+        } />
+
         <Route path="/support-tickets" element={
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
             <SupportTicketsTab />
@@ -259,6 +267,14 @@ function App() {
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
             <React.Suspense fallback={<UsersPageSkeleton />}>
               <FarmVestEmployees />
+            </React.Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/farmvest/employees/:id" element={
+          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
+            <React.Suspense fallback={<UsersPageSkeleton />}>
+              <FarmVestEmployeeDetails />
             </React.Suspense>
           </ProtectedRoute>
         } />
@@ -365,6 +381,7 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
     '/buffalo-viz',
     '/referral-landing',
     '/deactivate-user',
+    '/farmvest/user-activation',
     '/privacy-policy',
     '/support'
   ];

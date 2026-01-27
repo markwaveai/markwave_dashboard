@@ -1,11 +1,13 @@
 export interface FarmvestEmployee {
-    id: number;
+    id?: number;
     first_name: string;
     last_name: string;
     email: string;
-    mobile: string;
-    roles: string[];
-    is_active: number;
+    phone_number: string;
+    // roles: string[]; // Access removed in new API
+    total_investment: number;
+    address: string | null;
+    active_status: boolean;
 }
 
 export interface FarmvestPagination {

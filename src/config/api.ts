@@ -1,6 +1,6 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
-    const productionUrl = 'http://0.0.0.0:8000';
+   const productionUrl = 'https://animalkart-stagging-services-jn6cma3vvq-el.a.run.app';
 
     // Only use CORS proxy in local development
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {

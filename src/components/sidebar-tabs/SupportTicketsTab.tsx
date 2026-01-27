@@ -35,16 +35,52 @@ const mockTickets: SupportTicket[] = [
 ];
 
 const SupportTicketsTab: React.FC = () => {
+    const [tickets, setTickets] = useState<SupportTicket[]>(mockTickets);
     const [filter, setFilter] = useState<'All' | 'Solved' | 'Pending'>('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
-    const filteredTickets = mockTickets.filter(ticket => {
+    // Close dropdown when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (activeDropdownId && !(event.target as Element).closest('.dropdown-container')) {
+                setActiveDropdownId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [activeDropdownId]);
+
+    const handleMarkAsSolved = (id: string) => {
+        setTickets(prev => prev.map(t =>
+            t.id === id ? { ...t, status: 'Solved' } : t
+        ));
+        setActiveDropdownId(null);
+    };
+
+    const filteredTickets = tickets.filter(ticket => {
         const matchesFilter = filter === 'All' || ticket.status === filter;
         const matchesSearch = ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             ticket.requestedBy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
     });
+
+    const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedTickets(filteredTickets.map(t => t.id));
+        } else {
+            setSelectedTickets([]);
+        }
+    };
+
+    const handleSelectOne = (id: string) => {
+        setSelectedTickets(prev =>
+            prev.includes(id) ? prev.filter(ticketId => ticketId !== id) : [...prev, id]
+        );
+    };
 
     return (
         <div className="p-6 bg-[#F8F9FA] min-h-full font-sans">
@@ -135,7 +171,14 @@ const SupportTicketsTab: React.FC = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-[#F8F9FA]">
-                                <th className="p-4 border-b border-[#E2E8F0]"><input type="checkbox" className="rounded border-[#E2E8F0]" /></th>
+                                <th className="p-4 border-b border-[#E2E8F0]">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-[#E2E8F0]"
+                                        checked={selectedTickets.length > 0 && selectedTickets.length === filteredTickets.length}
+                                        onChange={handleSelectAll}
+                                    />
+                                </th>
                                 <th className="p-4 border-b border-[#E2E8F0] text-xs font-bold text-[#64748B] uppercase tracking-wider">Ticket ID</th>
                                 <th className="p-4 border-b border-[#E2E8F0] text-xs font-bold text-[#64748B] uppercase tracking-wider">Requested By</th>
                                 <th className="p-4 border-b border-[#E2E8F0] text-xs font-bold text-[#64748B] uppercase tracking-wider">Subject</th>
@@ -147,7 +190,14 @@ const SupportTicketsTab: React.FC = () => {
                         <tbody>
                             {filteredTickets.map((ticket, index) => (
                                 <tr key={index} className="hover:bg-gray-50 transition-colors group">
-                                    <td className="p-4 border-b border-[#F1F5F9]"><input type="checkbox" className="rounded border-[#E2E8F0]" /></td>
+                                    <td className="p-4 border-b border-[#F1F5F9]">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-[#E2E8F0]"
+                                            checked={selectedTickets.includes(ticket.id)}
+                                            onChange={() => handleSelectOne(ticket.id)}
+                                        />
+                                    </td>
                                     <td className="p-4 border-b border-[#F1F5F9] text-sm font-semibold text-[#1E293B]">{ticket.id}</td>
                                     <td className="p-4 border-b border-[#F1F5F9]">
                                         <div className="flex flex-col">
@@ -165,10 +215,31 @@ const SupportTicketsTab: React.FC = () => {
                                             {ticket.status}
                                         </span>
                                     </td>
-                                    <td className="p-4 border-b border-[#F1F5F9] text-right">
-                                        <button className="text-[#94A3B8] hover:text-[#1E293B] transition-colors">
+                                    <td className="p-4 border-b border-[#F1F5F9] text-right relative dropdown-container">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveDropdownId(activeDropdownId === ticket.id ? null : ticket.id);
+                                            }}
+                                            className="text-[#94A3B8] hover:text-[#1E293B] transition-colors p-1 rounded-full hover:bg-gray-100"
+                                        >
                                             <MoreHorizontal size={20} />
                                         </button>
+
+                                        {activeDropdownId === ticket.id && (
+                                            <div className="absolute right-8 top-8 z-10 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 animate-in fade-in zoom-in-95 duration-200">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarkAsSolved(ticket.id);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2 text-sm text-[#1E293B] hover:bg-gray-50 flex items-center gap-2"
+                                                >
+                                                    <CheckCircle2 size={14} className="text-green-600" />
+                                                    Mark as Solved
+                                                </button>
+                                            </div>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

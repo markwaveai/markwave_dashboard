@@ -11,6 +11,7 @@ interface AdminDetailsModalProps {
     lastLogin?: string;
     presentLogin?: string;
     adminReferralCode?: string;
+    onLogout?: () => void;
 }
 
 const AdminDetailsModal: React.FC<AdminDetailsModalProps> = (props) => {
@@ -70,6 +71,17 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = (props) => {
                         <div className="admin-detail-value">{presentLogin || 'N/A'}</div>
                     </div>
                 </div>
+
+                <div className="mt-4 px-4">
+                    <button
+                        onClick={props.onLogout}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
+                        Logout
+                    </button>
+                </div>
+
                 <div style={{ marginTop: '12px', textAlign: 'center' }}>
                     <span style={{ fontSize: '12px', color: '#9ca3af' }}>v1.0.1</span>
                 </div>

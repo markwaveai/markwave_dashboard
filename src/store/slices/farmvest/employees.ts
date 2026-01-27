@@ -7,9 +7,40 @@ export const fetchEmployees = createAsyncThunk(
     async (role: string | undefined, { rejectWithValue }) => {
         try {
             const response = await farmvestService.getEmployees(role);
-            if (response.status === 200) {
-                return response.data;
+            console.log('fetchEmployees thunk response:', response);
+
+            let rawData: any[] = [];
+
+            // Extract the array from various possible structures
+            if (Array.isArray(response)) {
+                rawData = response;
+            } else if (response && Array.isArray(response.data)) {
+                rawData = response.data;
+            } else if (response && (response.users || response.employees)) {
+                rawData = response.users || response.employees;
+            } else {
+                // Fallback: check if status is 200 and data exists but hasn't been caught yet
+                if (response && response.status === 200 && Array.isArray(response.data)) {
+                    rawData = response.data;
+                }
             }
+
+            if (rawData.length > 0 || (response && response.status === 'success')) {
+                // Map the data to match FarmvestEmployee interface
+                const mappedData = rawData.map((item: any, index: number) => ({
+                    id: item.id || item.investor_id || index, // Fallback to index if no ID
+                    first_name: item.first_name || '',
+                    last_name: item.last_name || '',
+                    email: item.email || '',
+                    mobile: item.mobile || item.phone_number || '', // Map phone_number to mobile
+                    roles: item.roles || ['Investor'], // Default role
+                    is_active: item.is_active !== undefined ? item.is_active : (item.active_status ? 1 : 0), // Map boolean active_status to number
+                    // Preserve other fields just in case
+                    ...item
+                }));
+                return mappedData;
+            }
+
             return rejectWithValue(response.message || 'Failed to fetch employees');
         } catch (error: any) {
             return rejectWithValue(error.message || 'Failed to fetch employees');

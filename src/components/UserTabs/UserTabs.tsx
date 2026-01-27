@@ -104,6 +104,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
   else if (currentPath.includes('/orders')) activeTab = 'orders';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
+  else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
   else if (currentPath.includes('/support')) activeTab = 'support';
   else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
   else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
@@ -117,6 +118,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   }
   else if (currentPath.includes('/farmvest/employees')) activeTab = 'farmvest-employees';
   else if (currentPath.includes('/farmvest/farms')) activeTab = 'farmvest-farms';
+  else if (currentPath.includes('/farmvest/user-activation')) activeTab = 'farmvest-activation';
   else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets'; // Added support-tickets active state
 
   const handleChoiceSelection = useCallback((type: 'investor' | 'referral') => {
@@ -626,6 +628,14 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                   </button>
                 </li>
                 <li>
+                  <button className={`nav-item ${activeTab === 'farmvest-activation' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/farmvest/user-activation'); }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <UserCheck size={18} />
+                      <span className="nav-text">User Activation</span>
+                    </div>
+                  </button>
+                </li>
+                <li>
                   <button className={`nav-item ${activeTab === 'support-tickets' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/support-tickets'); }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                       <Mail size={18} />
@@ -665,7 +675,18 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
             <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralFieldBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} canEditReferralCode={true} errors={errors} />
             <EditReferralModal editFormData={editFormData} onInputChange={handleEditInputChange} onBlur={handleEditReferralMobileBlur} onSubmit={handleEditSubmit} />
             <ImageNamesModal />
-            <AdminDetailsModal adminName={displayAdminName} adminMobile={adminMobile} adminRole={adminRole} lastLogin={lastLogin} presentLogin={presentLogin} adminReferralCode={adminReferralCode} />
+            <AdminDetailsModal
+              adminName={displayAdminName}
+              adminMobile={adminMobile}
+              adminRole={adminRole}
+              lastLogin={lastLogin}
+              presentLogin={presentLogin}
+              adminReferralCode={adminReferralCode}
+              onLogout={() => {
+                dispatch(setShowAdminDetails(false));
+                setIsLogoutModalOpen(true);
+              }}
+            />
             <RejectionModal />
             <ApprovalModal />
             <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />

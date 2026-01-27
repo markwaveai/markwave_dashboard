@@ -152,6 +152,7 @@ const InputCard = () => {
                         type="number"
                         min={1}
                         value={units || ''}
+                        onWheel={(e) => e.currentTarget.blur()}
                         onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
                         onChange={(e) => {
                             const val = e.target.value;
@@ -192,6 +193,7 @@ const InputCard = () => {
                             type="number"
                             min={1}
                             value={rate || ''}
+                            onWheel={(e) => e.currentTarget.blur()}
                             onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
                             onChange={(e) => {
                                 const val = e.target.value;
@@ -214,6 +216,7 @@ const InputCard = () => {
                             type="number"
                             min={1}
                             value={months || ''}
+                            onWheel={(e) => e.currentTarget.blur()}
                             onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); }}
                             onChange={(e) => {
                                 const val = e.target.value;
