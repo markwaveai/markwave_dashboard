@@ -1,9 +1,10 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import type { RootState } from '../store';
 import { fetchEmployees, clearMessages, deleteEmployee } from '../store/slices/farmvest/employees';
 import AddEmployeeModal from './AddEmployee/AddEmployeeModal';
+
 import DeleteEmployeeModal from './DeleteEmployeeModal';
 import Snackbar from '../components/common/Snackbar';
 import { Trash2 } from 'lucide-react';
@@ -17,6 +18,7 @@ import './Employees.css';
 
 const Employees: React.FC = () => {
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [selectedEmployee, setSelectedEmployee] = React.useState<any>(null);
@@ -38,6 +40,10 @@ const Employees: React.FC = () => {
         setSelectedEmployee(employee);
         setIsDeleteModalOpen(true);
     }, []);
+
+    const handleNameClick = useCallback((employee: any) => {
+        navigate(`/farmvest/employees/${employee.id}`);
+    }, [navigate]);
 
     const handleConfirmDelete = async () => {
         if (!selectedEmployee) return;
@@ -130,6 +136,28 @@ const Employees: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-4 w-full md:w-auto">
+                    <button
+                        onClick={handleAddEmployee}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md whitespace-nowrap"
+                    >
+                        <span className="text-xl leading-none">+</span>
+                        Add Employee
+                    </button>
+                    {/* Role Filter */}
+                    <select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        style={{ height: '42px' }}
+                    >
+                        <option value="">All Roles</option>
+                        <option value="FARM_MANAGER">Farm Manager</option>
+                        <option value="SUPERVISOR">Supervisor</option>
+                        <option value="DOCTOR">Doctor</option>
+                        <option value="ASSISTANT_DOCTOR">Assistant Doctor</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
+
                     {/* Search Input */}
                     <div className="w-full md:w-auto relative">
                         <input
@@ -189,7 +217,10 @@ const Employees: React.FC = () => {
                                 currentItems.map((employee: any, index: number) => (
                                     <tr key={employee.id || index} className="bg-white border-b hover:bg-gray-50">
                                         <td className="px-4 py-3 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                        <td className="px-4 py-3 font-medium text-gray-900">
+                                        <td
+                                            className="px-4 py-3 font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                                            onClick={() => handleNameClick(employee)}
+                                        >
                                             {`${employee.first_name || ''} ${employee.last_name || ''}`.trim() || '-'}
                                         </td>
                                         <td className="px-4 py-3">
@@ -243,6 +274,8 @@ const Employees: React.FC = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
             />
+
+
 
             {/* Delete Employee Modal */}
             <DeleteEmployeeModal

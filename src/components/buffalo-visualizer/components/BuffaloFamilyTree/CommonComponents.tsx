@@ -69,21 +69,45 @@ export const buildTree = (root: any, all: any[]) => {
     return all.filter((b: any) => b.parentId === root.id);
 };
 
-// Buffalo Node Component - Updated to accept elementId and parentDisplayName AND show tooltip
-export const BuffaloNode = ({ data, founder, displayName, elementId, parentDisplayName }: {
+// Buffalo Node Component - Updated to accept elementId, parentDisplayName, variant, and tooltipPosition
+export const BuffaloNode = ({
+    data,
+    founder,
+    displayName,
+    elementId,
+    parentDisplayName,
+    variant = 'circle',
+    tooltipPosition = 'top'
+}: {
     data: any;
     founder?: boolean;
     displayName: string;
     elementId: string;
     parentDisplayName?: string;
+    variant?: 'circle' | 'pill';
+    tooltipPosition?: 'top' | 'right';
 }) => {
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const birthMonthName = monthNames[data.acquisitionMonth] || "Jan";
 
+    // Tooltip positioning classes
+    const tooltipClasses = tooltipPosition === 'right'
+        ? "absolute left-full top-1/2 -translate-y-1/2 ml-3 hidden group-hover:block z-50 w-48 transition-opacity duration-200"
+        : "absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block z-50 w-48 transition-opacity duration-200";
+
+    const arrowClasses = tooltipPosition === 'right'
+        ? "absolute top-1/2 right-full -translate-y-1/2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-slate-800 drop-shadow-sm"
+        : "absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-slate-800 drop-shadow-sm";
+
+    // Node shape classes
+    const nodeShapeClasses = variant === 'pill'
+        ? "w-20 h-10 rounded-xl flex-col"
+        : "w-12 h-12 rounded-full flex-col";
+
     return (
         <div id={elementId} className="flex flex-col items-center group relative z-10 hover:z-50">
-            {/* Tooltip - Positioned to the RIGHT */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block z-50 w-48 transition-opacity duration-200">
+            {/* Tooltip */}
+            <div className={tooltipClasses}>
                 <div className="bg-slate-800 text-white text-[11px] rounded-lg p-2 shadow-xl border border-slate-700 relative">
                     <div className="font-bold text-xs mb-1.5 border-b border-slate-600 pb-1.5 text-white">
                         Buffalo {displayName} ({data.ageInMonths >= 34 ? 'Milking' : 'Non-Milking'})
@@ -105,14 +129,14 @@ export const BuffaloNode = ({ data, founder, displayName, elementId, parentDispl
                         </div>
                     </div>
 
-                    {/* Arrow pointing Left (towards the node) */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-slate-800 drop-shadow-sm"></div>
+                    {/* Arrow */}
+                    <div className={arrowClasses}></div>
                 </div>
             </div>
 
             <div
                 className={`${colors[data.generation % colors.length]}
-          rounded-full w-12 h-12 flex flex-col justify-center items-center
+          ${nodeShapeClasses} flex justify-center items-center
           text-white shadow-md transform transition-all duration-200
           hover:scale-110 border-none cursor-pointer relative`}
             >
