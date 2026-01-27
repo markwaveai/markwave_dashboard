@@ -66,7 +66,7 @@ const UnitCalculatorTab: React.FC<UnitCalculatorTabProps> = ({ tree = true }) =>
 
     return (
         <div style={{ width: '100%', height: 'calc(100vh - 60px)', overflow: 'hidden', position: 'relative' }}>
-            <UnitCalculatorApp tree={tree} />
+            <UnitCalculatorApp key={tree ? 'with-tree' : 'without-tree'} tree={tree} />
         </div>
     );
 };

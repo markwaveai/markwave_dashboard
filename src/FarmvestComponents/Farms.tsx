@@ -256,7 +256,7 @@ const Farms: React.FC = () => {
                                     <div className="flex items-center gap-2">Farm Name <span className="text-blue-500 opacity-60">{getSortIcon('farm_name')}</span></div>
                                 </th>
                                 <th className="px-6 py-5 cursor-pointer hover:bg-gray-100/50 transition-colors group" onClick={() => requestSort('location')}>
-                                    <div className="flex items-center gap-2">Region <span className="text-blue-500 opacity-60">{getSortIcon('location')}</span></div>
+                                    <div className="flex items-center gap-2">Location <span className="text-blue-500 opacity-60">{getSortIcon('location')}</span></div>
                                 </th>
                                 <th className="px-6 py-5 cursor-pointer hover:bg-gray-100/50 transition-colors group" onClick={() => requestSort('total_buffaloes_count')}>
                                     <div className="flex items-center gap-2">Live Count <span className="text-blue-500 opacity-60">{getSortIcon('total_buffaloes_count')}</span></div>

@@ -103,6 +103,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
   else if (currentPath.includes('/orders')) activeTab = 'orders';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
+  else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
   else if (currentPath.includes('/support')) activeTab = 'support';
   else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
   else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
@@ -659,7 +660,18 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
             <ReferralModal formData={formData} onInputChange={handleInputChange} onBlur={handleReferralFieldBlur} onSubmit={handleSubmit} adminReferralCode={adminReferralCode} canEditReferralCode={true} errors={errors} />
             <EditReferralModal editFormData={editFormData} onInputChange={handleEditInputChange} onBlur={handleEditReferralMobileBlur} onSubmit={handleEditSubmit} />
             <ImageNamesModal />
-            <AdminDetailsModal adminName={displayAdminName} adminMobile={adminMobile} adminRole={adminRole} lastLogin={lastLogin} presentLogin={presentLogin} adminReferralCode={adminReferralCode} />
+            <AdminDetailsModal
+              adminName={displayAdminName}
+              adminMobile={adminMobile}
+              adminRole={adminRole}
+              lastLogin={lastLogin}
+              presentLogin={presentLogin}
+              adminReferralCode={adminReferralCode}
+              onLogout={() => {
+                dispatch(setShowAdminDetails(false));
+                setIsLogoutModalOpen(true);
+              }}
+            />
             <RejectionModal />
             <ApprovalModal />
             <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />

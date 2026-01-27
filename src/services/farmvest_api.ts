@@ -87,6 +87,15 @@ export const farmvestService = {
             throw error;
         }
     },
+    getAllFarms: async () => {
+        try {
+            const response = await farmvestApi.get('/api/farm/get_all_farms');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching all farms:', error);
+            throw error;
+        }
+    },
     createEmployee: async (employeeData: any) => {
         try {
             const response = await farmvestApi.post('/api/admin/create_employee', employeeData);
@@ -128,9 +137,27 @@ export const farmvestService = {
             throw error;
         }
     },
-    createFarm: async (farmData: { farm_name: string; location: string; total_buffaloes_count: number }) => {
+    getShedList: async (farmId: number) => {
         try {
-            const response = await farmvestApi.post('/api/admin/farm', farmData);
+            const response = await farmvestApi.get(`/api/shed/list?farm_id=${farmId}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching shed list for farm ${farmId}:`, error);
+            throw error;
+        }
+    },
+    getShedPositions: async (shedId: number) => {
+        try {
+            const response = await farmvestApi.get(`/api/shed/available_positions?shed_id=${shedId}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching positions for shed ${shedId}:`, error);
+            throw error;
+        }
+    },
+    createFarm: async (farmData: { farm_name: string; location: string; is_test: boolean }) => {
+        try {
+            const response = await farmvestApi.post('/api/farm', farmData);
             return response.data;
         } catch (error) {
             console.error('Error creating farm:', error);

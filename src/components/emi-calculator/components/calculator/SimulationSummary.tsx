@@ -122,117 +122,121 @@ const SimulationSummary = () => {
         <div className="space-y-12 mt-12 px-2 pb-8">
             {/* Summary Grid - Responsive across all breakpoints */}
             {/* 0-60 Months Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                <GenericCard
-                    label="Revenue (0-60 Months)"
-                    value={totalRevenue}
-                    colorClass="bg-[#E8F5E9] text-[#2E7D32]" // Green
-                    borderClass="border-[#A5D6A7]"
-                    shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
-                    icon={IndianRupee}
-                    iconColorClass="text-[#2E7D32]"
-                />
-                <GenericCard
-                    label={
-                        <div className="flex flex-col">
-                            <span>Total Payment</span>
-                            <span className="text-[10px] sm:text-[11px] font-medium opacity-90 leading-tight">(EMI+CPF)</span>
-                        </div>
-                    }
-                    value={totalPayment + totalCpf}
-                    colorClass="bg-[#FFF3E0] text-[#EF6C00]" // Orange
-                    borderClass="border-[#FFE0B2]"
-                    shadowClass="shadow-[0_4px_15px_rgb(239,108,0,0.1)]"
-                    icon={CreditCard}
-                    iconColorClass="text-[#EF6C00]"
-                />
-                <GenericCard
-                    label="Loan Paid"
-                    value={totalPayment}
-                    colorClass="bg-[#F3E5F5] text-[#7B1FA2]" // Purple
-                    borderClass="border-[#E1BEE7]"
-                    shadowClass="shadow-[0_4px_15px_rgb(123,31,162,0.1)]"
-                    icon={Calendar}
-                    iconColorClass="text-[#7B1FA2]"
-                />
-                <GenericCard
-                    label="CPF (0-60 Months)"
-                    value={totalCpf}
-                    colorClass="bg-[#FFFDE7] text-[#FBC02D]" // Yellow
-                    borderClass="border-[#FFF9C4]"
-                    shadowClass="shadow-[0_4px_15px_rgb(251,192,45,0.1)]"
-                    icon={PawPrint}
-                    iconColorClass="text-[#FBC02D]"
-                />
-                {/* <GenericCard
-                    label="CGF (0-60 Months)"
-                    value={displayCgf}
-                    colorClass="bg-[#EFEBE9] text-[#5D4037]" // Brown
-                    borderClass="border-[#D7CCC8]"
-                    shadowClass="shadow-[0_4px_15px_rgb(93,64,55,0.1)]"
-                    icon={Sprout}
-                    iconColorClass="text-[#5D4037]"
-                /> */}
-                <GenericCard
-                    label="Total Profit"
-                    value={totalProfit}
-                    colorClass="bg-[#E3F2FD] text-[#1565C0]" // Blue
-                    borderClass="border-[#BBDEFB]"
-                    shadowClass="shadow-[0_4px_15px_rgb(21,101,192,0.1)]"
-                    icon={TrendingUp}
-                    iconColorClass="text-[#1565C0]"
-                />
-                <GenericCard
-                    label="From Pocket"
-                    value={totalLoss}
-                    colorClass="bg-[#FFEBEE] text-[#C62828]" // Red
-                    borderClass="border-[#FFCDD2]"
-                    shadowClass="shadow-[0_4px_15px_rgb(198,40,40,0.1)]"
-                    icon={AlertCircle}
-                    iconColorClass="text-[#C62828]"
-                />
-                <GenericCard
-                    label="Net Cash"
-                    value={totalNetCash}
-                    colorClass="bg-[#E0F2F1] text-[#00695C]" // Teal
-                    borderClass="border-[#B2DFDB]"
-                    shadowClass="shadow-[0_4px_15px_rgb(0,105,92,0.1)]"
-                    icon={Banknote}
-                    iconColorClass="text-[#00695C]"
-                />
-                <GenericCard
-                    label="Asset Value (0-60 Months)"
-                    value={totalAssetValue}
-                    colorClass="bg-[#E8EAF6] text-[#283593]" // Indigo
-                    borderClass="border-[#C5CAE9]"
-                    shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
-                    icon="/buffalo_icon.png"
-                    iconColorClass="text-[#283593]"
-                />
+            <div>
+                <h3 className="text-lg font-bold text-gray-800 pb-0.5 mb-2 border-b border-gray-100">Projected 0-60 Months</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                    <GenericCard
+                        label="Revenue (0-60 Months)"
+                        value={totalRevenue}
+                        colorClass="bg-[#E8F5E9] text-[#2E7D32]" // Green
+                        borderClass="border-[#A5D6A7]"
+                        shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
+                        icon={IndianRupee}
+                        iconColorClass="text-[#2E7D32]"
+                    />
+                    <GenericCard
+                        label={
+                            <div className="flex flex-col">
+                                <span>Total Payment</span>
+                                <span className="text-[10px] sm:text-[11px] font-medium opacity-90 leading-tight">(EMI+CPF)</span>
+                            </div>
+                        }
+                        value={totalPayment + totalCpf}
+                        colorClass="bg-[#FFF3E0] text-[#EF6C00]" // Orange
+                        borderClass="border-[#FFE0B2]"
+                        shadowClass="shadow-[0_4px_15px_rgb(239,108,0,0.1)]"
+                        icon={CreditCard}
+                        iconColorClass="text-[#EF6C00]"
+                    />
+                    <GenericCard
+                        label="Loan Paid"
+                        value={totalPayment}
+                        colorClass="bg-[#F3E5F5] text-[#7B1FA2]" // Purple
+                        borderClass="border-[#E1BEE7]"
+                        shadowClass="shadow-[0_4px_15px_rgb(123,31,162,0.1)]"
+                        icon={Calendar}
+                        iconColorClass="text-[#7B1FA2]"
+                    />
+                    <GenericCard
+                        label="CPF (0-60 Months)"
+                        value={totalCpf}
+                        colorClass="bg-[#FFFDE7] text-[#FBC02D]" // Yellow
+                        borderClass="border-[#FFF9C4]"
+                        shadowClass="shadow-[0_4px_15px_rgb(251,192,45,0.1)]"
+                        icon={PawPrint}
+                        iconColorClass="text-[#FBC02D]"
+                    />
+                    {/* <GenericCard
+                        label="CGF (0-60 Months)"
+                        value={displayCgf}
+                        colorClass="bg-[#EFEBE9] text-[#5D4037]" // Brown
+                        borderClass="border-[#D7CCC8]"
+                        shadowClass="shadow-[0_4px_15px_rgb(93,64,55,0.1)]"
+                        icon={Sprout}
+                        iconColorClass="text-[#5D4037]"
+                    /> */}
+                    <GenericCard
+                        label="Total Profit"
+                        value={totalProfit}
+                        colorClass="bg-[#E3F2FD] text-[#1565C0]" // Blue
+                        borderClass="border-[#BBDEFB]"
+                        shadowClass="shadow-[0_4px_15px_rgb(21,101,192,0.1)]"
+                        icon={TrendingUp}
+                        iconColorClass="text-[#1565C0]"
+                    />
+                    <GenericCard
+                        label="From Pocket"
+                        value={totalLoss}
+                        colorClass="bg-[#FFEBEE] text-[#C62828]" // Red
+                        borderClass="border-[#FFCDD2]"
+                        shadowClass="shadow-[0_4px_15px_rgb(198,40,40,0.1)]"
+                        icon={AlertCircle}
+                        iconColorClass="text-[#C62828]"
+                    />
+                    <GenericCard
+                        label="Net Cash"
+                        value={totalNetCash}
+                        colorClass="bg-[#E0F2F1] text-[#00695C]" // Teal
+                        borderClass="border-[#B2DFDB]"
+                        shadowClass="shadow-[0_4px_15px_rgb(0,105,92,0.1)]"
+                        icon={Banknote}
+                        iconColorClass="text-[#00695C]"
+                    />
+                    <GenericCard
+                        label="Asset Value (0-60 Months)"
+                        value={totalAssetValue}
+                        colorClass="bg-[#E8EAF6] text-[#283593]" // Indigo
+                        borderClass="border-[#C5CAE9]"
+                        shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
+                        icon="/buffalo_icon.png"
+                        iconColorClass="text-[#283593]"
+                    />
+                </div>
             </div>
 
             {/* 61-120 Months Row */}
-            <h3 className="text-lg font-bold text-gray-800 pb-1 mb-1 mt-1 border-b border-gray-100">Projected 61-120 Months</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                <GenericCard
-                    label="Revenue (61-120 Months)"
-                    value={totalNetCashLongTerm}
-                    colorClass="bg-[#E8F5E9] text-[#2E7D32]"
-                    borderClass="border-[#A5D6A7]"
-                    shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
-                    icon={IndianRupee}
-                    iconColorClass="text-[#2E7D32]"
-                />
-                <GenericCard
-                    label="CPF (61-120 Months)"
-                    value={totalCpfLongTerm}
-                    colorClass="bg-[#FFFDE7] text-[#FBC02D]"
-                    borderClass="border-[#FFF9C4]"
-                    shadowClass="shadow-[0_4px_15px_rgb(251,192,45,0.1)]"
-                    icon={PawPrint}
-                    iconColorClass="text-[#FBC02D]"
-                />
-                {/* <GenericCard
+            <div>
+                <h3 className="text-lg font-bold text-gray-800 pb-0.5 mb-2 border-b border-gray-100">Projected 61-120 Months</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                    <GenericCard
+                        label="Revenue (61-120 Months)"
+                        value={totalNetCashLongTerm}
+                        colorClass="bg-[#E8F5E9] text-[#2E7D32]"
+                        borderClass="border-[#A5D6A7]"
+                        shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
+                        icon={IndianRupee}
+                        iconColorClass="text-[#2E7D32]"
+                    />
+                    <GenericCard
+                        label="CPF (61-120 Months)"
+                        value={totalCpfLongTerm}
+                        colorClass="bg-[#FFFDE7] text-[#FBC02D]"
+                        borderClass="border-[#FFF9C4]"
+                        shadowClass="shadow-[0_4px_15px_rgb(251,192,45,0.1)]"
+                        icon={PawPrint}
+                        iconColorClass="text-[#FBC02D]"
+                    />
+                    {/* <GenericCard
                     label="CGF (61-120 Months)"
                     value={!cgfEnabled ? 0 : totalCgfLongTerm}
                     colorClass="bg-[#EFEBE9] text-[#5D4037]"
@@ -242,38 +246,41 @@ const SimulationSummary = () => {
                     iconColorClass="text-[#5D4037]"
                 /> */}
 
-                <GenericCard
-                    label="Asset Value (61-120 Months)"
-                    value={totalAssetValueLongTerm}
-                    colorClass="bg-[#E8EAF6] text-[#283593]"
-                    borderClass="border-[#C5CAE9]"
-                    shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
-                    icon="/buffalo_icon.png"
-                    iconColorClass="text-[#283593]"
-                />
+                    <GenericCard
+                        label="Asset Value (61-120 Months)"
+                        value={totalAssetValueLongTerm}
+                        colorClass="bg-[#E8EAF6] text-[#283593]"
+                        borderClass="border-[#C5CAE9]"
+                        shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
+                        icon="/buffalo_icon.png"
+                        iconColorClass="text-[#283593]"
+                    />
+                </div>
             </div>
 
             {/* 10 Year Summary Row */}
-            <h3 className="text-lg font-bold text-gray-800 pb-1 mb-1 mt-1 border-b border-gray-100">10 Year Summary</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                <GenericCard
-                    label="10 Years Total Revenue"
-                    value={totalProfit + totalNetCashLongTerm}
-                    colorClass="bg-[#E8F5E9] text-[#2E7D32]"
-                    borderClass="border-[#A5D6A7]"
-                    shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
-                    icon={IndianRupee}
-                    iconColorClass="text-[#2E7D32]"
-                />
-                <GenericCard
-                    label="Total Asset Value (10 Years)"
-                    value={totalAssetValue120}
-                    colorClass="bg-[#E8EAF6] text-[#283593]"
-                    borderClass="border-[#C5CAE9]"
-                    shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
-                    icon="/buffalo_icon.png"
-                    iconColorClass="text-[#283593]"
-                />
+            <div>
+                <h3 className="text-lg font-bold text-gray-800 pb-0.5 mb-2 border-b border-gray-100">10 Year Summary</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                    <GenericCard
+                        label="10 Years Total Revenue"
+                        value={totalProfit + totalNetCashLongTerm}
+                        colorClass="bg-[#E8F5E9] text-[#2E7D32]"
+                        borderClass="border-[#A5D6A7]"
+                        shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
+                        icon={IndianRupee}
+                        iconColorClass="text-[#2E7D32]"
+                    />
+                    <GenericCard
+                        label="Total Asset Value (10 Years)"
+                        value={totalAssetValue120}
+                        colorClass="bg-[#E8EAF6] text-[#283593]"
+                        borderClass="border-[#C5CAE9]"
+                        shadowClass="shadow-[0_4px_15px_rgb(40,53,147,0.1)]"
+                        icon="/buffalo_icon.png"
+                        iconColorClass="text-[#283593]"
+                    />
+                </div>
             </div>
 
             {/* Loan Summary Section - Stylized to match requested image */}

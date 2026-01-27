@@ -12,7 +12,7 @@ interface AddFarmModalProps {
 const AddFarmModal: React.FC<AddFarmModalProps> = ({ isOpen, onClose, onSuccess, initialLocation }) => {
     const [farmName, setFarmName] = useState('');
     const [location, setLocation] = useState(initialLocation);
-    const [totalBuffaloes, setTotalBuffaloes] = useState<number | ''>(0);
+    // const [totalBuffaloes, setTotalBuffaloes] = useState<number | ''>(0); // Removed as per API schema
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -33,11 +33,11 @@ const AddFarmModal: React.FC<AddFarmModalProps> = ({ isOpen, onClose, onSuccess,
             await farmvestService.createFarm({
                 farm_name: farmName,
                 location: location.toUpperCase(),
-                total_buffaloes_count: Number(totalBuffaloes)
+                is_test: false
             });
 
             setFarmName('');
-            setTotalBuffaloes('');
+            // setTotalBuffaloes('');
             onSuccess(location.toUpperCase());
             onClose();
         } catch (err: any) {
