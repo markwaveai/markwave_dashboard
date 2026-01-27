@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchNetworkUserDetails } from '../../store/slices/usersSlice';
 import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, Award, Package, CheckCircle, AlertCircle, Users } from 'lucide-react';
 import Loader from '../common/Loader';
+import NetworkTreeVisualization from './NetworkTreeVisualization';
 
 const NetworkUserDetailsPage: React.FC = () => {
     const { mobile } = useParams<{ mobile: string }>();
@@ -117,7 +118,15 @@ const NetworkUserDetailsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Network Tree / Direct Referrals */}
+                {/* Network Tree Visualization */}
+                <div className="bg-white rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Users size={20} /> Network Visualization
+                    </h3>
+                    <NetworkTreeVisualization data={data} />
+                </div>
+
+                {/* Network Tree / Direct Referrals Table */}
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <Users size={20} /> Direct Referrals

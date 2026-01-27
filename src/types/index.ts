@@ -18,6 +18,12 @@ export interface User {
   occupation?: string;
   income_level?: string;
   family_size?: number;
+  aadhar_front_image_url?: string;
+  aadhar_back_image_url?: string;
+  panCardUrl?: string;
+  aadhar_number?: string;
+  pan_number?: string; // or whatever the field name is, likely standardizing
+  referral_count?: number;
   [key: string]: any; // Allow dynamic custom fields
 }
 

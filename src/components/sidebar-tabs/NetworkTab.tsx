@@ -20,7 +20,7 @@ const NetworkTab: React.FC = () => {
     const itemsPerPage = 10;
 
     // Filter State
-    const [role, setRole] = useState<string>('Investor');
+    const [role, setRole] = useState<string>('');
 
     // Memoize params
     const fetchParams = useMemo(() => ({
@@ -100,6 +100,7 @@ const NetworkTab: React.FC = () => {
                             onChange={handleRoleChange}
                             className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
                         >
+                            <option value="">All</option>
                             <option value="Investor">Investor</option>
                             <option value="Employee">Employee</option>
                             <option value="SpecialCategory">Special Category</option>

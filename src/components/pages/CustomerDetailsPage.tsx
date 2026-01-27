@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks'; // Adjust path
 import { fetchCustomerDetails, clearCustomerDetails } from '../../store/slices/usersSlice'; // Adjust path
-import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, Award, Package, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, Award, Package, CheckCircle, AlertCircle, FileText, CreditCard, Users, Image as ImageIcon } from 'lucide-react';
 import Loader from '../common/Loader'; // Adjust path
 // Reuse CSS or create new? Reuse logic but not modal overlay.
 // I will use inline classes or a new CSS file.
@@ -78,6 +78,11 @@ const CustomerDetailsPage: React.FC = () => {
                                 <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                                     {user.role}
                                 </span>
+                                {stats.total_referrals > 0 && (
+                                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 flex items-center gap-1">
+                                        <Users size={12} /> {stats.total_referrals} Referrals
+                                    </span>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mt-4">
@@ -93,10 +98,49 @@ const CustomerDetailsPage: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                     <Calendar size={16} /> Joined: {new Date(user.user_created_date).toLocaleDateString()}
                                 </div>
+                                {user.aadhar_number && (
+                                    <div className="flex items-center gap-2">
+                                        <FileText size={16} /> Aadhar: {user.aadhar_number}
+                                    </div>
+                                )}
+                                {user.pan_number && (
+                                    <div className="flex items-center gap-2">
+                                        <CreditCard size={16} /> PAN: {user.pan_number}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Documents Section */}
+                {(user.aadhar_front_image_url || user.aadhar_back_image_url || user.panCardUrl) && (
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <ImageIcon size={20} /> Documents
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {user.aadhar_front_image_url && (
+                                <div className="border rounded p-2">
+                                    <div className="text-sm font-medium mb-2 text-gray-500">Aadhar Front</div>
+                                    <img src={user.aadhar_front_image_url} alt="Aadhar Front" className="w-full h-48 object-cover rounded cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(user.aadhar_front_image_url, '_blank')} />
+                                </div>
+                            )}
+                            {user.aadhar_back_image_url && (
+                                <div className="border rounded p-2">
+                                    <div className="text-sm font-medium mb-2 text-gray-500">Aadhar Back</div>
+                                    <img src={user.aadhar_back_image_url} alt="Aadhar Back" className="w-full h-48 object-cover rounded cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(user.aadhar_back_image_url, '_blank')} />
+                                </div>
+                            )}
+                            {user.panCardUrl && (
+                                <div className="border rounded p-2">
+                                    <div className="text-sm font-medium mb-2 text-gray-500">PAN Card</div>
+                                    <img src={user.panCardUrl} alt="PAN Card" className="w-full h-48 object-cover rounded cursor-pointer hover:opacity-90 transition-opacity" onClick={() => window.open(user.panCardUrl, '_blank')} />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -148,8 +192,8 @@ const CustomerDetailsPage: React.FC = () => {
                                             <td className="px-4 py-3">{order.paymentType}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`px-2 py-1 rounded text-xs font-semibold ${order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
-                                                        order.paymentStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                                            'bg-yellow-100 text-yellow-800'
+                                                    order.paymentStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                        'bg-yellow-100 text-yellow-800'
                                                     }`}>
                                                     {order.paymentStatus}
                                                 </span>
