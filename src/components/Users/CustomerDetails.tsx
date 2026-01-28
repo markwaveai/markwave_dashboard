@@ -143,7 +143,7 @@ const CustomerDetailsPage: React.FC = () => {
                 )}
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div className="bg-white p-4 rounded-lg shadow text-center">
                         <div className="text-gray-500 text-xs uppercase mb-1">Total Orders</div>
                         <div className="text-2xl font-bold">{stats.total_orders}</div>
@@ -153,16 +153,20 @@ const CustomerDetailsPage: React.FC = () => {
                         <div className="text-2xl font-bold">{stats.total_referrals}</div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow text-center">
-                        <div className="text-gray-500 text-xs uppercase mb-1">Coins</div>
-                        <div className="text-2xl font-bold text-yellow-600 flex items-center justify-center gap-1">
-                            <Award size={20} /> {stats.total_coins.toLocaleString()}
-                        </div>
+                        <div className="text-gray-500 text-xs uppercase mb-1">Referral Earned Coins</div>
+                        <div className="text-2xl font-bold text-blue-600">{user.referral_coins || 0}</div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow text-center">
+                        <div className="text-gray-500 text-xs uppercase mb-1">Total Used Coins</div>
+                        <div className="text-2xl font-bold text-red-600">{user.used_coins || 0}</div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow text-center">
                         <div className="text-gray-500 text-xs uppercase mb-1">Purchased</div>
                         <div className="text-2xl font-bold text-green-600">{stats.purchased_orders}</div>
                     </div>
                 </div>
+
+
 
                 {/* Orders Section */}
                 <div className="bg-white rounded-lg shadow p-6">
@@ -218,18 +222,26 @@ const CustomerDetailsPage: React.FC = () => {
                                     <th className="px-4 py-3">Name</th>
                                     <th className="px-4 py-3">Mobile</th>
                                     <th className="px-4 py-3">City</th>
+                                    <th className="px-4 py-3"> Earn Coins</th>
+                                    <th className="px-4 py-3"> Spend Coins</th>
                                     <th className="px-4 py-3">Verified</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {referrals.length === 0 ? (
-                                    <tr><td colSpan={4} className="px-4 py-4 text-center">No referrals found</td></tr>
+                                    <tr><td colSpan={6} className="px-4 py-4 text-center">No referrals found</td></tr>
                                 ) : (
                                     referrals.map((ref: any) => (
                                         <tr key={ref.id} className="border-b hover:bg-gray-50">
                                             <td className="px-4 py-3 font-medium text-gray-900">{ref.first_name} {ref.last_name}</td>
                                             <td className="px-4 py-3">{ref.mobile}</td>
                                             <td className="px-4 py-3">{ref.city}</td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="font-semibold text-green-600">{ref.earned_coins || 0}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="font-semibold text-red-500">{ref.used_coins || 0}</span>
+                                            </td>
                                             <td className="px-4 py-3">
                                                 {ref.verified ? <CheckCircle size={16} className="text-green-500" /> : <AlertCircle size={16} className="text-yellow-500" />}
                                             </td>
