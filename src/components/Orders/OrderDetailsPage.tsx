@@ -21,41 +21,72 @@ import {
 const OrderDetailsPage: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
     const navigate = useNavigate();
-    const dispatch = useAppDispatch();
+    // const dispatch = useAppDispatch(); // API disabled for now
     const [loading, setLoading] = useState(true);
     const [orderData, setOrderData] = useState<any>(null);
 
-    useEffect(() => {
-        if (orderId) {
-            setLoading(true);
-            const storedSession = localStorage.getItem('ak_dashboard_session');
-            let adminMobile = '';
-            if (storedSession) {
-                try {
-                    const sess = JSON.parse(storedSession);
-                    adminMobile = sess.mobile;
-                } catch (e) { }
-            }
-
-            if (adminMobile) {
-                dispatch(fetchPendingUnits({ adminMobile, search: orderId, pageSize: 10 }))
-                    .unwrap()
-                    .then((payload: any) => {
-                        let orders = [];
-                        if (payload && Array.isArray(payload.orders)) {
-                            orders = payload.orders;
-                        } else if (Array.isArray(payload)) {
-                            orders = payload;
-                        }
-                        const match = orders.find((o: any) => o.order?.id === orderId);
-                        setOrderData(match || orders[0] || null);
-                    })
-                    .finally(() => setLoading(false));
-            } else {
-                setLoading(false);
-            }
+    // Mock Data for UI
+    const mockDataMap: any = {
+        'ORD-2024-001': {
+            order: { id: 'ORD-2024-001', placedAt: '2024-03-20T10:30:00', paymentStatus: 'PAID', numUnits: 5, totalCost: 45000, buffaloCount: 5, calfCount: 0, unitCost: 9000, withCpf: true, submittedAt: '2024-03-20T10:25:00' },
+            transaction: { amount: 45000, utr: 'UTR123456789', bank_name: 'HDFC Bank', paymentType: 'BANK_TRANSFER', date: '2024-03-20' },
+            investor: { name: 'Ramesh Kumar', mobile: '9876543210', email: 'ramesh@example.com', city: 'Mumbai', state: 'Maharashtra', role: 'Investor', verified: true, user_created_date: '2023-12-01', panCardUrl: 'https://via.placeholder.com/300x200?text=PAN+Card' }
+        },
+        'ORD-2024-002': {
+            order: { id: 'ORD-2024-002', placedAt: '2024-03-19T14:20:00', paymentStatus: 'PENDING_ADMIN_VERIFICATION', numUnits: 2, totalCost: 12000, buffaloCount: 2, calfCount: 0, unitCost: 6000, withCpf: false, submittedAt: '2024-03-19T14:15:00' },
+            transaction: { amount: 12000, utr: 'UTR987654321', bank_name: 'SBI', paymentType: 'ONLINE', date: '2024-03-19', paymentScreenshotUrl: 'https://via.placeholder.com/300x400?text=Payment+Screenshot' },
+            investor: { name: 'Sita Devi', mobile: '9123456780', email: 'sita@example.com', city: 'Delhi', state: 'Delhi', role: 'Farmer', verified: false, user_created_date: '2024-01-15' }
         }
+    };
+
+    useEffect(() => {
+        // Simulate fetch delay
+        setLoading(true);
+        setTimeout(() => {
+            if (orderId && mockDataMap[orderId]) {
+                setOrderData(mockDataMap[orderId]);
+            } else {
+                // Fallback / Default mock for any other ID to show UI
+                setOrderData({
+                    order: {
+                        id: orderId || 'ORD-MOCK-00X',
+                        placedAt: new Date().toISOString(),
+                        paymentStatus: 'PENDING_PAYMENT',
+                        numUnits: 3,
+                        totalCost: 27000,
+                        buffaloCount: 3,
+                        calfCount: 0,
+                        unitCost: 9000,
+                        withCpf: true,
+                        submittedAt: new Date().toISOString()
+                    },
+                    transaction: {
+                        amount: 27000,
+                        paymentType: 'BANK_TRANSFER',
+                        utr: '-',
+                        bank_name: '-'
+                    },
+                    investor: {
+                        name: 'Demo User',
+                        mobile: '9999999999',
+                        email: 'demo@markwave.com',
+                        city: 'Hyderabad',
+                        state: 'Telangana',
+                        role: 'User',
+                        verified: true,
+                        user_created_date: '2024-01-01'
+                    }
+                });
+            }
+            setLoading(false);
+        }, 500);
+    }, [orderId]);
+
+    /* API Fetch Logic (Disabled)
+    useEffect(() => {
+        if (orderId) { ... }
     }, [dispatch, orderId]);
+    */
 
     if (loading) {
         return (
@@ -88,6 +119,7 @@ const OrderDetailsPage: React.FC = () => {
             case 'Approved': return 'bg-green-100 text-green-800 border-green-200';
             case 'PENDING_ADMIN_VERIFICATION': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
             case 'REJECTED': return 'bg-red-100 text-red-800 border-red-200';
+            case 'PENDING_PAYMENT': return 'bg-blue-100 text-blue-800 border-blue-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
@@ -98,7 +130,19 @@ const OrderDetailsPage: React.FC = () => {
             case 'Approved': return <CheckCircle size={16} className="mr-1.5" />;
             case 'PENDING_ADMIN_VERIFICATION': return <Clock size={16} className="mr-1.5" />;
             case 'REJECTED': return <AlertCircle size={16} className="mr-1.5" />;
+            case 'PENDING_PAYMENT': return <CreditCard size={16} className="mr-1.5" />;
             default: return null;
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'PAID':
+            case 'Approved': return 'Paid';
+            case 'PENDING_ADMIN_VERIFICATION': return 'Admin Approval';
+            case 'REJECTED': return 'Rejected';
+            case 'PENDING_PAYMENT': return 'Payment Due';
+            default: return status?.replace(/_/g, ' ') || '-';
         }
     };
 
@@ -131,10 +175,10 @@ const OrderDetailsPage: React.FC = () => {
                             </button>
                             <div>
                                 <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                    Order #{order?.id}
+                                    Order {order?.id}
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order?.paymentStatus)}`}>
                                         {StatusIcon(order?.paymentStatus)}
-                                        {order?.paymentStatus?.replace(/_/g, ' ')}
+                                        {getStatusLabel(order?.paymentStatus)}
                                     </span>
                                 </h1>
                                 <p className="text-xs text-gray-500 mt-0.5">

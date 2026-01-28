@@ -159,10 +159,28 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         const timer = setTimeout(() => {
             if (localSearch !== searchQuery) {
                 dispatch(setSearchQuery(localSearch));
+                // Manual Fetch for Search
+                dispatch(fetchPendingUnits({
+                    adminMobile,
+                    page: 1, // Reset to page 1 for new search
+                    pageSize,
+                    paymentStatus: statusFilter,
+                    paymentType: paymentTypeFilter,
+                    transferMode: transferModeFilter,
+                    search: localSearch
+                }));
+                // Update URL to match (optional but good for consistency)
+                setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    if (localSearch) newParams.set('search', localSearch);
+                    else newParams.delete('search');
+                    newParams.set('page', '1');
+                    return newParams;
+                });
             }
         }, 500);
         return () => clearTimeout(timer);
-    }, [localSearch, dispatch, searchQuery]);
+    }, [localSearch, dispatch, searchQuery, adminMobile, pageSize, statusFilter, paymentTypeFilter, transferModeFilter, setSearchParams]);
 
     // Persist filters to localStorage
     useEffect(() => {
@@ -175,52 +193,84 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
     }, [searchQuery, paymentTypeFilter, statusFilter, transferModeFilter, page]);
 
     // Fetch Data on Filter Change
+    // Initial Fetch ON MOUNT ONLY (One time)
+    const hasFetchedParams = useRef(false);
     useEffect(() => {
+        if (hasFetchedParams.current) return;
+        hasFetchedParams.current = true;
+
+        // Read params directly from URL for the initial fetch to ensure accuracy before Redux syncs
+        const pageParam = searchParams.get('page');
+        const statusParam = searchParams.get('status');
+        const paymentParam = searchParams.get('payment');
+        const modeParam = searchParams.get('mode');
+
+        const initialPage = pageParam ? parseInt(pageParam, 10) : 1;
+        // Default to PENDING_ADMIN_VERIFICATION if no status in URL (User Requirement)
+        const initialStatus = statusParam || 'PENDING_ADMIN_VERIFICATION';
+        const initialPayment = paymentParam || 'All Payments';
+        const initialMode = modeParam || 'All Modes';
+
         dispatch(fetchPendingUnits({
             adminMobile,
-            page,
+            page: initialPage,
             pageSize,
-            paymentStatus: statusFilter,
-            paymentType: paymentTypeFilter,
-            transferMode: transferModeFilter,
+            paymentStatus: initialStatus,
+            paymentType: initialPayment,
+            transferMode: initialMode,
             search: searchQuery
         }));
-    }, [dispatch, adminMobile, page, pageSize, statusFilter, paymentTypeFilter, transferModeFilter, searchQuery]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch, adminMobile]); // Run once on mount (when adminMobile is available)
 
-    // Reset Page on Filter Change
+    /* REACTIVE FETCH REMOVED - calling manually in handlers to prevent loops/redundant calls
+    useEffect(() => {
+        dispatch(fetchPendingUnits({ ... }));
+    }, [...]);
+    */
+
+    // Reset Page on Filter Change - REMOVED to prevent circular dependency
+    // Page reset is now handled in the individual filter change handlers updating the URL directly.
+    /*
     const prevFiltersRef = useRef({ statusFilter, paymentTypeFilter, transferModeFilter });
     useEffect(() => {
-        const prev = prevFiltersRef.current;
-        const current = { statusFilter, paymentTypeFilter, transferModeFilter };
-
-        if (
-            prev.statusFilter !== current.statusFilter ||
-            prev.paymentTypeFilter !== current.paymentTypeFilter ||
-            prev.transferModeFilter !== current.transferModeFilter
-        ) {
-            // dispatch(setPage(1)); // Handled via URL update now to keep sync
-            setSearchParams(prevParams => {
-                const newParams = new URLSearchParams(prevParams);
-                newParams.set('page', '1');
-                return newParams;
-            });
-            prevFiltersRef.current = current;
-        }
-    }, [statusFilter, paymentTypeFilter, transferModeFilter, dispatch, setSearchParams]);
+        // ... (removed to fix loop)
+    }, []);
+    */
 
     // Initial Stats Fetch
     // Filter Change Handlers with URL updates
     const handleStatusFilterChange = (status: string) => {
+        // 1. Update Redux Immediate
+        dispatch(setStatusFilter(status));
+        dispatch(setPage(1));
+
+        // 2. Update URL
         setSearchParams(prev => {
             const newParams = new URLSearchParams(prev);
-            newParams.set('status', status); // Always set status explicitly
-            newParams.set('page', '1'); // Reset page on filter change
+            newParams.set('status', status);
+            newParams.set('page', '1');
             return newParams;
         });
-        // Dispatch happens in useEffect
+
+        // 3. Manual Fetch
+        dispatch(fetchPendingUnits({
+            adminMobile,
+            page: 1,
+            pageSize,
+            paymentStatus: status,
+            paymentType: paymentTypeFilter,
+            transferMode: transferModeFilter,
+            search: searchQuery
+        }));
     };
 
     const handlePaymentTypeChange = (type: string) => {
+        // 1. Update Redux
+        dispatch(setPaymentFilter(type));
+        dispatch(setPage(1));
+
+        // 2. Update URL
         setSearchParams(prev => {
             const newParams = new URLSearchParams(prev);
             if (type === 'All Payments') newParams.delete('payment');
@@ -228,6 +278,17 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             newParams.set('page', '1');
             return newParams;
         });
+
+        // 3. Manual Fetch
+        dispatch(fetchPendingUnits({
+            adminMobile,
+            page: 1,
+            pageSize,
+            paymentStatus: statusFilter,
+            paymentType: type,
+            transferMode: transferModeFilter,
+            search: searchQuery
+        }));
     };
 
 
@@ -848,11 +909,26 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                 currentPage={page}
                 totalPages={totalPages || 1}
                 onPageChange={(p) => {
+                    // 1. Update Redux
+                    dispatch(setPage(p));
+
+                    // 2. Update URL
                     setSearchParams(prevParams => {
                         const newParams = new URLSearchParams(prevParams);
                         newParams.set('page', String(p));
                         return newParams;
                     });
+
+                    // 3. Manual Fetch
+                    dispatch(fetchPendingUnits({
+                        adminMobile,
+                        page: p,
+                        pageSize,
+                        paymentStatus: statusFilter,
+                        paymentType: paymentTypeFilter,
+                        transferMode: transferModeFilter,
+                        search: searchQuery
+                    }));
                 }}
             />
 

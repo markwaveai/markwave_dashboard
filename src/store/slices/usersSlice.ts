@@ -198,6 +198,7 @@ export interface UsersState {
         message: string | null;
     };
     adminProfile: any | null;
+    adminProfileLoading: boolean; // Added to prevent duplicate fetches
 }
 
 const initialState: UsersState = {
@@ -239,6 +240,7 @@ const initialState: UsersState = {
         message: null,
     },
     adminProfile: null,
+    adminProfileLoading: false,
 };
 
 const usersSlice = createSlice({
@@ -445,13 +447,14 @@ const usersSlice = createSlice({
 
         // Fetch Admin Profile
         builder.addCase(fetchAdminProfile.pending, (state) => {
-            // Option to handle loading state specifically for admin profile if needed
+            state.adminProfileLoading = true;
         });
         builder.addCase(fetchAdminProfile.fulfilled, (state, action) => {
+            state.adminProfileLoading = false;
             state.adminProfile = action.payload;
         });
         builder.addCase(fetchAdminProfile.rejected, (state) => {
-            // Handle error if needed
+            state.adminProfileLoading = false;
         });
     }
 });

@@ -67,7 +67,7 @@ function App() {
     return null;
   });
   const dispatch = useAppDispatch();
-  const { adminProfile } = useAppSelector((state: RootState) => state.users);
+  const { adminProfile, adminProfileLoading } = useAppSelector((state: RootState) => state.users);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -82,11 +82,11 @@ function App() {
       }));
 
       // Fetch admin profile if not already loaded to prevent repeated API calls
-      if (!adminProfile) {
+      if (!adminProfile && !adminProfileLoading) {
         dispatch(fetchAdminProfile(session.mobile));
       }
     }
-  }, [dispatch, session, adminProfile]);
+  }, [dispatch, session, adminProfile, adminProfileLoading]);
 
   const handleLogin = useCallback((s: Session) => {
     // Determine last login (from previous session or current if new)
