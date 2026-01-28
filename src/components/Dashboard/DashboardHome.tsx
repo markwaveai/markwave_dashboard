@@ -5,6 +5,7 @@ import MonthlyTargetCard from './MonthlyTargetCard';
 import RecentOrdersCard from './RecentOrdersCard';
 import TopProductsCard from './TopProductsCard';
 import RecentCustomersCard from './RecentCustomersCard';
+import CategoryCard from './CategoryCard';
 import { Users, Package, IndianRupee, Clock } from 'lucide-react';
 import { useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
@@ -57,6 +58,7 @@ const DashboardHome: React.FC = () => {
                             isIncrease={true}
                             icon={Users}
                         />
+                        <CategoryCard />
                     </div>
 
                     {/* Sales Chart Row */}
@@ -73,7 +75,7 @@ const DashboardHome: React.FC = () => {
                 {/* Right Column - Target, Products, Customers (Span 4) */}
                 <div style={{ gridColumn: 'span 12', display: 'flex', flexDirection: 'column', gap: '24px' }} className="col-span-12 lg:col-span-4">
                     <MonthlyTargetCard />
-                    <TopProductsCard />
+                    {/* <TopProductsCard /> */}
                     <RecentCustomersCard />
                 </div>
             </div>
