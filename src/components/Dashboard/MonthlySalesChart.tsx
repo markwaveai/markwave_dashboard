@@ -1,20 +1,113 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Filler,
+    Legend,
+    ScriptableContext
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
 
-const data = [
-    { name: 'Jan', sales: 150 },
-    { name: 'Feb', sales: 380 },
-    { name: 'Mar', sales: 180 },
-    { name: 'Apr', sales: 290 },
-    { name: 'May', sales: 170 },
-    { name: 'Jun', sales: 180 },
-    { name: 'Jul', sales: 280 },
-    { name: 'Aug', sales: 90 },
-    { name: 'Sep', sales: 200 },
-    { name: 'Oct', sales: 380 },
-    { name: 'Nov', sales: 270 },
-    { name: 'Dec', sales: 90 },
-];
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Filler,
+    Legend
+);
+
+const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            display: false,
+        },
+        tooltip: {
+            backgroundColor: '#fff',
+            titleColor: '#111827',
+            bodyColor: '#6b7280',
+            borderColor: '#e5e7eb',
+            borderWidth: 1,
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+                label: function (context: any) {
+                    return `Sales: ${context.parsed.y}`;
+                }
+            }
+        },
+    },
+    scales: {
+        x: {
+            grid: {
+                display: false,
+            },
+            ticks: {
+                color: '#6b7280',
+                font: {
+                    size: 12
+                }
+            },
+            border: {
+                display: false
+            }
+        },
+        y: {
+            grid: {
+                color: '#f3f4f6',
+            },
+            ticks: {
+                color: '#6b7280',
+                font: {
+                    size: 12
+                }
+            },
+            border: {
+                display: false
+            }
+        },
+    },
+    interaction: {
+        mode: 'index' as const,
+        intersect: false,
+    }
+};
+
+const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export const data = {
+    labels,
+    datasets: [
+        {
+            fill: true,
+            label: 'Monthly Sales',
+            data: [150, 380, 180, 290, 170, 180, 280, 90, 200, 380, 270, 90],
+            borderColor: '#4f46e5',
+            backgroundColor: (context: ScriptableContext<'line'>) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(79, 70, 229, 0.5)'); // Start color
+                gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');   // End color
+                return gradient;
+            },
+            tension: 0.4, // Curved line
+            pointRadius: 0, // Hide points by default
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#4f46e5',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2,
+        },
+    ],
+};
 
 const MonthlySalesChart: React.FC = () => {
     return (
@@ -32,28 +125,8 @@ const MonthlySalesChart: React.FC = () => {
                 <button style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '20px' }}>⋮</button>
             </div>
 
-            <div style={{ flex: 1, minHeight: '300px' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} barSize={12}>
-                        <XAxis
-                            dataKey="name"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: '#6b7280', fontSize: 12 }}
-                            dy={10}
-                        />
-                        <Tooltip
-                            cursor={{ fill: 'transparent' }}
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        />
-                        <Bar
-                            dataKey="sales"
-                            fill="#4f46e5"
-                            radius={[6, 6, 6, 6]}
-                            background={{ fill: '#fff', radius: 6 }}
-                        />
-                    </BarChart>
-                </ResponsiveContainer>
+            <div style={{ flex: 1, minHeight: '300px', position: 'relative' }}>
+                <Line options={options} data={data} />
             </div>
         </div>
     );
