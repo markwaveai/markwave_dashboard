@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList, Copy, Check } from 'lucide-react';
+import { Check, Copy, User } from 'lucide-react';
 import {
     setSearchQuery,
     setPaymentFilter,
@@ -12,13 +12,14 @@ import {
     fetchPendingUnits,
     setExpandedOrderId,
     setActiveUnitIndex,
-    setInitialTracking
+    approveOrder,
+    rejectOrder,
 } from '../../store/slices/ordersSlice';
-import { setProofModal, setRejectionModal, setApprovalModal } from '../../store/slices/uiSlice';
+import { setProofModal, setRejectionModal, setApprovalModal, setSnackbar } from '../../store/slices/uiSlice';
 import Pagination from '../common/Pagination';
-import { API_ENDPOINTS } from '../../config/api';
-import './OrdersTab.css';
+
 import TableSkeleton from '../common/TableSkeleton';
+import TrackingTab from './TrackingTab';
 
 const UTRCopyButton: React.FC<{ value: string }> = ({ value }) => {
     const [isCopied, setIsCopied] = useState(false);
@@ -66,14 +67,17 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         error: ordersError,
         totalCount,
         totalAllOrders,
-        statusCounts,
+        pendingAdminApprovalCount,
+        paidCount,
+        rejectedCount,
+        paymentDueCount,
+        coinsRedeemedCount,
         filters,
-        trackingData,
         expansion,
         actionLoading
     } = useAppSelector((state: RootState) => state.orders);
 
-    const { expandedOrderId, activeUnitIndex } = expansion;
+    const { expandedOrderId } = expansion;
 
     const {
         searchQuery,
@@ -85,7 +89,6 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
     } = filters;
 
     const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
-
     const [searchParams, setSearchParams] = useSearchParams();
 
     // Tooltip State
@@ -109,25 +112,21 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         const paymentParam = searchParams.get('payment');
         const modeParam = searchParams.get('mode');
 
-        // Page
         const pageNum = pageParam ? parseInt(pageParam, 10) : 1;
         if (!isNaN(pageNum) && pageNum !== page) {
             dispatch(setPage(pageNum));
         }
 
-        // Status
         if (statusParam && statusParam !== statusFilter) {
             dispatch(setStatusFilter(statusParam));
         }
 
-        // Payment Type
         if (paymentParam && paymentParam !== paymentTypeFilter) {
             dispatch(setPaymentFilter(paymentParam));
         } else if (!paymentParam && paymentTypeFilter !== 'All Payments') {
             dispatch(setPaymentFilter('All Payments'));
         }
 
-        // Transfer Mode
         if (modeParam && modeParam !== transferModeFilter) {
             dispatch(setTransferModeFilter(modeParam));
         } else if (!modeParam && transferModeFilter !== 'All Modes') {
@@ -138,7 +137,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 
     // Debounce Search
     const [localSearch, setLocalSearch] = useState(searchQuery);
-    const [expandedTrackerKeys, setExpandedTrackerKeys] = useState<Record<string, boolean>>({}); // NEW: Local state for individual expand/collapse
+    const [expandedTrackerKeys, setExpandedTrackerKeys] = useState<Record<string, boolean>>({});
 
     // Local state to track which specific order action is processing
     const [processingAction, setProcessingAction] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null);
@@ -159,17 +158,15 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         const timer = setTimeout(() => {
             if (localSearch !== searchQuery) {
                 dispatch(setSearchQuery(localSearch));
-                // Manual Fetch for Search
                 dispatch(fetchPendingUnits({
                     adminMobile,
-                    page: 1, // Reset to page 1 for new search
+                    page: 1,
                     pageSize,
                     paymentStatus: statusFilter,
                     paymentType: paymentTypeFilter,
                     transferMode: transferModeFilter,
                     search: localSearch
                 }));
-                // Update URL to match (optional but good for consistency)
                 setSearchParams(prev => {
                     const newParams = new URLSearchParams(prev);
                     if (localSearch) newParams.set('search', localSearch);
@@ -192,24 +189,21 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         localStorage.setItem('orders_page', String(page));
     }, [searchQuery, paymentTypeFilter, statusFilter, transferModeFilter, page]);
 
-    // Fetch Data on Filter Change
-    // Initial Fetch ON MOUNT ONLY (One time)
+    // Initial Fetch ON MOUNT ONLY
     const hasFetchedParams = useRef(false);
     useEffect(() => {
         if (hasFetchedParams.current) return;
         hasFetchedParams.current = true;
 
-        // Read params directly from URL for the initial fetch to ensure accuracy before Redux syncs
         const pageParam = searchParams.get('page');
         const statusParam = searchParams.get('status');
         const paymentParam = searchParams.get('payment');
         const modeParam = searchParams.get('mode');
 
-        const initialPage = pageParam ? parseInt(pageParam, 10) : 1;
-        // Default to PENDING_ADMIN_VERIFICATION if no status in URL (User Requirement)
-        const initialStatus = statusParam || 'PENDING_ADMIN_VERIFICATION';
-        const initialPayment = paymentParam || 'All Payments';
-        const initialMode = modeParam || 'All Modes';
+        const initialPage = pageParam ? parseInt(pageParam, 10) : page;
+        const initialStatus = statusParam || statusFilter || 'PENDING_ADMIN_VERIFICATION';
+        const initialPayment = paymentParam || paymentTypeFilter || 'All Payments';
+        const initialMode = modeParam || transferModeFilter || 'All Modes';
 
         dispatch(fetchPendingUnits({
             adminMobile,
@@ -220,32 +214,11 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             transferMode: initialMode,
             search: searchQuery
         }));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatch, adminMobile]); // Run once on mount (when adminMobile is available)
+    }, [dispatch, adminMobile]);
 
-    /* REACTIVE FETCH REMOVED - calling manually in handlers to prevent loops/redundant calls
-    useEffect(() => {
-        dispatch(fetchPendingUnits({ ... }));
-    }, [...]);
-    */
-
-    // Reset Page on Filter Change - REMOVED to prevent circular dependency
-    // Page reset is now handled in the individual filter change handlers updating the URL directly.
-    /*
-    const prevFiltersRef = useRef({ statusFilter, paymentTypeFilter, transferModeFilter });
-    useEffect(() => {
-        // ... (removed to fix loop)
-    }, []);
-    */
-
-    // Initial Stats Fetch
-    // Filter Change Handlers with URL updates
     const handleStatusFilterChange = (status: string) => {
-        // 1. Update Redux Immediate
         dispatch(setStatusFilter(status));
         dispatch(setPage(1));
-
-        // 2. Update URL
         setSearchParams(prev => {
             const newParams = new URLSearchParams(prev);
             newParams.set('status', status);
@@ -253,7 +226,6 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             return newParams;
         });
 
-        // 3. Manual Fetch
         dispatch(fetchPendingUnits({
             adminMobile,
             page: 1,
@@ -266,11 +238,8 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
     };
 
     const handlePaymentTypeChange = (type: string) => {
-        // 1. Update Redux
         dispatch(setPaymentFilter(type));
         dispatch(setPage(1));
-
-        // 2. Update URL
         setSearchParams(prev => {
             const newParams = new URLSearchParams(prev);
             if (type === 'All Payments') newParams.delete('payment');
@@ -279,7 +248,6 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             return newParams;
         });
 
-        // 3. Manual Fetch
         dispatch(fetchPendingUnits({
             adminMobile,
             page: 1,
@@ -290,9 +258,6 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             search: searchQuery
         }));
     };
-
-
-
 
     const handleViewProof = useCallback((transaction: any, investor: any) => {
         dispatch(setProofModal({ isOpen: true, data: { ...transaction, name: investor.name } }));
@@ -305,271 +270,86 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         } else {
             dispatch(setExpandedOrderId(orderId));
             dispatch(setActiveUnitIndex(0));
+            // Reset individual trackers when opening a new order
+            setExpandedTrackerKeys({});
         }
     }, [dispatch, expandedOrderId]);
 
-    // Real Tracking Integration
-    const [realTrackingData, setRealTrackingData] = useState<any>(null);
-    const [trackingLoading, setTrackingLoading] = useState(false);
-
-    useEffect(() => {
-        if (expandedOrderId) {
-            setTrackingLoading(true);
-            const fetchTracking = async () => {
-                try {
-                    const token = localStorage.getItem('token');
-                    const response = await fetch(API_ENDPOINTS.getOrderStatus(), {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ orderId: expandedOrderId })
-                    });
-                    const data = await response.json();
-                    if (data.status === 'success') {
-                        setRealTrackingData(data);
-                    }
-                } catch (err) {
-                    console.error("Failed to fetch tracking", err);
-                } finally {
-                    setTrackingLoading(false);
-                }
-            };
-            fetchTracking();
-        } else {
-            setRealTrackingData(null);
-        }
-    }, [expandedOrderId]);
-
-    // Process specific phase/cycle stages from the new API structure
-    const processPhaseStages = useCallback((phaseData: any) => {
-        if (!phaseData || !phaseData.stages) return { currentStageId: 1, history: {}, stages: [] };
-
-        const history: any = {};
-        let maxStageId = 1;
-
-        const dynamicStages = phaseData.stages.map((item: any) => {
-            let label = '';
-            if (item.stage === 'BUFFALOS_BOUGHT') {
-                label = 'Buffaloes Bought';
-            } else {
-                label = item.stage
-                    .split('_')
-                    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                    .join(' ');
-            }
-
-            return {
-                id: item.id,
-                label: label,
-                description: item.description,
-                status: item.status,
-                rawStage: item.stage
-            };
-        }).sort((a: any, b: any) => a.id - b.id);
-
-        phaseData.stages.forEach((item: any) => {
-            const sId = item.id;
-            if (sId) {
-                if (item.timestamp) {
-                    const dateObj = new Date(item.timestamp);
-                    const dateStr = dateObj.toLocaleDateString('en-GB').replace(/\//g, '-');
-                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false });
-                    history[sId] = { date: dateStr, time: timeStr, description: item.description };
-                } else if (item.description) {
-                    history[sId] = { date: '-', time: '-', description: item.description };
-                }
-
-                if (item.status === 'COMPLETED') {
-                    maxStageId = Math.max(maxStageId, sId + 1);
-                }
-            }
-        });
-
-        if (dynamicStages.length > 0) {
-            const lastId = dynamicStages[dynamicStages.length - 1].id;
-            if (maxStageId > lastId + 1) maxStageId = lastId + 1;
-        }
-
-        return { currentStageId: maxStageId, history, stages: dynamicStages };
-    }, []);
-
-    const handleStageUpdateLocal = async (orderId: string, buffaloIds: string[], nextStageId: number) => {
-        // Map nextStageId to Specific Backend Status required by user
-        let status = '';
-
-        if (nextStageId === 5) status = 'PLACED_TO_MARKET';
-        else if (nextStageId === 6) status = 'BOUGHT';
-        else if (nextStageId === 7) status = 'IN_QUARANTINE';
-        else if (nextStageId === 8) status = 'IN_TRANSIT';
-
-        if (!status) {
-            alert("Update not allowed for this stage.");
-            return;
-        }
-
-        const payload = {
-            orderId: orderId,
-            status: status,
-            buffaloIds: buffaloIds, // LIST of IDs
-            adminMobile: adminMobile,
-            description: "",
-            location: ""
-        };
-
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(API_ENDPOINTS.updateOrderStatus(), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                    'x-admin-mobile': adminMobile
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-            if (data.status === 'success') {
-                // Refresh tracking data
-                const refreshResponse = await fetch(API_ENDPOINTS.getOrderStatus(), {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ orderId: orderId })
-                });
-                const refreshData = await refreshResponse.json();
-                if (refreshData.status === 'success') {
-                    setRealTrackingData(refreshData);
-                }
-            } else {
-                alert(`Failed to update status: ${data.message}`);
-            }
-        } catch (err) {
-            console.error("Failed to update status", err);
-            alert("Error updating status");
-        }
-    };
-
     // Pagination
     const totalPages = Math.ceil((totalCount || 0) / pageSize);
+    const currentCols = (statusFilter === 'PENDING_ADMIN_VERIFICATION' || statusFilter === 'REJECTED') ? 9 : 8;
 
-    const currentCols = (statusFilter === 'PENDING_ADMIN_VERIFICATION' || statusFilter === 'REJECTED') ? 11 : 10;
+    // Filter Buttons Config
+    const filterButtons = [
+        { label: 'All Orders', status: 'All Status', count: totalAllOrders },
+        { label: 'Pending Approval', status: 'PENDING_ADMIN_VERIFICATION', count: pendingAdminApprovalCount },
+        { label: 'Approved/Paid', status: 'PAID', count: paidCount },
+        { label: 'Rejected', status: 'REJECTED', count: rejectedCount },
+        { label: 'Payment Due', status: 'PENDING_PAYMENT', count: paymentDueCount },
+        { label: 'Coins Redeemed', status: 'COINS_REDEEMED', count: coinsRedeemedCount },
+    ];
 
     return (
-        <div className="orders-dashboard">
-            <div className="orders-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                <h2 className="text-xl font-bold">Live Orders</h2>
+        <div className="p-8">
+            {/* New Header: Order Management Left, Date/Search Right */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+                <h2 className="text-xl font-bold m-0 text-slate-800">Order Management</h2>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <input
                         type="date"
-                        className="search-input w-full sm:w-auto"
+                        className="h-[38px] px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full sm:w-auto"
                         style={{ maxWidth: '160px' }}
                     />
                     <input
                         type="text"
                         placeholder="Search by Order ID, Name, Mobile..."
-                        className="search-input orders-search w-full sm:w-auto"
+                        className="h-[38px] px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full sm:w-[250px]"
                         value={localSearch}
                         onChange={(e) => setLocalSearch(e.target.value)}
                     />
                 </div>
             </div>
 
-            {/* Status Cards / Filters */}
-            <div className="status-controls grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                <div
-                    className={`stats-card ${statusFilter === 'All Status' ? 'active-all' : ''}`}
-                    onClick={() => handleStatusFilterChange('All Status')}
-                >
-                    <div className="card-icon-wrapper all">
-                        <ClipboardList size={24} />
-                    </div>
-                    <div className="card-content">
-                        <h3>{statusFilter === 'All Status' ? totalAllOrders : (statusCounts['All Status'] ?? (totalAllOrders > 0 ? totalAllOrders : '-'))}</h3>
-                        <p>All Status</p>
-                    </div>
-                </div>
-                <div
-                    className={`stats-card ${statusFilter === 'PENDING_ADMIN_VERIFICATION' ? 'active-pending' : ''}`}
-                    onClick={() => handleStatusFilterChange('PENDING_ADMIN_VERIFICATION')}
-                >
-                    <div className="card-icon-wrapper pending">
-                        <CheckCircle size={24} />
-                    </div>
-                    <div className="card-content">
-                        {/* <h3>{statusFilter === 'PENDING_ADMIN_VERIFICATION' ? totalCount : (statusCounts['PENDING_ADMIN_VERIFICATION'] ?? '-')}</h3> */}
-                        <p>Pending Admin Approval</p>
-                    </div>
-                </div>
-
-                <div
-                    className={`stats-card ${statusFilter === 'PAID' ? 'active-paid' : ''}`}
-                    onClick={() => handleStatusFilterChange('PAID')}
-                >
-                    <div className="card-icon-wrapper approved">
-                        <CheckSquare size={24} />
-                    </div>
-                    <div className="card-content">
-                        {/* <h3>{statusFilter === 'PAID' ? totalCount : (statusCounts['PAID'] ?? '-')}</h3> */}
-                        <p>Approved/Paid</p>
-                    </div>
-                </div>
-
-                <div
-                    className={`stats-card ${statusFilter === 'REJECTED' ? 'active-rejected' : ''}`}
-                    onClick={() => handleStatusFilterChange('REJECTED')}
-                >
-                    <div className="card-icon-wrapper rejected">
-                        <XCircle size={24} />
-                    </div>
-                    <div className="card-content">
-                        {/* <h3>{statusFilter === 'REJECTED' ? totalCount : (statusCounts['REJECTED'] ?? '-')}</h3> */}
-                        <p>Rejected</p>
-                    </div>
-                </div>
-
-                <div
-                    className={`stats-card ${statusFilter === 'PENDING_PAYMENT' ? 'active-payment-due' : ''}`}
-                    onClick={() => handleStatusFilterChange('PENDING_PAYMENT')}
-                >
-                    <div className="card-icon-wrapper payment-due">
-                        <Clock size={24} />
-                    </div>
-                    <div className="card-content">
-                        {/* <h3>{statusFilter === 'PENDING_PAYMENT' ? totalCount : (statusCounts['PENDING_PAYMENT'] ?? '-')}</h3> */}
-                        <p>Payment Due</p>
-                    </div>
-                </div>
+            {/* Pill Filters */}
+            <div className="flex flex-wrap gap-3 mb-6 items-center">
+                {filterButtons.map((btn) => (
+                    <button
+                        key={btn.status}
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full border text-[13px] font-semibold cursor-pointer transition-all ${statusFilter === btn.status
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
+                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300'
+                            }`}
+                        onClick={() => handleStatusFilterChange(btn.status)}
+                    >
+                        <span>{btn.label}</span>
+                        <span className={`px-2 py-0.5 rounded-xl text-[11px] ${statusFilter === btn.status ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                            {btn.count !== undefined ? btn.count : '-'}
+                        </span>
+                    </button>
+                ))}
             </div>
-
-            {/* Filters Bar Removed - Payment Filter moved to table header */}
 
             {
                 ordersError && (
-                    <div className="orders-error-msg">{ordersError}</div>
+                    <div className="mb-3 text-red-600 font-medium text-sm">{ordersError}</div>
                 )
             }
 
-            <div className="table-container">
-                <table className="user-table">
-                    <thead style={{ backgroundColor: '#f0f2f5' }}>
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full border-collapse">
+                    <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                            <th>S.No</th>
-                            <th>Ordered Date</th>
-                            <th>Order Id</th>
-                            <th>Units</th>
-                            <th className="th-user-name">User Name</th>
-                            <th>Mobile</th>
-                            <th>Status</th>
-                            <th style={{ minWidth: '140px' }}>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">S.No</th>
+
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">User Details</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Order Details</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Units</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Status</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left" style={{ minWidth: '140px' }}>
                                 <select
                                     value={paymentTypeFilter}
                                     onChange={(e) => handlePaymentTypeChange(e.target.value)}
-                                    className="payment-type-select"
+                                    className="bg-white text-slate-600 border border-slate-300 rounded-md px-2 py-1 font-semibold text-[11px] h-[35px] outline-none cursor-pointer w-full text-center hover:border-slate-400 transition-colors"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <option value="All Payments">Payment Type</option>
@@ -579,12 +359,12 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                     <option value="CASH">Cash</option>
                                 </select>
                             </th>
-                            <th className="th-proof">Payment Image Proof</th>
-                            <th>Amount</th>
-                            <th>Total Cost</th>
-                            <th>Coins Redeemed</th>
-                            {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <th>Actions</th>}
-                            {statusFilter === 'REJECTED' && <th>Rejected Reason</th>}
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left min-w-[200px]">Payment Image Proof</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Amount</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Total Cost</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Coins Redeemed</th>
+                            {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Actions</th>}
+                            {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Rejected Reason</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -592,7 +372,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                             <TableSkeleton cols={currentCols + 2} rows={10} />
                         ) : pendingUnits.length === 0 ? (
                             <tr>
-                                <td colSpan={currentCols + 2} className="no-data-row">
+                                <td colSpan={currentCols + 2} className="text-center text-slate-400 py-12 text-sm">
                                     No orders found matching filters.
                                 </td>
                             </tr>
@@ -603,6 +383,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                 const inv = entry.investor || {};
                                 const serialNumber = (page - 1) * pageSize + index + 1;
 
+                                // Expandable only if PAID/Approved
                                 const isExpandable = (unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved') && statusFilter === 'PAID';
 
                                 return (
@@ -610,82 +391,81 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                         <tr
                                             onClick={() => navigate(`/orders/${unit.id}`)}
                                             style={{ cursor: 'pointer' }}
-                                            className="order-row-hover"
+                                            className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
                                         >
-                                            <td>{serialNumber}</td>
-                                            <td>
-                                                {unit.placedAt ? (
-                                                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '12px', fontWeight: 'bold' }}>
-                                                        <span >
-                                                            {new Date(unit.placedAt).toLocaleDateString('en-GB')}
-                                                        </span>
-                                                        <span style={{ color: '#64748b', fontSize: '11px' }}>
-                                                            {new Date(unit.placedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{serialNumber}</td>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top text-left">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                                                        <User size={18} className="text-slate-400" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-semibold text-slate-800">{inv.name}</span>
+                                                        <span className="text-xs text-slate-500 font-medium">
+                                                            {inv.mobile ? `+91 ${String(inv.mobile)}` : '-'}
                                                         </span>
                                                     </div>
-                                                ) : '-'}
+                                                </div>
                                             </td>
-                                            <td>
-                                                <button
-                                                    className="check-status-btn"
-                                                    onClick={() => isExpandable && handleToggleExpansion(unit.id)}
-                                                    style={{
-                                                        fontWeight: 700,
-                                                        cursor: isExpandable ? 'pointer' : 'default',
-                                                        textDecoration: isExpandable ? 'underline' : 'none',
-                                                        color: isExpandable ? '#3b82f6' : '#374151'
-                                                    }}
-                                                >
-                                                    {unit.id}
-                                                </button>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top text-left">
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (isExpandable) {
+                                                                handleToggleExpansion(unit.id);
+                                                            } else {
+                                                                navigate(`/orders/${unit.id}`);
+                                                            }
+                                                        }}
+                                                        className={`text-[13px] font-bold p-0 text-left bg-transparent border-none ${isExpandable ? 'text-blue-600 underline cursor-pointer' : 'text-slate-700 cursor-pointer'}`}
+                                                    >
+                                                        {unit.id}
+                                                    </button>
+                                                    {unit.placedAt ? (
+                                                        <span className="text-[11px] text-slate-500">
+                                                            {new Date(unit.placedAt).toLocaleDateString('en-GB')} • {new Date(unit.placedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                        </span>
+                                                    ) : <span className="text-[11px] text-slate-500">-</span>}
+                                                </div>
                                             </td>
-                                            <td>{unit.numUnits}</td>
-                                            <td>{inv.name}</td>
-                                            <td>{inv.mobile ? `******${String(inv.mobile).slice(-4)}` : '-'}</td>
-                                            <td className="td-vertical-middle">
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{unit.numUnits}</td>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top align-middle">
                                                 {(() => {
-                                                    let statusClass = '';
+                                                    let statusClasses = 'bg-slate-100 text-slate-600 border-slate-200';
                                                     let label = unit.paymentStatus || '-';
 
                                                     if (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION') {
-                                                        statusClass = 'admin-approval';
+                                                        statusClasses = 'bg-amber-50 text-amber-700 border-amber-200';
                                                         label = 'Admin Approval';
                                                     } else if (unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved') {
-                                                        statusClass = 'paid';
+                                                        statusClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                                                         label = 'Paid';
                                                     } else if (unit.paymentStatus === 'REJECTED') {
-                                                        statusClass = 'rejected';
+                                                        statusClasses = 'bg-red-50 text-red-700 border-red-200';
                                                         label = 'Rejected';
                                                     } else if (unit.paymentStatus === 'PENDING_PAYMENT') {
-                                                        statusClass = 'payment-due';
+                                                        statusClasses = 'bg-slate-100 text-slate-600 border-slate-200';
                                                         label = 'Payment Due';
                                                     }
 
                                                     return (
-                                                        <span className={`status-badge ${statusClass}`}>
+                                                        <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap border ${statusClasses}`}>
                                                             {label}
                                                         </span>
                                                     );
                                                 })()}
                                             </td>
-                                            <td className="payment-type-cell">
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top relative">
                                                 {tx.paymentType === 'BANK_TRANSFER' || tx.paymentType === 'CHEQUE' ? (
                                                     <div
-                                                        className="bank-transfer-hover-container"
+                                                        className="cursor-pointer text-blue-600 font-semibold relative inline-block"
                                                         onMouseEnter={(e) => {
                                                             const rect = e.currentTarget.getBoundingClientRect();
                                                             const viewportHeight = window.innerHeight;
-                                                            // Default: Center vertically relative to trigger
                                                             let top = rect.top + (rect.height / 2);
-
-                                                            // Adjust if near bottom (assume tooltip height ~250px)
-                                                            if (top + 125 > viewportHeight) {
-                                                                top = viewportHeight - 140;
-                                                            }
-                                                            // Adjust if near top
-                                                            if (top - 125 < 0) {
-                                                                top = 140;
-                                                            }
+                                                            if (top + 125 > viewportHeight) top = viewportHeight - 140;
+                                                            if (top - 125 < 0) top = 140;
 
                                                             setTooltipInfo({
                                                                 tx,
@@ -701,28 +481,28 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                     tx.paymentType || '-'
                                                 )}
                                             </td>
-                                            <td>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">
                                                 {tx.paymentType ? (
                                                     <button
-                                                        className="view-proof-btn"
-                                                        onClick={() => handleViewProof(tx, inv)}
+                                                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold underline bg-transparent border-none p-0 cursor-pointer"
+                                                        onClick={(e) => { e.stopPropagation(); handleViewProof(tx, inv); }}
                                                     >
                                                         Payment Proof
                                                     </button>
                                                 ) : '-'}
                                             </td>
-                                            <td>{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
-                                            <td>{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
-                                            <td>{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
-                                            {statusFilter === 'REJECTED' && <td>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
+                                            {statusFilter === 'REJECTED' && <td className="px-6 py-4 text-[13px] text-slate-700 align-top">
                                                 {unit.rejectedReason || 'No reason provided'}
                                             </td>}
-                                            {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <td>
-                                                <div className="action-btn-container">
+                                            {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <td className="px-6 py-4 text-[13px] text-slate-700 align-top">
+                                                <div className="flex gap-2 items-center">
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
-                                                            onClick={() => handleApproveWrapper(unit.id)}
-                                                            className={`action-btn approve ${processingAction?.id === unit.id && processingAction?.type === 'approve' ? 'loading' : ''}`}
+                                                            onClick={(e) => { e.stopPropagation(); handleApproveWrapper(unit.id); }}
+                                                            className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all shadow-sm border-none cursor-pointer flex items-center justify-center min-w-[80px] bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed`}
                                                             disabled={actionLoading || processingAction !== null}
                                                         >
                                                             {processingAction?.id === unit.id && processingAction?.type === 'approve' ? 'Processing...' : 'Approve'}
@@ -730,8 +510,8 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                     )}
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
-                                                            onClick={() => handleRejectWrapper(unit.id)}
-                                                            className={`action-btn reject ${processingAction?.id === unit.id && processingAction?.type === 'reject' ? 'loading' : ''}`}
+                                                            onClick={(e) => { e.stopPropagation(); handleRejectWrapper(unit.id); }}
+                                                            className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all shadow-sm border-none cursor-pointer flex items-center justify-center min-w-[80px] bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed`}
                                                             disabled={actionLoading || processingAction !== null}
                                                         >
                                                             {processingAction?.id === unit.id && processingAction?.type === 'reject' ? 'Processing...' : 'Reject'}
@@ -742,161 +522,16 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                         </tr>
 
                                         {expandedOrderId === unit.id && (
-                                            <tr className="tracking-expanded-row">
-                                                <td colSpan={currentCols + 2} className="tracking-expanded-cell">
-                                                    <div className="order-expand-animation tracking-expand-container">
-                                                        <div className="tracking-interface-container" style={{ display: 'block' }}>
-                                                            {/* Sidebar removed */}
-                                                            <div className="tracking-main-content" style={{ width: '100%' }}>
-                                                                <div className="order-expand-animation tracking-buffalo-grid">
-
-                                                                    {realTrackingData?.deliveryPhases ? (
-                                                                        realTrackingData.deliveryPhases.map((phase: any, index: number) => {
-                                                                            const cycleNum = phase.phase;
-                                                                            const tracker = processPhaseStages(phase);
-                                                                            const TRACKING_WINDOW_DAYS = 15; // Set to 200 to enable early. Standard is 15.
-
-                                                                            // Tracking enablement logic based on scheduledDate
-                                                                            let isTrackingEnabled = true;
-                                                                            let daysRemaining = 0;
-                                                                            const targetDate = phase.scheduledDate || phase.scheduled_date;
-
-                                                                            if (targetDate) {
-                                                                                const scheduledDate = new Date(targetDate);
-                                                                                scheduledDate.setHours(0, 0, 0, 0);
-                                                                                const today = new Date();
-                                                                                today.setHours(0, 0, 0, 0);
-                                                                                const diffTime = scheduledDate.getTime() - today.getTime();
-                                                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                                                                daysRemaining = diffDays;
-                                                                                // Enable only if within window (or date passed)
-                                                                                if (diffDays > TRACKING_WINDOW_DAYS) {
-                                                                                    isTrackingEnabled = false;
-                                                                                }
-                                                                            }
-
-                                                                            const currentStageId = tracker.currentStageId;
-                                                                            const isExpanded = isTrackingEnabled && (expandedTrackerKeys[`${unit.id}-${cycleNum}`] !== false);
-                                                                            const timelineStages = tracker.stages || [];
-                                                                            const buffaloIds = phase.buffaloIds || [];
-
-
-
-                                                                            // Text formatting
-                                                                            const buffaloCount = buffaloIds.length;
-                                                                            const buffaloText = buffaloCount === 1
-                                                                                ? '(1 Buffalo)'
-                                                                                : `(${buffaloCount} Buffaloes)`;
-
-                                                                            const trackerKey = `${unit.id}-${cycleNum}`;
-
-                                                                            return (
-                                                                                <div key={cycleNum} className="tracking-buffalo-card" style={{ marginBottom: '20px' }}>
-                                                                                    <div className="tracking-buffalo-title">
-                                                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                                            <span>{`Cycle ${cycleNum} ${buffaloText}`}</span>
-                                                                                            {!isTrackingEnabled && (
-                                                                                                <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>
-                                                                                                    Tracking starts in {daysRemaining - TRACKING_WINDOW_DAYS} days ({new Date(targetDate).toLocaleDateString()})
-                                                                                                </span>
-                                                                                            )}
-                                                                                        </div>
-                                                                                        <div className="header-actions">
-                                                                                            {isTrackingEnabled && (
-                                                                                                <button
-                                                                                                    onClick={() => setExpandedTrackerKeys(prev => ({ ...prev, [trackerKey]: !isExpanded }))}
-                                                                                                    className="tracking-individual-expand-btn"
-                                                                                                >
-                                                                                                    {isExpanded ? 'Minimize' : 'Expand'}
-                                                                                                    <span className={`tracking-chevron ${isExpanded ? 'up' : 'down'}`}>
-                                                                                                        {isExpanded ? '▲' : '▼'}
-                                                                                                    </span>
-                                                                                                </button>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-
-                                                                                    {isExpanded && (
-                                                                                        <div className="tracking-timeline-container order-expand-animation">
-                                                                                            {timelineStages.map((stage: any, sIdx: number) => {
-                                                                                                const isLast = sIdx === timelineStages.length - 1;
-                                                                                                const isStepCompleted = stage.id < currentStageId;
-                                                                                                const isCurrent = stage.id === currentStageId;
-                                                                                                const stageDate = tracker.history[stage.id]?.date || '-';
-                                                                                                const stageTime = tracker.history[stage.id]?.time || '-';
-
-                                                                                                return (
-                                                                                                    <div key={stage.id} className="tracking-timeline-item">
-                                                                                                        <div className="tracking-timeline-date-col">
-                                                                                                            <div className="tracking-timeline-date">{stageDate}</div>
-                                                                                                            {stageTime !== '-' && <div className="tracking-timeline-time-sub">{stageTime}</div>}
-                                                                                                        </div>
-
-                                                                                                        <div className="tracking-timeline-marker-col">
-                                                                                                            {!isLast && (
-                                                                                                                <div className={`tracking-timeline-line ${isStepCompleted ? 'completed' : 'pending'}`} />
-                                                                                                            )}
-                                                                                                            <div className={`tracking-timeline-dot ${isStepCompleted ? 'completed' : 'pending'}`}>
-                                                                                                                {isStepCompleted ? '✓' : stage.id}
-                                                                                                            </div>
-                                                                                                        </div>
-
-                                                                                                        <div className={`tracking-timeline-content-col ${isLast ? 'last' : ''}`}>
-                                                                                                            <div className="tracking-timeline-header">
-                                                                                                                <div className="tracking-timeline-details-text">
-                                                                                                                    <div className={`tracking-timeline-label ${isStepCompleted ? 'completed' : 'pending'}`}>
-                                                                                                                        {stage.label}
-                                                                                                                    </div>
-                                                                                                                    <div className="tracking-timeline-desc">
-                                                                                                                        {/* Only show description if time/date is present ("along with time only") */}
-                                                                                                                        {(tracker.history[stage.id]?.date && tracker.history[stage.id]?.date !== '-') ? `(${tracker.history[stage.id]?.description || stage.description})` : null}
-                                                                                                                    </div>
-                                                                                                                </div>
-
-                                                                                                                {/* Show button only if previous step is completed and we are waiting for the next action */}
-                                                                                                                {(isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8 && (
-                                                                                                                    <button
-                                                                                                                        className="tracking-update-btn"
-                                                                                                                        onClick={() => handleStageUpdateLocal(unit.id, buffaloIds, stage.id + 1)}
-                                                                                                                    >
-                                                                                                                        {(() => {
-                                                                                                                            const nextId = stage.id + 1;
-
-                                                                                                                            if (nextId === 5) return 'Update Placed to Market';
-                                                                                                                            if (nextId === 6) return 'Update Bought';
-                                                                                                                            if (nextId === 7) return 'Update In Quarantine';
-                                                                                                                            if (nextId === 8) return 'Update In Transit';
-                                                                                                                            return 'Update';
-                                                                                                                        })()}
-                                                                                                                    </button>
-                                                                                                                )}
-
-                                                                                                                {/* Show Completed Badge only if step is completed via API AND button is NOT shown */}
-                                                                                                                {stage.status === 'COMPLETED' && !((isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8) && (
-                                                                                                                    <span className="tracking-completed-badge">
-                                                                                                                        {stage.id === 7 ? 'Delivered' : 'Completed'}
-                                                                                                                    </span>
-                                                                                                                )}
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                );
-                                                                                            })}
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            );
-                                                                        })
-                                                                    ) : null
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                            <tr className="bg-slate-50">
+                                                <td colSpan={currentCols + 2} className="p-6">
+                                                    <TrackingTab
+                                                        orderId={unit.id}
+                                                        expandedTrackerKeys={expandedTrackerKeys}
+                                                        setExpandedTrackerKeys={setExpandedTrackerKeys}
+                                                    />
                                                 </td>
                                             </tr>
                                         )}
-
                                     </React.Fragment>
                                 );
                             })
@@ -909,17 +544,12 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                 currentPage={page}
                 totalPages={totalPages || 1}
                 onPageChange={(p) => {
-                    // 1. Update Redux
                     dispatch(setPage(p));
-
-                    // 2. Update URL
                     setSearchParams(prevParams => {
                         const newParams = new URLSearchParams(prevParams);
                         newParams.set('page', String(p));
                         return newParams;
                     });
-
-                    // 3. Manual Fetch
                     dispatch(fetchPendingUnits({
                         adminMobile,
                         page: p,
@@ -938,28 +568,25 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                 const isCheque = tx.paymentType === 'CHEQUE';
                 return (
                     <div
-                        className="bank-details-tooltip"
+                        className="fixed z-[9999] bg-slate-900 border border-slate-800 rounded-xl p-4 w-[280px] shadow-2xl transition-opacity duration-300"
                         style={{
-                            visibility: 'visible',
-                            opacity: 1,
-                            position: 'fixed',
                             top: top,
                             left: left,
                             transform: 'translateY(-50%)',
-                            zIndex: 9999
                         }}
                         onMouseEnter={() => { }}
                         onMouseLeave={() => setTooltipInfo(null)}
                     >
-                        <div className="tooltip-title">Payment Details</div>
-                        <div className="tooltip-item">
-                            <span className="tooltip-label">Bank Name:</span>
-                            <span className="tooltip-value">{findVal(tx, ['bank_name', 'bankName', 'bank_details'], ['bank'])}</span>
+                        <div className="absolute top-1/2 right-full -mt-2 border-8 border-transparent border-r-slate-900"></div>
+                        <div className="text-[13px] font-bold text-slate-50 mb-3 pb-2 border-b border-slate-700">Payment Details</div>
+                        <div className="flex justify-between gap-3 mb-1.5">
+                            <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Bank Name:</span>
+                            <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{findVal(tx, ['bank_name', 'bankName', 'bank_details'], ['bank'])}</span>
                         </div>
-                        <div className="tooltip-item">
-                            <span className="tooltip-label">{isCheque ? 'Cheque No:' : 'A/C Number:'}</span>
+                        <div className="flex justify-between gap-3 mb-1.5">
+                            <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">{isCheque ? 'Cheque No:' : 'A/C Number:'}</span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                <span className="tooltip-value">
+                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
                                     {isCheque
                                         ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
                                         : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no'])
@@ -970,10 +597,10 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="tooltip-item">
-                            <span className="tooltip-label">{isCheque ? 'Cheque Date:' : 'UTR:'}</span>
+                        <div className="flex justify-between gap-3 mb-1.5">
+                            <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">{isCheque ? 'Cheque Date:' : 'UTR:'}</span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                <span className="tooltip-value">
+                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
                                     {isCheque
                                         ? findVal(tx, ['cheque_date', 'date'], ['date'])
                                         : findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
@@ -985,22 +612,250 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                             </div>
                         </div>
                         {!isCheque && (
-                            <div className="tooltip-item">
-                                <span className="tooltip-label">IFSC:</span>
-                                <span className="tooltip-value">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
+                            <div className="flex justify-between gap-3 mb-1.5">
+                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">IFSC:</span>
+                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
                             </div>
                         )}
                         {tx.transferMode && (
-                            <div className="tooltip-item">
-                                <span className="tooltip-label">Mode:</span>
-                                <span className="tooltip-value">{tx.transferMode}</span>
+                            <div className="flex justify-between gap-3 mb-0">
+                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Mode:</span>
+                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{tx.transferMode}</span>
                             </div>
                         )}
                     </div>
                 );
             })()}
+            {/* Render Inlined Modals */}
+            <ApprovalModal />
+            <RejectionModal />
         </div>
     );
 };
 
+
+const ApprovalModal: React.FC = () => {
+    const dispatch = useAppDispatch();
+    const { isOpen, unitId } = useAppSelector((state: RootState) => state.ui.modals.approval);
+    const { adminMobile, adminRole } = useAppSelector((state: RootState) => state.auth);
+    const { adminProfile } = useAppSelector((state: RootState) => state.users);
+
+    const [comment, setComment] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Derived Name Logic
+    const realName = React.useMemo(() => {
+        if (adminProfile) {
+            const { first_name, last_name, name } = adminProfile;
+            if (first_name || last_name) {
+                return `${first_name || ''} ${last_name || ''}`.trim();
+            }
+            if (name) return name;
+        }
+        return 'Admin';
+    }, [adminProfile]);
+
+    const onClose = () => {
+        if (isSubmitting) return;
+        dispatch(setApprovalModal({ isOpen: false, unitId: null }));
+        setComment('');
+    };
+
+    const handleApprove = async () => {
+        if (!unitId) return;
+
+        setIsSubmitting(true);
+        try {
+            await dispatch(approveOrder({
+                unitId,
+                adminMobile,
+                comments: comment,
+            })).unwrap();
+
+            dispatch(setSnackbar({ message: 'Order approved successfully!', type: 'success' }));
+            dispatch(setApprovalModal({ isOpen: false, unitId: null }));
+            setComment('');
+        } catch (error) {
+            console.error('Error approving order:', error);
+            dispatch(setSnackbar({ message: 'Failed to approve order.', type: 'error' }));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className={`fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] opacity-0 invisible transition-all duration-200 ${isOpen ? 'opacity-100 visible' : ''}`} onClick={onClose}>
+            <div
+                className={`bg-white w-[90%] max-w-[500px] rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200 ${isOpen ? 'scale-100' : ''}`}
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="px-6 pt-6">
+                    <h3 className="m-0 mb-2 text-xl font-semibold text-slate-900">Approve Order</h3>
+                    <p className="m-0 text-sm text-slate-500 leading-snug">Are you sure you want to approve this order?</p>
+                </div>
+
+                <div className="p-6 text-slate-600">
+                    <div className="mb-5">
+                        <div className="text-[13px] font-medium text-slate-500 mb-2">Approved By:</div>
+                        <div className="mb-4">
+                            <div className="text-base font-bold text-slate-900 mb-0.5">{realName}</div>
+                            <div className="text-sm text-slate-500 mb-0.5">{adminMobile}</div>
+                            <div className="text-[13px] font-medium text-slate-600 capitalize">{adminRole || 'Admin'}</div>
+                        </div>
+                    </div>
+
+                    <div className="mb-5">
+                        <label className="block text-[13px] font-semibold mb-2 text-slate-500">
+                            Comment
+                        </label>
+                        <textarea
+                            className="w-full min-h-[80px] p-3 rounded-lg border border-slate-200 text-sm outline-none resize-y focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                            placeholder="Enter approval comment (optional)..."
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-all bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-all bg-emerald-500 border border-transparent text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleApprove}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Approving...' : 'Approve Order'}
+                    </button>
+                </div>
+            </div>
+        </div >
+    );
+};
+
+const RejectionModal: React.FC = () => {
+    const dispatch = useAppDispatch();
+    const { isOpen, unitId } = useAppSelector((state: RootState) => state.ui.modals.rejection);
+    const { adminMobile, adminRole } = useAppSelector((state: RootState) => state.auth);
+    const { adminProfile } = useAppSelector((state: RootState) => state.users);
+
+    const [reason, setReason] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Derived Name Logic
+    const realName = React.useMemo(() => {
+        if (adminProfile) {
+            const { first_name, last_name, name } = adminProfile;
+            if (first_name || last_name) {
+                return `${first_name || ''} ${last_name || ''}`.trim();
+            }
+            if (name) return name;
+        }
+        return 'Admin';
+    }, [adminProfile]);
+
+    // Reset reason when modal opens/closes
+    useEffect(() => {
+        if (isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const onClose = () => {
+        if (isSubmitting) return;
+        dispatch(setRejectionModal({ isOpen: false, unitId: null }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmedReason = reason.trim();
+
+        if (!trimmedReason || !unitId) return;
+
+        setIsSubmitting(true);
+        try {
+            await dispatch(rejectOrder({
+                unitId,
+                adminMobile,
+                comments: trimmedReason
+            })).unwrap();
+
+            dispatch(setSnackbar({ message: 'Order rejected successfully!', type: 'error' }));
+            dispatch(setRejectionModal({ isOpen: false, unitId: null }));
+        } catch (error) {
+            console.error('Error rejecting order:', error);
+            dispatch(setSnackbar({ message: 'Failed to reject order.', type: 'error' }));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className={`fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] opacity-0 invisible transition-all duration-200 ${isOpen ? 'opacity-100 visible' : ''}`} onClick={onClose}>
+            <div
+                className={`bg-white w-[90%] max-w-[500px] rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200 ${isOpen ? 'scale-100' : ''}`}
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="px-6 pt-6">
+                    <h3 className="m-0 mb-2 text-xl font-semibold text-slate-900">Reject Order</h3>
+                    <p className="m-0 text-sm text-slate-500 leading-snug">Please provide a reason for rejecting this order. This message will be sent to the investor.</p>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="p-6 text-slate-600">
+                        <div className="mb-5">
+                            <div className="text-[13px] font-medium text-slate-500 mb-2">Rejected By:</div>
+                            <div className="mb-4">
+                                <div className="text-base font-bold text-slate-900 mb-0.5">{realName}</div>
+                                <div className="text-sm text-slate-500 mb-0.5">{adminMobile}</div>
+                                <div className="text-[13px] font-medium text-slate-600 capitalize">{adminRole || 'Admin'}</div>
+                            </div>
+                        </div>
+
+                        <textarea
+                            className="w-full min-h-[120px] p-3 rounded-lg border border-slate-200 text-[15px] outline-none resize-y text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-sans"
+                            placeholder="Type rejection reason here..."
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            disabled={isSubmitting}
+                            required
+                            autoFocus
+                        />
+                    </div>
+
+                    <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-all bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-all bg-red-500 border border-transparent text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isSubmitting || !reason.trim()}
+                        >
+                            {isSubmitting ? 'Rejecting...' : 'Reject Order'}
+                        </button>
+                    </div>
+                </form>
+            </div >
+        </div >
+    );
+};
+
 export default OrdersTab;
+

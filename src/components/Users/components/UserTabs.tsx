@@ -31,8 +31,6 @@ import ImageNamesModal from '../../products/components/ImageNamesModal';
 import AdminDetailsModal from './AdminDetailsModal';
 import ReferralModal from './ReferralModal';
 import EditReferralModal from './EditReferralModal';
-import RejectionModal from '../../Orders/components/RejectionModal';
-import ApprovalModal from '../../Orders/components/ApprovalModal';
 import LogoutModal from './LogoutModal';
 import Snackbar from '../../common/Snackbar';
 
@@ -441,26 +439,22 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
             )}
             {hasSession && (
               <li>
-                {hasSession && (
-                  <li>
-                    <button className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                        <Users size={18} />
-                        <span className="nav-text">User Management</span>
-                      </div>
-                    </button>
-                  </li>
-                )}
-                {hasSession && (
-                  <li>
-                    <button className={`nav-item ${activeTab === 'network' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management/network'); }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                        <Users size={18} />
-                        <span className="nav-text">Network</span>
-                      </div>
-                    </button>
-                  </li>
-                )}
+                <button className={`nav-item ${activeTab === 'user-management' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <Users size={18} />
+                    <span className="nav-text">User Management</span>
+                  </div>
+                </button>
+              </li>
+            )}
+            {hasSession && (
+              <li>
+                <button className={`nav-item ${activeTab === 'network' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/user-management/network'); }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <Users size={18} />
+                    <span className="nav-text">Network</span>
+                  </div>
+                </button>
               </li>
             )}
             {hasSession && (
@@ -623,8 +617,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 setIsLogoutModalOpen(true);
               }}
             />
-            <RejectionModal />
-            <ApprovalModal />
+
             <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />
             <Snackbar
               message={snackbar.message}

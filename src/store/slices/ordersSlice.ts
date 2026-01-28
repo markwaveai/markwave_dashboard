@@ -145,6 +145,11 @@ export interface OrdersState {
     };
     totalCount: number;
     totalAllOrders: number;
+    pendingAdminApprovalCount: number;
+    paidCount: number;
+    rejectedCount: number;
+    paymentDueCount: number;
+    coinsRedeemedCount: number;
     statusCounts: { [key: string]: number };
     filters: {
         searchQuery: string; // Keeping for client-side or future use
@@ -191,6 +196,11 @@ const initialState: OrdersState = {
     trackingData: getInitialTrackingData(),
     totalCount: 0,
     totalAllOrders: 0,
+    pendingAdminApprovalCount: 0,
+    paidCount: 0,
+    rejectedCount: 0,
+    paymentDueCount: 0,
+    coinsRedeemedCount: 0,
     statusCounts: {},
     filters: {
         searchQuery: localStorage.getItem('orders_searchQuery') || '',
@@ -273,6 +283,12 @@ const ordersSlice = createSlice({
                 if (typeof payload.total_all_orders === 'number') {
                     state.totalAllOrders = payload.total_all_orders;
                 }
+                if (typeof payload.pending_admin_approval_count === 'number') state.pendingAdminApprovalCount = payload.pending_admin_approval_count;
+                if (typeof payload.paid_count === 'number') state.paidCount = payload.paid_count;
+                if (typeof payload.rejected_count === 'number') state.rejectedCount = payload.rejected_count;
+                if (typeof payload.payment_due_count === 'number') state.paymentDueCount = payload.payment_due_count;
+                if (typeof payload.coins_redeemed_count === 'number') state.coinsRedeemedCount = payload.coins_redeemed_count;
+
             } else if (Array.isArray(payload)) {
                 state.pendingUnits = payload;
                 currentCount = payload.length;

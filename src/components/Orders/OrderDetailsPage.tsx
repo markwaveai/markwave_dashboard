@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../../store/hooks';
-import { fetchPendingUnits } from '../../store/slices/ordersSlice';
 import {
     ArrowLeft,
     User,
@@ -21,97 +19,51 @@ import {
 const OrderDetailsPage: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
     const navigate = useNavigate();
-    // const dispatch = useAppDispatch(); // API disabled for now
-    const [loading, setLoading] = useState(true);
-    const [orderData, setOrderData] = useState<any>(null);
 
-    // Mock Data for UI
-    const mockDataMap: any = {
-        'ORD-2024-001': {
-            order: { id: 'ORD-2024-001', placedAt: '2024-03-20T10:30:00', paymentStatus: 'PAID', numUnits: 5, totalCost: 45000, buffaloCount: 5, calfCount: 0, unitCost: 9000, withCpf: true, submittedAt: '2024-03-20T10:25:00' },
-            transaction: { amount: 45000, utr: 'UTR123456789', bank_name: 'HDFC Bank', paymentType: 'BANK_TRANSFER', date: '2024-03-20' },
-            investor: { name: 'Ramesh Kumar', mobile: '9876543210', email: 'ramesh@example.com', city: 'Mumbai', state: 'Maharashtra', role: 'Investor', verified: true, user_created_date: '2023-12-01', panCardUrl: 'https://via.placeholder.com/300x200?text=PAN+Card' }
+    // Mock Data for UI Development
+    const orderData = {
+        order: {
+            id: 'ORD-2023-12345',
+            paymentStatus: 'PAID',
+            placedAt: '2023-10-27T10:30:00Z',
+            totalCost: 150000,
+            numUnits: 2,
+            buffaloCount: 2,
+            calfCount: 2,
+            unitCost: 75000,
+            withCpf: true,
+            submittedAt: '2023-10-27T10:00:00Z'
         },
-        'ORD-2024-002': {
-            order: { id: 'ORD-2024-002', placedAt: '2024-03-19T14:20:00', paymentStatus: 'PENDING_ADMIN_VERIFICATION', numUnits: 2, totalCost: 12000, buffaloCount: 2, calfCount: 0, unitCost: 6000, withCpf: false, submittedAt: '2024-03-19T14:15:00' },
-            transaction: { amount: 12000, utr: 'UTR987654321', bank_name: 'SBI', paymentType: 'ONLINE', date: '2024-03-19', paymentScreenshotUrl: 'https://via.placeholder.com/300x400?text=Payment+Screenshot' },
-            investor: { name: 'Sita Devi', mobile: '9123456780', email: 'sita@example.com', city: 'Delhi', state: 'Delhi', role: 'Farmer', verified: false, user_created_date: '2024-01-15' }
+        investor: {
+            name: 'Priya Sharma',
+            mobile: '+91 9876543210',
+            email: 'priya.sharma@example.com',
+            city: 'Bangalore',
+            state: 'Karnataka',
+            role: 'Investor',
+            user_created_date: '2023-01-15T09:00:00Z',
+            verified: true,
+            panCardUrl: 'https://placehold.co/600x400/png?text=PAN+Card+Preview'
+        },
+        transaction: {
+            transaction: {
+                amount: 150000,
+                utr: 'ICI1234567890',
+                bankName: 'ICICI Bank',
+                transferMode: 'UPI',
+                paymentDate: '2023-10-27',
+                accountNumber: '**** **** **** 1234',
+                paymentScreenshotUrl: 'https://placehold.co/400x600/png?text=Payment+Screenshot'
+            }
         }
     };
 
-    useEffect(() => {
-        // Simulate fetch delay
-        setLoading(true);
-        setTimeout(() => {
-            if (orderId && mockDataMap[orderId]) {
-                setOrderData(mockDataMap[orderId]);
-            } else {
-                // Fallback / Default mock for any other ID to show UI
-                setOrderData({
-                    order: {
-                        id: orderId || 'ORD-MOCK-00X',
-                        placedAt: new Date().toISOString(),
-                        paymentStatus: 'PENDING_PAYMENT',
-                        numUnits: 3,
-                        totalCost: 27000,
-                        buffaloCount: 3,
-                        calfCount: 0,
-                        unitCost: 9000,
-                        withCpf: true,
-                        submittedAt: new Date().toISOString()
-                    },
-                    transaction: {
-                        amount: 27000,
-                        paymentType: 'BANK_TRANSFER',
-                        utr: '-',
-                        bank_name: '-'
-                    },
-                    investor: {
-                        name: 'Demo User',
-                        mobile: '9999999999',
-                        email: 'demo@markwave.com',
-                        city: 'Hyderabad',
-                        state: 'Telangana',
-                        role: 'User',
-                        verified: true,
-                        user_created_date: '2024-01-01'
-                    }
-                });
-            }
-            setLoading(false);
-        }, 500);
-    }, [orderId]);
-
-    /* API Fetch Logic (Disabled)
-    useEffect(() => {
-        if (orderId) { ... }
-    }, [dispatch, orderId]);
-    */
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-        );
-    }
-
-    if (!orderData) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-500">
-                <Package size={48} className="mb-4 opacity-50" />
-                <p className="text-lg font-medium">Order not found</p>
-                <button
-                    onClick={() => navigate(-1)}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                    Go Back
-                </button>
-            </div>
-        );
-    }
-
     const { order, transaction, investor } = orderData;
+    // Helper to get transaction object - API structure might vary
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const txData: any = transaction?.transaction || transaction || {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orderObj: any = order || {};
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -157,9 +109,6 @@ const OrderDetailsPage: React.FC = () => {
         return foundKey ? obj[foundKey] : '-';
     };
 
-    // Helper to get transaction object
-    const txData = transaction?.transaction || transaction || {};
-
     return (
         <div className="min-h-screen bg-gray-50 pb-12 font-sans">
             {/* Header / Navbar style area */}
@@ -182,7 +131,7 @@ const OrderDetailsPage: React.FC = () => {
                                     </span>
                                 </h1>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                    Placed on {new Date(order?.placedAt).toLocaleString()}
+                                    Placed on {order?.placedAt ? new Date(order.placedAt).toLocaleString() : '-'}
                                 </p>
                             </div>
                         </div>
@@ -217,7 +166,7 @@ const OrderDetailsPage: React.FC = () => {
                                 <InfoItem icon={<Mail size={16} />} label="Email Address" value={investor?.email} />
                                 <InfoItem icon={<MapPin size={16} />} label="Location" value={`${investor?.city || ''}, ${investor?.state || ''}`} />
                                 <InfoItem icon={<FileText size={16} />} label="Role" value={investor?.role} />
-                                <InfoItem icon={<Calendar size={16} />} label="Joined Date" value={new Date(investor?.user_created_date).toLocaleDateString()} />
+                                <InfoItem icon={<Calendar size={16} />} label="Joined Date" value={investor?.user_created_date ? new Date(investor.user_created_date).toLocaleDateString() : '-'} />
                             </div>
 
                             {investor?.panCardUrl && (
@@ -268,7 +217,7 @@ const OrderDetailsPage: React.FC = () => {
                                     />
                                     <InfoItem
                                         label="Payment Method"
-                                        value={txData?.transferMode || txData?.paymentType || order?.paymentType}
+                                        value={txData?.transferMode || txData?.paymentType || orderObj?.paymentType}
                                     />
                                     <InfoItem
                                         label="Transaction Date"
@@ -330,14 +279,14 @@ const OrderDetailsPage: React.FC = () => {
                                     <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Timeline</p>
                                     <div className="relative pl-4 space-y-4 border-l-2 border-gray-100 ml-1">
                                         <TimelineItem
-                                            time={new Date(order?.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            date={new Date(order?.submittedAt).toLocaleDateString()}
+                                            time={order?.submittedAt ? new Date(order.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                            date={order?.submittedAt ? new Date(order.submittedAt).toLocaleDateString() : '-'}
                                             title="Order Submitted"
                                             active
                                         />
                                         <TimelineItem
-                                            time={new Date(order?.placedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            date={new Date(order?.placedAt).toLocaleDateString()}
+                                            time={order?.placedAt ? new Date(order.placedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                            date={order?.placedAt ? new Date(order.placedAt).toLocaleDateString() : '-'}
                                             title="Order Placed"
                                             active
                                         />
