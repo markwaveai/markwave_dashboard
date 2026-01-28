@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './UserTabs.css';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../../config/api';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, UserMinus, Mail, ChevronDown, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, UserMinus, Mail, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
@@ -97,6 +97,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/buffalo-viz')) activeTab = 'buffaloViz';
   else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
   else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
+  else if (currentPath.includes('/dashboard')) activeTab = 'dashboard';
   else if (currentPath.includes('/orders')) activeTab = 'orders';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
   else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
@@ -420,9 +421,19 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           <ul className="sidebar-menu" style={{ marginTop: '10px' }}>
             {hasSession && (
               <li>
-                <button className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/orders'); }}>
+                <button className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                     <LayoutDashboard size={18} />
+                    <span className="nav-text">Dashboard</span>
+                  </div>
+                </button>
+              </li>
+            )}
+            {hasSession && (
+              <li>
+                <button className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/orders'); }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <ClipboardList size={18} />
                     <span className="nav-text">Orders</span>
                   </div>
                 </button>

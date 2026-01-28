@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList, Copy, Check } from 'lucide-react';
@@ -57,6 +57,7 @@ interface OrdersTabProps {
 
 const OrdersTab: React.FC<OrdersTabProps> = () => {
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     // Redux State
     const {
@@ -545,7 +546,11 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 
                                 return (
                                     <React.Fragment key={`${unit.id || 'order'}-${index}`}>
-                                        <tr>
+                                        <tr
+                                            onClick={() => navigate(`/orders/${unit.id}`)}
+                                            style={{ cursor: 'pointer' }}
+                                            className="order-row-hover"
+                                        >
                                             <td>{serialNumber}</td>
                                             <td>
                                                 {unit.placedAt ? (

@@ -9,8 +9,9 @@ import UserTabs from './components/Users/components/UserTabs';
 import Login from './components/auth/Login';
 
 // Tabs
-// Tabs
+import DashboardHome from './components/Dashboard/DashboardHome';
 import OrdersTab from './components/Orders/OrdersTab';
+import OrderDetailsPage from './components/Orders/OrderDetailsPage';
 import UserManagementTab from './components/Users/UserManagement';
 import ProductsTab from './components/products/ProductsTab';
 import BuffaloVisualizationTab from './components/BuffaloViz/BuffaloVisualizationTab';
@@ -149,11 +150,23 @@ function App() {
         } />
 
         {/* Protected Dashboard Routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
+            <DashboardHome />
+          </ProtectedRoute>
+        } />
+
         <Route path="/orders" element={
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
             <React.Suspense fallback={<OrdersPageSkeleton />}>
               <OrdersTab />
             </React.Suspense>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/orders/:orderId" element={
+          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
+            <OrderDetailsPage />
           </ProtectedRoute>
         } />
 
@@ -274,13 +287,13 @@ function App() {
         } />
 
         {/* Default redirect to orders or login */}
-        <Route path="/" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
+        <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
         <Route path="/user-management/network/:mobile" element={
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
             <NetworkUserDetailsPage />
           </ProtectedRoute>
         } />
-        <Route path="*" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
+        <Route path="*" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
       </Routes>
     </div>
   );
