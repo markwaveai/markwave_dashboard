@@ -157,6 +157,9 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
                                 <th className="px-4 py-3">Name</th>
                                 <th className="px-4 py-3">Mobile</th>
                                 <th className="px-4 py-3">Role</th>
+                                <th className="px-4 py-3">Earned Coins</th>
+                                <th className="px-4 py-3">Used Coins</th>
+                                <th className="px-4 py-3">Referral Earn Coins</th>
                                 <th className="px-4 py-3">Referred By</th>
                                 <th className="px-4 py-3">Verified</th>
                                 <th className="px-4 py-3">Created Date</th>
@@ -164,10 +167,10 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
                         </thead>
                         <tbody>
                             {managedLoading ? (
-                                <TableSkeleton cols={7} rows={10} />
+                                <TableSkeleton cols={10} rows={10} />
                             ) : managedUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">No users found</td>
+                                    <td colSpan={10} className="px-4 py-8 text-center text-gray-400">No users found</td>
                                 </tr>
                             ) : (
                                 managedUsers.map((user: any, index: number) => (
@@ -189,6 +192,15 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
                                                 }`}>
                                                 {user.role === 'SpecialCategory' ? 'Special Category' : (user.role || 'Investor')}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="font-semibold text-green-600">{user.earned_coins || 0}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="font-semibold text-red-500">{user.used_coins || 0}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="font-semibold text-blue-600">{user.referral_coins || 0}</span>
                                         </td>
                                         <td className="px-4 py-3">
                                             <div>{user.refered_by_name || '-'}</div>

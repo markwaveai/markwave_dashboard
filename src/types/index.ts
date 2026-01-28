@@ -24,6 +24,9 @@ export interface User {
   aadhar_number?: string;
   pan_number?: string; // or whatever the field name is, likely standardizing
   referral_count?: number;
+  earned_coins?: number;
+  used_coins?: number;
+  referral_coins?: number;
   [key: string]: any; // Allow dynamic custom fields
 }
 
@@ -95,6 +98,9 @@ export interface Referral {
   paymentSessionDate?: string;
   aadhar_number?: string;
   dob?: string;
+  referral_earned_coins?: number;
+  earned_coins?: number;
+  used_coins?: number;
 }
 
 export interface Stats {
