@@ -97,10 +97,13 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
   else if (currentPath.includes('/dashboard')) activeTab = 'dashboard';
   else if (currentPath.includes('/orders')) activeTab = 'orders';
+  else if (currentPath.includes('/orders')) activeTab = 'orders';
+  else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
   else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
   else if (currentPath.includes('/support')) activeTab = 'support';
   else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
+  else if (currentPath.includes('/true-harvest-deactivate-user')) activeTab = 'true-harvest-deactivate-user';
   else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
   else if (currentPath.includes('/unit-calculator')) {
     activeTab = 'unit-calculator';
@@ -556,6 +559,22 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                   <UserMinus size={18} />
                   <span className="nav-text">Deactivate User</span>
+                </div>
+              </button>
+            </li>
+            <li>
+              <button className={`nav-item ${activeTab === 'true-harvest-privacy' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/true-harvest-privacy-policy', { state: { fromDashboard: true } }); }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <ShieldIcon size={18} />
+                  <span className="nav-text">True Harvest Privacy</span>
+                </div>
+              </button>
+            </li>
+            <li>
+              <button className={`nav-item ${activeTab === 'true-harvest-deactivate-user' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/true-harvest-deactivate-user', { state: { fromDashboard: true } }); }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <UserMinus size={18} />
+                  <span className="nav-text">True Harvest Deactivate</span>
                 </div>
               </button>
             </li>

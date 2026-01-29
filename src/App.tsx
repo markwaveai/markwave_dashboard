@@ -32,6 +32,8 @@ import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
 
 // Privacy
 import PrivacyPolicy from './components/public/PrivacyPolicy';
+import TrueHarvestPrivacyPolicy from './components/true-harvest/TrueHarvestPrivacyPolicy';
+import TrueHarvestDeactivateUser from './components/true-harvest/TrueHarvestDeactivateUser';
 import Support from './components/Support/Support';
 
 // Skeletons
@@ -286,6 +288,19 @@ function App() {
           </ConditionalLayoutWrapper>
         } />
 
+        {/* Farmvest Routes */}
+        <Route path="/true-harvest-privacy-policy" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <TrueHarvestPrivacyPolicy />
+          </ConditionalLayoutWrapper>
+        } />
+
+        <Route path="/true-harvest-deactivate-user" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <TrueHarvestDeactivateUser />
+          </ConditionalLayoutWrapper>
+        } />
+
         {/* Default redirect to orders or login */}
         <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
         <Route path="/user-management/network/:mobile" element={
@@ -317,7 +332,7 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
 
   // Role-based route protection
   const path = location.pathname;
-  if (session.role === 'Animalkart admin' && path.startsWith('/farmvest')) {
+  if (session.role === 'Animalkart admin' && path.startsWith('/true-harvest')) {
     return <Navigate to="/orders" replace />;
   }
 
@@ -347,6 +362,8 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
     '/referral-landing',
     '/deactivate-user',
     '/privacy-policy',
+    '/true-harvest-privacy-policy',
+    '/true-harvest-deactivate-user',
     '/support'
   ];
 
