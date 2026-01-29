@@ -34,6 +34,7 @@ import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
 import PrivacyPolicy from './components/public/PrivacyPolicy';
 import TrueHarvestPrivacyPolicy from './components/true-harvest/TrueHarvestPrivacyPolicy';
 import TrueHarvestDeactivateUser from './components/true-harvest/TrueHarvestDeactivateUser';
+import TrueHarvestSupport from './components/true-harvest/TrueHarvestSupport';
 import Support from './components/Support/Support';
 
 // Skeletons
@@ -295,9 +296,16 @@ function App() {
           </ConditionalLayoutWrapper>
         } />
 
+
         <Route path="/true-harvest-deactivate-user" element={
           <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
             <TrueHarvestDeactivateUser />
+          </ConditionalLayoutWrapper>
+        } />
+
+        <Route path="/true-harvest-support" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <TrueHarvestSupport />
           </ConditionalLayoutWrapper>
         } />
 

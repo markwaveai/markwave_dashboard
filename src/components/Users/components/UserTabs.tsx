@@ -100,6 +100,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/orders')) activeTab = 'orders';
   else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
+  else if (currentPath.includes('/true-harvest-support')) activeTab = 'true-harvest-support';
   else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
   else if (currentPath.includes('/support')) activeTab = 'support';
   else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
@@ -575,6 +576,14 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                   <UserMinus size={18} />
                   <span className="nav-text">True Harvest Deactivate</span>
+                </div>
+              </button>
+            </li>
+            <li>
+              <button className={`nav-item ${activeTab === 'true-harvest-support' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/true-harvest-support', { state: { fromDashboard: true } }); }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <LifeBuoy size={18} />
+                  <span className="nav-text">True Harvest Support</span>
                 </div>
               </button>
             </li>
