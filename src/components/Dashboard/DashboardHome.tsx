@@ -1,4 +1,5 @@
 import React from 'react';
+// Force rebuild
 import StatsCard from './StatsCard';
 import MonthlySalesChart from './MonthlySalesChart';
 import MonthlyTargetCard from './MonthlyTargetCard';
@@ -6,13 +7,26 @@ import RecentOrdersCard from './RecentOrdersCard';
 import TopProductsCard from './TopProductsCard';
 import RecentCustomersCard from './RecentCustomersCard';
 import CategoryCard from './CategoryCard';
-import { Users, Package, IndianRupee, Clock } from 'lucide-react';
-import { useAppSelector } from '../../store/hooks';
+import CoinsStatsCard from './CoinsStatsCard';
+import UnitsStatsCard from './UnitsStatsCard';
+import OrdersStatsCard from './OrdersStatsCard';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchStatusCounts } from '../../store/slices/ordersSlice';
+import { setSession as setReduxSession } from '../../store/slices/authSlice';
 import type { RootState } from '../../store';
+import { Award, ShoppingBag } from 'lucide-react';
 
 const DashboardHome: React.FC = () => {
     // We can pull real data here if available, using placeholder for now to match design
-    const { totalCount, totalAllOrders } = useAppSelector((state: RootState) => state.orders);
+    const dispatch = useAppDispatch();
+    const { totalAllOrders, pendingAdminApprovalCount, paidCount, rejectedCount } = useAppSelector((state: RootState) => state.orders);
+    const { adminMobile } = useAppSelector((state: RootState) => state.auth);
+
+    React.useEffect(() => {
+        if (adminMobile) {
+            dispatch(fetchStatusCounts({ adminMobile }));
+        }
+    }, [dispatch, adminMobile]);
 
     // Using mock data to match the visual provided by user for "Customers" if real count is not suitable or available in this context yet
     const customerCount = "3,782";
@@ -26,41 +40,26 @@ const DashboardHome: React.FC = () => {
                 gap: '24px',
                 alignItems: 'start'
             }}>
-                {/* Left Column - Stats, Chart, Recent Orders (Span 8) */}
-                <div style={{ gridColumn: 'span 12', display: 'flex', flexDirection: 'column', gap: '24px' }} className="col-span-12 lg:col-span-8">
-                    {/* Stats Row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
-                        <StatsCard
-                            title="Total Revenue"
-                            count="₹4.2Cr"
-                            trend="12.5%"
-                            isIncrease={true}
-                            icon={IndianRupee}
-                        />
-                        <StatsCard
-                            title="Orders"
-                            count={orderCount}
-                            trend="9.05%"
-                            isIncrease={false}
-                            icon={Package}
-                        />
-                        <StatsCard
-                            title="Pending"
-                            count="145"
-                            trend="5.2%"
-                            isIncrease={true}
-                            icon={Clock}
-                        />
-                        <StatsCard
-                            title="Customers"
-                            count={customerCount}
-                            trend="11.01%"
-                            isIncrease={true}
-                            icon={Users}
-                        />
-                        <CategoryCard />
-                    </div>
+                <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+                    <CoinsStatsCard
+                        count="1.55M"
+                        target="1.75B"
+                    />
+                    <UnitsStatsCard
+                        count={totalAllOrders ? totalAllOrders.toLocaleString() : "323"}
+                        target="100,000"
+                    />
+                    <OrdersStatsCard
+                        total={1250}
+                        pending={450}
+                        approved={720}
+                        rejected={80}
+                    />
+                    <CategoryCard totalUsers={customerCount} />
+                </div>
 
+                {/* Left Column - Chart, Recent Orders (Span 8) */}
+                <div style={{ gridColumn: 'span 12', display: 'flex', flexDirection: 'column', gap: '24px' }} className="col-span-12 lg:col-span-8">
                     {/* Sales Chart Row */}
                     <div style={{ minHeight: '400px' }}>
                         <MonthlySalesChart />

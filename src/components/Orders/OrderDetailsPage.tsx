@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -16,49 +16,71 @@ import {
     Download
 } from 'lucide-react';
 
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchPendingUnits } from '../../store/slices/ordersSlice';
+import { RootState } from '../../store';
+
+
 const OrderDetailsPage: React.FC = () => {
     const { orderId } = useParams<{ orderId: string }>();
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
 
-    // Mock Data for UI Development
-    const orderData = {
-        order: {
-            id: 'ORD-2023-12345',
-            paymentStatus: 'PAID',
-            placedAt: '2023-10-27T10:30:00Z',
-            totalCost: 150000,
-            numUnits: 2,
-            buffaloCount: 2,
-            calfCount: 2,
-            unitCost: 75000,
-            withCpf: true,
-            submittedAt: '2023-10-27T10:00:00Z'
-        },
-        investor: {
-            name: 'Priya Sharma',
-            mobile: '+91 9876543210',
-            email: 'priya.sharma@example.com',
-            city: 'Bangalore',
-            state: 'Karnataka',
-            role: 'Investor',
-            user_created_date: '2023-01-15T09:00:00Z',
-            verified: true,
-            panCardUrl: 'https://placehold.co/600x400/png?text=PAN+Card+Preview'
-        },
-        transaction: {
-            transaction: {
-                amount: 150000,
-                utr: 'ICI1234567890',
-                bankName: 'ICICI Bank',
-                transferMode: 'UPI',
-                paymentDate: '2023-10-27',
-                accountNumber: '**** **** **** 1234',
-                paymentScreenshotUrl: 'https://placehold.co/400x600/png?text=Payment+Screenshot'
-            }
+    const { adminMobile } = useAppSelector((state: RootState) => state.auth);
+    const { pendingUnits, loading } = useAppSelector((state: RootState) => state.orders);
+
+    // Local state to handle "single order fetch" status if not in list
+    const [isFetchingInfo, setIsFetchingInfo] = useState(false);
+
+    // Find order in current list
+    const foundEntry = useMemo(() => {
+        console.log('OrderDetailsPage Debug V2: orderId param:', orderId);
+        if (!pendingUnits || !orderId) return null;
+        const found = pendingUnits.find((u: any) => u.order?.id === orderId);
+        console.log('Found entry in standard list:', found ? 'Yes' : 'No');
+        return found;
+    }, [pendingUnits, orderId]);
+
+    useEffect(() => {
+        // If not found in current list, try fetching specifically
+        if (orderId && !foundEntry && adminMobile) {
+            setIsFetchingInfo(true);
+            dispatch(fetchPendingUnits({
+                adminMobile,
+                search: orderId,
+                page: 1,
+                pageSize: 10 // Fetch at least a few to be safe, though search should return 1
+            })).finally(() => {
+                setIsFetchingInfo(false);
+            });
         }
-    };
+    }, [orderId, adminMobile, dispatch, foundEntry]);
 
-    const { order, transaction, investor } = orderData;
+    const { order, transaction, investor } = foundEntry || {};
+
+    // Fallback while loading
+    if ((loading || isFetchingInfo) && !foundEntry) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-500 font-medium">Loading Order Details...</div>
+            </div>
+        );
+    }
+
+    if (!foundEntry && !loading && !isFetchingInfo) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center bg-gray-50">
+                <div className="text-gray-800 font-bold text-lg mb-2">Order Not Found</div>
+                <button
+                    onClick={() => navigate('/orders')}
+                    className="text-blue-600 hover:underline"
+                >
+                    Back to Orders
+                </button>
+            </div>
+        );
+    }
+
     // Helper to get transaction object - API structure might vary
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const txData: any = transaction?.transaction || transaction || {};

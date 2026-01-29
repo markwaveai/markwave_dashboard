@@ -389,7 +389,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                 return (
                                     <React.Fragment key={`${unit.id || 'order'}-${index}`}>
                                         <tr
-                                            onClick={() => navigate(`/orders/${unit.id}`)}
+                                            onClick={() => navigate(`/orders/${encodeURIComponent(unit.id)}`)}
                                             style={{ cursor: 'pointer' }}
                                             className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
                                         >
@@ -415,7 +415,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                             if (isExpandable) {
                                                                 handleToggleExpansion(unit.id);
                                                             } else {
-                                                                navigate(`/orders/${unit.id}`);
+                                                                navigate(`/orders/${encodeURIComponent(unit.id)}`);
                                                             }
                                                         }}
                                                         className={`text-[13px] font-bold p-0 text-left bg-transparent border-none ${isExpandable ? 'text-blue-600 underline cursor-pointer' : 'text-slate-700 cursor-pointer'}`}
@@ -563,73 +563,75 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             />
 
             {/* Floating Tooltip */}
-            {tooltipInfo && (() => {
-                const { tx, top, left } = tooltipInfo;
-                const isCheque = tx.paymentType === 'CHEQUE';
-                return (
-                    <div
-                        className="fixed z-[9999] bg-slate-900 border border-slate-800 rounded-xl p-4 w-[280px] shadow-2xl transition-opacity duration-300"
-                        style={{
-                            top: top,
-                            left: left,
-                            transform: 'translateY(-50%)',
-                        }}
-                        onMouseEnter={() => { }}
-                        onMouseLeave={() => setTooltipInfo(null)}
-                    >
-                        <div className="absolute top-1/2 right-full -mt-2 border-8 border-transparent border-r-slate-900"></div>
-                        <div className="text-[13px] font-bold text-slate-50 mb-3 pb-2 border-b border-slate-700">Payment Details</div>
-                        <div className="flex justify-between gap-3 mb-1.5">
-                            <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Bank Name:</span>
-                            <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{findVal(tx, ['bank_name', 'bankName', 'bank_details'], ['bank'])}</span>
-                        </div>
-                        <div className="flex justify-between gap-3 mb-1.5">
-                            <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">{isCheque ? 'Cheque No:' : 'A/C Number:'}</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
-                                    {isCheque
-                                        ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
-                                        : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no'])
-                                    }
-                                </span>
-                                {isCheque && (
-                                    <UTRCopyButton value={findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])} />
-                                )}
-                            </div>
-                        </div>
-                        <div className="flex justify-between gap-3 mb-1.5">
-                            <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">{isCheque ? 'Cheque Date:' : 'UTR:'}</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
-                                    {isCheque
-                                        ? findVal(tx, ['cheque_date', 'date'], ['date'])
-                                        : findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
-                                    }
-                                </span>
-                                {!isCheque && (
-                                    <UTRCopyButton value={findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])} />
-                                )}
-                            </div>
-                        </div>
-                        {!isCheque && (
+            {
+                tooltipInfo && (() => {
+                    const { tx, top, left } = tooltipInfo;
+                    const isCheque = tx.paymentType === 'CHEQUE';
+                    return (
+                        <div
+                            className="fixed z-[9999] bg-slate-900 border border-slate-800 rounded-xl p-4 w-[280px] shadow-2xl transition-opacity duration-300"
+                            style={{
+                                top: top,
+                                left: left,
+                                transform: 'translateY(-50%)',
+                            }}
+                            onMouseEnter={() => { }}
+                            onMouseLeave={() => setTooltipInfo(null)}
+                        >
+                            <div className="absolute top-1/2 right-full -mt-2 border-8 border-transparent border-r-slate-900"></div>
+                            <div className="text-[13px] font-bold text-slate-50 mb-3 pb-2 border-b border-slate-700">Payment Details</div>
                             <div className="flex justify-between gap-3 mb-1.5">
-                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">IFSC:</span>
-                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
+                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Bank Name:</span>
+                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{findVal(tx, ['bank_name', 'bankName', 'bank_details'], ['bank'])}</span>
                             </div>
-                        )}
-                        {tx.transferMode && (
-                            <div className="flex justify-between gap-3 mb-0">
-                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Mode:</span>
-                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{tx.transferMode}</span>
+                            <div className="flex justify-between gap-3 mb-1.5">
+                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">{isCheque ? 'Cheque No:' : 'A/C Number:'}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                    <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
+                                        {isCheque
+                                            ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
+                                            : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no'])
+                                        }
+                                    </span>
+                                    {isCheque && (
+                                        <UTRCopyButton value={findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])} />
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </div>
-                );
-            })()}
+                            <div className="flex justify-between gap-3 mb-1.5">
+                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">{isCheque ? 'Cheque Date:' : 'UTR:'}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                    <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
+                                        {isCheque
+                                            ? findVal(tx, ['cheque_date', 'date'], ['date'])
+                                            : findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
+                                        }
+                                    </span>
+                                    {!isCheque && (
+                                        <UTRCopyButton value={findVal(tx, ['utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])} />
+                                    )}
+                                </div>
+                            </div>
+                            {!isCheque && (
+                                <div className="flex justify-between gap-3 mb-1.5">
+                                    <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">IFSC:</span>
+                                    <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{findVal(tx, ['ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}</span>
+                                </div>
+                            )}
+                            {tx.transferMode && (
+                                <div className="flex justify-between gap-3 mb-0">
+                                    <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Mode:</span>
+                                    <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{tx.transferMode}</span>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()
+            }
             {/* Render Inlined Modals */}
             <ApprovalModal />
             <RejectionModal />
-        </div>
+        </div >
     );
 };
 
