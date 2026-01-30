@@ -503,18 +503,18 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleApproveWrapper(unit.id); }}
                                                             className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all shadow-sm border-none cursor-pointer flex items-center justify-center min-w-[80px] bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                            disabled={actionLoading || processingAction !== null}
+                                                            disabled={actionLoading}
                                                         >
-                                                            {processingAction?.id === unit.id && processingAction?.type === 'approve' ? 'Processing...' : 'Approve'}
+                                                            {processingAction?.id === unit.id && processingAction?.type === 'approve' ? 'Approving...' : 'Approve'}
                                                         </button>
                                                     )}
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleRejectWrapper(unit.id); }}
                                                             className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all shadow-sm border-none cursor-pointer flex items-center justify-center min-w-[80px] bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                            disabled={actionLoading || processingAction !== null}
+                                                            disabled={actionLoading}
                                                         >
-                                                            {processingAction?.id === unit.id && processingAction?.type === 'reject' ? 'Processing...' : 'Reject'}
+                                                            {processingAction?.id === unit.id && processingAction?.type === 'reject' ? 'Rejecting...' : 'Reject'}
                                                         </button>
                                                     )}
                                                 </div>
@@ -639,8 +639,13 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 const ApprovalModal: React.FC = () => {
     const dispatch = useAppDispatch();
     const { isOpen, unitId } = useAppSelector((state: RootState) => state.ui.modals.approval);
-    const { adminMobile, adminRole } = useAppSelector((state: RootState) => state.auth);
-    const { adminProfile } = useAppSelector((state: RootState) => state.users);
+    // Use fallback for adminMobile
+    const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
+    // Safely access potentially undefined state slices
+    const { adminProfile, adminRole } = useAppSelector((state: RootState) => ({
+        adminProfile: state.users?.adminProfile,
+        adminRole: state.auth?.adminRole
+    }));
 
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -669,14 +674,13 @@ const ApprovalModal: React.FC = () => {
         setIsSubmitting(true);
         try {
             await dispatch(approveOrder({
-                unitId,
+                unitId: String(unitId), // Ensure string
                 adminMobile,
                 comments: comment,
             })).unwrap();
 
             dispatch(setSnackbar({ message: 'Order approved successfully!', type: 'success' }));
-            dispatch(setApprovalModal({ isOpen: false, unitId: null }));
-            setComment('');
+            onClose(); // Use onClose to reset/close
         } catch (error) {
             console.error('Error approving order:', error);
             dispatch(setSnackbar({ message: 'Failed to approve order.', type: 'error' }));
@@ -688,9 +692,9 @@ const ApprovalModal: React.FC = () => {
     if (!isOpen) return null;
 
     return (
-        <div className={`fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] opacity-0 invisible transition-all duration-200 ${isOpen ? 'opacity-100 visible' : ''}`} onClick={onClose}>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000]" onClick={onClose}>
             <div
-                className={`bg-white w-[90%] max-w-[500px] rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200 ${isOpen ? 'scale-100' : ''}`}
+                className="bg-white w-[90%] max-w-[500px] rounded-xl shadow-2xl overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="px-6 pt-6">
@@ -747,8 +751,11 @@ const ApprovalModal: React.FC = () => {
 const RejectionModal: React.FC = () => {
     const dispatch = useAppDispatch();
     const { isOpen, unitId } = useAppSelector((state: RootState) => state.ui.modals.rejection);
-    const { adminMobile, adminRole } = useAppSelector((state: RootState) => state.auth);
-    const { adminProfile } = useAppSelector((state: RootState) => state.users);
+    const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
+    // Safely access potentially undefined state slices
+    const { adminProfile } = useAppSelector((state: RootState) => ({
+        adminProfile: state.users?.adminProfile
+    }));
 
     const [reason, setReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -765,7 +772,7 @@ const RejectionModal: React.FC = () => {
         return 'Admin';
     }, [adminProfile]);
 
-    // Reset reason when modal opens/closes
+    // Reset reason when modal opens
     useEffect(() => {
         if (isOpen) {
             setReason('');
@@ -786,13 +793,13 @@ const RejectionModal: React.FC = () => {
         setIsSubmitting(true);
         try {
             await dispatch(rejectOrder({
-                unitId,
+                unitId: String(unitId),
                 adminMobile,
                 comments: trimmedReason
             })).unwrap();
 
             dispatch(setSnackbar({ message: 'Order rejected successfully!', type: 'error' }));
-            dispatch(setRejectionModal({ isOpen: false, unitId: null }));
+            onClose();
         } catch (error) {
             console.error('Error rejecting order:', error);
             dispatch(setSnackbar({ message: 'Failed to reject order.', type: 'error' }));
@@ -804,35 +811,24 @@ const RejectionModal: React.FC = () => {
     if (!isOpen) return null;
 
     return (
-        <div className={`fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] opacity-0 invisible transition-all duration-200 ${isOpen ? 'opacity-100 visible' : ''}`} onClick={onClose}>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000]" onClick={onClose}>
             <div
-                className={`bg-white w-[90%] max-w-[500px] rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200 ${isOpen ? 'scale-100' : ''}`}
+                className="bg-white w-[90%] max-w-[500px] rounded-xl shadow-2xl overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="px-6 pt-6">
+                <div className="px-6 pt-6 mb-4">
                     <h3 className="m-0 mb-2 text-xl font-semibold text-slate-900">Reject Order</h3>
-                    <p className="m-0 text-sm text-slate-500 leading-snug">Please provide a reason for rejecting this order. This message will be sent to the investor.</p>
+                    <p className="m-0 text-sm text-slate-500 leading-snug">Please provide a reason for rejecting this order.</p>
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="p-6 text-slate-600">
-                        <div className="mb-5">
-                            <div className="text-[13px] font-medium text-slate-500 mb-2">Rejected By:</div>
-                            <div className="mb-4">
-                                <div className="text-base font-bold text-slate-900 mb-0.5">{realName}</div>
-                                <div className="text-sm text-slate-500 mb-0.5">{adminMobile}</div>
-                                <div className="text-[13px] font-medium text-slate-600 capitalize">{adminRole || 'Admin'}</div>
-                            </div>
-                        </div>
-
+                    <div className="px-6 mb-2">
                         <textarea
-                            className="w-full min-h-[120px] p-3 rounded-lg border border-slate-200 text-[15px] outline-none resize-y text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-sans"
-                            placeholder="Type rejection reason here..."
+                            className="w-full min-h-[100px] p-3 rounded-lg border border-slate-200 text-sm outline-none resize-y focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all font-medium text-slate-700"
+                            placeholder="Reason for rejection (required)..."
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            disabled={isSubmitting}
                             required
-                            autoFocus
                         />
                     </div>
 
@@ -847,17 +843,16 @@ const RejectionModal: React.FC = () => {
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-all bg-red-500 border border-transparent text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-all bg-red-600 border border-transparent text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                             disabled={isSubmitting || !reason.trim()}
                         >
                             {isSubmitting ? 'Rejecting...' : 'Reject Order'}
                         </button>
                     </div>
                 </form>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 
 export default OrdersTab;
-
