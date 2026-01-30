@@ -13,76 +13,56 @@ const RecentOrdersCard: React.FC = () => {
         { id: 'ORD-2024-005', customer: 'Vikram Mehta', status: 'PENDING_PAYMENT', amount: 15000, date: '2024-03-17' },
     ];
 
-    const getStatusStyle = (status: string) => {
+    const getStatusStyles = (status: string) => {
         switch (status) {
-            case 'PAID': return { bg: '#dcfce7', color: '#166534', label: 'Paid' };
-            case 'PENDING_ADMIN_VERIFICATION': return { bg: '#fef3c7', color: '#92400e', label: 'Pending' };
-            case 'REJECTED': return { bg: '#fee2e2', color: '#991b1b', label: 'Rejected' };
-            case 'PENDING_PAYMENT': return { bg: '#eff6ff', color: '#1e40af', label: 'Due' };
-            default: return { bg: '#f3f4f6', color: '#374151', label: status };
+            case 'PAID': return 'bg-green-100 text-green-800 label-Paid';
+            case 'PENDING_ADMIN_VERIFICATION': return 'bg-amber-100 text-amber-800 label-Pending';
+            case 'REJECTED': return 'bg-red-100 text-red-800 label-Rejected';
+            case 'PENDING_PAYMENT': return 'bg-blue-100 text-blue-800 label-Due';
+            default: return 'bg-gray-100 text-gray-800 label-' + status;
         }
     };
 
     return (
-        <div style={{
-            background: '#fff',
-            borderRadius: '20px',
-            padding: '24px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-            height: '100%',
-        }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#111827' }}>Recent Orders</h3>
+        <div className="bg-white rounded-[20px] p-6 shadow-sm h-full border border-gray-100">
+            <div className="flex justify-between items-center mb-5">
+                <h3 className="m-0 text-lg font-bold text-gray-900">Recent Orders</h3>
                 <button
                     onClick={() => navigate('/orders')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#4f46e5',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}
+                    className="bg-transparent border-none text-indigo-600 hover:text-indigo-700 cursor-pointer text-sm font-semibold flex items-center gap-1 p-0 transition-colors"
                 >
                     View All <ArrowRight size={16} />
                 </button>
             </div>
 
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
+            <div className="overflow-x-auto">
+                <table className="w-full border-separate border-spacing-y-2">
                     <thead>
-                        <tr style={{ textAlign: 'left', color: '#6b7280', fontSize: '13px' }}>
-                            <th style={{ paddingBottom: '8px', fontWeight: 500 }}>Order ID</th>
-                            <th style={{ paddingBottom: '8px', fontWeight: 500 }}>Customer</th>
-                            <th style={{ paddingBottom: '8px', fontWeight: 500 }}>Status</th>
-                            <th style={{ paddingBottom: '8px', fontWeight: 500 }}>Amount</th>
-                            <th style={{ paddingBottom: '8px', fontWeight: 500 }}>Date</th>
+                        <tr className="text-left text-gray-400 text-[13px]">
+                            <th className="pb-2 font-medium">Order ID</th>
+                            <th className="pb-2 font-medium">Customer</th>
+                            <th className="pb-2 font-medium">Status</th>
+                            <th className="pb-2 font-medium">Amount</th>
+                            <th className="pb-2 font-medium">Date</th>
                         </tr>
                     </thead>
                     <tbody>
                         {mockOrders.map((order) => {
-                            const statusStyle = getStatusStyle(order.status);
+                            const styles = getStatusStyles(order.status).split(' ');
+                            const label = styles.find(s => s.startsWith('label-'))?.replace('label-', '') || order.status;
+                            const badgeClasses = styles.filter(s => !s.startsWith('label-')).join(' ');
+
                             return (
-                                <tr key={order.id} style={{ fontSize: '14px' }}>
-                                    <td style={{ padding: '8px 0', color: '#111827', fontWeight: 500 }}>{order.id}</td>
-                                    <td style={{ padding: '8px 0', color: '#374151' }}>{order.customer}</td>
-                                    <td style={{ padding: '8px 0' }}>
-                                        <span style={{
-                                            backgroundColor: statusStyle.bg,
-                                            color: statusStyle.color,
-                                            padding: '4px 10px',
-                                            borderRadius: '9999px',
-                                            fontSize: '12px',
-                                            fontWeight: 600
-                                        }}>
-                                            {statusStyle.label}
+                                <tr key={order.id} className="text-sm">
+                                    <td className="py-2 text-gray-900 font-medium">{order.id}</td>
+                                    <td className="py-2 text-gray-600">{order.customer}</td>
+                                    <td className="py-2">
+                                        <span className={`${badgeClasses} px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap`}>
+                                            {label}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '8px 0', color: '#111827', fontWeight: 600 }}>₹{order.amount.toLocaleString('en-IN')}</td>
-                                    <td style={{ padding: '8px 0', color: '#6b7280', fontSize: '13px' }}>{new Date(order.date).toLocaleDateString()}</td>
+                                    <td className="py-2 text-gray-900 font-bold">₹{order.amount.toLocaleString('en-IN')}</td>
+                                    <td className="py-2 text-gray-500 text-[13px]">{new Date(order.date).toLocaleDateString()}</td>
                                 </tr>
                             );
                         })}

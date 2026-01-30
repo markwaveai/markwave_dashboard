@@ -78,43 +78,29 @@ const CoinsStatsCard: React.FC<CoinsStatsCardProps> = ({ count, target }) => {
     };
 
     return (
-        <div style={{
-            background: '#fff',
-            borderRadius: '20px',
-            padding: '24px',
-            flex: 1,
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '16px',
-            minHeight: '170px' // Initial height assumption, adjustable
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div className="bg-white rounded-[20px] p-6 shadow-sm flex flex-col justify-between gap-4 min-h-[170px] border border-gray-100 h-full">
+            <div className="flex items-center gap-5">
                 {/* Progress Circle */}
-                <div style={{ position: 'relative', width: '60px', height: '60px' }}>
+                <div className="relative w-[60px] h-[60px] shrink-0">
                     <Doughnut data={createProgressData(89, '#f59e0b')} options={progressOptions} />
-                    <div style={{
-                        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                        fontSize: '12px', fontWeight: 'bold', color: '#f59e0b'
-                    }}>
+                    <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-amber-500">
                         89%
                     </div>
                 </div>
                 {/* Text Info */}
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '14px', color: '#52525b', fontWeight: 500 }}>Distributed Coins</div>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a' }}>{count}</div>
-                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>Target: {target}</div>
+                <div className="flex flex-col">
+                    <div className="text-sm text-gray-500 font-medium">Distributed Coins</div>
+                    <div className="text-2xl font-bold text-slate-900">{count}</div>
+                    <div className="text-xs text-gray-400">Target: {target}</div>
                 </div>
             </div>
 
             {/* Growth & Wave */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '40px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#16a34a', marginBottom: '8px' }}>
+            <div className="flex items-end justify-between h-10">
+                <div className="text-[13px] font-semibold text-green-600 mb-2">
                     ▲ 8.2%
                 </div>
-                <div style={{ width: '120px', height: '100%' }}>
+                <div className="w-[120px] h-full">
                     <Line data={createWaveChartData('#f59e0b', 'rgba(245, 158, 11, 0.1)')} options={waveOptions} />
                 </div>
             </div>

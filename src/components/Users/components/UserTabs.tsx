@@ -502,7 +502,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                         className={`nav-item ${location.pathname.includes('/73d2a') ? 'active' : ''}`}
                         style={{ padding: '8px 12px', fontSize: '0.9em', textDecoration: 'none' }}
                         to="/unit-calculator/73d2a"
-                        state={{ fromDashboard: true, authorizedNavigation: true }}
+                        state={{ fromDashboard: true }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <span className="nav-text">With Tree</span>
@@ -513,7 +513,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                         className={`nav-item ${location.pathname.includes('/92f1b') ? 'active' : ''}`}
                         style={{ padding: '8px 12px', fontSize: '0.9em', textDecoration: 'none' }}
                         to="/unit-calculator/92f1b"
-                        state={{ fromDashboard: true, authorizedNavigation: true }}
+                        state={{ fromDashboard: true }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <span className="nav-text">Without Tree</span>

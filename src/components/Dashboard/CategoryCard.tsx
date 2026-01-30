@@ -10,7 +10,6 @@ interface CategoryCardProps {
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ totalUsers }) => {
 
-    // Sample data to match the visual request
     const data = {
         labels: ['Investors', 'Employees', 'Special'],
         datasets: [
@@ -31,7 +30,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ totalUsers }) => {
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                display: false, // Custom legend below
+                display: false,
             },
             tooltip: {
                 enabled: true,
@@ -39,78 +38,41 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ totalUsers }) => {
         },
     };
 
-    // Custom Plugin to draw text inside slices
-    const textCenterPlugin = {
-        id: 'textCenter',
-        afterDatasetsDraw(chart: any) {
-            const { ctx, data } = chart;
-            ctx.save();
-            ctx.font = 'bold 12px sans-serif';
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            const meta = chart.getDatasetMeta(0);
-            meta.data.forEach((element: any, index: number) => {
-                const dataValue = data.datasets[0].data[index];
-                const { x, y } = element.tooltipPosition();
-                ctx.fillText(dataValue, x, y);
-            });
-            ctx.restore();
-        }
-    };
-
     return (
-        <div style={{
-            background: '#fff',
-            borderRadius: '20px',
-            padding: '24px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '16px',
-            minHeight: '170px'
-        }}>
-            <h3 style={{
-                margin: 0,
-                fontSize: '16px',
-                fontWeight: 'bold',
-                color: '#111827'
-            }}>
+        <div className="bg-white rounded-[20px] p-6 shadow-sm border border-gray-100 flex flex-col justify-between gap-4 min-h-[170px] h-full">
+            <h3 className="m-0 text-base font-bold text-gray-900">
                 Users
             </h3>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+            <div className="flex items-center gap-4 flex-1">
                 {/* Chart Left */}
-                <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
+                <div className="relative w-[100px] h-[100px] shrink-0">
                     <Pie data={data} options={options} />
                 </div>
 
                 {/* Right Legend */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6' }}></div>
-                            <span style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>Investors</span>
+                <div className="flex flex-col gap-2 flex-1">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                            <span className="text-[10px] text-gray-500 whitespace-nowrap">Investors</span>
                         </div>
-                        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#111827' }}>12</span>
+                        <span className="text-[10px] font-bold text-gray-900">12</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }}></div>
-                            <span style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>Employees</span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                            <span className="text-[10px] text-gray-500 whitespace-nowrap">Employees</span>
                         </div>
-                        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#111827' }}>45</span>
+                        <span className="text-[10px] font-bold text-gray-900">45</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8b5cf6' }}></div>
-                            <span style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>Special</span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
+                            <span className="text-[10px] text-gray-500 whitespace-nowrap">Special</span>
                         </div>
-                        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#111827' }}>8</span>
+                        <span className="text-[10px] font-bold text-gray-900">8</span>
                     </div>
-                    {/* Placeholder numbers used in legend to match visual, mapping to data would need access to dataset values */}
                 </div>
             </div>
         </div>

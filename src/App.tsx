@@ -57,6 +57,12 @@ interface Session {
 
 
 
+// Helper component to handle smart redirects for Unit Calculator based on session history
+const SmartUnitCalculatorRedirect = () => {
+  const lastMode = sessionStorage.getItem('lastUnitCalcMode') || '73d2a';
+  return <Navigate to={`/unit-calculator/${lastMode}`} replace />;
+};
+
 function App() {
   const [session, setSession] = useState<Session | null>(() => {
     const saved = window.localStorage.getItem('ak_dashboard_session');
@@ -226,7 +232,7 @@ function App() {
           </ConditionalLayoutWrapper>
         } />
 
-        <Route path="/unit-calculator" element={<Navigate to="/unit-calculator/73d2a" replace />} />
+        <Route path="/unit-calculator" element={<SmartUnitCalculatorRedirect />} />
 
         <Route path="/emi-calculator" element={
           <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>

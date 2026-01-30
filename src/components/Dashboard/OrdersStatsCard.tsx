@@ -44,73 +44,51 @@ const OrdersStatsCard: React.FC<OrdersStatsCardProps> = ({ total, pending, appro
     };
 
     return (
-        <div style={{
-            background: '#fff',
-            borderRadius: '20px',
-            padding: '24px',
-            flex: 1,
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: '16px',
-            minHeight: '170px'
-        }}>
-            <h3 style={{
-                margin: 0,
-                fontSize: '16px',
-                fontWeight: 'bold',
-                color: '#111827'
-            }}>
+        <div className="bg-white rounded-[20px] p-6 shadow-sm border border-gray-100 flex flex-col justify-between gap-4 min-h-[170px] h-full">
+            <h3 className="m-0 text-base font-bold text-gray-900">
                 Orders
             </h3>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+            <div className="flex items-center gap-4 flex-1">
                 {/* Chart Left */}
-                <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
+                <div className="relative w-[100px] h-[100px] shrink-0">
                     <Doughnut data={data} options={options} />
                     {/* Center Text Overlay */}
-                    <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        textAlign: 'center',
-                    }}>
-                        <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: 'bold' }}>Total</div>
-                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#111827' }}>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total</div>
+                        <div className="text-sm font-bold text-gray-900 leading-tight">
                             {total}
                         </div>
                     </div>
                 </div>
 
                 {/* Right Legend */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                <div className="flex flex-col gap-2 flex-1">
                     {/* Approved */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }}></div>
-                            <span style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>Approved</span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                            <span className="text-[10px] text-gray-500 whitespace-nowrap">Approved</span>
                         </div>
-                        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#111827' }}>{approved}</span>
+                        <span className="text-[10px] font-bold text-gray-900">{approved}</span>
                     </div>
 
                     {/* Pending */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fbbf24' }}></div>
-                            <span style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>Pending</span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                            <span className="text-[10px] text-gray-500 whitespace-nowrap">Pending</span>
                         </div>
-                        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#111827' }}>{pending}</span>
+                        <span className="text-[10px] font-bold text-gray-900">{pending}</span>
                     </div>
 
                     {/* Rejected */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f87171' }}></div>
-                            <span style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'nowrap' }}>Rejected</span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
+                            <span className="text-[10px] text-gray-500 whitespace-nowrap">Rejected</span>
                         </div>
-                        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#111827' }}>{rejected}</span>
+                        <span className="text-[10px] font-bold text-gray-900">{rejected}</span>
                     </div>
                 </div>
             </div>
