@@ -101,6 +101,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
   else if (currentPath.includes('/true-harvest-support')) activeTab = 'true-harvest-support';
+  else if (currentPath.includes('/landify/legal')) activeTab = 'landify-legal';
+  else if (currentPath.includes('/landify/support')) activeTab = 'landify-support';
+  else if (currentPath.includes('/landify/deactivate')) activeTab = 'landify-deactivate';
   else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
   else if (currentPath.includes('/support')) activeTab = 'support';
   else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
@@ -114,6 +117,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       // No, we'll initialize or use useEffect.
     }
   }
+
 
   else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets'; // Added support-tickets active state
 
@@ -584,6 +588,30 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                   <LifeBuoy size={18} />
                   <span className="nav-text">True Harvest Support</span>
+                </div>
+              </button>
+            </li>
+            <li>
+              <button className={`nav-item ${activeTab === 'landify-legal' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/landify/legal', { state: { fromDashboard: true } }); }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <ShieldIcon size={18} />
+                  <span className="nav-text">Landify Legal</span>
+                </div>
+              </button>
+            </li>
+            <li>
+              <button className={`nav-item ${activeTab === 'landify-support' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/landify/support', { state: { fromDashboard: true } }); }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <LifeBuoy size={18} />
+                  <span className="nav-text">Landify Support</span>
+                </div>
+              </button>
+            </li>
+            <li>
+              <button className={`nav-item ${activeTab === 'landify-deactivate' ? 'active-main' : ''}`} onClick={(e) => { e.stopPropagation(); navigate('/landify/deactivate', { state: { fromDashboard: true } }); }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <UserMinus size={18} />
+                  <span className="nav-text">Landify Deactivate</span>
                 </div>
               </button>
             </li>

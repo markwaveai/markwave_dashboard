@@ -35,6 +35,9 @@ import PrivacyPolicy from './components/public/PrivacyPolicy';
 import TrueHarvestPrivacyPolicy from './components/true-harvest/TrueHarvestPrivacyPolicy';
 import TrueHarvestDeactivateUser from './components/true-harvest/TrueHarvestDeactivateUser';
 import TrueHarvestSupport from './components/true-harvest/TrueHarvestSupport';
+import LandifyLegal from './components/landify/LandifyLegal';
+import LandifySupport from './components/landify/LandifySupport';
+import LandifyDeactivateUser from './components/landify/LandifyDeactivateUser';
 import Support from './components/Support/Support';
 
 // Skeletons
@@ -315,6 +318,24 @@ function App() {
           </ConditionalLayoutWrapper>
         } />
 
+        <Route path="/landify/legal" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <LandifyLegal />
+          </ConditionalLayoutWrapper>
+        } />
+
+        <Route path="/landify/support" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <LandifySupport />
+          </ConditionalLayoutWrapper>
+        } />
+
+        <Route path="/landify/deactivate" element={
+          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <LandifyDeactivateUser />
+          </ConditionalLayoutWrapper>
+        } />
+
         {/* Default redirect to orders or login */}
         <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
         <Route path="/user-management/network/:mobile" element={
@@ -378,7 +399,10 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
     '/privacy-policy',
     '/true-harvest-privacy-policy',
     '/true-harvest-deactivate-user',
-    '/support'
+    '/support',
+    '/landify/legal',
+    '/landify/support',
+    '/landify/deactivate'
   ];
 
   const isDashboardPath = dashboardPaths.some(path => location.pathname.startsWith(path));
