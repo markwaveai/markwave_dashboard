@@ -11,7 +11,7 @@ import {
 } from '../store/slices/uiSlice';
 import {
     createReferralUser
-} from '../store/slices/UsersSlice';
+} from '../store/slices/usersSlice';
 
 // Components
 import TopNavbar from './topnavbar/TopNavbar';

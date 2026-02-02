@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import type { RootState } from '../../../store';
-import { fetchNetwork } from '../../../store/slices/UsersSlice';
+import { fetchNetwork } from '../../../store/slices/usersSlice';
 import Pagination from '../common/Pagination';
 import TableSkeleton from '../common/TableSkeleton';
 import { Award, Users, Target, ShoppingBag } from 'lucide-react';

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import type { RootState } from '../../../store';
 import { useNavigate } from 'react-router-dom';
-import { fetchManagedUsers } from '../../../store/slices/UsersSlice';
+import { fetchManagedUsers } from '../../../store/slices/usersSlice';
 import Pagination from '../common/Pagination';
 import TableSkeleton from '../common/TableSkeleton';
 import { CreateUserModal, CreateUserFormData, CreateUserModalProps } from './components/CreateUserModal';

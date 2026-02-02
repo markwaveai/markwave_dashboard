@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setSession as setReduxSession } from './store/slices/authSlice';
-import { fetchAdminProfile } from './store/slices/UsersSlice';
+import { fetchAdminProfile } from './store/slices/usersSlice';
 import { RootState } from './store';
 import React, { useState, useCallback, useEffect } from 'react';
 import HealthStatus from './components/topnavbar/HealthStatus';
