@@ -15,6 +15,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
     // Real Tracking Integration
     const [realTrackingData, setRealTrackingData] = useState<any>(null);
     const [trackingLoading, setTrackingLoading] = useState(false);
+    const [actionLoading, setActionLoading] = useState<string | null>(null); // Track specific stage being updated
 
     useEffect(() => {
         if (orderId) {
@@ -113,6 +114,8 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
             return;
         }
 
+        setActionLoading(`${orderId}-${nextStageId}`);
+
         const payload = {
             orderId: orderId,
             status: status,
@@ -155,6 +158,8 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
         } catch (err) {
             console.error("Failed to update status", err);
             alert("Error updating status");
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -171,7 +176,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
         <div className="transition-all duration-300 ease-in-out">
             <div className="block">
                 <div className="w-full">
-                    <div className="grid grid-cols-1 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                         {realTrackingData?.deliveryPhases ? (
                             realTrackingData.deliveryPhases.map((phase: any, index: number) => {
@@ -211,7 +216,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
                                     : `(${buffaloCount} Buffaloes)`;
 
                                 return (
-                                    <div key={cycleNum} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-5">
+                                    <div key={cycleNum} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                                         <div className="p-5 border-b border-slate-100 flex justify-between items-start">
                                             <div className="flex flex-col">
                                                 <span className="text-base font-bold text-slate-800">{`Cycle ${cycleNum} ${buffaloText}`}</span>
@@ -260,9 +265,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
                                                                 )}
                                                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center z-10 text-[10px] font-bold border-2 ${isStepCompleted
                                                                     ? 'bg-emerald-500 border-emerald-500 text-white'
-                                                                    : isCurrent
-                                                                        ? 'bg-blue-500 border-blue-500 text-white'
-                                                                        : 'bg-white border-slate-200 text-slate-400'
+                                                                    : 'bg-white border-slate-200 text-slate-400'
                                                                     }`}>
                                                                     {isStepCompleted ? '✓' : stage.id}
                                                                 </div>
@@ -272,7 +275,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
                                                             <div className={`flex-1 ${!isLast ? 'pb-8' : ''}`}>
                                                                 <div className="flex justify-between items-start">
                                                                     <div className="flex flex-col">
-                                                                        <div className={`text-sm font-bold mb-1 ${isStepCompleted ? 'text-emerald-600' : isCurrent ? 'text-blue-600' : 'text-slate-400'}`}>
+                                                                        <div className={`text-sm font-bold mb-1 ${isStepCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
                                                                             {stage.label}
                                                                         </div>
                                                                         <div className="text-xs text-slate-500 font-medium leading-relaxed max-w-md">
@@ -282,11 +285,13 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
 
                                                                     {(isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8 && (
                                                                         <button
-                                                                            className="ml-4 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm border-none cursor-pointer whitespace-nowrap"
+                                                                            className={`ml-4 px-3 py-1.5 text-xs font-semibold text-white rounded-md transition-colors shadow-sm border-none cursor-pointer whitespace-nowrap ${actionLoading === `${orderId}-${stage.id + 1}` ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                                                                             onClick={() => handleStageUpdateLocal(orderId, buffaloIds, stage.id + 1)}
+                                                                            disabled={actionLoading === `${orderId}-${stage.id + 1}`}
                                                                         >
                                                                             {(() => {
                                                                                 const nextId = stage.id + 1;
+                                                                                if (actionLoading === `${orderId}-${nextId}`) return 'Updating...';
                                                                                 if (nextId === 5) return 'Update Placed to Market';
                                                                                 if (nextId === 6) return 'Update Bought';
                                                                                 if (nextId === 7) return 'Update In Quarantine';
@@ -298,7 +303,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
 
                                                                     {stage.status === 'COMPLETED' && !((isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8) && (
                                                                         <span className="ml-4 px-3 py-1 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 whitespace-nowrap">
-                                                                            {stage.id === 7 ? 'Delivered' : 'Completed'}
+                                                                            Completed
                                                                         </span>
                                                                     )}
                                                                 </div>
