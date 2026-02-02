@@ -18,10 +18,10 @@ import BuffaloVisualizationTab from './components/BuffaloViz/BuffaloVisualizatio
 import EmiCalculatorTab from './components/Calculators/Emi/EmiCalculatorTab';
 import AcfCalculatorTab from './components/Calculators/Acf/AcfCalculatorTab';
 import UnitCalculatorTab from './components/Calculators/Unit/UnitCalculatorTab';
-import SupportTicketsTab from './components/Support/SupportTicketsTab';
+import SupportTicketsTab from './components/public/SupportTicketsTab';
 import CustomerDetailsPage from './components/Users/CustomerDetails';
-import NetworkTab from './components/Users/Network';
-import NetworkUserDetailsPage from './components/Users/NetworkUserDetails';
+import NetworkTab from './components/Network/Network';
+import NetworkUserDetailsPage from './components/Network/NetworkUserDetails';
 
 // Public Pages
 import ReferralLandingPage from './components/public/ReferralLandingPage';
@@ -38,7 +38,7 @@ import TrueHarvestSupport from './components/true-harvest/TrueHarvestSupport';
 import LandifyLegal from './components/landify/LandifyLegal';
 import LandifySupport from './components/landify/LandifySupport';
 import LandifyDeactivateUser from './components/landify/LandifyDeactivateUser';
-import Support from './components/Support/Support';
+import Support from './components/public/Support';
 
 // Skeletons
 import OrdersPageSkeleton from './components/common/skeletons/OrdersPageSkeleton';

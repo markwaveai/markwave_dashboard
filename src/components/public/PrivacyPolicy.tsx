@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import './PrivacyPolicy.css';
+
 
 const DEFAULT_CONTENT = `
     <h1>Privacy Policy & Terms and Conditions</h1>
@@ -157,18 +157,33 @@ const PrivacyPolicy: React.FC = () => {
     ];
 
     return (
-        <div className="privacy-container">
+        <div className="w-full min-h-full bg-white px-10 py-8 font-['Inter'] text-slate-700 box-border">
             {isAdmin && !isEditing && (
-                <div className="edit-button-container">
-                    <button onClick={handleEdit} className="edit-btn"> Edit Policy</button>
+                <div className="flex justify-end mb-4">
+                    <button
+                        onClick={handleEdit}
+                        className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white border-0 py-2 px-4 rounded-lg cursor-pointer font-medium text-sm transition-all hover:-translate-y-px shadow-sm"
+                    >
+                        Edit Policy
+                    </button>
                 </div>
             )}
 
             {isEditing ? (
                 <>
-                    <div className="editor-controls">
-                        <button onClick={handleSave} className="save-btn">Save Changes</button>
-                        <button onClick={handleCancel} className="cancel-btn">Cancel</button>
+                    <div className="flex justify-end gap-3 mb-4 pb-4 border-b border-slate-100">
+                        <button
+                            onClick={handleSave}
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white border-0 py-2 px-4 rounded-md cursor-pointer font-semibold text-sm shadow-sm transition-colors"
+                        >
+                            Save Changes
+                        </button>
+                        <button
+                            onClick={handleCancel}
+                            className="bg-red-500 hover:bg-red-600 text-white border-0 py-2 px-4 rounded-md cursor-pointer font-semibold text-sm shadow-sm transition-colors"
+                        >
+                            Cancel
+                        </button>
                     </div>
                     <ReactQuill
                         theme="snow"
@@ -176,11 +191,23 @@ const PrivacyPolicy: React.FC = () => {
                         onChange={setEditContent}
                         modules={modules}
                         formats={formats}
-                        className="privacy-editor"
+                        className="[&_.ql-container]:min-h-[400px] [&_.ql-container]:font-['Inter'] [&_.ql-container]:border-none [&_.ql-toolbar]:border-none [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-slate-200 [&_.ql-toolbar]:pb-3 bg-white rounded-xl border border-slate-200 p-5 mb-10"
                     />
                 </>
             ) : (
-                <div className="privacy-content ql-editor" dangerouslySetInnerHTML={{ __html: content }} />
+                <div
+                    className="max-w-[850px] mx-auto ql-editor
+                    [&_h1]:text-4xl [&_h1]:text-slate-800 [&_h1]:font-bold [&_h1]:mb-5 [&_h1]:border-b-2 [&_h1]:border-slate-200 [&_h1]:pb-4 [&_h1]:text-left
+                    [&_h2]:text-3xl [&_h2]:text-slate-800 [&_h2]:font-semibold [&_h2]:mt-8 [&_h2]:mb-3
+                    [&_h3]:text-xl [&_h3]:text-slate-800 [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2
+                    [&_p]:text-slate-600 [&_p]:text-lg [&_p]:mb-3 [&_p]:leading-relaxed
+                    [&_ul]:list-none [&_ul]:pl-0 [&_ul]:mb-5
+                    [&_li]:relative [&_li]:pl-7 [&_li]:mb-2 [&_li]:text-slate-700 [&_li]:text-base [&_li]:leading-relaxed
+                    [&_li::before]:content-['•'] [&_li::before]:text-[#35d1f5] [&_li::before]:font-bold [&_li::before]:text-2xl [&_li::before]:absolute [&_li::before]:left-0 [&_li::before]:-top-1
+                    [&_strong]:text-slate-900 [&_strong]:font-semibold
+                    "
+                    dangerouslySetInnerHTML={{ __html: content }}
+                />
             )}
         </div>
     );

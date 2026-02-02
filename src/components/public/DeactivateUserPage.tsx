@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import './DeactivateUserPage.css';
 import { ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,7 +16,7 @@ import {
 const Snackbar = ({ message, type }: { message: string; type: 'success' | 'error' }) => {
     return (
         <div
-            className={`fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 z-50 flex items-center gap-2 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'
+            className={`fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 z-50 flex items-center gap-2 animate-popIn ${type === 'success' ? 'bg-green-600' : 'bg-red-600'
                 }`}
         >
             {type === 'success' ? (
@@ -46,7 +45,7 @@ const Modal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-100">
+            <div className={`bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-100 animate-popIn`}>
                 <h3
                     className={`text-lg font-bold text-center mb-2 ${type === 'success' ? 'text-gray-900' : 'text-red-900'
                         }`}
@@ -59,8 +58,8 @@ const Modal = ({
                 <button
                     onClick={onClose}
                     className={`w-full py-2.5 rounded-xl font-semibold text-white shadow-sm transition-all active:scale-95 ${type === 'success'
-                            ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-green-200'
-                            : 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-red-200'
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-green-200'
+                        : 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-red-200'
                         }`}
                 >
                     OK
@@ -94,7 +93,7 @@ const ConfirmModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className={`bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-popIn`}>
                 <h3 className="text-lg font-bold text-center text-gray-900 mb-2">{title}</h3>
                 <p className="text-sm text-center text-gray-600 mb-6">{message}</p>
 
@@ -111,8 +110,8 @@ const ConfirmModal = ({
                         type="button"
                         onClick={onConfirm}
                         className={`flex-1 py-2.5 rounded-xl font-semibold text-white shadow-sm transition-all active:scale-95 ${type === 'danger'
-                                ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-red-200'
-                                : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-green-200'
+                            ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-red-200'
+                            : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-green-200'
                             }`}
                     >
                         {okText}
@@ -373,36 +372,39 @@ const DeactivateUserPage = () => {
     };
 
     return (
-        <div className="deactivate-user-container">
+        <div className="min-h-full font-['Inter'] text-black bg-[#f3f6fc]">
             {/* Navbar */}
-            <nav className="landing-navbar">
-                <div className="landing-brand">
-                    <span style={{ color: 'white', fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.5px' }}>
+            <nav className="flex flex-col sm:flex-row justify-between items-center px-4 md:px-[5%] py-3 bg-slate-800 text-white shadow-md gap-4 sm:gap-0">
+                <div className="flex items-center gap-3 font-bold text-2xl text-white">
+                    <span className="text-[1.8rem] font-[800] tracking-[-0.5px]">
                         Animalkart
                     </span>
                 </div>
             </nav>
 
-            <div className="promo-banner">
+            <div className="bg-[#eef2ff] text-black text-center p-2 text-sm font-semibold">
                 {mode === 'deactivate' ? 'Deactivate your account securely' : 'Activate your account securely'}
             </div>
 
-            <section className="landing-hero">
+            <section className="flex flex-wrap max-w-[1400px] mx-auto p-6 md:p-10 gap-10 items-center lg:items-stretch justify-between">
                 {/* Left */}
-                <div className="hero-content">
-                    <div className="hero-image-container" style={{ marginTop: 0 }}>
-                        <img src="/buffalo-family.jpg" alt="Buffalo Family" className="hero-image" />
+                <div className="flex-1 min-w-[300px] md:min-w-[400px] flex flex-col w-full">
+                    <div className="mt-0 relative w-full h-[250px] md:h-[350px] lg:h-full flex overflow-hidden rounded-[20px]">
+                        <img src="/buffalo-family.jpg" alt="Buffalo Family" className="w-full h-full object-cover block animate-slowZoom" />
                     </div>
                 </div>
 
                 {/* Right */}
-                <div className="hero-form-container">
-                    <div className="trial-form-card">
+                <div className="flex flex-col w-full max-w-[100%] md:max-w-[500px] lg:flex-[0_0_420px]">
+                    <div className="bg-white p-6 md:p-[35px] rounded-[20px] shadow-[0_20px_40px_rgba(0,0,0,0.08)] h-full flex flex-col justify-center">
                         {/* Two Buttons */}
-                        <div className="mode-switch">
+                        <div className="flex gap-2.5 mb-4 p-1.5 rounded-2xl bg-[#f1f5f9] border border-[rgba(0,0,0,0.04)]">
                             <button
                                 type="button"
-                                className={`mode-btn ${mode === 'activate' ? 'active' : ''}`}
+                                className={`flex-1 p-3 rounded-[14px] font-[800] text-sm border-none cursor-pointer transition-all duration-250 ${mode === 'activate'
+                                    ? 'bg-[#111827] text-white shadow-[0_10px_20px_rgba(0,0,0,0.15)] -translate-y-[1px]'
+                                    : 'bg-transparent text-[#334155] hover:bg-[rgba(0,0,0,0.04)]'
+                                    }`}
                                 onClick={() => handleModeSwitch('activate')}
                             >
                                 Activate User
@@ -410,17 +412,22 @@ const DeactivateUserPage = () => {
 
                             <button
                                 type="button"
-                                className={`mode-btn ${mode === 'deactivate' ? 'active danger' : 'danger'}`}
+                                className={`flex-1 p-3 rounded-[14px] font-[800] text-sm border-none cursor-pointer transition-all duration-250 ${mode === 'deactivate'
+                                    ? 'bg-[#ef4444] text-white shadow-[0_10px_20px_rgba(239,68,68,0.25)] -translate-y-[1px]'
+                                    : 'bg-transparent text-[#334155] hover:bg-[rgba(0,0,0,0.04)]'
+                                    }`}
                                 onClick={() => handleModeSwitch('deactivate')}
                             >
                                 Deactivate User
                             </button>
                         </div>
 
-                        <div className="form-header">
-                            <h2 className="form-title">{mode === 'deactivate' ? 'Deactivate Account' : 'Activate Account'}</h2>
+                        <div className="text-center mb-6">
+                            <h2 className="text-black text-[1.3rem] font-[800] mb-2.5 leading-[1.3]">
+                                {mode === 'deactivate' ? 'Deactivate Account' : 'Activate Account'}
+                            </h2>
 
-                            <p className="form-subtitle">
+                            <p className="mb-4 text-black text-[0.95rem]">
                                 {mode === 'deactivate' ? (
                                     <span className="font-semibold text-black">We're sorry to see you go.</span>
                                 ) : (
@@ -442,8 +449,7 @@ const DeactivateUserPage = () => {
                                         type="tel"
                                         name="mobile"
                                         placeholder="Enter your registered mobile *"
-                                        className="landing-input !pl-14"
-                                        style={{ marginBottom: 0 }}
+                                        className="w-full p-3.5 pl-14 mb-0 border border-[#e2e8f0] rounded-[50px] text-base outline-none transition-all duration-200 bg-[#f8fafc] focus:border-[#238E8B] focus:bg-white focus:shadow-[0_0_0_3px_rgba(35,142,139,0.12)]"
                                         value={formData.mobile}
                                         onChange={(e) => {
                                             const val = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -454,28 +460,26 @@ const DeactivateUserPage = () => {
                                 </div>
 
                                 {/* First + Last */}
-                                <div style={{ display: 'flex', gap: '10px' }}>
+                                <div className="flex gap-2.5 mb-4">
                                     <input
                                         type="text"
                                         name="first_name"
                                         placeholder="First Name *"
-                                        className="landing-input"
+                                        className="w-full p-3.5 mb-0 border border-[#e2e8f0] rounded-[50px] text-base outline-none transition-all duration-200 bg-[#f8fafc] focus:border-[#238E8B] focus:bg-white focus:shadow-[0_0_0_3px_rgba(35,142,139,0.12)] flex-1"
                                         value={formData.first_name}
                                         onChange={handleInputChange}
                                         maxLength={30}
                                         required
-                                        style={{ flex: 1 }}
                                     />
                                     <input
                                         type="text"
                                         name="last_name"
                                         placeholder="Last Name *"
-                                        className="landing-input"
+                                        className="w-full p-3.5 mb-0 border border-[#e2e8f0] rounded-[50px] text-base outline-none transition-all duration-200 bg-[#f8fafc] focus:border-[#238E8B] focus:bg-white focus:shadow-[0_0_0_3px_rgba(35,142,139,0.12)] flex-1"
                                         value={formData.last_name}
                                         onChange={handleInputChange}
                                         maxLength={30}
                                         required
-                                        style={{ flex: 1 }}
                                     />
                                 </div>
 
@@ -484,7 +488,7 @@ const DeactivateUserPage = () => {
                                     type="email"
                                     name="email"
                                     placeholder="Email Address (Optional)"
-                                    className="landing-input"
+                                    className="w-full p-3.5 mb-3.5 border border-[#e2e8f0] rounded-[50px] text-base outline-none transition-all duration-200 bg-[#f8fafc] focus:border-[#238E8B] focus:bg-white focus:shadow-[0_0_0_3px_rgba(35,142,139,0.12)]"
                                     value={formData.email}
                                     onChange={handleInputChange}
                                 />
@@ -492,7 +496,7 @@ const DeactivateUserPage = () => {
                                 <button
                                     type="submit"
                                     disabled={deactivation.loading}
-                                    className="w-full font-bold py-3 rounded-full transition mt-6 shadow-lg uppercase tracking-wide mb-4 disabled:opacity-70 disabled:cursor-not-allowed referral-btn"
+                                    className="w-full font-bold py-3 rounded-full transition-all duration-200 ease-in-out mt-6 shadow-lg uppercase tracking-wide mb-4 disabled:opacity-70 disabled:cursor-not-allowed text-white hover:transform hover:-translate-y-px"
                                     style={{
                                         backgroundColor: mode === 'deactivate' ? '#ef4444' : '#16a34a',
                                     }}
@@ -510,7 +514,7 @@ const DeactivateUserPage = () => {
                                     type="text"
                                     name="otp"
                                     placeholder="Enter OTP"
-                                    className="landing-input text-center tracking-widest font-bold text-lg"
+                                    className="w-full p-3.5 mb-3.5 border border-[#e2e8f0] rounded-[50px] text-base outline-none transition-all duration-200 bg-[#f8fafc] focus:border-[#238E8B] focus:bg-white focus:shadow-[0_0_0_3px_rgba(35,142,139,0.12)] text-center tracking-widest font-bold text-lg"
                                     value={otp}
                                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                     required
@@ -520,7 +524,7 @@ const DeactivateUserPage = () => {
                                 <button
                                     type="submit"
                                     disabled={deactivation.loading}
-                                    className="w-full font-bold py-3 rounded-full transition mt-6 shadow-lg uppercase tracking-wide mb-4 disabled:opacity-70 disabled:cursor-not-allowed referral-btn"
+                                    className="w-full font-bold py-3 rounded-full transition-all duration-200 ease-in-out mt-6 shadow-lg uppercase tracking-wide mb-4 disabled:opacity-70 disabled:cursor-not-allowed text-white hover:transform hover:-translate-y-px"
                                     style={{
                                         backgroundColor: mode === 'deactivate' ? '#ef4444' : '#16a34a',
                                     }}
@@ -531,7 +535,7 @@ const DeactivateUserPage = () => {
                                 <button
                                     type="button"
                                     onClick={() => setStep('mobile')}
-                                    className="w-full text-sm text-gray-500 hover:text-gray-800 underline"
+                                    className="w-full text-sm text-gray-500 hover:text-gray-800 underline block text-center"
                                 >
                                     Change Mobile Number
                                 </button>
@@ -539,7 +543,7 @@ const DeactivateUserPage = () => {
                         )}
 
                         <div className="text-center text-xs text-black mt-2">
-                            <Link to="/privacy-policy" className="underline hover:text-blue-600" target="_blank" style={{ color: '#000000' }}>
+                            <Link to="/privacy-policy" className="underline hover:text-blue-600 text-black decoration-black" target="_blank">
                                 Terms and Policy
                             </Link>
                         </div>

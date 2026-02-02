@@ -357,6 +357,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                     <option value="CHEQUE">Cheque</option>
                                     <option value="ONLINE">Online/UPI</option>
                                     <option value="CASH">Cash</option>
+                                    <option value="COINS_REDEEM">Coins Redeem</option>
                                 </select>
                             </th>
                             <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left min-w-[200px]">Payment Image Proof</th>
@@ -477,6 +478,8 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                     >
                                                         <span>{tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cheque'}</span>
                                                     </div>
+                                                ) : tx.paymentType === 'COINS_REDEEM' ? (
+                                                    'Coins Redeem'
                                                 ) : (
                                                     tx.paymentType || '-'
                                                 )}

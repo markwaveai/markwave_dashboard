@@ -5,11 +5,11 @@ interface StatsCardProps {
     title: string;
     count: string;
     trend: string;
-    icon: LucideIcon;
+    icon: React.ReactNode;
     isIncrease: boolean;
 }
 
-const StatsCard: React.FC<StatsCardProps> = ({ title, count, trend, icon: Icon, isIncrease }) => {
+const StatsCard: React.FC<StatsCardProps> = ({ title, count, trend, icon, isIncrease }) => {
     return (
         <div style={{
             background: '#fff',
@@ -32,7 +32,12 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, count, trend, icon: Icon, 
                 justifyContent: 'center',
                 marginBottom: '20px'
             }}>
-                <Icon size={24} color="#374151" />
+                {/* Render the icon node directly, assuming it's already styled/sized by parent if needed, 
+                    OR parent passes a node that fits. 
+                    Actually, to preserve the previous style (size 24, specific color), 
+                    we should ask parent to pass the element with those props, or clone it.
+                    For simplicity and safety, let's assume parent passes the full element. */}
+                {icon}
             </div>
 
             <div>
