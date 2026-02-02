@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle, ShieldCheck, MapPin, Share2, Copy } from 'lucide-react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { useAppDispatch } from '../../store/hooks';
-import { createReferralUser } from '../../store/slices/usersSlice';
+import { createReferralUser } from '../../store/slices/UsersSlice';
 
 const Modal = ({ isOpen, type, message, onClose }: { isOpen: boolean; type: 'success' | 'error'; message: string; onClose: () => void }) => {
     if (!isOpen) return null;

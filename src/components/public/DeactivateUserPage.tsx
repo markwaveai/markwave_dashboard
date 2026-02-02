@@ -10,7 +10,7 @@ import {
     activateRequestOtp,
     activateConfirm,
     resetActivationState,
-} from '../../store/slices/usersSlice';
+} from '../../store/slices/UsersSlice';
 
 /* -------------------- Snackbar -------------------- */
 const Snackbar = ({ message, type }: { message: string; type: 'success' | 'error' }) => {

@@ -1,11 +1,11 @@
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setSession as setReduxSession } from './store/slices/authSlice';
-import { fetchAdminProfile } from './store/slices/usersSlice';
+import { fetchAdminProfile } from './store/slices/UsersSlice';
 import { RootState } from './store';
 import React, { useState, useCallback, useEffect } from 'react';
 import HealthStatus from './components/common/HealthStatus';
-import UserTabs from './components/Users/components/UserTabs';
+import PageBreadcrumb from './components/PageBreadcrumb';
 import Login from './components/auth/Login';
 
 // Tabs
@@ -284,7 +284,7 @@ function App() {
         <Route path="/dashboard/acf-calculator" element={<Navigate to="/acf-calculator" replace />} />
         <Route path="/dashboard/*" element={<Navigate to="/orders" replace />} />
 
-        {/* Privacy Policy - Standalone, no UserTabs, accessible publicly if needed */}
+        {/* Privacy Policy - Standalone, no PageBreadcrumb, accessible publicly if needed */}
         <Route path="/privacy-policy" element={
           <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
             <PrivacyPolicy />
@@ -372,7 +372,7 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
   }
 
   return (
-    <UserTabs
+    <PageBreadcrumb
       adminMobile={session.mobile}
       adminName={session.name}
       adminRole={session.role || undefined}
@@ -381,7 +381,7 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
       onLogout={handleLogout}
     >
       {children}
-    </UserTabs>
+    </PageBreadcrumb>
   );
 };
 
@@ -410,7 +410,7 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
 
   if (shouldShowLayout) {
     return (
-      <UserTabs
+      <PageBreadcrumb
         adminMobile={session?.mobile}
         adminName={session?.name}
         adminRole={session?.role || undefined}
@@ -419,7 +419,7 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
         onLogout={handleLogout}
       >
         {children}
-      </UserTabs>
+      </PageBreadcrumb>
     );
   }
 

@@ -7,7 +7,7 @@ interface LogoutModalProps {
     onConfirm: () => void;
 }
 
-const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm }) => {
+const Logout: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm }) => {
     if (!isOpen) return null;
 
     return (
@@ -60,4 +60,4 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm })
     );
 };
 
-export default LogoutModal;
+export default Logout;

@@ -17,8 +17,6 @@ export const fetchReferralUsers = createAsyncThunk(
     }
 );
 
-
-
 export const fetchManagedUsers = createAsyncThunk(
     'users/fetchManagedUsers',
     async (params: UserParams, { rejectWithValue }) => {
@@ -176,15 +174,15 @@ export interface UsersState {
         error: string | null;
     };
     networkUserDetails: {
-        data: any | null; // Using any to match the response structure
+        data: any | null;
         loading: boolean;
         error: string | null;
     };
     referralLoading: boolean;
     existingLoading: boolean;
-    loading: boolean; // Computed loading state
+    loading: boolean;
     error: string | null;
-    actionLoading: boolean; // For create action
+    actionLoading: boolean;
     deactivation: {
         loading: boolean;
         error: string | null;
@@ -198,7 +196,7 @@ export interface UsersState {
         message: string | null;
     };
     adminProfile: any | null;
-    adminProfileLoading: boolean; // Added to prevent duplicate fetches
+    adminProfileLoading: boolean;
 }
 
 const initialState: UsersState = {
@@ -276,7 +274,6 @@ const usersSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        // Fetch Referral Users
         builder.addCase(fetchReferralUsers.pending, (state) => {
             state.referralLoading = true;
             state.loading = true;
@@ -293,7 +290,6 @@ const usersSlice = createSlice({
             state.error = action.payload as string;
         });
 
-        // Fetch Existing Customers
         builder.addCase(fetchExistingCustomers.pending, (state) => {
             state.existingLoading = true;
             state.loading = true;
@@ -310,7 +306,6 @@ const usersSlice = createSlice({
             state.error = action.payload as string;
         });
 
-        // Fetch Managed Users (Server-side Pagination)
         builder.addCase(fetchManagedUsers.pending, (state) => {
             state.managedLoading = true;
             state.managedError = null;
@@ -325,7 +320,6 @@ const usersSlice = createSlice({
             state.managedError = action.payload as string;
         });
 
-        // Fetch Customer Details
         builder.addCase(fetchCustomerDetails.pending, (state) => {
             state.customerDetailsLoading = true;
             state.customerDetailsError = null;
@@ -339,7 +333,6 @@ const usersSlice = createSlice({
             state.customerDetailsError = action.payload as string;
         });
 
-        // Fetch Network
         builder.addCase(fetchNetwork.pending, (state) => {
             state.network.loading = true;
             state.network.error = null;
@@ -354,7 +347,6 @@ const usersSlice = createSlice({
             state.network.error = action.payload as string;
         });
 
-        // Fetch Network User Details
         builder.addCase(fetchNetworkUserDetails.pending, (state) => {
             state.networkUserDetails.loading = true;
             state.networkUserDetails.error = null;
@@ -368,7 +360,6 @@ const usersSlice = createSlice({
             state.networkUserDetails.error = action.payload as string;
         });
 
-        // Create Referral User
         builder.addCase(createReferralUser.pending, (state) => {
             state.actionLoading = true;
             state.error = null;
@@ -381,7 +372,6 @@ const usersSlice = createSlice({
             state.error = action.payload as string;
         });
 
-        // Deactivate Request OTP
         builder.addCase(deactivateRequestOtp.pending, (state) => {
             state.deactivation.loading = true;
             state.deactivation.error = null;
@@ -397,7 +387,6 @@ const usersSlice = createSlice({
             state.deactivation.error = action.payload as string;
         });
 
-        // Deactivate Confirm
         builder.addCase(deactivateConfirm.pending, (state) => {
             state.deactivation.loading = true;
             state.deactivation.error = null;
@@ -413,7 +402,6 @@ const usersSlice = createSlice({
             state.deactivation.error = action.payload as string;
         });
 
-        // Activate Request OTP
         builder.addCase(activateRequestOtp.pending, (state) => {
             state.activation.loading = true;
             state.activation.error = null;
@@ -429,7 +417,6 @@ const usersSlice = createSlice({
             state.activation.error = action.payload as string;
         });
 
-        // Activate Confirm
         builder.addCase(activateConfirm.pending, (state) => {
             state.activation.loading = true;
             state.activation.error = null;
@@ -445,7 +432,6 @@ const usersSlice = createSlice({
             state.activation.error = action.payload as string;
         });
 
-        // Fetch Admin Profile
         builder.addCase(fetchAdminProfile.pending, (state) => {
             state.adminProfileLoading = true;
         });
@@ -458,7 +444,6 @@ const usersSlice = createSlice({
         });
     }
 });
-
 
 export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState, clearCustomerDetails } = usersSlice.actions;
 export const usersReducer = usersSlice.reducer;

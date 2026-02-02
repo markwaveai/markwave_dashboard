@@ -6,10 +6,7 @@ export interface UIState {
     showAdminDetails: boolean;
     modals: {
         referral: boolean;
-        editReferral: {
-            isOpen: boolean;
-            user: any;
-        };
+
         proof: {
             isOpen: boolean;
             data: any;
@@ -45,10 +42,7 @@ const initialState: UIState = {
     showAdminDetails: false,
     modals: {
         referral: false,
-        editReferral: {
-            isOpen: false,
-            user: null,
-        },
+
         proof: {
             isOpen: false,
             data: null,
@@ -89,12 +83,7 @@ const uiSlice = createSlice({
         setReferralModalOpen: (state, action: PayloadAction<boolean>) => {
             state.modals.referral = action.payload;
         },
-        setEditReferralModal: (state, action: PayloadAction<{ isOpen: boolean; user?: any }>) => {
-            state.modals.editReferral.isOpen = action.payload.isOpen;
-            if (action.payload.user !== undefined) {
-                state.modals.editReferral.user = action.payload.user;
-            }
-        },
+
         setProofModal: (state, action: PayloadAction<{ isOpen: boolean; data?: any }>) => {
             state.modals.proof.isOpen = action.payload.isOpen;
             if (action.payload.data !== undefined) {
@@ -129,7 +118,7 @@ export const {
     setSidebarOpen,
     setShowAdminDetails,
     setReferralModalOpen,
-    setEditReferralModal,
+
     setProofModal,
     setRejectionModal,
     setApprovalModal,
