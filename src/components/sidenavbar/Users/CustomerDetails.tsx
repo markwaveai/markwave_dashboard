@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'; // Adjust path
 import { fetchCustomerDetails, clearCustomerDetails } from '../../../store/slices/usersSlice'; // Adjust path
 import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, Award, Package, CheckCircle, AlertCircle, FileText, CreditCard, Users, Image as ImageIcon } from 'lucide-react';
-import Loader from '../common/Loader'; // Adjust path
+import Loader from '../../common/Loader'; // Adjust path
 // Reuse CSS or create new? Reuse logic but not modal overlay.
 // I will use inline classes or a new CSS file.
 

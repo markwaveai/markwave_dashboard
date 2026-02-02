@@ -1,20 +1,20 @@
-import React, { useMemo, useEffect, useCallback, useState } from 'react'; // Refreshed
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import type { RootState } from '../../../store';
 import { useNavigate } from 'react-router-dom';
 import { fetchManagedUsers } from '../../../store/slices/usersSlice';
-import Pagination from '../common/Pagination';
-import TableSkeleton from '../common/TableSkeleton';
-import { CreateUserModal, CreateUserFormData, CreateUserModalProps } from './components/CreateUserModal';
+import Pagination from '../../common/Pagination';
+import TableSkeleton from '../../common/TableSkeleton';
+import { CreateUser, CreateUserFormData, CreateUserProps } from './CreateUser';
 import { Plus, Pencil } from 'lucide-react';
 
 
-interface UserManagementTabProps {
+interface UserDetailsProps {
     getSortIcon: (key: string, currentSortConfig: any) => string;
 }
 
-const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) => {
+const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { managedUsers, managedLoading, managedTotal } = useAppSelector((state: RootState) => state.users);
@@ -99,7 +99,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
             <div className="bg-white border-b border-gray-200 p-6 flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
+                        <h2 className="text-2xl font-bold text-gray-900">User Details</h2>
                         <p className="text-sm text-gray-500 mt-1">Manage Users and Referrals</p>
                     </div>
                 </div>
@@ -275,7 +275,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
             </button>
 
             {/* Create/Edit User Modal */}
-            <CreateUserModal
+            <CreateUser
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseModal}
                 onSuccess={() => {
@@ -284,9 +284,10 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({ getSortIcon }) =>
                 }}
                 initialData={editingUser}
                 isEditMode={!!editingUser}
+                adminReferralCode={useAppSelector((state: RootState) => state.users.adminProfile?.referral_code)}
             />
         </div>
     );
 };
 
-export default UserManagementTab;
+export default UserDetails;

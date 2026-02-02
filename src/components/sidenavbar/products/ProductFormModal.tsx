@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAppDispatch } from '../../../../store/hooks';
-import { addProduct, updateProduct } from '../../../../store/slices/productsSlice';
-import './ProductFormModal.css';
+import { useAppDispatch } from '../../../store/hooks';
+import { addProduct, updateProduct } from '../../../store/slices/productsSlice';
+
 
 interface ProductFormModalProps {
     isOpen: boolean;
@@ -124,33 +124,37 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
         }
     };
 
+
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay"
-            style={{
-                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', zIndex: 1000
-            }}
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
             onClick={onClose}
         >
-            <div className="product-form-modal" onClick={(e) => e.stopPropagation()}>
-                <h2>{product ? 'Edit Product' : 'Add New Product'}</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Breed / Title</label>
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h2 className="text-xl font-bold text-gray-800">{product ? 'Edit Product' : 'Add New Product'}</h2>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-gray-700">Breed / Title</label>
                             <input
                                 type="text"
                                 name="breed"
                                 value={formData.breed}
                                 onChange={handleChange}
                                 required
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                                placeholder="e.g. Murrah Buffalo"
                             />
                         </div>
-                        <div className="form-group">
-                            <label>Age (years)</label>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-gray-700">Age (years)</label>
                             <input
                                 type="number"
                                 name="age"
@@ -158,13 +162,14 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
                                 onChange={handleChange}
                                 required
                                 min="0"
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                             />
                         </div>
                     </div>
 
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Price (₹)</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-gray-700">Price (₹)</label>
                             <input
                                 type="number"
                                 name="price"
@@ -172,83 +177,89 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
                                 onChange={handleChange}
                                 required
                                 min="0"
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                             />
                         </div>
-                        <div className="form-group">
-                            <label>CPF Cost</label>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-gray-700">CPF Cost</label>
                             <input
                                 type="text"
                                 name="cpf"
                                 value={formData.cpf}
                                 onChange={handleChange}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                             />
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label>Buffalo ID</label>
+                    <div className="flex flex-col gap-1.5 mb-4">
+                        <label className="text-sm font-semibold text-gray-700">Buffalo ID</label>
                         <input
                             type="text"
                             name="buffaloId"
                             value={formData.buffaloId}
                             onChange={handleChange}
                             required
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-mono"
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Location</label>
+                    <div className="flex flex-col gap-1.5 mb-4">
+                        <label className="text-sm font-semibold text-gray-700">Location</label>
                         <input
                             type="text"
                             name="location"
                             value={formData.location}
                             onChange={handleChange}
                             required
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Description</label>
+                    <div className="flex flex-col gap-1.5 mb-4">
+                        <label className="text-sm font-semibold text-gray-700">Description</label>
                         <textarea
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
                             required
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm min-h-[100px] resize-y"
                         />
                     </div>
 
                     {/* Image Upload in Form */}
-                    <div className="form-group">
-                        <label>Product Images</label>
-                        <div className="file-input-wrapper">
+                    <div className="flex flex-col gap-1.5 mb-4">
+                        <label className="text-sm font-semibold text-gray-700">Product Images</label>
+                        <div className="relative">
                             <input
                                 type="file"
                                 name="images"
                                 onChange={handleChange}
                                 multiple={true}
                                 accept="image/*"
+                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer border border-gray-300 rounded-lg"
                             />
                         </div>
-                        <small style={{ color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                        <small className="text-xs text-gray-500 mt-1">
                             {product ? 'Upload to add/replace images' : 'Select images for the product'}
                         </small>
                     </div>
 
                     {/* Image Previews */}
                     {(previewUrls.length > 0 || (product?.buffalo_images?.length > 0)) && (
-                        <div className="form-group">
-                            <label>Selected Previews</label>
-                            <div className="image-previews-grid">
+                        <div className="flex flex-col gap-1.5 mb-6">
+                            <label className="text-sm font-semibold text-gray-700">Selected Previews</label>
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-1">
                                 {previewUrls.length > 0 ? (
                                     previewUrls.map((url, index) => (
-                                        <div key={index} className="preview-item">
-                                            <img src={url} alt={`Preview ${index}`} />
+                                        <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group">
+                                            <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
                                         </div>
                                     ))
                                 ) : (
                                     product?.buffalo_images?.map((img: string, index: number) => (
-                                        <div key={index} className="preview-item">
-                                            <img src={img} alt={`Existing ${index}`} />
+                                        <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group">
+                                            <img src={img} alt={`Existing ${index}`} className="w-full h-full object-cover" />
                                         </div>
                                     ))
                                 )}
@@ -256,22 +267,27 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, pr
                         </div>
                     )}
 
-                    <div className="form-group checkbox-group">
-                        <input
-                            type="checkbox"
-                            name="inStock"
-                            id="inStock"
-                            checked={formData.inStock}
-                            onChange={handleChange}
-                        />
-                        <label htmlFor="inStock" style={{ marginBottom: 0 }}>Available in Stock</label>
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100 mb-2 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => setFormData(prev => ({ ...prev, inStock: !prev.inStock }))}>
+                        <div className="relative flex items-center">
+                            <input
+                                type="checkbox"
+                                name="inStock"
+                                id="inStock"
+                                checked={formData.inStock}
+                                onChange={handleChange}
+                                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        </div>
+                        <label htmlFor="inStock" className="text-sm font-medium text-gray-700 cursor-pointer select-none">Available in Stock</label>
                     </div>
 
-                    <div className="modal-actions">
-                        <button type="button" className="btn-cancel" onClick={onClose} disabled={loading}>
+                    <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
+                        <button type="button" className="px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-all active:scale-95 text-sm" onClick={onClose} disabled={loading}>
                             Cancel
                         </button>
-                        <button type="submit" className="btn-submit" disabled={loading}>
+                        <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg shadow-blue-500/30 font-medium transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2 text-sm" disabled={loading}>
+                            {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                             {loading ? 'Saving...' : (product ? 'Update Product' : 'Add Product')}
                         </button>
                     </div>

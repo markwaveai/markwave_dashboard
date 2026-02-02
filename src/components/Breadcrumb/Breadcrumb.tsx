@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { API_ENDPOINTS } from '../config/api';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import type { RootState } from '../store';
+import { API_ENDPOINTS } from '../../config/api';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import type { RootState } from '../../store';
 import {
     setSidebarOpen,
     setReferralModalOpen,
     setCreationRole,
     setSnackbar,
-} from '../store/slices/uiSlice';
+} from '../../store/slices/uiSlice';
 import {
     createReferralUser
-} from '../store/slices/usersSlice';
+} from '../../store/slices/usersSlice';
 
 // Components
-import TopNavbar from './topnavbar/TopNavbar';
-import SideNavbar from './sidenavbar/SideNavbar';
-import ImageNamesModal from './sidenavbar/products/components/ImageNamesModal';
-import Logout from './auth/Logout';
-import Snackbar from './sidenavbar/common/Snackbar';
+import TopNavbar from '../topnavbar/TopNavbar';
+import SideNavbar from '../sidenavbar/SideNavbar';
+import ImageNamesModal from '../common/ImageNamesModal';
+import Logout from '../auth/Logout';
+import Snackbar from '../common/Snackbar';
 
 interface BreadcrumbProps {
     adminMobile?: string;

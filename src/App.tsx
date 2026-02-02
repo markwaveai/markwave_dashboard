@@ -5,7 +5,7 @@ import { fetchAdminProfile } from './store/slices/usersSlice';
 import { RootState } from './store';
 import React, { useState, useCallback, useEffect } from 'react';
 import HealthStatus from './components/topnavbar/HealthStatus';
-import Breadcrumb from './components/Breadcrumb';
+import Breadcrumb from './components/Breadcrumb/Breadcrumb';
 import Login from './components/auth/Login';
 
 // Tabs
@@ -13,7 +13,7 @@ import Login from './components/auth/Login';
 import DashboardHome from './components/sidenavbar/Dashboard/DashboardHome';
 import OrdersTab from './components/sidenavbar/Orders/OrdersTab';
 import OrderDetailsPage from './components/sidenavbar/Orders/OrderDetailsPage';
-import UserManagementTab from './components/sidenavbar/Users/UserManagement';
+import UserDetails from './components/sidenavbar/Users/UserDetails';
 import ProductsTab from './components/sidenavbar/products/ProductsTab';
 import BuffaloVisualizationTab from './components/sidenavbar/BuffaloViz/BuffaloVisualizationTab';
 import EmiCalculatorTab from './components/sidenavbar/Calculators/Emi/EmiCalculatorTab';
@@ -42,11 +42,11 @@ import LandifyDeactivateUser from './components/sidenavbar/landify/LandifyDeacti
 import Support from './components/sidenavbar/public/Support';
 
 // Skeletons
-import OrdersPageSkeleton from './components/sidenavbar/common/skeletons/OrdersPageSkeleton';
-import UsersPageSkeleton from './components/sidenavbar/common/skeletons/UsersPageSkeleton';
-import ProductsPageSkeleton from './components/sidenavbar/common/skeletons/ProductsPageSkeleton';
-import BuffaloVizSkeleton from './components/sidenavbar/common/skeletons/BuffaloVizSkeleton';
-import EmiCalculatorSkeleton from './components/sidenavbar/common/skeletons/EmiCalculatorSkeleton';
+import OrdersPageSkeleton from './components/common/skeletons/OrdersPageSkeleton';
+import UsersPageSkeleton from './components/common/skeletons/UsersPageSkeleton';
+import ProductsPageSkeleton from './components/common/skeletons/ProductsPageSkeleton';
+import BuffaloVizSkeleton from './components/common/skeletons/BuffaloVizSkeleton';
+import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSkeleton';
 
 
 
@@ -186,7 +186,7 @@ function App() {
         <Route path="/user-management" element={
           <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
             <React.Suspense fallback={<UsersPageSkeleton />}>
-              <UserManagementTab getSortIcon={getSortIcon} />
+              <UserDetails getSortIcon={getSortIcon} />
             </React.Suspense>
           </ProtectedRoute>
         } />

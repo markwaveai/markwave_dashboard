@@ -3,10 +3,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import type { RootState } from '../../../store';
 import { fetchNetwork } from '../../../store/slices/usersSlice';
-import Pagination from '../common/Pagination';
-import TableSkeleton from '../common/TableSkeleton';
+import Pagination from '../../common/Pagination';
+import TableSkeleton from '../../common/TableSkeleton';
 import { Award, Users, Target, ShoppingBag } from 'lucide-react';
-import './Network.css';
+
 
 const NetworkTab: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -52,14 +52,14 @@ const NetworkTab: React.FC = () => {
     const totalPages = stats ? Math.ceil(stats.user_count / stats.limit) : 0;
 
     return (
-        <div className="network-tab-container">
-            <div className="network-header p-6 bg-white border-b border-gray-200">
+        <div className="flex flex-col min-h-screen bg-gray-50">
+            <div className="p-6 bg-white border-b border-gray-200">
                 <h2 className="text-2xl font-bold mb-4">Network Overview</h2>
 
                 {/* Stats Cards */}
                 {stats && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div className="stat-card bg-blue-50 p-4 rounded-lg flex items-center gap-4">
+                        <div className="bg-blue-50 p-4 rounded-lg flex items-center gap-4 transition-transform duration-200 hover:-translate-y-0.5 shadow-sm border border-blue-100">
                             <div className="p-3 bg-blue-100 rounded-full text-blue-600">
                                 <Users size={24} />
                             </div>
@@ -68,7 +68,7 @@ const NetworkTab: React.FC = () => {
                                 <div className="text-xl font-bold">{stats.user_count}</div>
                             </div>
                         </div>
-                        <div className="stat-card bg-yellow-50 p-4 rounded-lg flex items-center gap-4">
+                        <div className="bg-yellow-50 p-4 rounded-lg flex items-center gap-4 transition-transform duration-200 hover:-translate-y-0.5 shadow-sm border border-yellow-100">
                             <div className="p-3 bg-yellow-100 rounded-full text-yellow-600">
                                 <Award size={24} />
                             </div>
@@ -78,7 +78,7 @@ const NetworkTab: React.FC = () => {
                                 <div className="text-xs text-gray-400">Target: {stats.total_target_coins?.toLocaleString()}</div>
                             </div>
                         </div>
-                        <div className="stat-card bg-green-50 p-4 rounded-lg flex items-center gap-4">
+                        <div className="bg-green-50 p-4 rounded-lg flex items-center gap-4 transition-transform duration-200 hover:-translate-y-0.5 shadow-sm border border-green-100">
                             <div className="p-3 bg-green-100 rounded-full text-green-600">
                                 <ShoppingBag size={24} />
                             </div>
@@ -109,8 +109,8 @@ const NetworkTab: React.FC = () => {
                 </div>
             </div>
 
-            <div className="network-content p-6">
-                <div className="table-container relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div className="p-6">
+                <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
                     <table className="w-full text-sm text-left text-gray-500">
                         <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                             <tr>

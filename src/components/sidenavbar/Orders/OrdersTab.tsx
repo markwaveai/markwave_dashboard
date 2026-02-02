@@ -16,9 +16,9 @@ import {
     rejectOrder,
 } from '../../../store/slices/ordersSlice';
 import { setProofModal, setRejectionModal, setApprovalModal, setSnackbar } from '../../../store/slices/uiSlice';
-import Pagination from '../common/Pagination';
+import Pagination from '../../common/Pagination';
 
-import TableSkeleton from '../common/TableSkeleton';
+import TableSkeleton from '../../common/TableSkeleton';
 import TrackingTab from './TrackingTab';
 
 const UTRCopyButton: React.FC<{ value: string }> = ({ value }) => {

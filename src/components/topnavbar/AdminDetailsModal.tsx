@@ -2,7 +2,6 @@ import React from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { setShowAdminDetails } from '../../store/slices/uiSlice';
-import './AdminDetailsModal.css';
 
 interface AdminDetailsModalProps {
     adminName?: string;
@@ -32,43 +31,47 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = (props) => {
     if (!isOpen) return null;
 
     return (
-        <div onClick={onClose} className="admin-modal-overlay">
+        <div onClick={onClose} className="fixed inset-0 z-[1999] bg-transparent">
             <div
-                className="admin-popover admin-modal-container"
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[340px] bg-white rounded-xl shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] border border-gray-200 z-[2000] p-5 animate-in fade-in zoom-in-95 duration-200 md:absolute md:top-[75px] md:right-[25px] md:left-auto md:translate-x-0 md:translate-y-0 md:w-[320px] md:zoom-in-100 md:slide-in-from-top-2"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
                     onClick={onClose}
-                    className="admin-modal-close-btn"
+                    className="absolute top-2 right-2 text-xl text-gray-400 hover:text-gray-600 p-1 leading-none transition-colors"
                 >
                     ×
                 </button>
-                <div className="admin-modal-header">
-                    <div className="admin-avatar">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 text-xl font-bold flex items-center justify-center shrink-0">
                         {adminName.charAt(0)}
                     </div>
-                    <div className="admin-info">
-                        <h2 className="admin-name">{adminName}</h2>
-                        <p className="admin-mobile">{adminMobile}</p>
+                    <div className="overflow-hidden">
+                        <h2 className="text-base text-gray-800 font-semibold whitespace-nowrap overflow-hidden text-ellipsis m-0">
+                            {adminName}
+                        </h2>
+                        <p className="text-xs text-gray-500 m-0">
+                            {adminMobile}
+                        </p>
                     </div>
                 </div>
 
-                <div className="admin-details-card">
+                <div className="grid gap-3 bg-gray-50 p-4 rounded-lg text-sm">
                     <div>
-                        <div className="admin-detail-label">Role</div>
-                        <div className="admin-detail-value">{adminRole}</div>
+                        <div className="text-xs text-gray-500 mb-0.5">Role</div>
+                        <div className="font-semibold text-gray-700">{adminRole}</div>
                     </div>
                     <div>
-                        <div className="admin-detail-label">Referral Code</div>
-                        <div className="admin-detail-value font-mono tracking-wider">{adminReferralCode || 'N/A'}</div>
+                        <div className="text-xs text-gray-500 mb-0.5">Referral Code</div>
+                        <div className="font-semibold text-gray-700 font-mono tracking-wider">{adminReferralCode || 'N/A'}</div>
                     </div>
                     <div>
-                        <div className="admin-detail-label">Last Login</div>
-                        <div className="admin-detail-value">{lastLogin || 'N/A'}</div>
+                        <div className="text-xs text-gray-500 mb-0.5">Last Login</div>
+                        <div className="font-semibold text-gray-700">{lastLogin || 'N/A'}</div>
                     </div>
                     <div>
-                        <div className="admin-detail-label">Present Login</div>
-                        <div className="admin-detail-value">{presentLogin || 'N/A'}</div>
+                        <div className="text-xs text-gray-500 mb-0.5">Present Login</div>
+                        <div className="font-semibold text-gray-700">{presentLogin || 'N/A'}</div>
                     </div>
                 </div>
 
@@ -82,8 +85,8 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = (props) => {
                     </button>
                 </div>
 
-                <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                    <span style={{ fontSize: '12px', color: '#9ca3af' }}>v1.0.1</span>
+                <div className="mt-3 text-center">
+                    <span className="text-xs text-gray-400">v1.0.1</span>
                 </div>
             </div>
         </div>

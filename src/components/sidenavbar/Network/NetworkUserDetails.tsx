@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { fetchNetworkUserDetails } from '../../../store/slices/usersSlice';
 import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, Award, Package, CheckCircle, AlertCircle, Users } from 'lucide-react';
-import Loader from '../common/Loader';
+import Loader from '../../common/Loader';
 import NetworkTreeVisualization from './NetworkTreeVisualization';
 
 const NetworkUserDetailsPage: React.FC = () => {

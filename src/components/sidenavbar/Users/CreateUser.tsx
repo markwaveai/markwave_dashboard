@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'; // Refreshed
 import { X } from 'lucide-react';
-import { userService } from '../../../../services/api';
+import { userService } from '../../../services/api';
 import axios from 'axios';
-import { API_ENDPOINTS } from '../../../../config/api';
+import { API_ENDPOINTS } from '../../../config/api';
 
-export interface CreateUserModalProps {
+export interface CreateUserProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
@@ -25,7 +25,7 @@ export interface CreateUserFormData {
     refered_by_name?: string;
 }
 
-export const CreateUserModal = ({ isOpen, onClose, onSuccess, adminReferralCode, initialData, isEditMode = false }: CreateUserModalProps) => {
+export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, initialData, isEditMode = false }: CreateUserProps) => {
     const [formData, setFormData] = useState<CreateUserFormData>({
         mobile: '',
         first_name: '',
@@ -57,7 +57,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, adminReferralCode,
                     last_name: '',
                     email: '',
                     role: 'Investor',
-                    referral_code: '',
+                    referral_code: adminReferralCode || '',
                     is_test: false,
                     refered_by_mobile: '',
                     refered_by_name: '',
@@ -66,7 +66,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, adminReferralCode,
             setErr(null);
             setValidationErrors({});
         }
-    }, [isOpen, isEditMode, initialData]);
+    }, [isOpen, isEditMode, initialData, adminReferralCode]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     ClipboardList, Users, ShoppingBag, LogOut, UserCheck, X,
     Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy,
-    UserMinus, Mail, ChevronDown, ChevronRight
+    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -30,8 +30,9 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
     // Determine active tab
     const currentPath = location.pathname;
-    let activeTab = 'orders';
-    if (currentPath.includes('/user-management/network')) activeTab = 'network';
+    let activeTab = 'dashboard';
+    if (currentPath.includes('/orders')) activeTab = 'orders';
+    else if (currentPath.includes('/user-management/network')) activeTab = 'network';
     else if (currentPath.includes('/buffalo-viz')) activeTab = 'buffaloViz';
     else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
     else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
@@ -88,6 +89,16 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                 </div>
 
                 <ul className="list-none px-3 my-2.5 flex flex-col gap-1 mt-[10px]">
+                    {hasSession && (
+                        <li>
+                            <button className={navItemClass('dashboard')} onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); }}>
+                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'flex-1'}`}>
+                                    <LayoutDashboard size={18} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Dashboard</span>}
+                                </div>
+                            </button>
+                        </li>
+                    )}
                     {hasSession && (
                         <li>
                             <button className={navItemClass('orders')} onClick={(e) => { e.stopPropagation(); navigate('/orders'); }}>
