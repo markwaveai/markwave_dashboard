@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAppSelector } from '../../store/hooks';
-import { API_ENDPOINTS } from '../../config/api';
+import { useAppSelector } from '../../../store/hooks';
+import { API_ENDPOINTS } from '../../../config/api';
 
 
 interface TrackingTabProps {

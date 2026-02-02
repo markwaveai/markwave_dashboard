@@ -4,48 +4,49 @@ import { setSession as setReduxSession } from './store/slices/authSlice';
 import { fetchAdminProfile } from './store/slices/UsersSlice';
 import { RootState } from './store';
 import React, { useState, useCallback, useEffect } from 'react';
-import HealthStatus from './components/common/HealthStatus';
-import PageBreadcrumb from './components/PageBreadcrumb';
+import HealthStatus from './components/topnavbar/HealthStatus';
+import Breadcrumb from './components/Breadcrumb';
 import Login from './components/auth/Login';
 
 // Tabs
-import DashboardHome from './components/Dashboard/DashboardHome';
-import OrdersTab from './components/Orders/OrdersTab';
-import OrderDetailsPage from './components/Orders/OrderDetailsPage';
-import UserManagementTab from './components/Users/UserManagement';
-import ProductsTab from './components/products/ProductsTab';
-import BuffaloVisualizationTab from './components/BuffaloViz/BuffaloVisualizationTab';
-import EmiCalculatorTab from './components/Calculators/Emi/EmiCalculatorTab';
-import AcfCalculatorTab from './components/Calculators/Acf/AcfCalculatorTab';
-import UnitCalculatorTab from './components/Calculators/Unit/UnitCalculatorTab';
-import SupportTicketsTab from './components/public/SupportTicketsTab';
-import CustomerDetailsPage from './components/Users/CustomerDetails';
-import NetworkTab from './components/Network/Network';
-import NetworkUserDetailsPage from './components/Network/NetworkUserDetails';
+// Tabs
+import DashboardHome from './components/sidenavbar/Dashboard/DashboardHome';
+import OrdersTab from './components/sidenavbar/Orders/OrdersTab';
+import OrderDetailsPage from './components/sidenavbar/Orders/OrderDetailsPage';
+import UserManagementTab from './components/sidenavbar/Users/UserManagement';
+import ProductsTab from './components/sidenavbar/products/ProductsTab';
+import BuffaloVisualizationTab from './components/sidenavbar/BuffaloViz/BuffaloVisualizationTab';
+import EmiCalculatorTab from './components/sidenavbar/Calculators/Emi/EmiCalculatorTab';
+import AcfCalculatorTab from './components/sidenavbar/Calculators/Acf/AcfCalculatorTab';
+import UnitCalculatorTab from './components/sidenavbar/Calculators/Unit/UnitCalculatorTab';
+import SupportTicketsTab from './components/sidenavbar/public/SupportTicketsTab';
+import CustomerDetailsPage from './components/sidenavbar/Users/CustomerDetails';
+import NetworkTab from './components/sidenavbar/Network/Network';
+import NetworkUserDetailsPage from './components/sidenavbar/Network/NetworkUserDetails';
 
 // Public Pages
-import ReferralLandingPage from './components/public/ReferralLandingPage';
-import DeactivateUserPage from './components/public/DeactivateUserPage';
+import ReferralLandingPage from './components/sidenavbar/public/ReferralLandingPage';
+import DeactivateUserPage from './components/sidenavbar/public/DeactivateUserPage';
 
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
 
 // Privacy
-import PrivacyPolicy from './components/public/PrivacyPolicy';
-import TrueHarvestPrivacyPolicy from './components/true-harvest/TrueHarvestPrivacyPolicy';
-import TrueHarvestDeactivateUser from './components/true-harvest/TrueHarvestDeactivateUser';
-import TrueHarvestSupport from './components/true-harvest/TrueHarvestSupport';
-import LandifyLegal from './components/landify/LandifyLegal';
-import LandifySupport from './components/landify/LandifySupport';
-import LandifyDeactivateUser from './components/landify/LandifyDeactivateUser';
-import Support from './components/public/Support';
+import PrivacyPolicy from './components/sidenavbar/public/PrivacyPolicy';
+import TrueHarvestPrivacyPolicy from './components/sidenavbar/true-harvest/TrueHarvestPrivacyPolicy';
+import TrueHarvestDeactivateUser from './components/sidenavbar/true-harvest/TrueHarvestDeactivateUser';
+import TrueHarvestSupport from './components/sidenavbar/true-harvest/TrueHarvestSupport';
+import LandifyLegal from './components/sidenavbar/landify/LandifyLegal';
+import LandifySupport from './components/sidenavbar/landify/LandifySupport';
+import LandifyDeactivateUser from './components/sidenavbar/landify/LandifyDeactivateUser';
+import Support from './components/sidenavbar/public/Support';
 
 // Skeletons
-import OrdersPageSkeleton from './components/common/skeletons/OrdersPageSkeleton';
-import UsersPageSkeleton from './components/common/skeletons/UsersPageSkeleton';
-import ProductsPageSkeleton from './components/common/skeletons/ProductsPageSkeleton';
-import BuffaloVizSkeleton from './components/common/skeletons/BuffaloVizSkeleton';
-import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSkeleton';
+import OrdersPageSkeleton from './components/sidenavbar/common/skeletons/OrdersPageSkeleton';
+import UsersPageSkeleton from './components/sidenavbar/common/skeletons/UsersPageSkeleton';
+import ProductsPageSkeleton from './components/sidenavbar/common/skeletons/ProductsPageSkeleton';
+import BuffaloVizSkeleton from './components/sidenavbar/common/skeletons/BuffaloVizSkeleton';
+import EmiCalculatorSkeleton from './components/sidenavbar/common/skeletons/EmiCalculatorSkeleton';
 
 
 
@@ -372,7 +373,7 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
   }
 
   return (
-    <PageBreadcrumb
+    <Breadcrumb
       adminMobile={session.mobile}
       adminName={session.name}
       adminRole={session.role || undefined}
@@ -381,7 +382,7 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
       onLogout={handleLogout}
     >
       {children}
-    </PageBreadcrumb>
+    </Breadcrumb>
   );
 };
 
@@ -410,7 +411,7 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
 
   if (shouldShowLayout) {
     return (
-      <PageBreadcrumb
+      <Breadcrumb
         adminMobile={session?.mobile}
         adminName={session?.name}
         adminRole={session?.role || undefined}
@@ -419,7 +420,7 @@ const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { childre
         onLogout={handleLogout}
       >
         {children}
-      </PageBreadcrumb>
+      </Breadcrumb>
     );
   }
 

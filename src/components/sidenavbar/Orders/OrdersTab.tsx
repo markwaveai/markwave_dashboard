@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import type { RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import type { RootState } from '../../../store';
 import { Check, Copy, User } from 'lucide-react';
 import {
     setSearchQuery,
@@ -14,8 +14,8 @@ import {
     setActiveUnitIndex,
     approveOrder,
     rejectOrder,
-} from '../../store/slices/ordersSlice';
-import { setProofModal, setRejectionModal, setApprovalModal, setSnackbar } from '../../store/slices/uiSlice';
+} from '../../../store/slices/ordersSlice';
+import { setProofModal, setRejectionModal, setApprovalModal, setSnackbar } from '../../../store/slices/uiSlice';
 import Pagination from '../common/Pagination';
 
 import TableSkeleton from '../common/TableSkeleton';

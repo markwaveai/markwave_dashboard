@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAppDispatch } from '../../../store/hooks';
-import { addProduct, updateProduct } from '../../../store/slices/productsSlice';
+import { useAppDispatch } from '../../../../store/hooks';
+import { addProduct, updateProduct } from '../../../../store/slices/productsSlice';
 import './ProductFormModal.css';
 
 interface ProductFormModalProps {

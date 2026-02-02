@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userService } from '../../services/api';
-import './HealthStatus.css';
+
 
 const HealthStatus: React.FC = () => {
   const [isHealthy, setIsHealthy] = useState<boolean | null>(null);
@@ -26,17 +26,17 @@ const HealthStatus: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="health-status">
-        <div className="spinner"></div>
-        <span className="health-status-text">Checking...</span>
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <span className="text-sm text-gray-500">Checking...</span>
       </div>
     );
   }
 
   return (
-    <div className="health-status">
-      <div className={`health-status-dot ${isHealthy ? 'online' : 'offline'}`}></div>
-      <span className={`health-status-text ${isHealthy ? 'health-online' : 'health-offline'}`}>
+    <div className="flex items-center gap-2">
+      <div className={`w-2.5 h-2.5 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`}></div>
+      <span className={`text-sm font-medium ${isHealthy ? 'text-green-600' : 'text-red-600'}`}>
         {isHealthy ? 'Online' : 'Offline'}
       </span>
     </div>

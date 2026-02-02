@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'; // Refreshed
 import { X } from 'lucide-react';
-import { userService } from '../../../services/api';
+import { userService } from '../../../../services/api';
 import axios from 'axios';
-import { API_ENDPOINTS } from '../../../config/api';
+import { API_ENDPOINTS } from '../../../../config/api';
 
 export interface CreateUserModalProps {
     isOpen: boolean;

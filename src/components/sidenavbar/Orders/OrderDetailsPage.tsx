@@ -16,9 +16,9 @@ import {
     Download
 } from 'lucide-react';
 
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchPendingUnits } from '../../store/slices/ordersSlice';
-import { RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { fetchPendingUnits } from '../../../store/slices/ordersSlice';
+import { RootState } from '../../../store';
 
 
 const OrderDetailsPage: React.FC = () => {

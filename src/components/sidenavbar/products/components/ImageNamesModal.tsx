@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import type { RootState } from '../../../store';
-import { setProofModal } from '../../../store/slices/uiSlice';
+import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import type { RootState } from '../../../../store';
+import { setProofModal } from '../../../../store/slices/uiSlice';
 import './ImageNamesModal.css';
 
 interface ImageNamesModalProps { }

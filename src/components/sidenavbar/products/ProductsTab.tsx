@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import type { RootState } from '../../store';
-import { deleteProduct, fetchProducts } from '../../store/slices/productsSlice';
+import { useAppSelector, useAppDispatch } from '../../../store/hooks';
+import type { RootState } from '../../../store';
+import { deleteProduct, fetchProducts } from '../../../store/slices/productsSlice';
 import ProductImageCarousel from '../products/ProductImageCarousel';
 import ProductCardSkeleton from '../common/ProductCardSkeleton';
 import ProductFormModal from './components/ProductFormModal';

@@ -132,9 +132,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
                 Welcome back
               </h1>
-              <p className="text-gray-500 text-lg">
-                Choose your dashboard to continue
-              </p>
+             
             </div>
 
 

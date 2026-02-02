@@ -1,7 +1,7 @@
 import React from 'react';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import type { RootState } from '../../../store';
-import { setShowAdminDetails } from '../../../store/slices/uiSlice';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import type { RootState } from '../../store';
+import { setShowAdminDetails } from '../../store/slices/uiSlice';
 import './AdminDetailsModal.css';
 
 interface AdminDetailsModalProps {

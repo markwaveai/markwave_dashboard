@@ -1,10 +1,9 @@
-/* Trigger rebuild */
+@import "./components/sidenavbar/Calculators/Emi/index.css";
+@import "./components/sidenavbar/BuffaloViz/index.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import "./components/Calculators/Emi/index.css";
-@import "./components/BuffaloViz/index.css";
 
 body {
   margin: 0;
@@ -288,38 +287,7 @@ body {
   color: #d1d5db;
 }
 
-.health-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 
-.health-status-text {
-  font-size: 0.875rem;
-}
-
-.health-online {
-  color: #16a34a;
-}
-
-.health-offline {
-  color: #dc2626;
-}
-
-.spinner {
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid #e5e7eb;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 /* Animations from Public Pages */
 @keyframes slowZoom {

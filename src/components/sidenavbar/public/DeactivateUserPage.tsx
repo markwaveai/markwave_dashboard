@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../../store';
+import { AppDispatch, RootState } from '../../../store';
 import {
     deactivateRequestOtp,
     deactivateConfirm,
@@ -10,7 +10,7 @@ import {
     activateRequestOtp,
     activateConfirm,
     resetActivationState,
-} from '../../store/slices/UsersSlice';
+} from '../../../store/slices/UsersSlice';
 
 /* -------------------- Snackbar -------------------- */
 const Snackbar = ({ message, type }: { message: string; type: 'success' | 'error' }) => {

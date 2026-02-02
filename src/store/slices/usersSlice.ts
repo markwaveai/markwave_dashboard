@@ -241,7 +241,7 @@ const initialState: UsersState = {
     adminProfileLoading: false,
 };
 
-const usersSlice = createSlice({
+const UsersSlice = createSlice({
     name: 'users',
     initialState,
     reducers: {
@@ -445,6 +445,6 @@ const usersSlice = createSlice({
     }
 });
 
-export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState, clearCustomerDetails } = usersSlice.actions;
-export const usersReducer = usersSlice.reducer;
-export default usersSlice.reducer;
+export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState, clearCustomerDetails } = UsersSlice.actions;
+export const usersReducer = UsersSlice.reducer;
+export default UsersSlice.reducer;

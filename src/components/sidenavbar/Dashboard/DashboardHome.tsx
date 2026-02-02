@@ -10,9 +10,9 @@ import OrdersStatsCard from './OrdersStatsCard';
 import TopProductsCard from './TopProductsCard';
 import StatsCard from './StatsCard';
 import { Users, ShoppingBag, Clock, CheckCircle, AlertCircle, Coins, CreditCard } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchStatusCounts } from '../../store/slices/ordersSlice';
-import type { RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { fetchStatusCounts } from '../../../store/slices/ordersSlice';
+import type { RootState } from '../../../store';
 import DashboardTabLayout from './DashboardTabLayout';
 
 const DashboardHome: React.FC = () => {
