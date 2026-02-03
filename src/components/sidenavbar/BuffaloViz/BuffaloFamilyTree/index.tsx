@@ -470,10 +470,17 @@ export default function BuffaloFamilyTree() {
 
                 // Only count buffaloes born before or in the last year
                 if (buffalo.birthYear <= endYear) {
-                    // Double check if buffalo was born after simulation end (shouldn't be in herd, but safety check)
+                    // Double check if buffalo was born after simulation end
                     const birthAbsolute = buffalo.birthYear * 12 + (buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0));
                     if (birthAbsolute <= absoluteEndMonth) {
-                        totalAssetValue += getBuffaloValueByAge(ageInMonths);
+                        let value = getBuffaloValueByAge(ageInMonths);
+
+                        // Consistency Override: 0-12 months value is 0 in the first year only
+                        if (Number(endYear) === Number(startYear) && ageInMonths <= 12) {
+                            value = 0;
+                        }
+
+                        totalAssetValue += value;
                     }
                 }
             });
@@ -742,7 +749,14 @@ export default function BuffaloFamilyTree() {
                     if (buffalo.birthYear <= endYear) {
                         const targetMonth = (endMonthOfSimulation === 11) ? 12 : endMonthOfSimulation;
                         const ageInMonths = calculateAgeInMonths(buffalo, endYear, targetMonth);
-                        lineageAssetValue += getBuffaloValueByAge(ageInMonths);
+                        let value = getBuffaloValueByAge(ageInMonths);
+
+                        // Consistency Override: 0-12 months value is 0 in the first year only
+                        if (Number(endYear) === Number(startYear) && ageInMonths <= 12) {
+                            value = 0;
+                        }
+
+                        lineageAssetValue += value;
                     }
                 });
 

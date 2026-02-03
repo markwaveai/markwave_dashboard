@@ -452,7 +452,14 @@ const CostEstimationTableContent = ({
                 // Only count buffaloes born before or in this month
                 if (buffalo.birthYear < targetYear || (buffalo.birthYear === targetYear && (buffalo.birthMonth || 0) <= targetMonth)) {
                     const ageInMonths = calculateAgeInMonths(buffalo, targetYear, targetMonth);
-                    totalValue += getBuffaloValueByAge(ageInMonths);
+                    let value = getBuffaloValueByAge(ageInMonths);
+
+                    // Consistency Override: 0-12 months value is 0 in the first year only
+                    if (Number(targetYear) === Number(treeData.startYear) && ageInMonths <= 12) {
+                        value = 0;
+                    }
+
+                    totalValue += value;
                 }
             });
             return totalValue;
@@ -673,7 +680,13 @@ const CostEstimationTableContent = ({
                 // Only count buffaloes born before or in the last year/month
                 if (buffalo.birthYear < year || (buffalo.birthYear === year && (buffalo.birthMonth || 0) <= targetMonth)) {
                     const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
-                    const value = getBuffaloValueByAge(ageInMonths);
+                    let value = getBuffaloValueByAge(ageInMonths);
+
+                    // Consistency Override: 0-12 months value is 0 in the first year only
+                    if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
+                        value = 0;
+                    }
+
                     totalAssetValue += value;
 
                     if (ageInMonths >= 41) {
