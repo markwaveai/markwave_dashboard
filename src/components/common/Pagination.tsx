@@ -1,5 +1,5 @@
 import React from 'react';
-import './Pagination.css';
+
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PaginationProps {
@@ -43,21 +43,27 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
     }
 
     return (
-        <div className="pagination-container">
+        <div className="flex items-center justify-between py-4 mt-4 border-t border-slate-200">
             <button
-                className="pagination-btn"
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
             >
                 <ChevronLeft size={16} />
-                <span className="pagination-btn-text">Previous</span>
+                <span className="hidden sm:inline">Previous</span>
             </button>
 
-            <div className="pagination-numbers">
+            <div className="flex gap-1 sm:gap-1.5">
                 {pages.map((page, index) => (
                     <button
                         key={index}
-                        className={`pagination-number ${page === currentPage ? 'active' : ''} ${page === '...' ? 'dots' : ''}`}
+                        className={`min-w-[32px] h-8 flex items-center justify-center border rounded-md text-sm font-medium transition-colors cursor-pointer disabled:cursor-default
+                            ${page === currentPage
+                                ? 'bg-blue-50 text-blue-600 border-blue-100 font-semibold'
+                                : page === '...'
+                                    ? 'border-transparent text-slate-500 cursor-default'
+                                    : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                            }`}
                         onClick={() => typeof page === 'number' && onPageChange(page)}
                         disabled={page === '...'}
                     >
@@ -67,11 +73,11 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
             </div>
 
             <button
-                className="pagination-btn"
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
             >
-                <span className="pagination-btn-text">Next</span>
+                <span className="hidden sm:inline">Next</span>
                 <ChevronRight size={16} />
             </button>
         </div>

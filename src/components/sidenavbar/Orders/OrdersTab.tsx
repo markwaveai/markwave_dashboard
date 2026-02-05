@@ -339,13 +339,13 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                 <table className="w-full border-collapse">
                     <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">S.No</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">S.No</th>
 
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">User Details</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Order Details</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Units</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Status</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left" style={{ minWidth: '140px' }}>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">User Details</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">Order Details</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">Units</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">Status</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center" style={{ minWidth: '140px' }}>
                                 <select
                                     value={paymentTypeFilter}
                                     onChange={(e) => handlePaymentTypeChange(e.target.value)}
@@ -360,12 +360,12 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                     <option value="COINS_REDEEM">Coins Redeem</option>
                                 </select>
                             </th>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left min-w-[200px]">Payment Image Proof</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Amount</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Total Cost</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Coins Redeemed</th>
-                            {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Actions</th>}
-                            {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-left">Rejected Reason</th>}
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center min-w-[200px]">Payment Image Proof</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">Amount</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">Total Cost</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">Coins Redeemed</th>
+                            {statusFilter === 'PENDING_ADMIN_VERIFICATION' && <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">Actions</th>}
+                            {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-400 tracking-wider px-6 py-4 text-center">Rejected Reason</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -394,15 +394,15 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                             style={{ cursor: 'pointer' }}
                                             className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
                                         >
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{serialNumber}</td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top text-left">
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top text-center">{serialNumber}</td>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-middle text-left">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                                                        <User size={18} className="text-slate-400" />
+                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                                                        <User size={14} className="text-slate-400" />
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-sm font-semibold text-slate-800">{inv.name}</span>
-                                                        <span className="text-xs text-slate-500 font-medium">
+                                                        <span className="text-[13px] font-semibold text-slate-800 whitespace-nowrap">{inv.name}</span>
+                                                        <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
                                                             {inv.mobile ? `+91 ${String(inv.mobile)}` : '-'}
                                                         </span>
                                                     </div>

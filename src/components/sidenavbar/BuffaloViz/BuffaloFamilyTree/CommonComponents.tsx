@@ -77,7 +77,7 @@ export const BuffaloNode = ({
     elementId,
     parentDisplayName,
     variant = 'circle',
-    tooltipPosition = 'top'
+    tooltipPosition = 'bottom'
 }: {
     data: any;
     founder?: boolean;
@@ -85,7 +85,7 @@ export const BuffaloNode = ({
     elementId: string;
     parentDisplayName?: string;
     variant?: 'circle' | 'pill';
-    tooltipPosition?: 'top' | 'right';
+    tooltipPosition?: 'bottom' | 'right';
 }) => {
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const birthMonthName = monthNames[data.acquisitionMonth] || "Jan";
@@ -93,11 +93,11 @@ export const BuffaloNode = ({
     // Tooltip positioning classes
     const tooltipClasses = tooltipPosition === 'right'
         ? "absolute left-full top-1/2 -translate-y-1/2 ml-3 hidden group-hover:block z-50 w-48 transition-opacity duration-200"
-        : "absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block z-50 w-48 transition-opacity duration-200";
+        : "absolute top-full left-1/2 -translate-x-1/2 mt-3 hidden group-hover:block z-50 w-48 transition-opacity duration-200";
 
     const arrowClasses = tooltipPosition === 'right'
         ? "absolute top-1/2 right-full -translate-y-1/2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-slate-800 drop-shadow-sm"
-        : "absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-slate-800 drop-shadow-sm";
+        : "absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-slate-800 drop-shadow-sm";
 
     // Node shape classes
     const nodeShapeClasses = variant === 'pill'

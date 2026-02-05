@@ -26,15 +26,27 @@ const CostEstimationTable = ({
     activeGraph,
     setActiveGraph,
     onBack,
-    setHeaderStats
+    setHeaderStats,
+    isCpfStaggered,
+    setIsCpfStaggered
 }: {
     treeData: any;
     activeGraph: string;
     setActiveGraph: (val: string) => void;
     onBack: () => void;
     setHeaderStats?: (stats: any) => void;
+    isCpfStaggered?: boolean;
+    setIsCpfStaggered?: (val: boolean) => void;
 }) => {
-    return <CostEstimationTableContent treeData={treeData} activeGraph={activeGraph} setActiveGraph={setActiveGraph} onBack={onBack} setHeaderStats={setHeaderStats} />;
+    return <CostEstimationTableContent
+        treeData={treeData}
+        activeGraph={activeGraph}
+        setActiveGraph={setActiveGraph}
+        onBack={onBack}
+        setHeaderStats={setHeaderStats}
+        isCpfStaggered={isCpfStaggered}
+        setIsCpfStaggered={setIsCpfStaggered}
+    />;
 };
 
 const CostEstimationTableContent = ({
@@ -42,13 +54,17 @@ const CostEstimationTableContent = ({
     activeGraph,
     setActiveGraph,
     onBack,
-    setHeaderStats
+    setHeaderStats,
+    isCpfStaggered,
+    setIsCpfStaggered
 }: {
     treeData: any;
     activeGraph: string;
     setActiveGraph: (val: string) => void;
     onBack: () => void;
     setHeaderStats?: (stats: any) => void;
+    isCpfStaggered?: boolean;
+    setIsCpfStaggered?: (val: boolean) => void;
 }) => {
     const [activeTab, setActiveTab] = useState("Monthly Revenue Break");
     const [cpfToggle, setCpfToggle] = useState("withCPF");
@@ -170,85 +186,74 @@ const CostEstimationTableContent = ({
     const calculateYearlyCPFCost = () => {
         const buffaloDetails = getBuffaloDetails();
         const cpfCostByYear: any = {};
-        const cpfCostByMonth: any = {}; // { year: { month: cost } }
+        const cpfCostByMonth: any = {};
+        const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
 
-        const CPF_PER_MONTH = 15000 / 12;
-
+        // 1. Calculate Standard Monthly CPF for all months
+        const standardMonthlyCPF: Record<number, Record<number, number>> = {};
         for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
-            let totalCPFCost = 0;
-            cpfCostByMonth[year] = {};
-
+            standardMonthlyCPF[year] = {};
             for (let month = 0; month < 12; month++) {
-                let monthlyTotalCPF = 0;
+                let monthlyTotal = 0;
+                Object.values(buffaloDetails).forEach((buffalo: any) => {
+                    const currentAbsoluteMonth = year * 12 + month;
+                    const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
+                    const absoluteEndMonth = absoluteStartMonth + (treeData.years * 12) - 1;
 
-                for (let unit = 1; unit <= treeData.units; unit++) {
-                    const unitBuffaloes = Object.values(buffaloDetails).filter((buffalo: any) => buffalo.unit === unit);
-                    let monthsWithCPF = 0; // In this month context, it's just count of buffaloes
+                    if (currentAbsoluteMonth < absoluteStartMonth || currentAbsoluteMonth > absoluteEndMonth) return;
 
-                    let buffaloesPayingCPF = 0;
-
-                    unitBuffaloes.forEach((buffalo: any) => {
-                        // Cutoff Logic
-                        const currentAbsoluteMonth = year * 12 + month;
-                        const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-                        const absoluteEndMonth = absoluteStartMonth + (treeData.years * 12) - 1;
-
-                        if (currentAbsoluteMonth < absoluteStartMonth || currentAbsoluteMonth > absoluteEndMonth) {
-                            return;
-                        }
-
-                        let isCpfApplicable = false;
-
-                        if (buffalo.generation === 0) {
-                            const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
-
-                            if (isFirstInUnit) {
-                                // Type A: Free Period for first 12 months
-                                const absoluteStart = treeData.startYear * 12 + treeData.startMonth;
-                                const monthsSinceStart = currentAbsoluteMonth - absoluteStart;
-
-                                if (monthsSinceStart >= 12) {
-                                    isCpfApplicable = true;
-                                }
-                            } else {
-                                // Type B: Free Period Check
-                                const startYear = treeData.startYear;
-                                const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
-                                    ? currentAbsoluteMonth >= buffalo.absoluteAcquisitionMonth
-                                    : (year > startYear || (year === startYear && month >= buffalo.acquisitionMonth));
-
-                                if (isPresentInSimulation) {
-                                    const absoluteStart = treeData.startYear * 12 + treeData.startMonth;
-                                    const monthsSinceStart = currentAbsoluteMonth - absoluteStart;
-                                    const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
-
-                                    if (!isFreePeriod) {
-                                        isCpfApplicable = true;
-                                    }
-                                }
-                            }
-                        } else if (buffalo.generation >= 1) {
-                            const ageInMonths = calculateAgeInMonths(buffalo, year, month);
-                            if (ageInMonths >= 24) {
-                                isCpfApplicable = true;
+                    let isCpfApplicable = false;
+                    if (buffalo.generation === 0) {
+                        const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
+                        const monthsSinceStart = currentAbsoluteMonth - absoluteStartMonth;
+                        if (isFirstInUnit) {
+                            if (monthsSinceStart >= 12) isCpfApplicable = true;
+                        } else {
+                            const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
+                                ? currentAbsoluteMonth >= buffalo.absoluteAcquisitionMonth
+                                : (year > treeData.startYear || (year === treeData.startYear && month >= buffalo.acquisitionMonth));
+                            if (isPresent) {
+                                const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
+                                if (!isFreePeriod) isCpfApplicable = true;
                             }
                         }
-
-                        if (isCpfApplicable) {
-                            buffaloesPayingCPF++;
-                        }
-                    });
-
-                    monthlyTotalCPF += buffaloesPayingCPF * CPF_PER_MONTH;
-                }
-
-                cpfCostByMonth[year][month] = monthlyTotalCPF;
-                totalCPFCost += monthlyTotalCPF;
+                    } else {
+                        const age = calculateAgeInMonths(buffalo, year, month);
+                        if (age >= 24) isCpfApplicable = true;
+                    }
+                    if (isCpfApplicable) monthlyTotal += CPF_PER_MONTH;
+                });
+                standardMonthlyCPF[year][month] = monthlyTotal;
             }
-
-            cpfCostByYear[year] = Math.round(totalCPFCost);
         }
 
+        // 2. Finalize Costs based on mode
+        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+            cpfCostByMonth[year] = {};
+            let totalYearly = 0;
+            for (let month = 0; month < 12; month++) {
+                let cost = 0;
+                if (isCpfStaggered) {
+                    if (month >= 9 && month <= 11) {
+                        const nextYear = year + 1;
+                        if (nextYear <= treeData.startYear + treeData.years) {
+                            let nextYearTotal = 0;
+                            for (let nm = 0; nm < 12; nm++) {
+                                nextYearTotal += standardMonthlyCPF[nextYear][nm];
+                            }
+                            cost = nextYearTotal / 3;
+                        }
+                    } else {
+                        cost = 0;
+                    }
+                } else {
+                    cost = standardMonthlyCPF[year][month];
+                }
+                cpfCostByMonth[year][month] = cost;
+                totalYearly += cost;
+            }
+            cpfCostByYear[year] = Math.round(totalYearly);
+        }
         return { byYear: cpfCostByYear, byMonth: cpfCostByMonth };
     };
 
@@ -325,7 +330,7 @@ const CostEstimationTableContent = ({
     };
 
     const MOTHER_BUFFALO_PRICE = 175000;
-    const CPF_PER_UNIT = 15000;
+    const CPF_PER_UNIT = isCpfStaggered ? 15000 : 18000;
 
     const calculateInitialInvestment = () => {
         const motherBuffaloCost = treeData.units * 2 * MOTHER_BUFFALO_PRICE;
@@ -505,7 +510,7 @@ const CostEstimationTableContent = ({
                 // Let's use the explicit check if possible, or approximate.
                 // The User's previous screenshot showed Year 1 CPF = 15000 (implied target).
                 // So we use standard monthly cost.
-                const cpf = 15000 / 12;
+                const cpf = (isCpfStaggered ? 15000 : 18000) / 12;
 
                 tempCumulativeForBreakEven += (rev - cpf);
 
@@ -849,10 +854,10 @@ const CostEstimationTableContent = ({
                         })}
                     </div>
 
-                    {/* Integrated Year Selector (Bottom Row) */}
-                    {["Monthly Revenue Break", "Cattle Growing Fund", "CPF + CGF", "Asset Market Value"].includes(activeTab) && (
-                        <div className="pb-2 flex-shrink-0 animate-fade-in-up">
-                            <div className="bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200 flex items-center gap-3 hover:bg-white transition-colors cursor-pointer group">
+                    {/* Integrated Year Selector & CPF Toggle (Bottom Row) */}
+                    {(
+                        <div className="pb-2 flex-shrink-0 animate-fade-in-up flex items-center justify-center gap-4">
+                            <div className="bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200 flex items-center gap-3 hover:bg-white transition-colors cursor-pointer group shadow-sm">
                                 <div className="flex items-center gap-2 pl-1 border-r border-slate-200 pr-3">
                                     <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-indigo-500 transition-colors">Year</span>
@@ -880,6 +885,23 @@ const CostEstimationTableContent = ({
                                         );
                                     })}
                                 </select>
+                            </div>
+
+                            {/* CPF Toggle integrated into same row */}
+                            <div className="bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200 flex items-center gap-3 hover:bg-white transition-colors cursor-pointer group shadow-sm">
+                                <div className="flex items-center gap-2 pl-1 border-r border-slate-200 pr-3">
+                                    <Calculator className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-indigo-500 transition-colors">CPF</span>
+                                </div>
+                                <div
+                                    onClick={() => setIsCpfStaggered?.(!isCpfStaggered)}
+                                    className="flex items-center gap-2"
+                                >
+                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">{isCpfStaggered ? "3 Months" : "12 Months"}</span>
+                                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 relative ${isCpfStaggered ? 'bg-indigo-500' : 'bg-slate-300'}`}>
+                                        <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${isCpfStaggered ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -910,6 +932,7 @@ const CostEstimationTableContent = ({
                                 formatCurrency={formatCurrency}
                                 setHeaderStats={setHeaderStats}
                                 selectedYearIndex={globalYearIndex}
+                                isCpfStaggered={isCpfStaggered}
                             />
                         )}
 
@@ -954,6 +977,7 @@ const CostEstimationTableContent = ({
                                 endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.years * 12) - 1) / 12)}
                                 endMonth={(treeData.startMonth + (treeData.years * 12) - 1) % 12}
                                 selectedYearIndex={globalYearIndex}
+                                isCpfStaggered={isCpfStaggered}
                             />
                         )}
 

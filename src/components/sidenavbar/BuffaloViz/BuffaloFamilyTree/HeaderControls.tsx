@@ -24,7 +24,9 @@ const HeaderControls = ({
     loading,
     headerStats,
     activeTab,
-    setActiveTab
+    setActiveTab,
+    isCpfStaggered,
+    setIsCpfStaggered
 }: {
     units: number;
     setUnits: (val: number) => void;
@@ -44,6 +46,8 @@ const HeaderControls = ({
     headerStats: any;
     activeTab: string;
     setActiveTab: (val: string) => void;
+    isCpfStaggered: boolean;
+    setIsCpfStaggered: (val: boolean) => void;
 }) => {
     const monthNames = ["January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"];
@@ -66,7 +70,7 @@ const HeaderControls = ({
     // Auto-run simulation on inputs change
     useEffect(() => {
         runSimulation();
-    }, [units, years, startYear, startMonth, startDay]);
+    }, [units, years, startYear, startMonth, startDay, isCpfStaggered]);
 
     return (
         <div className="bg-white border-b border-slate-200 px-4 py-3 pb-8 z-[80] relative">
@@ -142,6 +146,7 @@ const HeaderControls = ({
                                 placeholder="4-10"
                             />
                         </div>
+
                     </div>
 
                     {/* Run Button */}
@@ -152,24 +157,33 @@ const HeaderControls = ({
                 {treeData && (
                     <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner">
                         <button
-                            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md transition-all duration-200 flex items-center gap-1.5 ${activeTab === "familyTree"
+                            className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
                                 ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
                                 : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
                                 }`}
                             onClick={() => setActiveTab("familyTree")}
                         >
-                            Tree View
+                            <span className="text-base leading-none">🌳</span>
+                            {/* Floating Tooltip */}
+                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                                Tree View
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-slate-800"></span>
+                            </span>
                         </button>
                         <button
-                            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md transition-all duration-200 flex items-center gap-1.5 ${activeTab === "costEstimation"
+                            className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
                                 ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
                                 : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
                                 }`}
                             onClick={() => setActiveTab("costEstimation")}
                         >
-                            Revenue Projections
+                            <span className="text-base leading-none">📊</span>
+                            {/* Floating Tooltip */}
+                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                                Revenue Projections
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-slate-800"></span>
+                            </span>
                         </button>
-
                     </div>
                 )}
 
@@ -196,7 +210,7 @@ const HeaderControls = ({
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
                                 {isCGFEnabled ? "Net (+CGF)" : "Net Rev"}
                             </span>
-                            <span className={`text-sm font-black ${isCGFEnabled ? 'text-emerald-600' : 'text-emerald-600'}`}>
+                            <span className="text-sm font-black text-emerald-600">
                                 {formatCurrency(isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)}
                             </span>
                         </div>

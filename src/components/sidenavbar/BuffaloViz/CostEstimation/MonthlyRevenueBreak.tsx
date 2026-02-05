@@ -13,7 +13,8 @@ const MonthlyRevenueBreak = ({
     monthNames,
     formatCurrency,
     setHeaderStats,
-    selectedYearIndex
+    selectedYearIndex,
+    isCpfStaggered
 }: any) => {
     const [selectedUnit, setSelectedUnit] = useState(1);
     const [showScrollIndicator, setShowScrollIndicator] = useState(false);
@@ -124,58 +125,63 @@ const MonthlyRevenueBreak = ({
         return false;
     };
 
-    // Calculate CPF cost for milk-producing buffaloes precisely per month
     const calculateCPFCost = () => {
         let monthlyCosts = new Array(12).fill(0);
         const buffaloCPFDetails: any[] = [];
-        const CPF_PER_MONTH = 15000 / 12;
-        // We check ALL buffaloes in unit, not just the filtered "unitBuffaloes" (which overlaps mostly but just to be safe)
-        // Actually typically we want to show CPF details for buffaloes visibly contributing or costing money.
-        // Let's iterate all buffaloes in the unit to catch any hidden costs? 
-        // Usually only mature buffaloes have costs.
+        const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
         const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
 
-        let milkProducingBuffaloesWithCPF = 0; // Count of unique buffaloes paying CPF this year
+        let milkProducingBuffaloesWithCPF = 0;
 
+        // 1. Calculate Standard Monthly CPF for this year/unit
+        const standardCosts = new Array(12).fill(0);
         allUnitBuffaloes.forEach((buffalo: any) => {
-            let monthsWithCPF = 0;
-
+            let monthsWithCPFForThisBuffalo = 0;
             for (let m = 0; m < 12; m++) {
-                const { year, month } = getCalendarDate(selectedYearIndex, m);
-
                 if (isCpfApplicableForMonth(buffalo, selectedYearIndex, m)) {
-                    // Check if revenue > 0
-                    const revenue = monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0;
-
-                    monthlyCosts[m] += CPF_PER_MONTH;
-                    monthsWithCPF++;
+                    standardCosts[m] += CPF_PER_MONTH;
+                    monthsWithCPFForThisBuffalo++;
                 }
             }
+            if (monthsWithCPFForThisBuffalo > 0) milkProducingBuffaloesWithCPF++;
 
-            if (monthsWithCPF > 0) milkProducingBuffaloesWithCPF++;
-
+            // Add to details for tooltip/info
             let reason = "No CPF";
-            if (monthsWithCPF === 12) reason = "Full Year";
-            else if (monthsWithCPF > 0) reason = `Partial (${monthsWithCPF} months)`;
-            else if (buffalo.id === 'B' && selectedYear <= treeData.startYear + 1) reason = "Free Period";
-            else if (buffalo.generation > 0) reason = "Age < 24 months";
+            if (monthsWithCPFForThisBuffalo === 12) reason = "Full Year";
+            else if (monthsWithCPFForThisBuffalo > 0) reason = `Partial (${monthsWithCPFForThisBuffalo} months)`;
 
-            // Only add to details if relevant (generating income or has CPF)
-            const inDisplayList = unitBuffaloes.find((b: any) => b.id === buffalo.id);
-            if (monthsWithCPF > 0 || inDisplayList || buffalo.generation === 0) {
-                buffaloCPFDetails.push({
-                    id: buffalo.id,
-                    hasCPF: monthsWithCPF > 0,
-                    reason: reason,
-                    monthsWithCPF
-                });
-            }
+            buffaloCPFDetails.push({
+                id: buffalo.id,
+                hasCPF: monthsWithCPFForThisBuffalo > 0,
+                reason: reason,
+                monthsWithCPF: monthsWithCPFForThisBuffalo
+            });
         });
+
+        // 2. Apply Staggered Logic if enabled
+        if (isCpfStaggered) {
+            const nextYearIndex = selectedYearIndex + 1;
+            if (nextYearIndex < treeData.years) {
+                let totalNextYear = 0;
+                allUnitBuffaloes.forEach((buffalo: any) => {
+                    for (let m = 0; m < 12; m++) {
+                        if (isCpfApplicableForMonth(buffalo, nextYearIndex, m)) {
+                            totalNextYear += CPF_PER_MONTH;
+                        }
+                    }
+                });
+                monthlyCosts[9] = totalNextYear / 3;
+                monthlyCosts[10] = totalNextYear / 3;
+                monthlyCosts[11] = totalNextYear / 3;
+            }
+        } else {
+            monthlyCosts = standardCosts;
+        }
 
         const annualCPFCost = monthlyCosts.reduce((a, b) => a + b, 0);
 
         return {
-            monthlyCosts, // Array of 12 numbers
+            monthlyCosts,
             annualCPFCost: Math.round(annualCPFCost),
             buffaloCPFDetails,
             milkProducingBuffaloesWithCPF
@@ -216,17 +222,34 @@ const MonthlyRevenueBreak = ({
     // Calculate CPF cumulative cost until selected year precisely
     const calculateCumulativeCPFCost = () => {
         let totalCPF = 0;
-        const CPF_PER_MONTH = 15000 / 12;
+        const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
+        const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
 
-        for (let yIndex = 0; yIndex <= selectedYearIndex; yIndex++) {
-            const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
-            allUnitBuffaloes.forEach((buffalo: any) => {
-                for (let m = 0; m < 12; m++) {
-                    if (isCpfApplicableForMonth(buffalo, yIndex, m)) {
-                        totalCPF += CPF_PER_MONTH;
-                    }
+        for (let yIdx = 0; yIdx <= selectedYearIndex; yIdx++) {
+            if (isCpfStaggered) {
+                // Staggered: Pay for yIdx+1 in Oct-Dec of yIdx
+                const nextY = yIdx + 1;
+                if (nextY < treeData.years) {
+                    let nextYearTotal = 0;
+                    allUnitBuffaloes.forEach((buffalo: any) => {
+                        for (let m = 0; m < 12; m++) {
+                            if (isCpfApplicableForMonth(buffalo, nextY, m)) {
+                                nextYearTotal += CPF_PER_MONTH;
+                            }
+                        }
+                    });
+                    totalCPF += nextYearTotal;
                 }
-            });
+            } else {
+                // Standard: Pay normally
+                allUnitBuffaloes.forEach((buffalo: any) => {
+                    for (let m = 0; m < 12; m++) {
+                        if (isCpfApplicableForMonth(buffalo, yIdx, m)) {
+                            totalCPF += CPF_PER_MONTH;
+                        }
+                    }
+                });
+            }
         }
 
         return Math.round(totalCPF);
@@ -687,7 +710,7 @@ const MonthlyRevenueBreak = ({
                     </div>
 
                     <div className="text-center text-xs text-slate-400 mt-4">
-                        Notes: B gets one year free CPF start. CPF = ₹15,000/yr (monthly).
+                        Notes: B gets one year free CPF start. CPF = ₹18,000/yr (monthly).
                     </div>
                 </>
             ) : (

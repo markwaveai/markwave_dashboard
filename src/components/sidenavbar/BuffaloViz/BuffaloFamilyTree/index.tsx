@@ -22,6 +22,7 @@ export default function BuffaloFamilyTree() {
     const [activeGraph, setActiveGraph] = useState("buffaloes");
     const [activeTab, setActiveTab] = useState("familyTree");
     const [headerStats, setHeaderStats] = useState(null);
+    const [isCpfStaggered, setIsCpfStaggered] = useState(false);
 
     const containerRef = useRef<any>(null);
     const treeContainerRef = useRef<any>(null);
@@ -487,10 +488,42 @@ export default function BuffaloFamilyTree() {
 
             // --- Calculate Total Financials (Revenue & Net) Matching CostEstimationTable logic ---
             const calculateTotalFinancials = () => {
-                const CPF_PER_MONTH = 15000 / 12;
+                const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
                 let totalRevenue = 0;
                 let totalCPFCost = 0;
                 let totalCaringCost = 0;
+
+                // Helper for standard CPF applicability
+                const isCpfApplicableForMonth = (buffalo: any, absMonthIndex: number) => {
+                    const cy = Math.floor(absMonthIndex / 12);
+                    const cm = absMonthIndex % 12;
+
+                    if (buffalo.generation === 0) {
+                        const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
+                        const absoluteStart = startYear * 12 + startMonth;
+                        const monthsSinceStart = absMonthIndex - absoluteStart;
+
+                        if (isFirstInUnit) {
+                            const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
+                                ? absMonthIndex >= buffalo.absoluteAcquisitionMonth
+                                : true;
+                            if (isPresent && monthsSinceStart >= 12) return true;
+                        } else {
+                            const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
+                                ? absMonthIndex >= buffalo.absoluteAcquisitionMonth
+                                : (cy > startYear || (cy === startYear && cm >= buffalo.acquisitionMonth));
+                            if (isPresentInSimulation) {
+                                const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
+                                if (!isFreePeriod) return true;
+                            }
+                        }
+                    } else {
+                        const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                        const ageInMonths = ((cy - buffalo.birthYear) * 12) + (cm - birthMonth);
+                        if (ageInMonths >= 24) return true;
+                    }
+                    return false;
+                };
 
                 // Calculate monthly revenue for all years
                 for (let i = 0; i < totalMonthsDuration; i++) {
@@ -519,80 +552,48 @@ export default function BuffaloFamilyTree() {
                             monthlyTotalRevenue += revenue;
                         }
 
-                        // --- CPF Calculation ---
-                        let isCpfApplicable = false;
-
-                        // Current absolute month for CPF calc
-                        // const currentAbsolute = currentYear * 12 + currentMonth; // Already defined above
-
-                        if (buffalo.generation === 0) {
-                            const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
-                            if (isFirstInUnit) {
-                                // Type A: Full CPF from start (if present)
-                                // Check if buffalo is present (acquired)
-                                const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
-                                    ? currentAbsolute >= buffalo.absoluteAcquisitionMonth
-                                    : true; // Fallback
-
-                                if (isPresent) {
-                                    // Type A: Free Period for first 12 months
-                                    const absoluteStart = startYear * 12 + startMonth;
-                                    const monthsSinceStart = currentAbsolute - absoluteStart;
-
-                                    if (monthsSinceStart >= 12) {
-                                        isCpfApplicable = true;
-                                    }
-                                }
-                            } else {
-                                // Type B: Free Period Check
-                                const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
-                                    ? currentAbsolute >= buffalo.absoluteAcquisitionMonth
-                                    : (currentYear > startYear || (currentYear === startYear && currentMonth >= buffalo.acquisitionMonth));
-
-                                if (isPresentInSimulation) {
-                                    const absoluteStart = startYear * 12 + startMonth;
-                                    const monthsSinceStart = currentAbsolute - absoluteStart;
-
-                                    // Free Period: July to June of next year (months 6-17 if start is Jan)
-                                    // Logic: Start Month + 6 months is acquisition. Free for 1 year.
-                                    // Original Code: monthsSinceStart >= 6 && monthsSinceStart < 18
-                                    const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
-                                    if (!isFreePeriod) {
-                                        isCpfApplicable = true;
-                                    }
-                                }
-                            }
-                        } else {
-                            // Offspring: Pay CPF after 24 months
-                            const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
-                            const ageInMonths = ((currentYear - buffalo.birthYear) * 12) + (currentMonth - birthMonth);
-                            if (ageInMonths >= 24) {
-                                isCpfApplicable = true;
-                            }
-                        }
-
-                        if (isCpfApplicable) {
-                            monthlyTotalCPF += CPF_PER_MONTH;
-                        }
-
-                        // --- Caring Cost Logic (Matching CattleGrowingFund.jsx) ---
+                        // --- Caring Cost Logic ---
                         if (buffalo.generation > 0) {
                             const birthAbsolute = buffalo.birthYear * 12 + (buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0));
 
                             if (birthAbsolute <= currentAbsolute) {
-                                // Age Calculation: 1-based index (Born Jan, Current Jan = 1st month)
                                 const ageInMonths = (currentAbsolute - birthAbsolute) + 1;
-
                                 let monthlyCost = 0;
-                                if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;      // 13-18m: 6000 total
-                                else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400; // 19-24m: 8400 total
-                                else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800; // 25-30m: 10800 total
-                                else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500; // 31-36m: 15000 total
-
+                                if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;
+                                else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400;
+                                else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800;
+                                else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500;
                                 monthlyTotalCaringCost += monthlyCost;
                             }
                         }
                     });
+
+                    // --- CPF Calculation Logic ---
+                    if (isCpfStaggered) {
+                        if (currentMonth >= 9 && currentMonth <= 11) {
+                            const currentSimYearIdx = Math.floor(i / 12);
+                            const nextSimYearIdx = currentSimYearIdx + 1;
+
+                            if (nextSimYearIdx < years) {
+                                let totalNextYearCPF = 0;
+                                herd.forEach(buffalo => {
+                                    for (let nm = 0; nm < 12; nm++) {
+                                        const nextAbsMonth = (startYear * 12 + startMonth) + (nextSimYearIdx * 12) + nm;
+                                        if (isCpfApplicableForMonth(buffalo, nextAbsMonth)) {
+                                            totalNextYearCPF += CPF_PER_MONTH;
+                                        }
+                                    }
+                                });
+                                monthlyTotalCPF = totalNextYearCPF / 3;
+                            }
+                        }
+                    } else {
+                        herd.forEach(buffalo => {
+                            if (isCpfApplicableForMonth(buffalo, currentAbsolute)) {
+                                monthlyTotalCPF += CPF_PER_MONTH;
+                            }
+                        });
+                    }
 
                     totalRevenue += monthlyTotalRevenue;
                     totalCPFCost += monthlyTotalCPF;
@@ -609,7 +610,7 @@ export default function BuffaloFamilyTree() {
             const { totalRevenue, totalNetRevenue, totalCaringCost } = calculateTotalFinancials();
 
             // --- Calculate Per-Buffalo Stats for Tooltip ---
-            const CPF_PER_MONTH = 15000 / 12; // Define CPF constant
+            const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12; // Define CPF dynamic constant
 
             herd.forEach(buffalo => {
                 // 1. Age & Asset Value
@@ -914,6 +915,8 @@ export default function BuffaloFamilyTree() {
                     headerStats={headerStats}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
+                    isCpfStaggered={isCpfStaggered}
+                    setIsCpfStaggered={setIsCpfStaggered}
                 />
             )}
 
@@ -942,6 +945,8 @@ export default function BuffaloFamilyTree() {
                             setActiveGraph={setActiveGraph}
                             onBack={() => setActiveTab("familyTree")}
                             setHeaderStats={setHeaderStats}
+                            isCpfStaggered={isCpfStaggered}
+                            setIsCpfStaggered={setIsCpfStaggered}
                         />
                     </div>
                 ) : (

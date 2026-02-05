@@ -782,7 +782,7 @@ const TreeVisualization = ({
                                     displayName={getBuffaloDisplayName(node)}
                                     elementId={`buffalo-${node.id}`}
                                     variant={activeLayout === 'layout4' ? 'pill' : 'circle'}
-                                    tooltipPosition={activeLayout === 'layout4' ? 'right' : 'top'}
+                                    tooltipPosition={activeLayout === 'layout4' ? 'right' : 'bottom'}
                                 />
                             </div>
                         ))}

@@ -9,7 +9,8 @@ const CpfCgfCombined = ({
     startYear,
     endYear,
     endMonth,
-    selectedYearIndex
+    selectedYearIndex,
+    isCpfStaggered
 }: any) => {
     // const [selectedYearIndex, setSelectedYearIndex] = useState(0);
 
@@ -93,9 +94,27 @@ const CpfCgfCombined = ({
     };
 
     const calculateCpfForMonth = (yearIndex: number, monthIndex: number) => {
-        const CPF_PER_MONTH = 15000 / 12;
-        let totalCost = 0;
+        const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
 
+        if (isCpfStaggered) {
+            if (monthIndex >= 9 && monthIndex <= 11) {
+                const nextYearIndex = yearIndex + 1;
+                if (nextYearIndex < treeData.years) {
+                    let totalNextYear = 0;
+                    Object.values(buffaloDetails as Record<string, any>).forEach((buffalo: any) => {
+                        for (let m = 0; m < 12; m++) {
+                            if (isCpfApplicableForMonth(buffalo, nextYearIndex, m)) {
+                                totalNextYear += CPF_PER_MONTH;
+                            }
+                        }
+                    });
+                    return totalNextYear / 3;
+                }
+            }
+            return 0;
+        }
+
+        let totalCost = 0;
         Object.values(buffaloDetails as Record<string, any>).forEach((buffalo: any) => {
             if (isCpfApplicableForMonth(buffalo, yearIndex, monthIndex)) {
                 totalCost += CPF_PER_MONTH;
