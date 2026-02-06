@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useEmi } from '../../context/EmiContext';
 import { Check, Info, Calendar, CheckCircle2, CircleDollarSign, Clock, AlertCircle, IndianRupee } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -10,7 +10,9 @@ const AcfDetails = () => {
         acfTenureMonths,
         acfTotalInvestment,
         formatCurrency,
-        acfCpfBenefit
+        acfCpfBenefit,
+        simulateHerd,
+        calculateAssetValueFromSimulation
     } = useEmi();
 
     // Derived values for display
@@ -18,10 +20,11 @@ const AcfDetails = () => {
     const marketPricePerUnit = 350000;
     const totalMarketPrice = acfUnits * marketPricePerUnit;
 
-    // Asset Value for display (using 4.2L derived from image ratio or context, 
-    // but let's stick to a logical "Projected Value" which is usually higher than cost)
-    // The image shows 4,20,000 asset value for 3,00,000 investment. That's 1.4x
-    const projectedAssetValue = acfTotalInvestment * 1.4;
+    // Asset Value derived from actual simulation logic
+    const projectedAssetValue = useMemo(() => {
+        const herdAges = simulateHerd(acfTenureMonths, acfUnits);
+        return calculateAssetValueFromSimulation(herdAges, acfUnits);
+    }, [acfTenureMonths, acfUnits, simulateHerd, calculateAssetValueFromSimulation]);
 
     const cpfRate = 15000;
     const cpfTotalValue = acfCpfBenefit;
