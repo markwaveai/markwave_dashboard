@@ -95,33 +95,56 @@ const CpfCgfCombined = ({
 
     const calculateCpfForMonth = (yearIndex: number, monthIndex: number) => {
         const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
+        const currentSimMonth = yearIndex * 12 + monthIndex;
+        let totalMonthlyCPF = 0;
+
+        const allBuffaloes = Object.values(buffaloDetails as Record<string, any>);
 
         if (isCpfStaggered) {
-            if (monthIndex >= 9 && monthIndex <= 11) {
-                const nextYearIndex = yearIndex + 1;
-                if (nextYearIndex < treeData.years) {
-                    let totalNextYear = 0;
-                    Object.values(buffaloDetails as Record<string, any>).forEach((buffalo: any) => {
-                        for (let m = 0; m < 12; m++) {
-                            if (isCpfApplicableForMonth(buffalo, nextYearIndex, m)) {
-                                totalNextYear += CPF_PER_MONTH;
-                            }
-                        }
-                    });
-                    return totalNextYear / 3;
+            allBuffaloes.forEach(buffalo => {
+                // 1. Find the first absolute month of eligibility
+                let firstEligibleSimMonth = -1;
+                const scanMaxMonths = (treeData.years + 2) * 12; // Search sufficiently far ahead
+
+                for (let m = 0; m < scanMaxMonths; m++) {
+                    const yIdx = Math.floor(m / 12);
+                    const mIdx = m % 12;
+                    if (isCpfApplicableForMonth(buffalo, yIdx, mIdx)) {
+                        firstEligibleSimMonth = m;
+                        break;
+                    }
                 }
-            }
-            return 0;
+
+                if (firstEligibleSimMonth !== -1) {
+                    // 2. Check all potential cycle starts
+                    for (let s = firstEligibleSimMonth; s < (treeData.years + 1) * 12; s += 12) {
+                        // Payment window for this cycle is [s-3, s-1] relative to simulation start
+                        if (currentSimMonth >= s - 3 && currentSimMonth <= s - 1) {
+                            // Calculate total cost for the 12-month cycle [s, s+11]
+                            let cycleMonths = 0;
+                            for (let k = 0; k < 12; k++) {
+                                const cycleYIdx = Math.floor((s + k) / 12);
+                                const cycleMIdx = (s + k) % 12;
+                                if (isCpfApplicableForMonth(buffalo, cycleYIdx, cycleMIdx)) {
+                                    cycleMonths++;
+                                }
+                            }
+                            const cycleTotalCost = cycleMonths * CPF_PER_MONTH;
+                            totalMonthlyCPF += cycleTotalCost / 3;
+                        }
+                    }
+                }
+            });
+            return totalMonthlyCPF;
         }
 
-        let totalCost = 0;
-        Object.values(buffaloDetails as Record<string, any>).forEach((buffalo: any) => {
+        allBuffaloes.forEach((buffalo: any) => {
             if (isCpfApplicableForMonth(buffalo, yearIndex, monthIndex)) {
-                totalCost += CPF_PER_MONTH;
+                totalMonthlyCPF += CPF_PER_MONTH;
             }
         });
 
-        return totalCost;
+        return totalMonthlyCPF;
     };
 
     // --- Generate Table Data ---

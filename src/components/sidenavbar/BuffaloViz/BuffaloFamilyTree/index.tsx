@@ -504,11 +504,13 @@ export default function BuffaloFamilyTree() {
                         const monthsSinceStart = absMonthIndex - absoluteStart;
 
                         if (isFirstInUnit) {
+                            // Type A
                             const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
                                 ? absMonthIndex >= buffalo.absoluteAcquisitionMonth
                                 : true;
                             if (isPresent && monthsSinceStart >= 12) return true;
                         } else {
+                            // Type B
                             const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
                                 ? absMonthIndex >= buffalo.absoluteAcquisitionMonth
                                 : (cy > startYear || (cy === startYear && cm >= buffalo.acquisitionMonth));
@@ -570,23 +572,37 @@ export default function BuffaloFamilyTree() {
 
                     // --- CPF Calculation Logic ---
                     if (isCpfStaggered) {
-                        if (currentMonth >= 9 && currentMonth <= 11) {
-                            const currentSimYearIdx = Math.floor(i / 12);
-                            const nextSimYearIdx = currentSimYearIdx + 1;
-
-                            if (nextSimYearIdx < years) {
-                                let totalNextYearCPF = 0;
-                                herd.forEach(buffalo => {
-                                    for (let nm = 0; nm < 12; nm++) {
-                                        const nextAbsMonth = (startYear * 12 + startMonth) + (nextSimYearIdx * 12) + nm;
-                                        if (isCpfApplicableForMonth(buffalo, nextAbsMonth)) {
-                                            totalNextYearCPF += CPF_PER_MONTH;
-                                        }
-                                    }
-                                });
-                                monthlyTotalCPF = totalNextYearCPF / 3;
+                        herd.forEach(buffalo => {
+                            // 1. Find the first absolute month of eligibility
+                            let firstEligibleSimMonth = -1;
+                            // Search sufficiently far ahead
+                            for (let m = 0; m < totalMonthsDuration + 24; m++) {
+                                const absM = (startYear * 12 + startMonth) + m;
+                                if (isCpfApplicableForMonth(buffalo, absM)) {
+                                    firstEligibleSimMonth = m;
+                                    break;
+                                }
                             }
-                        }
+
+                            if (firstEligibleSimMonth !== -1) {
+                                // 2. Check all potential cycle starts
+                                for (let s = firstEligibleSimMonth; s < totalMonthsDuration + 12; s += 12) {
+                                    // Payment window for this cycle is [s-3, s-1]
+                                    if (i >= s - 3 && i <= s - 1) {
+                                        // Calculate total cost for the 12-month cycle [s, s+11]
+                                        let cycleMonths = 0;
+                                        for (let k = 0; k < 12; k++) {
+                                            const cycleAbsM = (startYear * 12 + startMonth) + s + k;
+                                            if (isCpfApplicableForMonth(buffalo, cycleAbsM)) {
+                                                cycleMonths++;
+                                            }
+                                        }
+                                        const cycleTotalCost = cycleMonths * CPF_PER_MONTH;
+                                        monthlyTotalCPF += cycleTotalCost / 3;
+                                    }
+                                }
+                            }
+                        });
                     } else {
                         herd.forEach(buffalo => {
                             if (isCpfApplicableForMonth(buffalo, currentAbsolute)) {
@@ -676,19 +692,18 @@ export default function BuffaloFamilyTree() {
                         if (buffalo.generation === 0) {
                             const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
                             if (isFirstInUnit) {
-                                isCpfApplicable = true;
+                                // Type A: 12 months from start (acquisition)
+                                const monthsSinceStart = currentAbsoluteMonth - (startYear * 12 + (startMonth || 0));
+                                if (monthsSinceStart >= 12) isCpfApplicable = true;
                             } else {
                                 // Type B: Free Period Check
-                                const currentAbsolute = y * 12 + m;
                                 const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
-                                    ? currentAbsolute >= buffalo.absoluteAcquisitionMonth
+                                    ? currentAbsoluteMonth >= buffalo.absoluteAcquisitionMonth
                                     : (y > startYear || (y === startYear && m >= buffalo.acquisitionMonth));
 
                                 if (isPresentInSimulation) {
-                                    // Free Period: 12 months starting 6 months after simulation start
                                     const absoluteStart = startYear * 12 + startMonth;
-                                    const currentAbsolute = y * 12 + m;
-                                    const monthsSinceStart = currentAbsolute - absoluteStart;
+                                    const monthsSinceStart = currentAbsoluteMonth - absoluteStart;
                                     const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
                                     if (!isFreePeriod) {
                                         isCpfApplicable = true;

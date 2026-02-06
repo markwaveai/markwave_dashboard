@@ -189,71 +189,109 @@ const CostEstimationTableContent = ({
         const cpfCostByMonth: any = {};
         const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
 
-        // 1. Calculate Standard Monthly CPF for all months
-        const standardMonthlyCPF: Record<number, Record<number, number>> = {};
-        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
-            standardMonthlyCPF[year] = {};
-            for (let month = 0; month < 12; month++) {
-                let monthlyTotal = 0;
-                Object.values(buffaloDetails).forEach((buffalo: any) => {
-                    const currentAbsoluteMonth = year * 12 + month;
-                    const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
-                    const absoluteEndMonth = absoluteStartMonth + (treeData.years * 12) - 1;
+        const startAbs = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const endAbs = startAbs + (treeData.years * 12) - 1;
+        const scanMaxAbs = (treeData.startYear + treeData.years + 2) * 12;
 
-                    if (currentAbsoluteMonth < absoluteStartMonth || currentAbsoluteMonth > absoluteEndMonth) return;
+        // 1. Calculate Standard Monthly Eligibility for all months
+        const eligibilityMap: Record<string, Record<number, boolean>> = {};
+        Object.values(buffaloDetails).forEach((buffalo: any) => {
+            eligibilityMap[buffalo.id] = {};
+            for (let absM = treeData.startYear * 12 - 12; absM < scanMaxAbs; absM++) {
+                if (absM < startAbs || absM > endAbs) {
+                    eligibilityMap[buffalo.id][absM] = false;
+                    continue;
+                }
 
-                    let isCpfApplicable = false;
-                    if (buffalo.generation === 0) {
-                        const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
-                        const monthsSinceStart = currentAbsoluteMonth - absoluteStartMonth;
-                        if (isFirstInUnit) {
-                            if (monthsSinceStart >= 12) isCpfApplicable = true;
-                        } else {
-                            const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
-                                ? currentAbsoluteMonth >= buffalo.absoluteAcquisitionMonth
-                                : (year > treeData.startYear || (year === treeData.startYear && month >= buffalo.acquisitionMonth));
-                            if (isPresent) {
-                                const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
-                                if (!isFreePeriod) isCpfApplicable = true;
-                            }
-                        }
+                const year = Math.floor(absM / 12);
+                const month = absM % 12;
+                let isCpfApplicable = false;
+                const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
+
+                if (buffalo.generation === 0) {
+                    const monthsSinceStart = absM - startAbs;
+                    if (isFirstInUnit) {
+                        if (monthsSinceStart >= 12) isCpfApplicable = true;
                     } else {
-                        const age = calculateAgeInMonths(buffalo, year, month);
-                        if (age >= 24) isCpfApplicable = true;
-                    }
-                    if (isCpfApplicable) monthlyTotal += CPF_PER_MONTH;
-                });
-                standardMonthlyCPF[year][month] = monthlyTotal;
-            }
-        }
-
-        // 2. Finalize Costs based on mode
-        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
-            cpfCostByMonth[year] = {};
-            let totalYearly = 0;
-            for (let month = 0; month < 12; month++) {
-                let cost = 0;
-                if (isCpfStaggered) {
-                    if (month >= 9 && month <= 11) {
-                        const nextYear = year + 1;
-                        if (nextYear <= treeData.startYear + treeData.years) {
-                            let nextYearTotal = 0;
-                            for (let nm = 0; nm < 12; nm++) {
-                                nextYearTotal += standardMonthlyCPF[nextYear][nm];
-                            }
-                            cost = nextYearTotal / 3;
+                        const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
+                            ? absM >= buffalo.absoluteAcquisitionMonth
+                            : (year > treeData.startYear || (year === treeData.startYear && month >= buffalo.acquisitionMonth));
+                        if (isPresent) {
+                            const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
+                            if (!isFreePeriod) isCpfApplicable = true;
                         }
-                    } else {
-                        cost = 0;
                     }
                 } else {
-                    cost = standardMonthlyCPF[year][month];
+                    const age = calculateAgeInMonths(buffalo, year, month);
+                    if (age >= 24) isCpfApplicable = true;
                 }
-                cpfCostByMonth[year][month] = cost;
-                totalYearly += cost;
+                eligibilityMap[buffalo.id][absM] = isCpfApplicable;
             }
-            cpfCostByYear[year] = Math.round(totalYearly);
+        });
+
+        // 2. Initialize Yearly/Monthly Cost Storage
+        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+            cpfCostByMonth[year] = {};
+            for (let month = 0; month < 12; month++) {
+                cpfCostByMonth[year][month] = 0;
+            }
         }
+
+        // 3. Assign Costs
+        Object.values(buffaloDetails).forEach((buffalo: any) => {
+            const eligibility = eligibilityMap[buffalo.id];
+
+            if (isCpfStaggered) {
+                // Find first eligibility
+                let firstAbsEligible = -1;
+                for (let absM = treeData.startYear * 12; absM < scanMaxAbs; absM++) {
+                    if (eligibility[absM]) {
+                        firstAbsEligible = absM;
+                        break;
+                    }
+                }
+
+                if (firstAbsEligible !== -1) {
+                    // Cycles start at firstAbsEligible, firstAbsEligible + 12, etc.
+                    for (let s = firstAbsEligible; s < scanMaxAbs; s += 12) {
+                        let cycleMonths = 0;
+                        for (let k = 0; k < 12; k++) {
+                            if (eligibility[s + k]) cycleMonths++;
+                        }
+                        const cycleTotal = cycleMonths * CPF_PER_MONTH;
+
+                        // Payment in lead-in window [s-3, s-1]
+                        for (let pIdx = s - 3; pIdx <= s - 1; pIdx++) {
+                            const pYear = Math.floor(pIdx / 12);
+                            const pMonth = pIdx % 12;
+                            if (cpfCostByMonth[pYear] && pMonth >= 0) {
+                                cpfCostByMonth[pYear][pMonth] += cycleTotal / 3;
+                            }
+                        }
+                    }
+                }
+            } else {
+                for (let absM = startAbs; absM <= endAbs; absM++) {
+                    if (eligibility[absM]) {
+                        const y = Math.floor(absM / 12);
+                        const m = absM % 12;
+                        if (cpfCostByMonth[y]) {
+                            cpfCostByMonth[y][m] += CPF_PER_MONTH;
+                        }
+                    }
+                }
+            }
+        });
+
+        // 4. Finalize Yearly Totals
+        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
+            let total = 0;
+            for (let month = 0; month < 12; month++) {
+                total += cpfCostByMonth[year][month];
+            }
+            cpfCostByYear[year] = Math.round(total);
+        }
+
         return { byYear: cpfCostByYear, byMonth: cpfCostByMonth };
     };
 

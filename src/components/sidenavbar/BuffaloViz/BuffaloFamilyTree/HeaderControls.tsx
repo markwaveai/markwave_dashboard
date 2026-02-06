@@ -193,7 +193,11 @@ const HeaderControls = ({
 
                         <div className="flex flex-col items-center">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
-                            <span className="text-sm font-black text-slate-800">{treeData.summaryStats.totalBuffaloes}</span>
+                            <span className="text-sm font-black text-slate-800">
+                                {activeTab === "costEstimation" && headerStats?.totalBuffaloes !== undefined
+                                    ? headerStats.totalBuffaloes
+                                    : treeData.summaryStats.totalBuffaloes}
+                            </span>
                         </div>
 
                         <div className="w-px h-8 bg-slate-200" />
@@ -201,7 +205,11 @@ const HeaderControls = ({
                         {/* Asset Value - Added */}
                         <div className="flex flex-col items-center">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Val</span>
-                            <span className="text-sm font-black text-blue-600">{formatCurrency(treeData.summaryStats.totalAssetValue)}</span>
+                            <span className="text-sm font-black text-blue-600">
+                                {formatCurrency(activeTab === "costEstimation" && headerStats?.totalAssetValue !== undefined
+                                    ? headerStats.totalAssetValue
+                                    : treeData.summaryStats.totalAssetValue)}
+                            </span>
                         </div>
 
                         <div className="w-px h-8 bg-slate-200" />
@@ -211,9 +219,14 @@ const HeaderControls = ({
                                 {isCGFEnabled ? "Net (+CGF)" : "Net Rev"}
                             </span>
                             <span className="text-sm font-black text-emerald-600">
-                                {formatCurrency(isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)}
+                                {formatCurrency(
+                                    activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
+                                        ? (isCGFEnabled ? headerStats.cumulativeNetRevenueWithCaring || headerStats.cumulativeNetRevenue : headerStats.cumulativeNetRevenue)
+                                        : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)
+                                )}
                             </span>
                         </div>
+
 
                         {/* CGF Toggle - Integrated */}
                         <button
