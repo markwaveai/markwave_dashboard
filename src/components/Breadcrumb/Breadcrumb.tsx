@@ -66,8 +66,6 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
     useEffect(() => {
         if (window.innerWidth <= 768) {
             dispatch(setSidebarOpen(false));
-        } else {
-            dispatch(setSidebarOpen(true));
         }
 
         const handleResize = () => {

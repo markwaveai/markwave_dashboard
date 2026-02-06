@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setSession as setReduxSession } from './store/slices/authSlice';
 import { fetchAdminProfile } from './store/slices/usersSlice';
@@ -23,6 +23,8 @@ import SupportTicketsTab from './components/sidenavbar/public/SupportTicketsTab'
 import CustomerDetailsPage from './components/sidenavbar/Users/CustomerDetails';
 import NetworkTab from './components/sidenavbar/Network/Network';
 import NetworkUserDetailsPage from './components/sidenavbar/Network/NetworkUserDetails';
+import ACFHome from './components/sidenavbar/Acf/ACFHome';
+import ACFUserDetails from './components/sidenavbar/Acf/ACFUserDetails';
 
 // Public Pages
 import ReferralLandingPage from './components/sidenavbar/public/ReferralLandingPage';
@@ -162,119 +164,88 @@ function App() {
           session ? <Navigate to="/orders" replace /> : <Login onLogin={handleLogin} />
         } />
 
-        {/* Protected Dashboard Routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <DashboardHome />
-          </ProtectedRoute>
-        } />
+        {/* Persistent Layout for all authenticated dashboard views */}
+        <Route element={<DashboardLayout session={session} isAdmin={isAdmin} handleLogout={handleLogout} />}>
 
-        <Route path="/orders" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <React.Suspense fallback={<OrdersPageSkeleton />}>
-              <OrdersTab />
-            </React.Suspense>
-          </ProtectedRoute>
-        } />
+          {/* Strictly Protected Routes */}
+          <Route element={<RequireAuth session={session} isAdmin={isAdmin} handleLogout={handleLogout}><Outlet /></RequireAuth>}>
+            <Route path="/dashboard" element={<DashboardHome />} />
 
-        <Route path="/orders/:orderId" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <OrderDetailsPage />
-          </ProtectedRoute>
-        } />
+            <Route path="/orders" element={
+              <React.Suspense fallback={<OrdersPageSkeleton />}>
+                <OrdersTab />
+              </React.Suspense>
+            } />
+            <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
 
-        <Route path="/user-management" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <React.Suspense fallback={<UsersPageSkeleton />}>
-              <UserDetails getSortIcon={getSortIcon} />
-            </React.Suspense>
-          </ProtectedRoute>
-        } />
+            <Route path="/user-management" element={
+              <React.Suspense fallback={<UsersPageSkeleton />}>
+                <UserDetails getSortIcon={getSortIcon} />
+              </React.Suspense>
+            } />
 
-        <Route path="/users/customers/:mobile" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <CustomerDetailsPage />
-          </ProtectedRoute>
-        } />
+            <Route path="/users/customers/:mobile" element={<CustomerDetailsPage />} />
 
-        <Route path="/products" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <React.Suspense fallback={<ProductsPageSkeleton />}>
-              <ProductsTab />
-            </React.Suspense>
-          </ProtectedRoute>
-        } />
+            <Route path="/products" element={
+              <React.Suspense fallback={<ProductsPageSkeleton />}>
+                <ProductsTab />
+              </React.Suspense>
+            } />
 
-        <Route path="/user-management/network" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <NetworkTab />
-          </ProtectedRoute>
-        } />
+            <Route path="/user-management/network" element={<NetworkTab />} />
+            <Route path="/user-management/network/:mobile" element={<NetworkUserDetailsPage />} />
 
-        {/* Publically Accessible Visualization Routes */}
-        <Route path="/buffalo-viz" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+            <Route path="/acf" element={<ACFHome />} />
+            <Route path="/acf/:userId" element={<ACFUserDetails />} />
+
+            <Route path="/support-tickets" element={<SupportTicketsTab />} />
+          </Route>
+
+          {/* Public/Hybrid Routes - Layout visible if logged in */}
+          <Route path="/buffalo-viz" element={
             <React.Suspense fallback={<BuffaloVizSkeleton />}>
               <BuffaloVisualizationTab />
             </React.Suspense>
-          </ConditionalLayoutWrapper>
-        } />
+          } />
 
-        <Route path="/unit-calculator/73d2a" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+          <Route path="/unit-calculator/73d2a" element={
             <React.Suspense fallback={<BuffaloVizSkeleton />}>
               <UnitCalculatorTab tree={true} />
             </React.Suspense>
-          </ConditionalLayoutWrapper>
-        } />
-
-        <Route path="/unit-calculator/92f1b" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+          } />
+          <Route path="/unit-calculator/92f1b" element={
             <React.Suspense fallback={<BuffaloVizSkeleton />}>
               <UnitCalculatorTab tree={false} />
             </React.Suspense>
-          </ConditionalLayoutWrapper>
-        } />
+          } />
+          <Route path="/unit-calculator" element={<SmartUnitCalculatorRedirect />} />
 
-        <Route path="/unit-calculator" element={<SmartUnitCalculatorRedirect />} />
-
-        <Route path="/emi-calculator" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+          <Route path="/emi-calculator" element={
             <React.Suspense fallback={<EmiCalculatorSkeleton />}>
               <EmiCalculatorTab />
             </React.Suspense>
-          </ConditionalLayoutWrapper>
-        } />
+          } />
 
-        <Route path="/acf-calculator" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
+          <Route path="/acf-calculator" element={
             <React.Suspense fallback={<EmiCalculatorSkeleton />}>
               <AcfCalculatorTab />
             </React.Suspense>
-          </ConditionalLayoutWrapper>
-        } />
+          } />
 
-        <Route path="/referral-landing" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <ReferralLandingPage />
-          </ConditionalLayoutWrapper>
-        } />
+          <Route path="/referral-landing" element={<ReferralLandingPage />} />
+          <Route path="/deactivate-user" element={<DeactivateUserPage />} />
 
-        <Route path="/deactivate-user" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <DeactivateUserPage />
-          </ConditionalLayoutWrapper>
-        } />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/support" element={<Support />} />
 
+          <Route path="/true-harvest-privacy-policy" element={<TrueHarvestPrivacyPolicy />} />
+          <Route path="/true-harvest-deactivate-user" element={<TrueHarvestDeactivateUser />} />
+          <Route path="/true-harvest-support" element={<TrueHarvestSupport />} />
 
-
-        <Route path="/support-tickets" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <SupportTicketsTab />
-          </ProtectedRoute>
-        } />
-
-
+          <Route path="/landify/legal" element={<LandifyLegal />} />
+          <Route path="/landify/support" element={<LandifySupport />} />
+          <Route path="/landify/deactivate" element={<LandifyDeactivateUser />} />
+        </Route>
 
         {/* Backward Compatibility Redirects */}
         <Route path="/dashboard/orders" element={<Navigate to="/orders" replace />} />
@@ -285,77 +256,48 @@ function App() {
         <Route path="/dashboard/acf-calculator" element={<Navigate to="/acf-calculator" replace />} />
         <Route path="/dashboard/*" element={<Navigate to="/orders" replace />} />
 
-        {/* Privacy Policy - Standalone, no PageBreadcrumb, accessible publicly if needed */}
-        <Route path="/privacy-policy" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <PrivacyPolicy />
-          </ConditionalLayoutWrapper>
-        } />
-
-        {/* Support Page - Context Aware */}
-        <Route path="/support" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <Support />
-          </ConditionalLayoutWrapper>
-        } />
-
-        {/* Farmvest Routes */}
-        <Route path="/true-harvest-privacy-policy" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <TrueHarvestPrivacyPolicy />
-          </ConditionalLayoutWrapper>
-        } />
-
-
-        <Route path="/true-harvest-deactivate-user" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <TrueHarvestDeactivateUser />
-          </ConditionalLayoutWrapper>
-        } />
-
-        <Route path="/true-harvest-support" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <TrueHarvestSupport />
-          </ConditionalLayoutWrapper>
-        } />
-
-        <Route path="/landify/legal" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <LandifyLegal />
-          </ConditionalLayoutWrapper>
-        } />
-
-        <Route path="/landify/support" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <LandifySupport />
-          </ConditionalLayoutWrapper>
-        } />
-
-        <Route path="/landify/deactivate" element={
-          <ConditionalLayoutWrapper session={session} handleLogout={handleLogout}>
-            <LandifyDeactivateUser />
-          </ConditionalLayoutWrapper>
-        } />
-
-        {/* Default redirect to orders or login */}
+        {/* Default redirect */}
         <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
-        <Route path="/user-management/network/:mobile" element={
-          <ProtectedRoute session={session} isAdmin={isAdmin} handleLogout={handleLogout}>
-            <NetworkUserDetailsPage />
-          </ProtectedRoute>
-        } />
         <Route path="*" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
       </Routes>
     </div>
   );
 }
 
-const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children: React.ReactNode, session: Session | null, isAdmin: boolean, handleLogout: () => void }) => {
+const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session | null, isAdmin: boolean, handleLogout: () => void }) => {
   const location = useLocation();
 
-  if (!session) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
-  }
+  // Redirect to login if no session for protected routes
+  // But wait, we have mixed routes here. 
+  // Let's keep strict protection for the main dashboard routes and conditional for others?
+  // Actually, to keep sidebar persistent, the hierarchy must be:
+  // <Route element={<DashboardLayout />}>
+  //    <Route path="/protected" ... />
+  //    <Route path="/public-with-sidebar" ... />
+  // </Route>
+
+  // If we want Breadcrumb to persist, DashboardLayout MUST be the parent.
+  // Routes that shouldn't have sidebar (like public unauth) should be outside.
+
+  // If a route like /privacy-policy is public but shows sidebar IF logged in:
+  return (
+    <Breadcrumb
+      adminMobile={session?.mobile}
+      adminName={session?.name}
+      adminRole={session?.role || undefined}
+      lastLogin={session?.lastLoginTime}
+      presentLogin={session?.currentLoginTime}
+      onLogout={handleLogout}
+    >
+      <Outlet />
+    </Breadcrumb>
+  );
+};
+
+// Helper for strict protection
+const RequireAuth = ({ children, session, isAdmin, handleLogout }: { children: React.ReactNode, session: Session | null, isAdmin: boolean, handleLogout: () => void }) => {
+  const location = useLocation();
+  if (!session) return <Navigate to="/login" replace state={{ from: location }} />;
   if (!isAdmin) {
     return (
       <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1.5rem', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textAlign: 'center' }}>
@@ -365,66 +307,13 @@ const ProtectedRoute = ({ children, session, isAdmin, handleLogout }: { children
       </div>
     );
   }
-
-  // Role-based route protection
-  const path = location.pathname;
-  if (session.role === 'Animalkart admin' && path.startsWith('/true-harvest')) {
+  // Rolecheck
+  if (session.role === 'Animalkart admin' && location.pathname.startsWith('/true-harvest')) {
     return <Navigate to="/orders" replace />;
   }
-
-  return (
-    <Breadcrumb
-      adminMobile={session.mobile}
-      adminName={session.name}
-      adminRole={session.role || undefined}
-      lastLogin={session.lastLoginTime}
-      presentLogin={session.currentLoginTime}
-      onLogout={handleLogout}
-    >
-      {children}
-    </Breadcrumb>
-  );
-};
-
-const ConditionalLayoutWrapper = ({ children, session, handleLogout }: { children: React.ReactNode, session: Session | null, handleLogout: () => void }) => {
-  const location = useLocation();
-
-  // Dashboard paths that should show layout if logged in
-  const dashboardPaths = [
-    '/unit-calculator',
-    '/emi-calculator',
-    '/acf-calculator',
-    '/buffalo-viz',
-    '/referral-landing',
-    '/deactivate-user',
-    '/privacy-policy',
-    '/true-harvest-privacy-policy',
-    '/true-harvest-deactivate-user',
-    '/support',
-    '/landify/legal',
-    '/landify/support',
-    '/landify/deactivate'
-  ];
-
-  const isDashboardPath = dashboardPaths.some(path => location.pathname.startsWith(path));
-  const shouldShowLayout = (location.state?.fromDashboard || isDashboardPath) && session;
-
-  if (shouldShowLayout) {
-    return (
-      <Breadcrumb
-        adminMobile={session?.mobile}
-        adminName={session?.name}
-        adminRole={session?.role || undefined}
-        lastLogin={session?.lastLoginTime}
-        presentLogin={session?.currentLoginTime}
-        onLogout={handleLogout}
-      >
-        {children}
-      </Breadcrumb>
-    );
-  }
-
   return <>{children}</>;
 };
+
+
 
 export default App;

@@ -15,18 +15,20 @@ interface DashboardTabLayoutProps {
         trendLabel?: string;
     }[];
 
-    // Middle Row
-    chartProps: {
+    // Middle Row - Flexible
+    customMiddleRow?: ReactNode;
+    chartProps?: {
         primaryValue: string;
         secondaryValue: string;
     };
-    revenueProps: {
+    revenueProps?: {
         target: number;
         current: number;
     };
 
     // Bottom Row
     categoryData?: any; // For Donut Chart
+    showSchedule?: boolean; // Toggle Schedule Card
 
     // Footer
     showRecentOrders?: boolean;
@@ -38,7 +40,9 @@ const DashboardTabLayout: React.FC<DashboardTabLayoutProps> = ({
     chartProps,
     revenueProps,
     categoryData,
+    showSchedule = true,
     showRecentOrders = true,
+    customMiddleRow,
     customFooter
 }) => {
     return (
@@ -56,21 +60,31 @@ const DashboardTabLayout: React.FC<DashboardTabLayoutProps> = ({
                 ))}
             </div>
 
-            {/* Middle Row: Statistics Chart (2/3) + Revenue Gauge (1/3) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 h-[420px]">
-                    <StatisticsChart
-                        primaryValue={chartProps.primaryValue}
-                        secondaryValue={chartProps.secondaryValue}
-                    />
+            {/* Middle Row: Statistics Chart (2/3) + Revenue Gauge (1/3) OR Custom Content */}
+            {customMiddleRow ? (
+                <div className="grid grid-cols-1 gap-6">
+                    {customMiddleRow}
                 </div>
-                <div className="lg:col-span-1 h-[420px]">
-                    <RevenueGaugeCard
-                        target={revenueProps.target}
-                        current={revenueProps.current}
-                    />
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 h-[420px]">
+                        {chartProps && (
+                            <StatisticsChart
+                                primaryValue={chartProps.primaryValue}
+                                secondaryValue={chartProps.secondaryValue}
+                            />
+                        )}
+                    </div>
+                    <div className="lg:col-span-1 h-[420px]">
+                        {revenueProps && (
+                            <RevenueGaugeCard
+                                target={revenueProps.target}
+                                current={revenueProps.current}
+                            />
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Bottom Row: Sales Category (1/2) + Schedule (1/2) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[380px]">
@@ -78,13 +92,13 @@ const DashboardTabLayout: React.FC<DashboardTabLayoutProps> = ({
                     <SalesCategoryCard data={categoryData} />
                 </div>
                 <div className="h-full">
-                    <ScheduleCard />
+                    {showSchedule ? <ScheduleCard /> : <div className="h-full bg-slate-50 rounded-[20px] border border-dashed border-slate-200 flex items-center justify-center text-slate-400 font-medium">No Schedule Data</div>}
                 </div>
             </div>
 
             {/* Footer Row: Recent Orders / Users Table */}
             <div className="w-full">
-                {showRecentOrders ? <RecentOrdersCard /> : customFooter}
+                {customFooter ? customFooter : showRecentOrders ? <RecentOrdersCard /> : null}
             </div>
         </div>
     );

@@ -645,10 +645,8 @@ const ApprovalModal: React.FC = () => {
     // Use fallback for adminMobile
     const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
     // Safely access potentially undefined state slices
-    const { adminProfile, adminRole } = useAppSelector((state: RootState) => ({
-        adminProfile: state.users?.adminProfile,
-        adminRole: state.auth?.adminRole
-    }));
+    const adminProfile = useAppSelector((state: RootState) => state.users?.adminProfile);
+    const adminRole = useAppSelector((state: RootState) => state.auth?.adminRole);
 
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -756,9 +754,7 @@ const RejectionModal: React.FC = () => {
     const { isOpen, unitId } = useAppSelector((state: RootState) => state.ui.modals.rejection);
     const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
     // Safely access potentially undefined state slices
-    const { adminProfile } = useAppSelector((state: RootState) => ({
-        adminProfile: state.users?.adminProfile
-    }));
+    const adminProfile = useAppSelector((state: RootState) => state.users?.adminProfile);
 
     const [reason, setReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);

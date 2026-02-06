@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { ChevronDown, Menu } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toggleSidebar, setShowAdminDetails } from '../../store/slices/uiSlice';
 import type { RootState } from '../../store';
@@ -47,35 +47,47 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
 
     return (
         <>
-            <header className="bg-[#1e293b] h-[70px] px-6 flex items-center justify-between shadow-md z-[1000] text-white relative flex-shrink-0">
-                <div className="flex items-center gap-1.5">
-                    <button
-                        className="flex items-center justify-center p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        onClick={() => dispatch(toggleSidebar())}
-                    >
-                        {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
-                    <img src="/header-logo.png" alt="Markwave Logo" className="h-[30px] w-auto transition-all" />
-                </div>
+            <header className="header sticky top-0 z-40 w-full transition-all duration-300 bg-[#0f172a] border-b border-slate-800">
+                <div className="flex items-center justify-between px-6 h-[70px]">
 
-             
-
-                <div className="flex items-center">
-                    <div className="bg-white/10 px-4 py-1.5 rounded-full flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]"></div>
-                        <span className="text-[0.85rem] font-semibold text-white">Online</span>
+                    {/* Left Side: Logo */}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => dispatch(toggleSidebar())}
+                            className="p-2 -ml-2 text-slate-400 hover:bg-slate-800 rounded-lg md:hidden"
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <img
+                            src="/header-logo-new.png"
+                            alt="Logo"
+                            className="h-8 object-contain"
+                            onError={(e) => {
+                                e.currentTarget.src = "/header-logo.png"; // Fallback
+                            }}
+                        />
                     </div>
-                    <div
-                        onClick={() => dispatch(setShowAdminDetails(true))}
-                        className="flex items-center gap-3 ml-6 cursor-pointer group"
-                    >
-                        <div className="flex flex-col items-end opacity-90 group-hover:opacity-100 transition-opacity">
-                            <span className="text-white font-semibold text-[0.9rem] leading-none">
-                                {displayAdminName}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-center rounded-full bg-orange-500 text-white font-bold border-2 border-white/20 w-10 h-10 text-[1rem]">
-                            {displayAdminName ? displayAdminName.substring(0, 2).toUpperCase() : 'AD'}
+
+                    {/* Right Side: Profile */}
+                    <div className="flex items-center gap-6">
+
+                        {/* Profile Dropdown Trigger */}
+                        <div
+                            onClick={() => dispatch(setShowAdminDetails(true))}
+                            className="flex items-center gap-3 pl-4 cursor-pointer group"
+                        >
+                            <div className="flex flex-col items-end">
+                                <span className="text-white font-bold text-sm leading-tight group-hover:text-blue-400 transition-colors">
+                                    {displayAdminName || 'Admin'}
+                                </span>
+                                <span className="text-slate-400 text-xs font-medium">
+                                    {adminRole || 'Administrator'}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold shadow-md shadow-blue-500/20 w-10 h-10 text-sm ring-2 ring-white/10 transition-transform group-hover:scale-105">
+                                {displayAdminName ? displayAdminName.substring(0, 2).toUpperCase() : 'AD'}
+                            </div>
+                            <ChevronDown size={16} className="text-slate-400 group-hover:text-blue-400 transition-colors" />
                         </div>
                     </div>
                 </div>
