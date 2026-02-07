@@ -34,21 +34,12 @@ const ImageNamesModal: React.FC<ImageNamesModalProps> = () => {
 
     const imageFields: [string, any][] = [];
 
-    if (data) {
-        Object.entries(data).forEach(([key, value]) => {
-            if (isImage(key, value)) {
-                imageFields.push([key, value]);
-            }
-        });
-
-        if (data.transaction && typeof data.transaction === 'object') {
-            Object.entries(data.transaction).forEach(([key, value]) => {
-                if (isImage(key, value)) {
-                    imageFields.push([`Transaction: ${key} `, value]);
-                }
-            });
+    if (data && data.transaction) {
+        if (data.transaction.paymentScreenshotUrl) {
+            imageFields.push(['Transaction: PaymentScreenshotUrl', data.transaction.paymentScreenshotUrl]);
         }
     }
+
 
     const handleClose = () => {
         setViewingImage(null);

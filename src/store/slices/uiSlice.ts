@@ -14,10 +14,12 @@ export interface UIState {
         rejection: {
             isOpen: boolean;
             unitId: string | null;
+            installmentNumber: number | null;
         };
         approval: {
             isOpen: boolean;
             unitId: string | null;
+            installmentNumber: number | null;
         };
         creationRole: 'Investor' | 'Employee' | null;
     };
@@ -50,10 +52,12 @@ const initialState: UIState = {
         rejection: {
             isOpen: false,
             unitId: null,
+            installmentNumber: null,
         },
         approval: {
             isOpen: false,
             unitId: null,
+            installmentNumber: null,
         },
         creationRole: null,
     },
@@ -90,16 +94,22 @@ const uiSlice = createSlice({
                 state.modals.proof.data = action.payload.data;
             }
         },
-        setRejectionModal: (state, action: PayloadAction<{ isOpen: boolean; unitId?: string | null }>) => {
+        setRejectionModal: (state, action: PayloadAction<{ isOpen: boolean; unitId?: string | null; installmentNumber?: number | null }>) => {
             state.modals.rejection.isOpen = action.payload.isOpen;
             if (action.payload.unitId !== undefined) {
                 state.modals.rejection.unitId = action.payload.unitId;
             }
+            if (action.payload.installmentNumber !== undefined) {
+                state.modals.rejection.installmentNumber = action.payload.installmentNumber;
+            }
         },
-        setApprovalModal: (state, action: PayloadAction<{ isOpen: boolean; unitId?: string | null }>) => {
+        setApprovalModal: (state, action: PayloadAction<{ isOpen: boolean; unitId?: string | null; installmentNumber?: number | null }>) => {
             state.modals.approval.isOpen = action.payload.isOpen;
             if (action.payload.unitId !== undefined) {
                 state.modals.approval.unitId = action.payload.unitId;
+            }
+            if (action.payload.installmentNumber !== undefined) {
+                state.modals.approval.installmentNumber = action.payload.installmentNumber;
             }
         },
         setCreationRole: (state, action: PayloadAction<'Investor' | 'Employee' | null>) => {

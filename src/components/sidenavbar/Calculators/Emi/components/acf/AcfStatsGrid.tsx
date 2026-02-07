@@ -1,7 +1,6 @@
 import React from 'react';
 import { useEmi } from '../../context/EmiContext';
-import { Wallet, Calendar, PiggyBank, Briefcase } from 'lucide-react';
-import { clsx } from 'clsx';
+import { Wallet, Calendar, PiggyBank } from 'lucide-react';
 import HoverGradientStatCard from '../stats/HoverGradientStatCard';
 import AssetProjectionCard from './AssetProjectionCard';
 import RevenueProjectionCard from './RevenueProjectionCard';
@@ -13,7 +12,7 @@ const AcfStatsGrid = () => {
         acfUnits,
         acfTotalBenefit,
         acfCpfBenefit,
-        calculateProjectedAssetValue: calculateProjection, // Destructure with alias if needed or direct
+        calculateProjectedAssetValue: calculateProjection,
         acfProjectionYear,
         setAcfProjectionYear,
         acfRevenueProjectionYear,
@@ -22,18 +21,17 @@ const AcfStatsGrid = () => {
     } = useEmi();
 
     // Projection Logic for Card
-    // Use the new precise calculation matching Buffalo Vis
     const { totalAssetValue: projectedAssetValue, totalBuffaloes: projectedBuffaloCount } =
         calculateProjection ? calculateProjection(acfProjectionYear, acfUnits) : { totalAssetValue: 0, totalBuffaloes: 0 };
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <HoverGradientStatCard
                 label="Total Investment"
                 value={acfTotalInvestment}
                 prefix="₹"
                 icon={Wallet}
-                color="blue" // Indigo-ish in Flutter
+                color="blue"
                 secondaryText={`${acfTenureMonths} months`}
                 formatCurrency={formatCurrency}
             />
@@ -57,9 +55,9 @@ const AcfStatsGrid = () => {
                 label="Total Savings"
                 value={acfTotalBenefit}
                 prefix="₹"
-                icon="/buffalo_icon.png"
-                color="green" // Emerald
-                secondaryText={`₹${formatCurrency(acfTotalBenefit - acfCpfBenefit)} Interest + ₹${formatCurrency(acfCpfBenefit)} Free CPF`}
+                icon={PiggyBank}
+                color="green"
+                secondaryText={`Interest + Free CPF`}
                 formatCurrency={formatCurrency}
             />
 
@@ -68,7 +66,7 @@ const AcfStatsGrid = () => {
                 value={acfTenureMonths}
                 prefix=""
                 icon={Calendar}
-                color="blue" // Amber in Flutter actually
+                color="blue"
                 secondaryText="Months Tenure"
                 formatCurrency={formatCurrency}
             />

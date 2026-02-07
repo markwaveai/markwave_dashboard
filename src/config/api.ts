@@ -27,6 +27,11 @@ export const API_ENDPOINTS = {
   getPendingUnits: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/pending`,
   approveUnit: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/approve`,
   rejectUnit: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/reject`,
+  getAcfPendingEmis: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/emis/pending`,
+  approveAcfEmi: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/approve-emi`,
+  rejectAcfEmi: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/reject-emi`,
+  getEmiDetails: () => `${API_CONFIG.getBaseUrl()}/purchases/units/emi-details`,
+
   uploadProductImage: (id: string) => `${API_CONFIG.getBaseUrl()}/products/${id}/images`,
   getOrderStatus: () => `${API_CONFIG.getBaseUrl()}/order-tracking/stages`,
   updateOrderStatus: () => `${API_CONFIG.getBaseUrl()}/order-tracking/update-status`,

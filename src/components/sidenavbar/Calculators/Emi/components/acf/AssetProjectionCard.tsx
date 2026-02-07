@@ -16,7 +16,7 @@ const AssetProjectionCard: React.FC<AssetProjectionCardProps> = ({
     buffaloCount,
     formatCurrency
 }) => {
-    
+
     // Calculate a mock date based on year (Assuming starting from current year)
     const currentYear = new Date().getFullYear();
     const displayYear = currentYear + (year - 1);
@@ -28,36 +28,33 @@ const AssetProjectionCard: React.FC<AssetProjectionCardProps> = ({
     };
 
     const handleNext = () => {
-        // Cap at 10 years or similar reasonable limit
         if (year < 10) {
             onYearChange(year + 1);
         }
     };
 
     return (
-        <div className="relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-300 hover:shadow-md border border-cyan-100 bg-gradient-to-br from-cyan-50 to-blue-50">
-            {/* Header with Icon and Date Selector */}
-            <div className="flex justify-between items-start mb-6">
-                <div className="w-12 h-12 rounded-full bg-cyan-200/50 flex items-center justify-center text-cyan-700">
+        <div className="relative rounded-3xl p-6 h-full flex flex-col justify-between min-h-[180px] bg-[#e0f7fa] transition-transform hover:-translate-y-1 duration-300">
+            <div className="flex justify-between items-start">
+                <div className="w-12 h-12 rounded-xl bg-[#b2ebf2] flex items-center justify-center text-[#0097a7]">
                     <Gem size={24} strokeWidth={2} />
                 </div>
 
-                <div className="flex items-center bg-cyan-200/30 rounded-full px-1 py-1">
+                {/* Pill Date Selector */}
+                <div className="flex items-center bg-[#b2ebf2]/50 rounded-lg p-1">
                     <button
                         onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-                        className={`p-1 rounded-full hover:bg-cyan-200/50 transition-colors ${year <= 1 ? 'opacity-30 cursor-not-allowed' : 'text-cyan-800'}`}
+                        className={`p-1 rounded-md transition-colors ${year <= 1 ? 'opacity-30 cursor-not-allowed' : 'text-[#00838f] hover:bg-white/50'}`}
                         disabled={year <= 1}
                     >
                         <ChevronLeft size={16} />
                     </button>
-
-                    <span className="mx-3 text-sm font-semibold text-cyan-900 min-w-[70px] text-center">
+                    <span className="mx-2 text-xs font-bold text-[#006064] min-w-[60px] text-center">
                         Jan, {displayYear}
                     </span>
-
                     <button
                         onClick={(e) => { e.stopPropagation(); handleNext(); }}
-                        className={`p-1 rounded-full hover:bg-cyan-200/50 transition-colors ${year >= 10 ? 'opacity-30 cursor-not-allowed' : 'text-cyan-800'}`}
+                        className={`p-1 rounded-md transition-colors ${year >= 10 ? 'opacity-30 cursor-not-allowed' : 'text-[#00838f] hover:bg-white/50'}`}
                         disabled={year >= 10}
                     >
                         <ChevronRight size={16} />
@@ -65,26 +62,22 @@ const AssetProjectionCard: React.FC<AssetProjectionCardProps> = ({
                 </div>
             </div>
 
-            {/* Label */}
-            <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wide mb-1">
-                Asset Value
-            </h3>
-
-            {/* Value and Count */}
-            <div className="flex items-baseline flex-wrap gap-2 mb-4">
-                <span className="text-3xl font-bold text-cyan-700">
+            <div className="mt-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Asset Value
+                </p>
+                <div className="text-3xl font-extrabold tracking-tight text-[#006064]">
                     ₹{formatCurrency(value)}
-                </span>
-                <span className="text-cyan-600 font-medium text-sm">
+                </div>
+                <div className="text-sm font-bold text-[#00838f] mt-1">
                     (Buffaloes - {buffaloCount})
-                </span>
+                </div>
             </div>
 
-            {/* Badge */}
-            <div className="inline-block bg-white/60 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/50 shadow-sm">
-                <span className="text-xs font-semibold text-cyan-900">
+            <div className="mt-auto pt-2">
+                <button className="bg-white text-[#006064] text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm border border-[#b2ebf2]">
                     Projected Value
-                </span>
+                </button>
             </div>
         </div>
     );

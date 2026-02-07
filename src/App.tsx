@@ -196,7 +196,7 @@ function App() {
             <Route path="/user-management/network/:mobile" element={<NetworkUserDetailsPage />} />
 
             <Route path="/acf" element={<ACFHome />} />
-            <Route path="/acf/:userId" element={<ACFUserDetails />} />
+            <Route path="/acf/details/:userId/:orderId" element={<ACFUserDetails />} />
 
             <Route path="/support-tickets" element={<SupportTicketsTab />} />
           </Route>

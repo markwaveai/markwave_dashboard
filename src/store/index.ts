@@ -5,6 +5,7 @@ import { uiReducer, UIState } from './slices/uiSlice';
 import { ordersReducer, OrdersState } from './slices/ordersSlice';
 import { usersReducer, UsersState } from './slices/usersSlice';
 import { productsReducer, ProductsState } from './slices/productsSlice';
+import { acfReducer, AcfState } from './slices/acfSlice';
 
 export const store = configureStore({
     reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
         orders: ordersReducer,
         users: usersReducer,
         products: productsReducer,
+        acf: acfReducer,
     },
 });
 
@@ -22,6 +24,7 @@ export interface RootState {
     orders: OrdersState;
     users: UsersState;
     products: ProductsState;
+    acf: AcfState;
 }
 
 export type AppDispatch = typeof store.dispatch;
