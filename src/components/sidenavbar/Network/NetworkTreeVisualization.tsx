@@ -8,6 +8,9 @@ interface TreeNode {
     name: string;
     coins: number;
     paid_orders_count: number;
+    paid_units_count: number;
+    direct_referrals_count: number;
+    indirect_referrals_count: number;
     role?: string;
     city?: string;
     referrals: TreeNode[];
@@ -44,47 +47,54 @@ const TreeRow = ({
                                 onClick={() => toggleExpand(node.mobile)}
                                 className="p-1 rounded hover:bg-gray-200 text-gray-500 transition-colors"
                             >
-                                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                             </button>
                         ) : (
                             <div className="w-6" /> // Spacer
                         )}
 
                         {/* Avatar */}
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${level === 0 ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${level === 0 ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
                             {node.name ? node.name[0].toUpperCase() : 'U'}
                         </div>
 
                         {/* Name & Mobile */}
                         <div>
-                            <div className="text-sm font-medium text-gray-900">{node.name}</div>
-                            <div className="text-xs text-gray-500 flex items-center gap-1">
-                                <Phone size={10} /> {node.mobile}
+                            <div className="text-xs font-bold text-gray-900">{node.name}</div>
+                            <div className="text-[10px] text-gray-400 flex items-center gap-1 font-mono">
+                                {node.mobile}
                             </div>
                         </div>
                     </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-tighter">
                         {node.role || 'Member'}
                     </span>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <div className="flex items-center justify-end gap-1.5 text-sm font-medium text-yellow-700">
-                        <Coins size={14} />
-                        {node.coins.toLocaleString()}
+                <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <div className="text-xs font-black text-amber-600">
+                        {node.coins.toLocaleString('en-IN')}
                     </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <div className="flex items-center justify-end gap-1.5 text-sm text-gray-700">
-                        <ShoppingBag size={14} className="text-gray-400" />
+                <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <div className="text-xs font-bold text-gray-700">
                         {node.paid_orders_count}
                     </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <div className="flex items-center justify-end gap-1.5 text-sm text-gray-700">
-                        <Users size={14} className="text-gray-400" />
-                        {node.referrals ? node.referrals.length : 0}
+                <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <div className="text-xs font-bold text-emerald-600">
+                        {node.paid_units_count.toLocaleString('en-IN')}
+                    </div>
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <div className="inline-flex items-center justify-center min-w-[20px] px-1 h-5 rounded bg-blue-50 text-blue-700 text-[10px] font-black">
+                        {node.direct_referrals_count}
+                    </div>
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <div className="inline-flex items-center justify-center min-w-[20px] px-1 h-5 rounded bg-purple-50 text-purple-700 text-[10px] font-black">
+                        {node.indirect_referrals_count}
                     </div>
                 </td>
             </tr>
@@ -110,6 +120,9 @@ const NetworkTreeTable = ({ data }: { data: any }) => {
         name: `${data.user.first_name || ''} ${data.user.last_name || ''}`.trim() || data.user.name,
         coins: data.stats?.total_coins || 0,
         paid_orders_count: data.stats?.paid_orders_count || 0,
+        paid_units_count: data.stats?.paid_units_count || 0,
+        direct_referrals_count: data.stats?.direct_referrals_count || 0,
+        indirect_referrals_count: data.stats?.indirect_referrals_count || 0,
         role: data.user.role,
         referrals: data.network_tree || [],
         level: 0
@@ -128,19 +141,21 @@ const NetworkTreeTable = ({ data }: { data: any }) => {
     };
 
     return (
-        <div className="overflow-hidden border rounded-lg shadow-sm bg-white">
+        <div className="overflow-hidden bg-white">
             <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm divide-y divide-gray-200">
-                    <thead className="bg-gray-50 text-gray-500 font-medium uppercase text-xs">
+                <table className="min-w-full text-left text-sm">
+                    <thead className="bg-slate-50/80 text-gray-400 font-bold uppercase text-[10px] tracking-widest border-b border-gray-100">
                         <tr>
-                            <th className="px-4 py-3 pl-12">User</th>
-                            <th className="px-4 py-3">Role</th>
-                            <th className="px-4 py-3 text-right">Coins</th>
-                            <th className="px-4 py-3 text-right">Orders</th>
-                            <th className="px-4 py-3 text-right">Referrals</th>
+                            <th className="px-4 py-4">User Details</th>
+                            <th className="px-3 py-4 text-center">Role</th>
+                            <th className="px-3 py-4 text-center">Coins</th>
+                            <th className="px-3 py-4 text-center">Orders</th>
+                            <th className="px-3 py-4 text-center">Units</th>
+                            <th className="px-3 py-4 text-center">Direct Referrals</th>
+                            <th className="px-3 py-4 text-center">Indirect Referrals</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
+                    <tbody className="divide-y divide-gray-50 bg-white">
                         <TreeRow
                             node={rootNode}
                             level={0}

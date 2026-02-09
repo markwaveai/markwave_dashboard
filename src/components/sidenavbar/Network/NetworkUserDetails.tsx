@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { fetchNetworkUserDetails } from '../../../store/slices/usersSlice';
-import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, Award, Package, CheckCircle, AlertCircle, Users } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, Award, Package, CheckCircle, AlertCircle, Users, Plane, Smartphone as PhoneIcon, Bike, Gift, ShoppingBag } from 'lucide-react';
 import Loader from '../../common/Loader';
 import NetworkTreeVisualization from './NetworkTreeVisualization';
 
@@ -41,6 +41,7 @@ const NetworkUserDetailsPage: React.FC = () => {
     }
 
     const { user, stats, network_tree } = data;
+    const achievedRewards = Array.isArray(stats?.achieved_rewards) ? stats.achieved_rewards : [];
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
@@ -92,70 +93,220 @@ const NetworkUserDetailsPage: React.FC = () => {
                                     <Calendar size={16} /> Joined: {new Date(user.user_created_date).toLocaleDateString()}
                                 </div>
                             </div>
+
+                            {/* Main Network Stats In Card */}
+                            <div className="flex flex-wrap gap-8 mt-6 pt-6 border-t border-gray-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                        <Users size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Network Size</div>
+                                        <div className="text-sm font-black text-gray-800">{stats?.total_network_size || 0}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                                        <ShoppingBag size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Paid Orders</div>
+                                        <div className="text-sm font-black text-gray-800">{stats?.paid_orders_count || 0}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                                        <Package size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Paid Units</div>
+                                        <div className="text-sm font-black text-gray-800">{stats?.paid_units_count || 0}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white p-4 rounded-lg shadow text-center">
-                        <div className="text-gray-500 text-xs uppercase mb-1">Total Coins</div>
-                        <div className="text-2xl font-bold text-yellow-600 flex items-center justify-center gap-1">
-                            <Award size={20} /> {stats?.total_coins?.toLocaleString()}
+                {/* Dashboard Sections Stacked Vertically */}
+                <div className="space-y-8">
+                    {/* 1. Direct Referrals Stats */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-1">
+                            <Users className="text-blue-600" size={20} />
+                            <h3 className="text-lg font-bold text-gray-800">Direct Referrals</h3>
+                        </div>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Direct Referrals Count */}
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Direct Referrals</div>
+                                <div className="text-xl lg:text-2xl font-black text-slate-800">
+                                    {stats?.direct_referrals_count || 0}
+                                </div>
+                            </div>
+
+                            {/* Direct Referrals Units */}
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Direct Referrals Units</div>
+                                <div className="text-xl lg:text-2xl font-black text-blue-600">
+                                    {stats?.direct_referrals_units || 0}
+                                </div>
+                            </div>
+
+                            {/* Total Coins */}
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Total Coins</div>
+                                <div className="text-xl lg:text-2xl font-black text-amber-600 flex items-center gap-1.5">
+                                    <Award className="w-5 h-5" />
+                                    {stats?.total_coins?.toLocaleString('en-IN')}
+                                </div>
+                            </div>
+
+                            {/* Spending Coins */}
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Spent Coins</div>
+                                <div className="text-xl lg:text-2xl font-black text-red-600">
+                                    {stats?.spending_coins?.toLocaleString('en-IN')}
+                                </div>
+                            </div>
+
+                            {/* Remaining Coins */}
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Remaining Coins</div>
+                                <div className="text-xl lg:text-2xl font-black text-green-600">
+                                    {stats?.remaining_coins?.toLocaleString('en-IN')}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow text-center">
-                        <div className="text-gray-500 text-xs uppercase mb-1">Paid Orders</div>
-                        <div className="text-2xl font-bold text-green-600">{stats?.paid_orders_count}</div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg shadow text-center">
-                        <div className="text-gray-500 text-xs uppercase mb-1">Direct Referrals</div>
-                        <div className="text-2xl font-bold">{stats?.direct_referrals_count}</div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg shadow text-center">
-                        <div className="text-gray-500 text-xs uppercase mb-1">Network Size</div>
-                        <div className="text-2xl font-bold">{stats?.total_network_size}</div>
+
+                    {/* 2. Indirect Referrals & Rewards */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-1">
+                            <Gift className="text-purple-600" size={20} />
+                            <h3 className="text-lg font-bold text-gray-800">Indirect Referrals & Rewards</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Indirect Referrals Count */}
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals</div>
+                                <div className="text-xl lg:text-2xl font-black text-slate-800">
+                                    {stats?.indirect_referrals_count || 0}
+                                </div>
+                            </div>
+
+                            {/* Indirect Referrals Units */}
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals Units</div>
+                                <div className="text-xl lg:text-2xl font-black text-purple-600">
+                                    {stats?.indirect_referrals_units || 0}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Referral Rewards Progress Bar Component */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 xl:p-10">
+                            <div className="flex items-center justify-between mb-10">
+                                <div>
+                                    <h4 className="text-base font-bold text-gray-800">Rewards Status</h4>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {stats?.current_reward ? (
+                                            <>Current Reward: <span className="text-purple-600 font-bold">{stats.current_reward}</span></>
+                                        ) : 'Unlock exclusive benefits through indirect referrals'}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Units Milestone</div>
+                                    <div className="text-lg font-black text-purple-600">
+                                        {stats?.indirect_referrals_units || 0} <span className="text-gray-300 font-normal ml-1">/ 100</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="relative py-12 px-8 bg-slate-50/70 rounded-2xl border border-slate-100/50">
+                                {/* Track Container */}
+                                <div className="relative h-3 mx-2">
+                                    {/* Progress Line Background */}
+                                    <div className="absolute inset-0 bg-gray-200 rounded-full"></div>
+
+                                    {/* Active Progress Line */}
+                                    <div
+                                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(147,51,234,0.4)]"
+                                        style={{ width: `${Math.min(((stats?.indirect_referrals_units || 0) / 100) * 100, 100)}%` }}
+                                    ></div>
+
+                                    {/* Interval Nodes (Ticks) - Using absolute positioning for perfect alignment with milestones */}
+                                    <div className="absolute inset-0 pointer-events-none">
+                                        {[10, 20, 40, 60, 70, 80, 90].map((tick) => (
+                                            <div
+                                                key={tick}
+                                                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full border-2 z-20 transition-all duration-500 ${(stats?.indirect_referrals_units || 0) >= tick ? 'bg-indigo-500 border-indigo-300' : 'bg-white border-gray-200'}`}
+                                                style={{ left: `${tick}%` }}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Milestones */}
+                                    <div className="absolute inset-0 h-3">
+                                        {/* Start Point (0) */}
+                                        <div className="absolute left-0 -translate-x-1/2 flex flex-col items-center">
+                                            <div className="w-6 h-6 rounded-full bg-blue-500 border-4 border-white shadow-lg z-30 transition-all"></div>
+                                            <div className="absolute -bottom-10 text-[11px] font-black text-slate-600">0</div>
+                                        </div>
+
+                                        {/* Milestone 30 - Thailand */}
+                                        <div className="absolute left-[30%] -translate-x-1/2 flex flex-col items-center">
+                                            <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
+                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${achievedRewards.includes('Thailand Trip') || (stats?.indirect_referrals_units || 0) >= 30 ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>Thailand Trip</div>
+                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${achievedRewards.includes('Thailand Trip') || (stats?.indirect_referrals_units || 0) >= 30 ? 'bg-blue-600 border-blue-400 text-white shadow-lg ring-4 ring-blue-50' : 'bg-white border-blue-100 text-blue-400 shadow-md group-hover:scale-110'}`}>
+                                                    <Plane size={20} />
+                                                </div>
+                                            </div>
+                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${achievedRewards.includes('Thailand Trip') || (stats?.indirect_referrals_units || 0) >= 30 ? 'bg-blue-600 border-white ring-4 ring-blue-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
+                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${achievedRewards.includes('Thailand Trip') || (stats?.indirect_referrals_units || 0) >= 30 ? 'text-blue-600' : 'text-slate-400'}`}>30</div>
+                                        </div>
+
+                                        {/* Milestone 50 - iPhone */}
+                                        <div className="absolute left-[50%] -translate-x-1/2 flex flex-col items-center">
+                                            <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
+                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${achievedRewards.includes('iPhone') || (stats?.indirect_referrals_units || 0) >= 50 ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-600 border border-purple-100'}`}>iPhone</div>
+                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${achievedRewards.includes('iPhone') || (stats?.indirect_referrals_units || 0) >= 50 ? 'bg-purple-600 border-purple-400 text-white shadow-lg ring-4 ring-purple-50' : 'bg-white border-purple-100 text-purple-400 shadow-md group-hover:scale-110'}`}>
+                                                    <PhoneIcon size={20} />
+                                                </div>
+                                            </div>
+                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${achievedRewards.includes('iPhone') || (stats?.indirect_referrals_units || 0) >= 50 ? 'bg-purple-600 border-white ring-4 ring-purple-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
+                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${achievedRewards.includes('iPhone') || (stats?.indirect_referrals_units || 0) >= 50 ? 'text-purple-600' : 'text-slate-400'}`}>50</div>
+                                        </div>
+
+                                        {/* Milestone 100 - Scooty */}
+                                        <div className="absolute left-[100%] -translate-x-1/2 flex flex-col items-center">
+                                            <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
+                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${achievedRewards.includes('Scooty') || (stats?.indirect_referrals_units || 0) >= 100 ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>Scooty</div>
+                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${achievedRewards.includes('Scooty') || (stats?.indirect_referrals_units || 0) >= 100 ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg ring-4 ring-indigo-50' : 'bg-white border-indigo-100 text-indigo-400 shadow-md group-hover:scale-110'}`}>
+                                                    <Bike size={22} />
+                                                </div>
+                                            </div>
+                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${achievedRewards.includes('Scooty') || (stats?.indirect_referrals_units || 0) >= 100 ? 'bg-indigo-600 border-white ring-4 ring-indigo-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
+                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${achievedRewards.includes('Scooty') || (stats?.indirect_referrals_units || 0) >= 100 ? 'text-indigo-600' : 'text-slate-400'}`}>100</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Network Tree Visualization */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Users size={20} /> Network Visualization
+                {/* 3. Network Visualization (Row below progress bar) */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                    <h3 className="text-xl font-bold mb-8 flex items-center gap-2 text-gray-800">
+                        <Users size={24} className="text-indigo-500" /> Network Visualization
                     </h3>
-                    <NetworkTreeVisualization data={data} />
-                </div>
-
-                {/* Network Tree / Direct Referrals Table */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Users size={20} /> Direct Referrals
-                    </h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-gray-500">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-3">Name</th>
-                                    <th className="px-4 py-3">Mobile</th>
-                                    <th className="px-4 py-3">Referrals</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {(!network_tree || network_tree.length === 0) ? (
-                                    <tr><td colSpan={3} className="px-4 py-4 text-center">No direct referrals found</td></tr>
-                                ) : (
-                                    network_tree.map((ref: any, index: number) => (
-                                        <tr key={ref.mobile || index} className="border-b hover:bg-gray-50">
-                                            <td className="px-4 py-3 font-medium text-gray-900">{ref.name}</td>
-                                            <td className="px-4 py-3">{ref.mobile}</td>
-                                            <td className="px-4 py-3">{ref.referrals ? ref.referrals.length : 0}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                    <div className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
+                        <NetworkTreeVisualization data={data} />
                     </div>
                 </div>
+
             </div>
         </div>
     );

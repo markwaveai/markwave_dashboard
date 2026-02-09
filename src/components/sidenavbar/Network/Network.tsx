@@ -5,14 +5,14 @@ import type { RootState } from '../../../store';
 import { fetchNetwork } from '../../../store/slices/usersSlice';
 import Pagination from '../../common/Pagination';
 import TableSkeleton from '../../common/TableSkeleton';
-import { Award, Users, Target, ShoppingBag } from 'lucide-react';
+import { Award, Users, Target, ShoppingBag, Search } from 'lucide-react';
 
 
 const NetworkTab: React.FC = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { network } = useAppSelector((state: RootState) => state.users);
-    const { stats, users, loading, error } = network;
+    const { stats, users = [], loading, error } = network || { stats: null, users: [], loading: false, error: null };
 
     // URL Search Params for Pagination
     const [searchParams, setSearchParams] = useSearchParams();
@@ -21,13 +21,27 @@ const NetworkTab: React.FC = () => {
 
     // Filter State
     const [role, setRole] = useState<string>('');
+    const [search, setSearch] = useState<string>('');
+    const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+
+    // Debounce Search
+    useEffect(() => {
+        // Only trigger search if it's 10 digits or empty
+        if (search.length === 10 || search.length === 0) {
+            const timer = setTimeout(() => {
+                setDebouncedSearch(search);
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [search]);
 
     // Memoize params
     const fetchParams = useMemo(() => ({
         page: currentPage,
         limit: itemsPerPage,
         role: role || undefined,
-    }), [currentPage, role]);
+        search: debouncedSearch || undefined,
+    }), [currentPage, role, debouncedSearch]);
 
     // Fetch Data
     useEffect(() => {
@@ -74,8 +88,8 @@ const NetworkTab: React.FC = () => {
                             </div>
                             <div>
                                 <div className="text-sm text-gray-500">Distributed Coins</div>
-                                <div className="text-xl font-bold">{stats.total_distributed_coins?.toLocaleString()}</div>
-                                <div className="text-xs text-gray-400">Target: {stats.total_target_coins?.toLocaleString()}</div>
+                                <div className="text-xl font-bold">{stats.total_distributed_coins?.toLocaleString('en-IN')}</div>
+                                <div className="text-xs text-gray-400">Target: {stats.total_target_coins?.toLocaleString('en-IN')}</div>
                             </div>
                         </div>
                         <div className="bg-green-50 p-4 rounded-lg flex items-center gap-4 transition-transform duration-200 hover:-translate-y-0.5 shadow-sm border border-green-100">
@@ -92,7 +106,29 @@ const NetworkTab: React.FC = () => {
                 )}
 
                 {/* Filters */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex flex-col min-w-[200px]">
+                        <label className="text-sm font-medium text-gray-700 mb-1">Search</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, ''); // Only digits
+                                    if (val.length <= 10) { // Max 10 digits
+                                        setSearch(val);
+                                        setCurrentPage(1);
+                                    }
+                                }}
+                                placeholder="Search by mobile..."
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="h-4 w-4 text-gray-400" />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-1">Role</label>
                         <select
@@ -119,16 +155,17 @@ const NetworkTab: React.FC = () => {
                                 <th className="px-4 py-3">Mobile</th>
                                 <th className="px-4 py-3">Role</th>
                                 <th className="px-4 py-3">Referrals</th>
+                                <th className="px-4 py-3">Units</th>
                                 <th className="px-4 py-3">Coins Earned</th>
                                 <th className="px-4 py-3">Joined Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <TableSkeleton cols={7} rows={10} />
+                                <TableSkeleton cols={8} rows={10} />
                             ) : users.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">No users found</td>
+                                    <td colSpan={8} className="px-4 py-8 text-center text-gray-400">No users found</td>
                                 </tr>
                             ) : (
                                 users.map((user: any, index: number) => (
@@ -148,8 +185,13 @@ const NetworkTab: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">{user.referral_count}</td>
+                                        <td className="px-4 py-3">
+                                            <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                                                {user.units_purchased || 0}
+                                            </span>
+                                        </td>
                                         <td className="px-4 py-3 font-medium text-yellow-600">
-                                            {user.total_coins?.toLocaleString()}
+                                            {user.total_coins?.toLocaleString('en-IN')}
                                         </td>
                                         <td className="px-4 py-3">
                                             {user.created_date ? new Date(user.created_date).toLocaleDateString() : '-'}

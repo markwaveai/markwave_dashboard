@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 const CattleGrowingFund = ({
     treeData,
@@ -103,45 +103,66 @@ const CattleGrowingFund = ({
         return { monthlyData, activeChildren, childTotalCosts, totalYearlyCaringCost, childActiveBrackets };
     };
 
-    const { monthlyData, activeChildren, childTotalCosts, totalYearlyCaringCost, childActiveBrackets } = calculateFinancialsForYear(selectedYearIndex);
+    const {
+        monthlyData,
+        activeChildren,
+        childTotalCosts,
+        totalYearlyCaringCost,
+        childActiveBrackets,
+        totalAnnualRevenue,
+        childCumulativeCosts,
+        totalCumulativeCaringCost,
+        totalCumulativeRevenue
+    } = useMemo(() => {
+        const stats = calculateFinancialsForYear(selectedYearIndex);
 
-    // --- Cumulative & Annual Revenue Logic ---
-    let totalAnnualRevenue = 0;
-    const absStart = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (selectedYearIndex * 12);
-    for (let m = 0; m < 12; m++) {
-        const abs = absStart + m;
-        const y = Math.floor(abs / 12);
-        const mo = abs % 12;
-        if (monthlyRevenue && monthlyRevenue[y] && monthlyRevenue[y][mo]) {
-            totalAnnualRevenue += (monthlyRevenue[y][mo].total || 0);
-        }
-    }
-
-    const childCumulativeCosts: Record<string, number> = {};
-    let totalCumulativeCaringCost = 0;
-    let totalCumulativeRevenue = 0;
-    activeChildren.forEach((child: any) => { childCumulativeCosts[child.id] = 0; });
-
-    for (let yIndex = 0; yIndex <= selectedYearIndex; yIndex++) {
-        const financials = calculateFinancialsForYear(yIndex);
-        Object.entries(financials.childTotalCosts).forEach(([id, cost]: [string, any]) => {
-            if (childCumulativeCosts[id] !== undefined) {
-                childCumulativeCosts[id] += cost;
-            } else if (activeChildren.find((c: any) => c.id === id)) {
-                childCumulativeCosts[id] = cost;
-            }
-        });
-        totalCumulativeCaringCost += financials.totalYearlyCaringCost;
-        const absStartLoop = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (yIndex * 12);
+        // --- Annual Revenue ---
+        let annRev = 0;
+        const absStart = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (selectedYearIndex * 12);
         for (let m = 0; m < 12; m++) {
-            const abs = absStartLoop + m;
+            const abs = absStart + m;
             const y = Math.floor(abs / 12);
             const mo = abs % 12;
-            if (monthlyRevenue && monthlyRevenue[y]) {
-                totalCumulativeRevenue += (monthlyRevenue[y][mo]?.total || 0);
+            if (monthlyRevenue && monthlyRevenue[y] && monthlyRevenue[y][mo]) {
+                annRev += (monthlyRevenue[y][mo].total || 0);
             }
         }
-    }
+
+        // --- Cumulative ---
+        const cumChildCosts: Record<string, number> = {};
+        let cumCaring = 0;
+        let cumRev = 0;
+        stats.activeChildren.forEach((child: any) => { cumChildCosts[child.id] = 0; });
+
+        for (let yIndex = 0; yIndex <= selectedYearIndex; yIndex++) {
+            const financials = calculateFinancialsForYear(yIndex);
+            Object.entries(financials.childTotalCosts).forEach(([id, cost]: [string, any]) => {
+                if (cumChildCosts[id] !== undefined) {
+                    cumChildCosts[id] += cost;
+                } else if (stats.activeChildren.find((c: any) => c.id === id)) {
+                    cumChildCosts[id] = cost;
+                }
+            });
+            cumCaring += financials.totalYearlyCaringCost;
+            const absStartLoop = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (yIndex * 12);
+            for (let m = 0; m < 12; m++) {
+                const abs = absStartLoop + m;
+                const y = Math.floor(abs / 12);
+                const mo = abs % 12;
+                if (monthlyRevenue && monthlyRevenue[y]) {
+                    cumRev += (monthlyRevenue[y][mo]?.total || 0);
+                }
+            }
+        }
+
+        return {
+            ...stats,
+            totalAnnualRevenue: annRev,
+            childCumulativeCosts: cumChildCosts,
+            totalCumulativeCaringCost: cumCaring,
+            totalCumulativeRevenue: cumRev
+        };
+    }, [selectedYearIndex, buffaloDetails, treeData.startYear, treeData.startMonth, treeData.years, monthlyRevenue]);
 
     const revenue = totalAnnualRevenue;
     const netValue = revenue - totalYearlyCaringCost;

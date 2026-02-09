@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { getBuffaloValueByAge, SimpleTooltip } from '../BuffaloFamilyTree/CommonComponents';
 import { ChevronRight } from 'lucide-react';
 
@@ -91,7 +91,7 @@ const MonthlyRevenueBreak = ({
         return false;
     };
 
-    const calculateCPFCost = () => {
+    const cpfCost = useMemo(() => {
         let monthlyCosts = new Array(12).fill(0);
         const buffaloCPFDetails: any[] = [];
         const CPF_PER_MONTH = 15000 / 12;
@@ -141,15 +141,12 @@ const MonthlyRevenueBreak = ({
             buffaloCPFDetails,
             milkProducingBuffaloesWithCPF
         };
-    };
+    }, [selectedUnit, buffaloDetails, treeData.startYear, treeData.years, treeData.startMonth, selectedYearIndex]);
 
-    const cpfCost = calculateCPFCost();
-
-    // Calculate cumulative revenue locally based on Simulation Years to ensure alignment with Table
-    const calculateCumulativeRevenueLocally = () => {
-        let totals: any = { total: 0 };
+    const { totalCumulativeUntilYear, cumulativeCPFCost, cumulativeCaringCost } = useMemo(() => {
+        // 1. Cumulative Revenue
+        let total = 0;
         const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
-        allUnitBuffaloes.forEach((b: any) => totals[b.id] = 0);
 
         for (let yIndex = 0; yIndex <= selectedYearIndex; yIndex++) {
             for (let m = 0; m < 12; m++) {
@@ -157,24 +154,15 @@ const MonthlyRevenueBreak = ({
                 if (monthlyRevenue[year]?.[month]) {
                     const monthData = monthlyRevenue[year][month];
                     allUnitBuffaloes.forEach((b: any) => {
-                        const rev = monthData.buffaloes[b.id] || 0;
-                        totals[b.id] = (totals[b.id] || 0) + rev;
-                        totals.total += rev;
+                        total += monthData.buffaloes[b.id] || 0;
                     });
                 }
             }
         }
-        return totals;
-    };
 
-    const cumulativeData = calculateCumulativeRevenueLocally();
-    const totalCumulativeUntilYear = cumulativeData.total;
-
-    // Calculate CPF cumulative cost until selected year precisely
-    const calculateCumulativeCPFCost = () => {
+        // 2. Cumulative CPF
         let totalCPF = 0;
         const CPF_PER_MONTH = 15000 / 12;
-        const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
         const scanMaxAbs = (treeData.startYear + treeData.years + 2) * 12;
 
         allUnitBuffaloes.forEach((buffalo: any) => {
@@ -190,26 +178,16 @@ const MonthlyRevenueBreak = ({
             }
         });
 
-        return Math.round(totalCPF);
-    };
-
-    const cumulativeCPFCost = calculateCumulativeCPFCost();
-
-    // Calculate Caring Cost (CGF) cumulative until selected year
-    const calculateCumulativeCaringCost = (untilYearIndex: number) => {
+        // 3. Cumulative Caring
         let totalCaring = 0;
-        const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
-
-        for (let yIdx = 0; yIdx <= untilYearIndex; yIdx++) {
+        for (let yIdx = 0; yIdx <= selectedYearIndex; yIdx++) {
             for (let m = 0; m < 12; m++) {
                 const { absMonth } = getCalendarDate(yIdx, m);
-
                 allUnitBuffaloes.forEach((buffalo: any) => {
                     if (buffalo.generation > 0) {
                         const birthYear = buffalo.birthYear;
                         const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
                         const birthAbsolute = birthYear * 12 + birthMonth;
-
                         if (birthAbsolute <= absMonth) {
                             const ageInMonths = (absMonth - birthAbsolute) + 1;
                             let monthlyCost = 0;
@@ -223,10 +201,13 @@ const MonthlyRevenueBreak = ({
                 });
             }
         }
-        return totalCaring;
-    };
 
-    const cumulativeCaringCost = calculateCumulativeCaringCost(selectedYearIndex);
+        return {
+            totalCumulativeUntilYear: total,
+            cumulativeCPFCost: Math.round(totalCPF),
+            cumulativeCaringCost: totalCaring
+        };
+    }, [selectedUnit, buffaloDetails, selectedYearIndex, treeData.startYear, treeData.startMonth, treeData.years, monthlyRevenue]);
     const cumulativeNetRevenue = totalCumulativeUntilYear - cumulativeCPFCost;
     const cumulativeNetRevenueWithCaring = cumulativeNetRevenue - cumulativeCaringCost;
 
@@ -255,8 +236,7 @@ const MonthlyRevenueBreak = ({
         return isCGFEnabled ? monthlyCGF : 0;
     };
 
-    // --- Fixed 10-Year Calculations for Header ---
-    const calculateFullDurationStats = () => {
+    const fullDurationStats = useMemo(() => {
         const fullYearIndex = treeData.years - 1;
 
         // Cumulative Revenue Full
@@ -292,7 +272,28 @@ const MonthlyRevenueBreak = ({
         });
 
         // Cumulative Caring Full
-        const totalFullCaring = calculateCumulativeCaringCost(fullYearIndex);
+        let totalFullCaring = 0;
+        for (let yIdx = 0; yIdx <= fullYearIndex; yIdx++) {
+            for (let m = 0; m < 12; m++) {
+                const { absMonth } = getCalendarDate(yIdx, m);
+                allUnitBuffaloes.forEach((buffalo: any) => {
+                    if (buffalo.generation > 0) {
+                        const birthYear = buffalo.birthYear;
+                        const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                        const birthAbsolute = birthYear * 12 + birthMonth;
+                        if (birthAbsolute <= absMonth) {
+                            const ageInMonths = (absMonth - birthAbsolute) + 1;
+                            let monthlyCost = 0;
+                            if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;
+                            else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400;
+                            else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800;
+                            else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500;
+                            totalFullCaring += monthlyCost;
+                        }
+                    }
+                });
+            }
+        }
 
         // Asset Value Full (at end of simulation)
         const fullDurationAssetValue = allUnitBuffaloes.reduce((sum: number, buffalo: any) => {
@@ -332,9 +333,7 @@ const MonthlyRevenueBreak = ({
             assetValue: fullDurationAssetValue,
             buffaloes: fullDurationBuffaloes
         };
-    };
-
-    const fullDurationStats = calculateFullDurationStats();
+    }, [selectedUnit, buffaloDetails, treeData.startYear, treeData.years, treeData.startMonth, monthlyRevenue]);
 
     // Sync with Header
     React.useEffect(() => {

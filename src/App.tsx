@@ -11,14 +11,7 @@ import Login from './components/auth/Login';
 // Tabs
 // Tabs
 import DashboardHome from './components/sidenavbar/Dashboard/DashboardHome';
-import OrdersTab from './components/sidenavbar/Orders/OrdersTab';
 import OrderDetailsPage from './components/sidenavbar/Orders/OrderDetailsPage';
-import UserDetails from './components/sidenavbar/Users/UserDetails';
-import ProductsTab from './components/sidenavbar/products/ProductsTab';
-import BuffaloVisualizationTab from './components/sidenavbar/BuffaloViz/BuffaloVisualizationTab';
-import EmiCalculatorTab from './components/sidenavbar/Calculators/Emi/EmiCalculatorTab';
-import AcfCalculatorTab from './components/sidenavbar/Calculators/Acf/AcfCalculatorTab';
-import UnitCalculatorTab from './components/sidenavbar/Calculators/Unit/UnitCalculatorTab';
 import SupportTicketsTab from './components/sidenavbar/public/SupportTicketsTab';
 import CustomerDetailsPage from './components/sidenavbar/Users/CustomerDetails';
 import NetworkTab from './components/sidenavbar/Network/Network';
@@ -49,6 +42,15 @@ import UsersPageSkeleton from './components/common/skeletons/UsersPageSkeleton';
 import ProductsPageSkeleton from './components/common/skeletons/ProductsPageSkeleton';
 import BuffaloVizSkeleton from './components/common/skeletons/BuffaloVizSkeleton';
 import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSkeleton';
+
+// Tabs (Lazy Loaded)
+const OrdersTab = React.lazy(() => import('./components/sidenavbar/Orders/OrdersTab'));
+const UserDetails = React.lazy(() => import('./components/sidenavbar/Users/UserDetails'));
+const ProductsTab = React.lazy(() => import('./components/sidenavbar/products/ProductsTab'));
+const BuffaloVisualizationTab = React.lazy(() => import('./components/sidenavbar/BuffaloViz/BuffaloVisualizationTab'));
+const EmiCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Emi/EmiCalculatorTab'));
+const AcfCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Acf/AcfCalculatorTab'));
+const UnitCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Unit/UnitCalculatorTab'));
 
 
 
@@ -86,6 +88,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Sync session stats to Redux
   useEffect(() => {
     if (session) {
       dispatch(setReduxSession({
@@ -95,13 +98,17 @@ function App() {
         lastLogin: session.lastLoginTime || 'First Login',
         presentLogin: session.currentLoginTime || new Date().toLocaleString(),
       }));
-
-      // Fetch admin profile if not already loaded to prevent repeated API calls
-      if (!adminProfile && !adminProfileLoading) {
-        dispatch(fetchAdminProfile(session.mobile));
-      }
     }
-  }, [dispatch, session, adminProfile, adminProfileLoading]);
+  }, [dispatch, session]);
+
+  // Fetch admin profile EXACTLY ONCE per session initialization
+  useEffect(() => {
+    if (session?.mobile && !adminProfile && !adminProfileLoading) {
+      dispatch(fetchAdminProfile(session.mobile));
+    }
+    // We intentionally omit adminProfile/loading to prevent re-triggering during the fetch lifecycle
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.mobile, dispatch]);
 
   const handleLogin = useCallback((s: Session) => {
     // Determine last login (from previous session or current if new)

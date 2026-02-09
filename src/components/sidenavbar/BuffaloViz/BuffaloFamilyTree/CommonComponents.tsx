@@ -69,8 +69,8 @@ export const buildTree = (root: any, all: any[]) => {
     return all.filter((b: any) => b.parentId === root.id);
 };
 
-// Buffalo Node Component - Updated to accept elementId, parentDisplayName, variant, and tooltipPosition
-export const BuffaloNode = ({
+// Buffalo Node Component - Memoized to prevent unnecessary re-renders in large trees
+export const BuffaloNode = React.memo(({
     data,
     founder,
     displayName,
@@ -152,7 +152,7 @@ export const BuffaloNode = ({
             </div>
         </div>
     );
-};
+});
 
 // Tree Branch Component with Xarrow - FIXED VERSION
 export const TreeBranch = ({ parent, all, level = 0, getDisplayName, zoom = 1 }: any) => {

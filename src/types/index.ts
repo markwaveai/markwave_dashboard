@@ -42,6 +42,7 @@ export interface UserParams {
   role?: string;
   created_date?: string;
   verified?: boolean;
+  search?: string;
 }
 
 export interface Order {
@@ -139,6 +140,7 @@ export interface NetworkUser {
   referral_count: number;
   role: string;
   created_date: string;
+  units_purchased?: number;
   [key: string]: any;
 }
 
@@ -151,9 +153,17 @@ export interface NetworkResponse {
 
 export interface NetworkUserStats {
   total_coins: number;
+  spending_coins: number;
+  remaining_coins: number;
   paid_orders_count: number;
+  paid_units_count: number;
   direct_referrals_count: number;
+  indirect_referrals_count: number;
   total_network_size: number;
+  direct_referrals_units?: number;
+  indirect_referrals_units?: number;
+  current_reward?: string;
+  achieved_rewards?: string[];
 }
 
 export interface NetworkTreeItem {

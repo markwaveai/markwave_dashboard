@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 const CpfCgfCombined = ({
     treeData,
@@ -107,51 +107,60 @@ const CpfCgfCombined = ({
         return totalMonthlyCPF;
     };
 
-    // --- Generate Table Data ---
-    const tableData = [];
-    let yearlyCgf = 0;
-    let yearlyCpf = 0;
-    let yearlyTotal = 0;
+    // --- Generate Table & Cumulative Data ---
+    const { tableData, yearlyCgf, yearlyCpf, yearlyTotal, cumulativeCgf, cumulativeCpf, cumulativeTotal } = useMemo(() => {
+        const tData = [];
+        let yCgf = 0;
+        let yCpf = 0;
+        let yTotal = 0;
 
-    for (let m = 0; m < 12; m++) {
-        // All 12 months in a simulation year are inherently valid unless beyond global end
-        const { absMonth, month } = getCalendarDate(selectedYearIndex, m);
-        const globalEnd = startYear * 12 + (treeData.startMonth || 0) + (treeData.years * 12) - 1;
-        const isValid = absMonth <= globalEnd;
-
-        const cgf = isValid ? calculateCgfForMonth(selectedYearIndex, m) : 0;
-        const cpf = isValid ? calculateCpfForMonth(selectedYearIndex, m) : 0;
-        const total = cgf + cpf;
-
-        yearlyCgf += cgf;
-        yearlyCpf += cpf;
-        yearlyTotal += total;
-
-        tableData.push({
-            monthName: monthNames[month],
-            isValid,
-            cgf,
-            cpf,
-            total
-        });
-    }
-
-    // --- Cumulative Calculations ---
-    let cumulativeCgf = 0;
-    let cumulativeCpf = 0;
-
-    for (let yIndex = 0; yIndex <= selectedYearIndex; yIndex++) {
         for (let m = 0; m < 12; m++) {
-            const { absMonth } = getCalendarDate(yIndex, m);
+            const { absMonth, month } = getCalendarDate(selectedYearIndex, m);
             const globalEnd = startYear * 12 + (treeData.startMonth || 0) + (treeData.years * 12) - 1;
+            const isValid = absMonth <= globalEnd;
 
-            if (absMonth <= globalEnd) {
-                cumulativeCgf += calculateCgfForMonth(yIndex, m);
-                cumulativeCpf += calculateCpfForMonth(yIndex, m);
+            const cgf = isValid ? calculateCgfForMonth(selectedYearIndex, m) : 0;
+            const cpf = isValid ? calculateCpfForMonth(selectedYearIndex, m) : 0;
+            const total = cgf + cpf;
+
+            yCgf += cgf;
+            yCpf += cpf;
+            yTotal += total;
+
+            tData.push({
+                monthName: monthNames[month],
+                isValid,
+                cgf,
+                cpf,
+                total
+            });
+        }
+
+        // Cumulative
+        let cCgf = 0;
+        let cCpf = 0;
+        for (let yIndex = 0; yIndex <= selectedYearIndex; yIndex++) {
+            for (let m = 0; m < 12; m++) {
+                const { absMonth } = getCalendarDate(yIndex, m);
+                const globalEnd = startYear * 12 + (treeData.startMonth || 0) + (treeData.years * 12) - 1;
+
+                if (absMonth <= globalEnd) {
+                    cCgf += calculateCgfForMonth(yIndex, m);
+                    cCpf += calculateCpfForMonth(yIndex, m);
+                }
             }
         }
-    }
-    const cumulativeTotal = cumulativeCgf + cumulativeCpf;
+
+        return {
+            tableData: tData,
+            yearlyCgf: yCgf,
+            yearlyCpf: yCpf,
+            yearlyTotal: yTotal,
+            cumulativeCgf: cCgf,
+            cumulativeCpf: cCpf,
+            cumulativeTotal: cCgf + cCpf
+        };
+    }, [selectedYearIndex, buffaloDetails, startYear, treeData.startMonth, treeData.years]);
 
     return (
         <div className="w-full mb-6 space-y-2">

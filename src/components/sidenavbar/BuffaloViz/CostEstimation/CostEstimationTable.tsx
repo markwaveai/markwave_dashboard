@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     Info,
     Calendar,
@@ -65,27 +65,11 @@ const CostEstimationTableContent = ({
     const [cpfToggle, setCpfToggle] = useState("withCPF");
     const [globalYearIndex, setGlobalYearIndex] = useState(0);
 
-    if (!propTreeData?.revenueData) {
-        return (
-            <div className="fixed inset-0 bg-white z-50 overflow-auto flex items-center justify-center">
-                <div className="text-center p-8">
-                    <div className="text-2xl text-red-500 mb-4">Revenue data not available</div>
-                    <button
-                        onClick={onBack}
-                        className="bg-red-500 text-white px-6 py-3 rounded-lg"
-                    >
-                        Go Back
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    const treeData = propTreeData;
+    const treeData = propTreeData || { buffaloes: [], startYear: 0, startMonth: 0, years: 0, revenueData: { yearlyData: [] } };
     const startYear = treeData.startYear;
     const startMonth = treeData.startMonth;
 
-    const { yearlyData, totalRevenue, totalUnits, totalMatureBuffaloYears } = treeData.revenueData;
+    const { yearlyData = [], totalRevenue = 0, totalUnits = 0, totalMatureBuffaloYears = 0 } = treeData.revenueData || {};
 
     // Shared calculation functions
     const calculateAgeInMonths = (buffalo: any, targetYear: number, targetMonth: number = 0) => {
@@ -96,11 +80,11 @@ const CostEstimationTableContent = ({
         return Math.max(0, totalMonths);
     };
 
-    const getBuffaloDetails = () => {
+    const buffaloDetails = useMemo(() => {
         const buffaloDetails: any = {};
 
         // First pass: Create all buffalo entries
-        treeData.buffaloes.forEach((buffalo: any) => {
+        (treeData.buffaloes || []).forEach((buffalo: any) => {
             // Determine acquisition/birth month logic
             // For Gen 0, acquisitionMonth is set.
             // For Gen > 0, we can use birthMonth if available or inherit from parent acquisition if consistent.
@@ -125,7 +109,7 @@ const CostEstimationTableContent = ({
         });
 
         // Second pass: Link relationships
-        treeData.buffaloes.forEach((buffalo: any) => {
+        (treeData.buffaloes || []).forEach((buffalo: any) => {
             if (buffalo.parentId && buffaloDetails[buffalo.parentId]) {
                 const parent = buffaloDetails[buffalo.parentId];
                 parent.children.push(buffalo.id);
@@ -145,7 +129,7 @@ const CostEstimationTableContent = ({
         });
 
         return buffaloDetails;
-    };
+    }, [treeData.buffaloes]);
 
     const calculateMonthlyRevenueForBuffalo = (acquisitionMonth: number, currentMonth: number, currentYear: number, startYear: number, absoluteAcquisitionMonth?: number, generation = 0, buffaloId = '') => {
         let monthsSinceAcquisition;
@@ -178,8 +162,7 @@ const CostEstimationTableContent = ({
         }
     };
 
-    const calculateYearlyCPFCost = () => {
-        const buffaloDetails = getBuffaloDetails();
+    const { byYear: yearlyCPFCost, byMonth: monthlyCPFCost } = useMemo(() => {
         const cpfCostByYear: any = {};
         const cpfCostByMonth: any = {};
         const CPF_PER_MONTH = 15000 / 12;
@@ -257,9 +240,7 @@ const CostEstimationTableContent = ({
         }
 
         return { byYear: cpfCostByYear, byMonth: cpfCostByMonth };
-    };
-
-    const { byYear: yearlyCPFCost, byMonth: monthlyCPFCost } = calculateYearlyCPFCost();
+    }, [treeData.startYear, treeData.startMonth, treeData.years, buffaloDetails]);
 
     const calculateYearlyDataWithCPF = () => {
         return yearlyData.map((yearData: any) => {
@@ -334,7 +315,7 @@ const CostEstimationTableContent = ({
     const MOTHER_BUFFALO_PRICE = 175000;
     const CPF_PER_UNIT = 15000;
 
-    const calculateInitialInvestment = () => {
+    const initialInvestment = useMemo(() => {
         const motherBuffaloCost = treeData.units * 2 * MOTHER_BUFFALO_PRICE;
         const cpfCost = treeData.units * CPF_PER_UNIT;
         return {
@@ -347,14 +328,11 @@ const CostEstimationTableContent = ({
             pricePerMotherBuffalo: MOTHER_BUFFALO_PRICE,
             cpfPerUnit: CPF_PER_UNIT
         };
-    };
-
-    const initialInvestment = calculateInitialInvestment();
+    }, [treeData.units]);
 
 
 
-    const calculateDetailedMonthlyRevenue = () => {
-        const buffaloDetails = getBuffaloDetails();
+    const { monthlyRevenue, investorMonthlyRevenue, revenueBuffaloDetails, buffaloValuesByYear } = useMemo(() => {
         const monthlyRevenue: any = {};
         const investorMonthlyRevenue: any = {};
         const buffaloValuesByYear: any = {};
@@ -437,12 +415,10 @@ const CostEstimationTableContent = ({
             }
         });
 
-        return { monthlyRevenue, investorMonthlyRevenue, buffaloDetails, buffaloValuesByYear };
-    };
+        return { monthlyRevenue, investorMonthlyRevenue, revenueBuffaloDetails: buffaloDetails, buffaloValuesByYear };
+    }, [treeData.startYear, treeData.startMonth, treeData.years, buffaloDetails]);
 
-    const { monthlyRevenue, investorMonthlyRevenue, buffaloDetails, buffaloValuesByYear } = calculateDetailedMonthlyRevenue();
-
-    const calculateBreakEvenAnalysis = () => {
+    const breakEvenAnalysis = useMemo(() => {
         const breakEvenData = [];
         let breakEvenYearWithCPF = null;
         let breakEvenMonthWithCPF = null;
@@ -651,12 +627,9 @@ const CostEstimationTableContent = ({
             initialInvestment: initialInvestment.totalInvestment,
             finalCumulativeRevenueWithCPF: breakEvenData.length > 0 ? breakEvenData[breakEvenData.length - 1].cumulativeRevenueWithCPF : 0
         };
-    };
+    }, [treeData.startYear, treeData.startMonth, treeData.years, buffaloDetails, initialInvestment, investorMonthlyRevenue, monthlyCPFCost]);
 
-
-    const breakEvenAnalysis = calculateBreakEvenAnalysis();
-
-    const calculateAssetMarketValue = () => {
+    const assetMarketValue = useMemo(() => {
         const assetValues: any[] = [];
         // Correctly calculate end year including partial years (same as index.jsx)
         const totalMonthsDuration = treeData.years * 12;
@@ -730,9 +703,7 @@ const CostEstimationTableContent = ({
         }
 
         return assetValues;
-    };
-
-    const assetMarketValue = calculateAssetMarketValue();
+    }, [treeData.years, treeData.startYear, treeData.startMonth, buffaloDetails, yearlyData]);
 
     const calculateDetailedAssetValue = (year: any) => {
         const ageGroups: any = {
@@ -826,6 +797,22 @@ const CostEstimationTableContent = ({
         { id: "Cattle Growing Fund", icon: Sprout, label: "Annual Caring Cost" },
         { id: "CPF + CGF", icon: Calculator, label: "CPF + CGF Analysis" }
     ];
+
+    if (!propTreeData?.revenueData) {
+        return (
+            <div className="fixed inset-0 bg-white z-50 overflow-auto flex items-center justify-center">
+                <div className="text-center p-8">
+                    <div className="text-2xl text-red-500 mb-4">Revenue data not available</div>
+                    <button
+                        onClick={onBack}
+                        className="bg-red-500 text-white px-6 py-3 rounded-lg"
+                    >
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full overflow-hidden relative bg-slate-50">
@@ -1053,7 +1040,7 @@ const CostEstimationTableContent = ({
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

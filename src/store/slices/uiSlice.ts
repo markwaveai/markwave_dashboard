@@ -38,9 +38,18 @@ const getInitialActiveTab = (): UIState['activeTab'] => {
     return 'orders';
 };
 
+const getInitialSidebarOpen = (): boolean => {
+    const saved = localStorage.getItem('isSidebarOpen');
+    if (saved !== null) {
+        return saved === 'true';
+    }
+    // Default to open on desktop, closed on mobile
+    return window.innerWidth >= 768;
+};
+
 const initialState: UIState = {
     activeTab: getInitialActiveTab(),
-    isSidebarOpen: window.innerWidth >= 768,
+    isSidebarOpen: getInitialSidebarOpen(),
     showAdminDetails: false,
     modals: {
         referral: false,
@@ -74,12 +83,15 @@ const uiSlice = createSlice({
     reducers: {
         setActiveTab: (state, action: PayloadAction<UIState['activeTab']>) => {
             state.activeTab = action.payload;
+            localStorage.setItem('activeTab', action.payload);
         },
         toggleSidebar: (state) => {
             state.isSidebarOpen = !state.isSidebarOpen;
+            localStorage.setItem('isSidebarOpen', state.isSidebarOpen.toString());
         },
         setSidebarOpen: (state, action: PayloadAction<boolean>) => {
             state.isSidebarOpen = action.payload;
+            localStorage.setItem('isSidebarOpen', action.payload.toString());
         },
         setShowAdminDetails: (state, action: PayloadAction<boolean>) => {
             state.showAdminDetails = action.payload;

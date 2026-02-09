@@ -88,41 +88,14 @@ const TreeVisualization = ({
         }
     };
 
-    // Update arrows when layout or zoom changes
-    useEffect(() => {
-        forceRefreshLines();
-
-        let animationFrameId: number;
-        const startTime = Date.now();
-        const duration = 1500;
-
-        const animate = () => {
-            const now = Date.now();
-            if (now - startTime < duration) {
-                // Periodically force powerful refresh
-                if (Math.random() > 0.8) forceRefreshLines();
-                else updateXarrow();
-
-                animationFrameId = requestAnimationFrame(animate);
-            }
-        };
-
-        cancelAnimationFrame(animationFrameId!);
-        animationFrameId = requestAnimationFrame(animate);
-
-        return () => {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        };
-    }, [activeLayout, zoom, isProcessing]);
-
     // Final strict update when processing finishes
     useEffect(() => {
         if (!isProcessing) {
+            // Use a few strategic refreshes instead of an aggressive animation loop
             const timers = [
-                setTimeout(forceRefreshLines, 50),
-                setTimeout(forceRefreshLines, 200),
-                setTimeout(forceRefreshLines, 500),
-                setTimeout(forceRefreshLines, 1000)
+                setTimeout(updateXarrow, 50),
+                setTimeout(forceRefreshLines, 250),
+                setTimeout(forceRefreshLines, 800)
             ];
             return () => timers.forEach(t => clearTimeout(t));
         }

@@ -103,7 +103,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                     <div className="h-4"></div>
 
                     <ul className="list-none flex flex-col gap-1 w-full">
-                        {hasSession && (
+                        {/* {hasSession && (
                             <li>
                                 <button className={navItemClass('dashboard')} onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); }}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
@@ -112,7 +112,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     </div>
                                 </button>
                             </li>
-                        )}
+                        )} */}
                         {hasSession && (
                             <li>
                                 <button className={navItemClass('orders')} onClick={(e) => { e.stopPropagation(); navigate('/orders'); }}>
@@ -123,14 +123,14 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 </button>
                             </li>
                         )}
-                        <li>
+                        {/* <li>
                             <button className={navItemClass('acf')} onClick={(e) => { e.stopPropagation(); navigate('/acf'); }}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                     <FileText size={18} className={activeTab === 'acf' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
                                     {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">ACF</span>}
                                 </div>
                             </button>
-                        </li>
+                        </li> */}
                         {hasSession && (
                             <li>
                                 <button className={navItemClass('user-management')} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
