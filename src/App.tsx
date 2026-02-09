@@ -148,6 +148,7 @@ function App() {
   const handleLogout = () => {
     window.localStorage.removeItem('ak_dashboard_session');
     setSession(null);
+    navigate('/login', { replace: true });
   };
 
   const isAdmin = session?.role === 'Admin' || session?.role === 'Animalkart admin';

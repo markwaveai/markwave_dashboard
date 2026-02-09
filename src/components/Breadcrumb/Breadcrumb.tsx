@@ -135,19 +135,19 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 </main>
             </div>
 
-            {hasSession && (
-                <>
-                    <ImageNamesModal />
-                    {/* AdminDetailsModal is now in TopNavbar */}
+            {hasSession && <ImageNamesModal />}
 
-                    <Logout isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={onLogout!} />
-                    <Snackbar
-                        message={snackbar.message}
-                        type={snackbar.type as 'success' | 'error' | null}
-                        onClose={() => dispatch(setSnackbar({ message: null, type: null }))}
-                    />
-                </>
-            )}
+            <Logout
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                onConfirm={onLogout!}
+            />
+
+            <Snackbar
+                message={snackbar.message}
+                type={snackbar.type as 'success' | 'error' | null}
+                onClose={() => dispatch(setSnackbar({ message: null, type: null }))}
+            />
         </div>
     );
 };

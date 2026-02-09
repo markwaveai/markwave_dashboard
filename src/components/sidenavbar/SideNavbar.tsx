@@ -123,6 +123,14 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 </button>
                             </li>
                         )}
+                         <li>
+                            <button className={navItemClass('acf')} onClick={(e) => { e.stopPropagation(); navigate('/acf'); }}>
+                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                    <FileText size={18} className={activeTab === 'acf' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">ACF</span>}
+                                </div>
+                            </button>
+                        </li>
                         {hasSession && (
                             <li>
                                 <button className={navItemClass('user-management')} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
@@ -226,14 +234,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 </div>
                             </button>
                         </li>
-                        <li>
-                            <button className={navItemClass('acf')} onClick={(e) => { e.stopPropagation(); navigate('/acf'); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <FileText size={18} className={activeTab === 'acf' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">ACF</span>}
-                                </div>
-                            </button>
-                        </li>
+                       
 
 
 
