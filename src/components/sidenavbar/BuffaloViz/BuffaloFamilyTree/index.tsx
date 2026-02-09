@@ -7,13 +7,24 @@ import CostEstimationTable from "../CostEstimation/CostEstimationTable";
 
 
 export default function BuffaloFamilyTree() {
-    // Initialize with current date
-    // Initialize with default date: Jan 1, 2026
+    // Calculate default start date as next month from current date
+    const getDefaultStartDate = () => {
+        const now = new Date();
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        return {
+            year: nextMonth.getFullYear(),
+            month: nextMonth.getMonth(),
+            day: 1
+        };
+    };
+
+    const defaultDate = getDefaultStartDate();
+
     const [units, setUnits] = useState(1);
     const [years, setYears] = useState(10);
-    const [startYear, setStartYear] = useState(2026);
-    const [startMonth, setStartMonth] = useState(0);
-    const [startDay, setStartDay] = useState(1);
+    const [startYear, setStartYear] = useState(defaultDate.year);
+    const [startMonth, setStartMonth] = useState(defaultDate.month);
+    const [startDay, setStartDay] = useState(defaultDate.day);
     const [treeData, setTreeData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [zoom, setZoom] = useState(1);
@@ -22,7 +33,7 @@ export default function BuffaloFamilyTree() {
     const [activeGraph, setActiveGraph] = useState("buffaloes");
     const [activeTab, setActiveTab] = useState("familyTree");
     const [headerStats, setHeaderStats] = useState(null);
-    const [isCpfStaggered, setIsCpfStaggered] = useState(false);
+    const [isCGFEnabled, setIsCGFEnabled] = useState(false);
 
     const containerRef = useRef<any>(null);
     const treeContainerRef = useRef<any>(null);
@@ -410,6 +421,8 @@ export default function BuffaloFamilyTree() {
 
                         // Or simpler: iterate reasonable k
                         for (let k = 0; k < 15; k++) { // 15 cycles max (enough for 10-15 years)
+                            // First birth at month 32 (33rd month), then every 12 months
+                            // k=0: month 32, k=1: month 44, k=2: month 56, etc.
                             const milestoneAbs = parentBirthAbs + 32 + (k * 12);
 
                             if (milestoneAbs >= yearStartAbs && milestoneAbs <= yearEndAbs) {
@@ -488,7 +501,7 @@ export default function BuffaloFamilyTree() {
 
             // --- Calculate Total Financials (Revenue & Net) Matching CostEstimationTable logic ---
             const calculateTotalFinancials = () => {
-                const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
+                const CPF_PER_MONTH = 15000 / 12;
                 let totalRevenue = 0;
                 let totalCPFCost = 0;
                 let totalCaringCost = 0;
@@ -570,46 +583,11 @@ export default function BuffaloFamilyTree() {
                         }
                     });
 
-                    // --- CPF Calculation Logic ---
-                    if (isCpfStaggered) {
-                        herd.forEach(buffalo => {
-                            // 1. Find the first absolute month of eligibility
-                            let firstEligibleSimMonth = -1;
-                            // Search sufficiently far ahead
-                            for (let m = 0; m < totalMonthsDuration + 24; m++) {
-                                const absM = (startYear * 12 + startMonth) + m;
-                                if (isCpfApplicableForMonth(buffalo, absM)) {
-                                    firstEligibleSimMonth = m;
-                                    break;
-                                }
-                            }
-
-                            if (firstEligibleSimMonth !== -1) {
-                                // 2. Check all potential cycle starts
-                                for (let s = firstEligibleSimMonth; s < totalMonthsDuration + 12; s += 12) {
-                                    // Payment window for this cycle is [s-3, s-1]
-                                    if (i >= s - 3 && i <= s - 1) {
-                                        // Calculate total cost for the 12-month cycle [s, s+11]
-                                        let cycleMonths = 0;
-                                        for (let k = 0; k < 12; k++) {
-                                            const cycleAbsM = (startYear * 12 + startMonth) + s + k;
-                                            if (isCpfApplicableForMonth(buffalo, cycleAbsM)) {
-                                                cycleMonths++;
-                                            }
-                                        }
-                                        const cycleTotalCost = cycleMonths * CPF_PER_MONTH;
-                                        monthlyTotalCPF += cycleTotalCost / 3;
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        herd.forEach(buffalo => {
-                            if (isCpfApplicableForMonth(buffalo, currentAbsolute)) {
-                                monthlyTotalCPF += CPF_PER_MONTH;
-                            }
-                        });
-                    }
+                    herd.forEach(buffalo => {
+                        if (isCpfApplicableForMonth(buffalo, currentAbsolute)) {
+                            monthlyTotalCPF += CPF_PER_MONTH;
+                        }
+                    });
 
                     totalRevenue += monthlyTotalRevenue;
                     totalCPFCost += monthlyTotalCPF;
@@ -626,7 +604,7 @@ export default function BuffaloFamilyTree() {
             const { totalRevenue, totalNetRevenue, totalCaringCost } = calculateTotalFinancials();
 
             // --- Calculate Per-Buffalo Stats for Tooltip ---
-            const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12; // Define CPF dynamic constant
+            const CPF_PER_MONTH = 15000 / 12; // Define CPF constant
 
             herd.forEach(buffalo => {
                 // 1. Age & Asset Value
@@ -930,8 +908,8 @@ export default function BuffaloFamilyTree() {
                     headerStats={headerStats}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
-                    isCpfStaggered={isCpfStaggered}
-                    setIsCpfStaggered={setIsCpfStaggered}
+                    isCGFEnabled={isCGFEnabled}
+                    setIsCGFEnabled={setIsCGFEnabled}
                 />
             )}
 
@@ -960,8 +938,7 @@ export default function BuffaloFamilyTree() {
                             setActiveGraph={setActiveGraph}
                             onBack={() => setActiveTab("familyTree")}
                             setHeaderStats={setHeaderStats}
-                            isCpfStaggered={isCpfStaggered}
-                            setIsCpfStaggered={setIsCpfStaggered}
+                            isCGFEnabled={isCGFEnabled}
                         />
                     </div>
                 ) : (

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, RotateCcw, Calendar, Loader2, ToggleLeft, ToggleRight, LayoutGrid, ChevronDown } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { formatCurrency } from './CommonComponents';
+import { formatCurrency, SimpleTooltip } from './CommonComponents';
 
 
 const HeaderControls = ({
@@ -25,8 +25,8 @@ const HeaderControls = ({
     headerStats,
     activeTab,
     setActiveTab,
-    isCpfStaggered,
-    setIsCpfStaggered
+    isCGFEnabled,
+    setIsCGFEnabled,
 }: {
     units: number;
     setUnits: (val: number) => void;
@@ -46,8 +46,8 @@ const HeaderControls = ({
     headerStats: any;
     activeTab: string;
     setActiveTab: (val: string) => void;
-    isCpfStaggered: boolean;
-    setIsCpfStaggered: (val: boolean) => void;
+    isCGFEnabled: boolean;
+    setIsCGFEnabled: (val: boolean) => void;
 }) => {
     const monthNames = ["January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"];
@@ -55,7 +55,6 @@ const HeaderControls = ({
     // Generate days array based on days in month
     const dayOptions = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-    const [isCGFEnabled, setIsCGFEnabled] = useState(false);
 
     // Handle number input changes to prevent showing 0 when empty
     const handleNumberChange = (value: string | number, setter: (val: any) => void) => {
@@ -70,7 +69,7 @@ const HeaderControls = ({
     // Auto-run simulation on inputs change
     useEffect(() => {
         runSimulation();
-    }, [units, years, startYear, startMonth, startDay, isCpfStaggered]);
+    }, [units, years, startYear, startMonth, startDay]);
 
     return (
         <div className="bg-white border-b border-slate-200 px-4 py-3 pb-8 z-[80] relative">
@@ -191,41 +190,50 @@ const HeaderControls = ({
                 {treeData && treeData.summaryStats && (
                     <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm">
 
-                        <div className="flex flex-col items-center">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
-                            <span className="text-sm font-black text-slate-800">
-                                {activeTab === "costEstimation" && headerStats?.totalBuffaloes !== undefined
-                                    ? headerStats.totalBuffaloes
-                                    : treeData.summaryStats.totalBuffaloes}
-                            </span>
-                        </div>
+                        <SimpleTooltip content={`Total buffaloes after ${years} years`} placement="bottom">
+                            <div className="flex flex-col items-center cursor-default">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
+                                <span className="text-sm font-black text-slate-800">
+                                    {activeTab === "costEstimation" && headerStats?.totalBuffaloes !== undefined
+                                        ? headerStats.totalBuffaloes
+                                        : treeData.summaryStats.totalBuffaloes}
+                                </span>
+                            </div>
+                        </SimpleTooltip>
 
                         <div className="w-px h-8 bg-slate-200" />
 
                         {/* Asset Value - Added */}
-                        <div className="flex flex-col items-center">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Val</span>
-                            <span className="text-sm font-black text-blue-600">
-                                {formatCurrency(activeTab === "costEstimation" && headerStats?.totalAssetValue !== undefined
-                                    ? headerStats.totalAssetValue
-                                    : treeData.summaryStats.totalAssetValue)}
-                            </span>
-                        </div>
+                        <SimpleTooltip content="Buffaloes asset value" placement="bottom">
+                            <div className="flex flex-col items-center cursor-default">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Value</span>
+                                <span className="text-sm font-black text-blue-600">
+                                    {formatCurrency(activeTab === "costEstimation" && headerStats?.totalAssetValue !== undefined
+                                        ? headerStats.totalAssetValue
+                                        : treeData.summaryStats.totalAssetValue)}
+                                </span>
+                            </div>
+                        </SimpleTooltip>
 
                         <div className="w-px h-8 bg-slate-200" />
 
-                        <div className="flex flex-col items-center">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                                {isCGFEnabled ? "Net (+CGF)" : "Net Rev"}
-                            </span>
-                            <span className="text-sm font-black text-emerald-600">
-                                {formatCurrency(
-                                    activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
-                                        ? (isCGFEnabled ? headerStats.cumulativeNetRevenueWithCaring || headerStats.cumulativeNetRevenue : headerStats.cumulativeNetRevenue)
-                                        : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)
-                                )}
-                            </span>
-                        </div>
+                        <SimpleTooltip
+                            content={isCGFEnabled ? "Total Recurring Revenue - (CPF +CGF)" : "Total Recurring Revenue - CPF"}
+                            placement="bottom"
+                        >
+                            <div className="flex flex-col items-center cursor-default">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                    {isCGFEnabled ? "Net (-(CPF+CGF))" : "Net (-CPF)"}
+                                </span>
+                                <span className="text-sm font-black text-emerald-600">
+                                    {formatCurrency(
+                                        activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
+                                            ? (isCGFEnabled ? headerStats.cumulativeNetRevenueWithCaring || headerStats.cumulativeNetRevenue : headerStats.cumulativeNetRevenue)
+                                            : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)
+                                    )}
+                                </span>
+                            </div>
+                        </SimpleTooltip>
 
 
                         {/* CGF Toggle - Integrated */}
@@ -242,16 +250,18 @@ const HeaderControls = ({
 
                         <div className="w-px h-8 bg-slate-200" />
 
-                        <div className="flex flex-col items-center">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total ROI</span>
-                            <span className="text-sm font-black text-slate-900">
-                                {formatCurrency(
-                                    activeTab === "costEstimation" && headerStats
-                                        ? (isCGFEnabled ? (headerStats.cumulativeNetRevenueWithCaring ?? headerStats.cumulativeNetRevenue) : headerStats.cumulativeNetRevenue) + headerStats.totalAssetValue
-                                        : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) + treeData.summaryStats.totalAssetValue
-                                )}
-                            </span>
-                        </div>
+                        <SimpleTooltip content="Total Projected Revenue" placement="bottom">
+                            <div className="flex flex-col items-center cursor-default">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total PR</span>
+                                <span className="text-sm font-black text-slate-900">
+                                    {formatCurrency(
+                                        activeTab === "costEstimation" && headerStats
+                                            ? (isCGFEnabled ? (headerStats.cumulativeNetRevenueWithCaring ?? headerStats.cumulativeNetRevenue) : headerStats.cumulativeNetRevenue) + headerStats.totalAssetValue
+                                            : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) + treeData.summaryStats.totalAssetValue
+                                    )}
+                                </span>
+                            </div>
+                        </SimpleTooltip>
 
 
 

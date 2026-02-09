@@ -434,6 +434,7 @@ const TreeVisualization = ({
                     {/* Stats Content */}
                     <div className="p-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75">
                         {/* Buffaloes */}
+                        {/* Buffaloes */}
                         <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
                             <span className="text-xs font-medium text-slate-500">Buffaloes</span>
                             <span className="text-sm font-black text-slate-800">{stats.count}</span>
@@ -449,6 +450,7 @@ const TreeVisualization = ({
                             </span>
                         </div>
 
+                        {/* Asset Value */}
                         {/* Asset Value */}
                         <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
                             <span className="text-xs font-medium text-slate-500">Asset Val</span>

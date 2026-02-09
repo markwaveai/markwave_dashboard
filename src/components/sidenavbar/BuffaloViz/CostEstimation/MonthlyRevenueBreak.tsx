@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { getBuffaloValueByAge } from '../BuffaloFamilyTree/CommonComponents';
+import { getBuffaloValueByAge, SimpleTooltip } from '../BuffaloFamilyTree/CommonComponents';
 import { ChevronRight } from 'lucide-react';
 
 const MonthlyRevenueBreak = ({
@@ -14,7 +14,7 @@ const MonthlyRevenueBreak = ({
     formatCurrency,
     setHeaderStats,
     selectedYearIndex,
-    isCpfStaggered
+    isCGFEnabled
 }: any) => {
     const [selectedUnit, setSelectedUnit] = useState(1);
     const [showScrollIndicator, setShowScrollIndicator] = useState(false);
@@ -38,41 +38,23 @@ const MonthlyRevenueBreak = ({
     // Get all buffaloes for the unit (for Asset Value)
     const allUnitBuffaloes = Object.values(buffaloDetails).filter((buffalo: any) => buffalo.unit === selectedUnit);
 
-    // Get buffaloes for selected unit and filter only income-producing ones
+    // Get buffaloes for selected unit and filter those that produce revenue OR reach CPF milestone this year
     const unitBuffaloes = allUnitBuffaloes
         .filter((buffalo: any) => {
-            // Show buffalo if it produces any revenue this year OR is old enough to potentially produce
-            // Or if it's M1/M2 which are main units
-            if (buffalo.generation === 0) return true;
-
-            if (currentSimYearStart < buffalo.birthYear) {
-                return false;
-            }
-
-            const hasRevenue = Array.from({ length: 12 }).some((_, m) => {
+            const hasRevenueThisYear = Array.from({ length: 12 }).some((_, m) => {
                 const { year, month } = getCalendarDate(selectedYearIndex, m);
                 return (monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0) > 0;
             });
 
+            // Also show children who reach CPF eligibility (month 24) this year
+            const reachesCPFMilestoneThisYear = buffalo.generation > 0 && Array.from({ length: 12 }).some((_, m) => {
+                const { year, month } = getCalendarDate(selectedYearIndex, m);
+                const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                const ageInMonths = ((year - buffalo.birthYear) * 12) + (month - birthMonth);
+                return ageInMonths === 24;
+            });
 
-            // Show if it has revenue OR is of CPF paying age (>= 24 months)
-            if (buffalo.generation > 0) {
-                // Check if buffalo reaches 24 months in this year
-                const reachesCPFAge = Array.from({ length: 12 }).some((_, m) => {
-                    const { year, month } = getCalendarDate(selectedYearIndex, m);
-                    const age = calculateAgeInMonths(buffalo, year, month);
-                    return age >= 24;
-                });
-
-                const hasRevenue = Array.from({ length: 12 }).some((_, m) => {
-                    const { year, month } = getCalendarDate(selectedYearIndex, m);
-                    return (monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0) > 0;
-                });
-
-                return reachesCPFAge || hasRevenue;
-            }
-
-            return true;
+            return hasRevenueThisYear || reachesCPFMilestoneThisYear;
         });
 
     // Helper to check precise CPF applicability (Standard Eligibility)
@@ -112,7 +94,7 @@ const MonthlyRevenueBreak = ({
     const calculateCPFCost = () => {
         let monthlyCosts = new Array(12).fill(0);
         const buffaloCPFDetails: any[] = [];
-        const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
+        const CPF_PER_MONTH = 15000 / 12;
         const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
         const scanMaxAbs = (treeData.startYear + treeData.years + 2) * 12;
 
@@ -133,30 +115,9 @@ const MonthlyRevenueBreak = ({
             if (hasAnyEligibilityIndex !== -1) milkProducingBuffaloesWithCPF++;
 
             // 2. Assign Costs
-            if (isCpfStaggered) {
-                let firstAbsEligible = -1;
-                for (let absM = treeData.startYear * 12; absM < scanMaxAbs; absM++) {
-                    if (eligibility[absM]) { firstAbsEligible = absM; break; }
-                }
-
-                if (firstAbsEligible !== -1) {
-                    for (let s = firstAbsEligible; s < scanMaxAbs; s += 12) {
-                        let cycleMonths = 0;
-                        for (let k = 0; k < 12; k++) { if (eligibility[s + k]) cycleMonths++; }
-                        const cycleTotal = cycleMonths * CPF_PER_MONTH;
-                        for (let pIdx = s - 3; pIdx <= s - 1; pIdx++) {
-                            const pYearIdx = Math.floor(pIdx / 12) - treeData.startYear;
-                            if (pYearIdx === selectedYearIndex) {
-                                monthlyCosts[pIdx % 12] += cycleTotal / 3;
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (let m = 0; m < 12; m++) {
-                    const absM = (treeData.startYear + selectedYearIndex) * 12 + m;
-                    if (eligibility[absM]) monthlyCosts[m] += CPF_PER_MONTH;
-                }
+            for (let m = 0; m < 12; m++) {
+                const absM = (treeData.startYear + selectedYearIndex) * 12 + m;
+                if (eligibility[absM]) monthlyCosts[m] += CPF_PER_MONTH;
             }
 
             // UI Breakdown
@@ -212,7 +173,7 @@ const MonthlyRevenueBreak = ({
     // Calculate CPF cumulative cost until selected year precisely
     const calculateCumulativeCPFCost = () => {
         let totalCPF = 0;
-        const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
+        const CPF_PER_MONTH = 15000 / 12;
         const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
         const scanMaxAbs = (treeData.startYear + treeData.years + 2) * 12;
 
@@ -222,30 +183,9 @@ const MonthlyRevenueBreak = ({
                 eligibility[absM] = isCpfApplicableForMonth(buffalo, Math.floor(absM / 12) - treeData.startYear, absM % 12);
             }
 
-            if (isCpfStaggered) {
-                let firstAbsEligible = -1;
-                for (let absM = treeData.startYear * 12; absM < scanMaxAbs; absM++) {
-                    if (eligibility[absM]) { firstAbsEligible = absM; break; }
-                }
-
-                if (firstAbsEligible !== -1) {
-                    for (let s = firstAbsEligible; s < scanMaxAbs; s += 12) {
-                        let cycleMonths = 0;
-                        for (let k = 0; k < 12; k++) { if (eligibility[s + k]) cycleMonths++; }
-                        const cycleTotal = cycleMonths * CPF_PER_MONTH;
-                        for (let pIdx = s - 3; pIdx <= s - 1; pIdx++) {
-                            const pYearIdx = Math.floor(pIdx / 12) - treeData.startYear;
-                            if (pYearIdx <= selectedYearIndex && pYearIdx >= 0) {
-                                totalCPF += cycleTotal / 3;
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (let yIdx = 0; yIdx <= selectedYearIndex; yIdx++) {
-                    for (let m = 0; m < 12; m++) {
-                        if (eligibility[treeData.startYear * 12 + yIdx * 12 + m]) totalCPF += CPF_PER_MONTH;
-                    }
+            for (let yIdx = 0; yIdx <= selectedYearIndex; yIdx++) {
+                for (let m = 0; m < 12; m++) {
+                    if (eligibility[treeData.startYear * 12 + yIdx * 12 + m]) totalCPF += CPF_PER_MONTH;
                 }
             }
         });
@@ -290,6 +230,31 @@ const MonthlyRevenueBreak = ({
     const cumulativeNetRevenue = totalCumulativeUntilYear - cumulativeCPFCost;
     const cumulativeNetRevenueWithCaring = cumulativeNetRevenue - cumulativeCaringCost;
 
+    const calculateMonthlyCGF = (yIndex: number, mIndex: number) => {
+        let monthlyCGF = 0;
+        const allUnitBuffaloes = Object.values(buffaloDetails).filter((b: any) => b.unit === selectedUnit);
+        const { absMonth } = getCalendarDate(yIndex, mIndex);
+
+        allUnitBuffaloes.forEach((buffalo: any) => {
+            if (buffalo.generation > 0) {
+                const birthYear = buffalo.birthYear;
+                const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                const birthAbsolute = birthYear * 12 + birthMonth;
+
+                if (birthAbsolute <= absMonth) {
+                    const ageInMonths = (absMonth - birthAbsolute) + 1;
+                    let monthlyCost = 0;
+                    if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;
+                    else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400;
+                    else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800;
+                    else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500;
+                    monthlyCGF += monthlyCost;
+                }
+            }
+        });
+        return isCGFEnabled ? monthlyCGF : 0;
+    };
+
     // --- Fixed 10-Year Calculations for Header ---
     const calculateFullDurationStats = () => {
         const fullYearIndex = treeData.years - 1;
@@ -311,7 +276,7 @@ const MonthlyRevenueBreak = ({
 
         // Cumulative CPF Full
         let totalFullCPF = 0;
-        const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
+        const CPF_PER_MONTH = 15000 / 12;
         const scanMaxAbs = (treeData.startYear + treeData.years + 2) * 12;
         allUnitBuffaloes.forEach((buffalo: any) => {
             const eligibility: Record<number, boolean> = {};
@@ -319,30 +284,9 @@ const MonthlyRevenueBreak = ({
                 eligibility[absM] = isCpfApplicableForMonth(buffalo, Math.floor(absM / 12) - treeData.startYear, absM % 12);
             }
 
-            if (isCpfStaggered) {
-                let firstAbsEligible = -1;
-                for (let absM = treeData.startYear * 12; absM < scanMaxAbs; absM++) {
-                    if (eligibility[absM]) { firstAbsEligible = absM; break; }
-                }
-
-                if (firstAbsEligible !== -1) {
-                    for (let s = firstAbsEligible; s < scanMaxAbs; s += 12) {
-                        let cycleMonths = 0;
-                        for (let k = 0; k < 12; k++) { if (eligibility[s + k]) cycleMonths++; }
-                        const cycleTotal = cycleMonths * CPF_PER_MONTH;
-                        for (let pIdx = s - 3; pIdx <= s - 1; pIdx++) {
-                            const pYearIdx = Math.floor(pIdx / 12) - treeData.startYear;
-                            if (pYearIdx <= fullYearIndex && pYearIdx >= 0) {
-                                totalFullCPF += cycleTotal / 3;
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (let yIdx = 0; yIdx <= fullYearIndex; yIdx++) {
-                    for (let m = 0; m < 12; m++) {
-                        if (eligibility[treeData.startYear * 12 + yIdx * 12 + m]) totalFullCPF += CPF_PER_MONTH;
-                    }
+            for (let yIdx = 0; yIdx <= fullYearIndex; yIdx++) {
+                for (let m = 0; m < 12; m++) {
+                    if (eligibility[treeData.startYear * 12 + yIdx * 12 + m]) totalFullCPF += CPF_PER_MONTH;
                 }
             }
         });
@@ -420,7 +364,7 @@ const MonthlyRevenueBreak = ({
         unitBuffaloes.forEach((buffalo: any) => {
             csvContent += buffalo.id + ",";
         });
-        csvContent += "Unit Total,CPF Cost,Net Revenue,Cumulative Revenue Until " + yearLabel + "\n";
+        csvContent += "Unit Total,CPF Cost,CGF Cost,Net Revenue,Cumulative Revenue Until " + yearLabel + "\n";
 
         Array.from({ length: 12 }).forEach((_, mIndex) => {
             const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
@@ -431,14 +375,14 @@ const MonthlyRevenueBreak = ({
             }, 0);
 
             const monthlyCPF: number = cpfCost.monthlyCosts[mIndex];
-            const netRevenue: number = unitTotal - monthlyCPF;
+            const monthlyCGF: number = calculateMonthlyCGF(selectedYearIndex, mIndex);
+            const netRevenue: number = unitTotal - monthlyCPF - monthlyCGF;
 
             csvContent += monthName + ",";
             unitBuffaloes.map((buffalo: any) => {
                 const revenue = monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0;
-                const isCpfApplicable = isCpfApplicableForMonth(buffalo, selectedYearIndex, mIndex);
             });
-            csvContent += unitTotal + "," + Math.round(monthlyCPF) + "," + Math.round(netRevenue) + "," + totalCumulativeUntilYear + "\n";
+            csvContent += unitTotal + "," + Math.round(monthlyCPF) + "," + Math.round(monthlyCGF) + "," + Math.round(netRevenue) + "," + totalCumulativeUntilYear + "\n";
         });
 
         // Yearly totals (Sum over the 12 simulation months)
@@ -449,7 +393,8 @@ const MonthlyRevenueBreak = ({
             }, 0);
         }, 0);
 
-        const yearlyNetRevenue = yearlyUnitTotal - cpfCost.annualCPFCost;
+        const yearlyCGF: number = (Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0);
+        const yearlyNetRevenue = yearlyUnitTotal - cpfCost.annualCPFCost - yearlyCGF;
 
         csvContent += "\nYearly Total,";
         (unitBuffaloes as any[]).forEach((buffalo: any) => {
@@ -459,7 +404,7 @@ const MonthlyRevenueBreak = ({
             }, 0);
             csvContent += yearlyTotal + ",";
         });
-        csvContent += yearlyUnitTotal + "," + cpfCost.annualCPFCost + "," + yearlyNetRevenue + "," + totalCumulativeUntilYear + "\n";
+        csvContent += yearlyUnitTotal + "," + cpfCost.annualCPFCost + "," + yearlyCGF + "," + yearlyNetRevenue + "," + totalCumulativeUntilYear + "\n";
 
         // Add CPF details section
         csvContent += "\n\nCPF Details,\n";
@@ -506,12 +451,12 @@ const MonthlyRevenueBreak = ({
                     {/* 1. Top Summary Cards - KPI Grid */}
                     {/* 1. Top Summary Cards - KPI Grid */}
                     {/* 1. Top Summary Cards - KPI Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isCGFEnabled ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-2`}>
 
                         {/* Annual Revenue */}
                         <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Revenue (No CPF)</p>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Revenue</p>
                                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
                                     {formatCurrency(unitBuffaloes.reduce((sum: number, buffalo: any) => {
                                         return sum + Array.from({ length: 12 }).reduce((monthSum: number, _, mIndex: number) => {
@@ -520,15 +465,6 @@ const MonthlyRevenueBreak = ({
                                         }, 0);
                                     }, 0))}
                                 </h3>
-                            </div>
-                            <div className="mt-1 flex items-center justify-center text-[9px] font-bold text-emerald-600 bg-emerald-50 w-fit px-1 py-0.5 rounded">
-                                {(unitBuffaloes as any[]).filter((buffalo: any) => {
-                                    const annualRev: number = (Array.from({ length: 12 }) as any[]).reduce((s: number, _, m: number) => {
-                                        const { year: y, month: mo } = getCalendarDate(selectedYearIndex, m);
-                                        return s + (Number(monthlyRevenue[y]?.[mo]?.buffaloes[buffalo.id]) || 0);
-                                    }, 0);
-                                    return annualRev > 0;
-                                }).length} Producing
                             </div>
                         </div>
 
@@ -540,23 +476,32 @@ const MonthlyRevenueBreak = ({
                                     {formatCurrency(cpfCost.annualCPFCost)}
                                 </h3>
                             </div>
-                            <div className="mt-1 flex items-center justify-center text-[9px] font-bold text-amber-600 bg-amber-50 w-fit px-1 py-0.5 rounded">
-                                {cpfCost.milkProducingBuffaloesWithCPF} Active
-                            </div>
                         </div>
+
+                        {/* Annual CGF Cost */}
+                        {isCGFEnabled && (
+                            <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CGF Cost</p>
+                                    <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                        {formatCurrency((Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0))}
+                                    </h3>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Net Annual Revenue */}
                         <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
                             <div className="relative z-10 h-full flex flex-col justify-between items-center">
                                 <div className="flex flex-col items-center">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Net Annual (+CPF)</p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Revenue (-{isCGFEnabled ? '(CPF+CGF)' : 'CPF'})</p>
                                     <h3 className="text-base font-bold text-slate-900 mt-0.5">
                                         {formatCurrency((unitBuffaloes as any[]).reduce((sum: number, buffalo: any) => {
                                             return sum + (Array.from({ length: 12 }) as any[]).reduce((monthSum: number, _, mIndex: number) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
                                                 return monthSum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0);
                                             }, 0);
-                                        }, 0) - cpfCost.annualCPFCost)}
+                                        }, 0) - cpfCost.annualCPFCost - (Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0))}
                                     </h3>
                                 </div>
                                 <div className="mt-1 flex items-center justify-center text-[9px] text-slate-400">
@@ -580,7 +525,7 @@ const MonthlyRevenueBreak = ({
                             <div>
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Cumulative Net (Till Date)</p>
                                 <h3 className="text-base font-bold text-indigo-600 mt-0.5">
-                                    {formatCurrency(cumulativeNetRevenue)}
+                                    {formatCurrency(isCGFEnabled ? cumulativeNetRevenueWithCaring : cumulativeNetRevenue)}
                                 </h3>
                             </div>
 
@@ -632,7 +577,7 @@ const MonthlyRevenueBreak = ({
                     {/* 3. Main Data Table */}
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
                         {showScrollIndicator && (
-                            <div className="absolute right-[16rem] top-5 z-50 pointer-events-none">
+                            <div className="absolute right-[21rem] top-5 z-50 pointer-events-none">
                                 <div className="bg-slate-900 text-white rounded-full p-1 shadow-xl animate-pulse flex items-center justify-center opacity-90 border border-slate-700">
                                     <ChevronRight className="w-4 h-4" />
                                 </div>
@@ -644,16 +589,27 @@ const MonthlyRevenueBreak = ({
                             className="overflow-x-auto"
                         >
                             <table className="w-full text-sm text-left">
-                                <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                                <thead className="text-xs text-slate-500 bg-slate-50 border-b border-slate-200 relative z-50">
                                     <tr>
                                         <th className="sticky left-0 z-20 w-24 min-w-[6rem] px-4 py-4 font-bold border-r border-slate-100 bg-slate-50">Month</th>
                                         {unitBuffaloes.map((buffalo: any) => (
                                             <th key={buffalo.id} className="px-4 py-4 font-semibold text-center border-r border-slate-100 min-w-[80px]">
-                                                <div className="text-slate-800 text-base">{buffalo.id}</div>
+                                                <div className="text-slate-800 text-xs">
+                                                    Buffalo {buffalo.id} revenue
+                                                </div>
                                             </th>
                                         ))}
-                                        <th className="sticky right-[10rem] z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 border-l border-slate-200 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]">Total</th>
-                                        <th className="sticky right-[5rem] z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700 border-l border-slate-200">CPF</th>
+                                        <th className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-20 w-28 min-w-[7rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 border-l border-slate-200 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
+                                        <th className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700 border-l border-slate-200`}>
+                                            <SimpleTooltip content="Cattle Protection Fund" placement="bottom">
+                                                <span className="cursor-default">CPF</span>
+                                            </SimpleTooltip>
+                                        </th>
+                                        {isCGFEnabled && <th className="sticky right-[5rem] z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-rose-50 text-rose-700 border-l border-slate-200">
+                                            <SimpleTooltip content="Cattle Growing Fund" placement="bottom">
+                                                <span className="cursor-default">CGF</span>
+                                            </SimpleTooltip>
+                                        </th>}
                                         <th className="sticky right-0 z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-emerald-50 text-emerald-700 border-l border-slate-200">Net</th>
                                     </tr>
                                 </thead>
@@ -663,7 +619,8 @@ const MonthlyRevenueBreak = ({
                                         const monthName = monthNames[month];
                                         const unitTotal: number = (unitBuffaloes as any[]).reduce((sum: number, b: any) => sum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[b.id]) || 0), 0);
                                         const monthlyCpfValue: number = cpfCost.monthlyCosts[mIndex];
-                                        const netRevenue: number = unitTotal - monthlyCpfValue;
+                                        const monthlyCgfValue: number = calculateMonthlyCGF(selectedYearIndex, mIndex);
+                                        const netRevenue: number = unitTotal - monthlyCpfValue - monthlyCgfValue;
                                         const rowBg = mIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50'; // Ensure opaque bg for sticky
 
                                         return (
@@ -708,6 +665,10 @@ const MonthlyRevenueBreak = ({
                                                             );
                                                             if (revenue >= 9000) cellClass = "text-emerald-600 font-bold bg-emerald-50/30";
                                                             else if (revenue >= 6000) cellClass = "text-blue-600 font-semibold bg-blue-50/30";
+                                                        } else if (revenue === 0 && monthDiff >= 2 && buffalo.generation === 0) {
+                                                            // For Gen 0 buffaloes, show "Rest" for zero-revenue months after the landing period
+                                                            cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                            displayText = "Rest";
                                                         } else if (buffalo.generation > 0) {
                                                             // Children Logic
                                                             // monthDiff is 0-indexed offset from birthMonth. 
@@ -715,32 +676,27 @@ const MonthlyRevenueBreak = ({
                                                             if (monthDiff < 0) {
                                                                 displayText = "-";
                                                             } else if (monthDiff === 24) {
-                                                                cellClass = "text-rose-400 text-xs font-medium bg-rose-50";
+                                                                cellClass = "text-amber-600 text-xs font-bold bg-amber-50";
                                                                 displayText = (
                                                                     <div className="flex flex-col items-center leading-none">
-                                                                        <span>CPF</span>
+                                                                        <span>CPF Start</span>
                                                                         <span className="text-[9px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
                                                                     </div>
                                                                 );
                                                             } else if (monthDiff >= 32) {
                                                                 // Generalized logic for Born/Transport events
-                                                                // Cycle starts at 34 months (first birth). Subsequent births every 12 months.
-                                                                // "Born" label at BirthMonth - 2. "Transport" label at BirthMonth - 1.
+                                                                // First birth at month 32 (33rd month), then every 12 months
+                                                                // "Born" label at month 32, 44, 56, etc.
 
-                                                                // Check for "Born" event (monthDiff is BirthMonth - 2)
-                                                                // TargetAge = monthDiff. BirthMonth = TargetAge + 2.
-                                                                // Condition: (TargetAge + 2 - 34) % 12 === 0
+                                                                const monthsSinceFirstBirth = monthDiff - 32;
 
-                                                                const monthsSinceFirstBirthForBorn = monthDiff + 2 - 34;
-                                                                const monthsSinceFirstBirthForTransport = monthDiff + 1 - 34;
-
-                                                                if (monthsSinceFirstBirthForBorn >= 0 && monthsSinceFirstBirthForBorn % 12 === 0) {
-                                                                    const childIndex = 1 + (monthsSinceFirstBirthForBorn / 12);
+                                                                if (monthsSinceFirstBirth >= 0 && monthsSinceFirstBirth % 12 === 0) {
+                                                                    const childIndex = 1 + (monthsSinceFirstBirth / 12);
                                                                     cellClass = "text-slate-500 text-xs font-medium bg-slate-100";
                                                                     displayText = (
                                                                         <div className="flex flex-col items-center leading-none">
                                                                             <span>{buffalo.id}{childIndex} Child (born)</span>
-                                                                            <span className="text-[9px] text-slate-400 font-normal">({currentSimMonthIndex}th month)</span>
+                                                                            <span className="text-[9px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
                                                                         </div>
                                                                     );
                                                                 } else if (monthDiff < 34) {
@@ -769,18 +725,16 @@ const MonthlyRevenueBreak = ({
                                                             }
                                                         } else if (monthDiff < 0 && buffalo.id === 'B') {
                                                             cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                            displayText = "Importing";
+                                                            displayText = "-";
                                                         } else if (monthDiff === 0) {
                                                             cellClass = "text-slate-500 text-xs font-medium bg-slate-50";
-                                                            displayText = "Transport";
+                                                            displayText = "In Transit";
                                                         } else if (monthDiff === 1) {
                                                             cellClass = "text-slate-500 text-xs font-medium bg-slate-50";
-                                                            displayText = "Milk Yield Initiation Period";
-                                                            // Actually user said "resting and landing periods of children".
-                                                            // For Gen 0, Month 2 is implicitly "Landing Phase" before full revenue.
+                                                            displayText = "Milk Yield Starts";
                                                         } else if (isCpfApplicable) {
-                                                            cellClass = "text-rose-400 text-xs";
-                                                            displayText = "CPF";
+                                                            cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                            displayText = "Rest";
                                                         }
 
                                                         return (
@@ -789,12 +743,17 @@ const MonthlyRevenueBreak = ({
                                                             </td>
                                                         );
                                                     })}
-                                                    <td className={`sticky right-[10rem] z-10 px-2 py-3 text-center font-bold text-slate-700 border-l border-slate-200 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
+                                                    <td className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-10 px-2 py-3 text-center font-bold text-slate-700 border-l border-slate-200 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
                                                         {formatCurrency(unitTotal)}
                                                     </td>
-                                                    <td className={`sticky right-[5rem] z-10 px-2 py-3 text-center font-medium text-amber-600 border-l border-slate-200 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
+                                                    <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-3 text-center font-medium text-amber-600 border-l border-slate-200 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
                                                         {formatCurrency(monthlyCpfValue)}
                                                     </td>
+                                                    {isCGFEnabled && (
+                                                        <td className={`sticky right-[5rem] z-10 px-2 py-3 text-center font-medium text-rose-600 border-l border-slate-200 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
+                                                            {formatCurrency(monthlyCgfValue)}
+                                                        </td>
+                                                    )}
                                                     <td className={`sticky right-0 z-10 px-2 py-3 text-center font-bold border-l border-slate-200 ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
                                                         {formatCurrency(netRevenue)}
                                                     </td>
@@ -804,15 +763,16 @@ const MonthlyRevenueBreak = ({
                                                 {/* Quarter separators */}
                                                 {(mIndex === 2 || mIndex === 5 || mIndex === 8) && (
                                                     <tr className="bg-slate-100/50">
-                                                        <td colSpan={unitBuffaloes.length + 4} className="h-2 p-0"></td>
+                                                        <td colSpan={unitBuffaloes.length + (isCGFEnabled ? 5 : 4)} className="h-2 p-0"></td>
                                                     </tr>
                                                 )}
                                             </React.Fragment>
                                         );
                                     })}
-
+                                </tbody >
+                                <tfoot className="border-t-[3px] border-slate-300">
                                     {/* Yearly Footer */}
-                                    <tr className="bg-slate-800 text-white font-semibold">
+                                    <tr className="bg-slate-800 text-white font-semibold shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                                         <td className="sticky left-0 z-10 px-4 py-4 border-r border-slate-700 bg-slate-800">Year Total</td>
                                         {unitBuffaloes.map((buffalo: any) => {
                                             const yearTot = Array.from({ length: 12 }).reduce((s: number, _, m: number) => {
@@ -825,29 +785,34 @@ const MonthlyRevenueBreak = ({
                                                 </td>
                                             );
                                         })}
-                                        <td className="sticky right-[10rem] z-10 px-2 py-4 text-center bg-slate-900 border-l border-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                                        <td className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-10 px-2 py-4 text-center bg-slate-900 border-l border-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>
                                             {formatCurrency(unitBuffaloes.reduce((s: any, b: any) => s + Array.from({ length: 12 }).reduce((ms: any, _, m) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, m);
                                                 return ms + (monthlyRevenue[year]?.[month]?.buffaloes[b.id] || 0);
                                             }, 0), 0))}
                                         </td>
-                                        <td className="sticky right-[5rem] z-10 px-2 py-4 text-center bg-amber-900 border-l border-slate-700 text-amber-200">
+                                        <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-4 text-center bg-amber-900 border-l border-slate-700 text-amber-200`}>
                                             {formatCurrency(cpfCost.annualCPFCost)}
                                         </td>
-                                        <td className="sticky right-0 z-10 px-2 py-4 text-center bg-emerald-900 text-emerald-300 border-l border-slate-700">
+                                        {isCGFEnabled && (
+                                            <td className="sticky right-[5rem] z-10 px-2 py-4 text-center bg-rose-900 border-l border-slate-700 text-rose-200">
+                                                {formatCurrency((Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0))}
+                                            </td>
+                                        )}
+                                        <td className={`sticky right-0 z-10 px-2 py-4 text-center bg-emerald-900 border-l border-slate-700 text-emerald-300`}>
                                             {formatCurrency((unitBuffaloes as any[]).reduce((s: number, b: any) => s + (Array.from({ length: 12 }) as any[]).reduce((ms: number, _, m: number) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, m);
                                                 return ms + (Number(monthlyRevenue[year]?.[month]?.buffaloes[b.id]) || 0);
-                                            }, 0), 0) - cpfCost.annualCPFCost)}
+                                            }, 0), 0) - cpfCost.annualCPFCost - (isCGFEnabled ? (Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0) : 0))}
                                         </td>
                                     </tr>
-                                </tbody>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
 
                     <div className="text-center text-xs text-slate-400 mt-4">
-                        Notes: B gets one year free CPF start. CPF = ₹18,000/yr (monthly).
+                        Notes: B gets one year free CPF start. CPF = ₹15,000/yr (monthly).
                     </div>
                 </>
             ) : (

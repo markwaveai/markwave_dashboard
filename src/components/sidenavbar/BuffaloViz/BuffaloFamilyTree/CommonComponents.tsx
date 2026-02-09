@@ -221,3 +221,34 @@ export const TreeBranch = ({ parent, all, level = 0, getDisplayName, zoom = 1 }:
         </div>
     );
 };
+
+export const SimpleTooltip = ({
+    children,
+    content,
+    placement = 'left'
+}: {
+    children: React.ReactNode,
+    content: string,
+    placement?: 'left' | 'bottom'
+}) => {
+
+    const containerClasses = placement === 'left'
+        ? "absolute right-full top-1/2 -translate-y-1/2 mr-3"
+        : "absolute top-full left-1/2 -translate-x-1/2 mt-3"; // bottom
+
+    const arrowClasses = placement === 'left'
+        ? "absolute left-full top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-slate-800"
+        : "absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-b-[6px] border-b-slate-800"; // bottom arrow
+
+    return (
+        <div className="group/tooltip relative flex items-center justify-center">
+            {children}
+            <div className={`${containerClasses} hidden group-hover/tooltip:block z-[9999] w-max max-w-[200px] pointer-events-none`}>
+                <div className="bg-slate-800 text-white text-[11px] font-medium rounded p-2 shadow-xl border border-slate-700 relative whitespace-normal text-center">
+                    {content}
+                    <div className={arrowClasses}></div>
+                </div>
+            </div>
+        </div>
+    );
+};

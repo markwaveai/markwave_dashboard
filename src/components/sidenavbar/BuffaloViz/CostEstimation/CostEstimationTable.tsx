@@ -27,16 +27,14 @@ const CostEstimationTable = ({
     setActiveGraph,
     onBack,
     setHeaderStats,
-    isCpfStaggered,
-    setIsCpfStaggered
+    isCGFEnabled
 }: {
     treeData: any;
     activeGraph: string;
     setActiveGraph: (val: string) => void;
     onBack: () => void;
     setHeaderStats?: (stats: any) => void;
-    isCpfStaggered?: boolean;
-    setIsCpfStaggered?: (val: boolean) => void;
+    isCGFEnabled: boolean;
 }) => {
     return <CostEstimationTableContent
         treeData={treeData}
@@ -44,8 +42,7 @@ const CostEstimationTable = ({
         setActiveGraph={setActiveGraph}
         onBack={onBack}
         setHeaderStats={setHeaderStats}
-        isCpfStaggered={isCpfStaggered}
-        setIsCpfStaggered={setIsCpfStaggered}
+        isCGFEnabled={isCGFEnabled}
     />;
 };
 
@@ -55,16 +52,14 @@ const CostEstimationTableContent = ({
     setActiveGraph,
     onBack,
     setHeaderStats,
-    isCpfStaggered,
-    setIsCpfStaggered
+    isCGFEnabled
 }: {
     treeData: any;
     activeGraph: string;
     setActiveGraph: (val: string) => void;
     onBack: () => void;
     setHeaderStats?: (stats: any) => void;
-    isCpfStaggered?: boolean;
-    setIsCpfStaggered?: (val: boolean) => void;
+    isCGFEnabled: boolean;
 }) => {
     const [activeTab, setActiveTab] = useState("Monthly Revenue Break");
     const [cpfToggle, setCpfToggle] = useState("withCPF");
@@ -187,7 +182,7 @@ const CostEstimationTableContent = ({
         const buffaloDetails = getBuffaloDetails();
         const cpfCostByYear: any = {};
         const cpfCostByMonth: any = {};
-        const CPF_PER_MONTH = (isCpfStaggered ? 15000 : 18000) / 12;
+        const CPF_PER_MONTH = 15000 / 12;
 
         const startAbs = treeData.startYear * 12 + (treeData.startMonth || 0);
         const endAbs = startAbs + (treeData.years * 12) - 1;
@@ -241,43 +236,12 @@ const CostEstimationTableContent = ({
         Object.values(buffaloDetails).forEach((buffalo: any) => {
             const eligibility = eligibilityMap[buffalo.id];
 
-            if (isCpfStaggered) {
-                // Find first eligibility
-                let firstAbsEligible = -1;
-                for (let absM = treeData.startYear * 12; absM < scanMaxAbs; absM++) {
-                    if (eligibility[absM]) {
-                        firstAbsEligible = absM;
-                        break;
-                    }
-                }
-
-                if (firstAbsEligible !== -1) {
-                    // Cycles start at firstAbsEligible, firstAbsEligible + 12, etc.
-                    for (let s = firstAbsEligible; s < scanMaxAbs; s += 12) {
-                        let cycleMonths = 0;
-                        for (let k = 0; k < 12; k++) {
-                            if (eligibility[s + k]) cycleMonths++;
-                        }
-                        const cycleTotal = cycleMonths * CPF_PER_MONTH;
-
-                        // Payment in lead-in window [s-3, s-1]
-                        for (let pIdx = s - 3; pIdx <= s - 1; pIdx++) {
-                            const pYear = Math.floor(pIdx / 12);
-                            const pMonth = pIdx % 12;
-                            if (cpfCostByMonth[pYear] && pMonth >= 0) {
-                                cpfCostByMonth[pYear][pMonth] += cycleTotal / 3;
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (let absM = startAbs; absM <= endAbs; absM++) {
-                    if (eligibility[absM]) {
-                        const y = Math.floor(absM / 12);
-                        const m = absM % 12;
-                        if (cpfCostByMonth[y]) {
-                            cpfCostByMonth[y][m] += CPF_PER_MONTH;
-                        }
+            for (let absM = startAbs; absM <= endAbs; absM++) {
+                if (eligibility[absM]) {
+                    const y = Math.floor(absM / 12);
+                    const m = absM % 12;
+                    if (cpfCostByMonth[y]) {
+                        cpfCostByMonth[y][m] += CPF_PER_MONTH;
                     }
                 }
             }
@@ -368,7 +332,7 @@ const CostEstimationTableContent = ({
     };
 
     const MOTHER_BUFFALO_PRICE = 175000;
-    const CPF_PER_UNIT = isCpfStaggered ? 15000 : 18000;
+    const CPF_PER_UNIT = 15000;
 
     const calculateInitialInvestment = () => {
         const motherBuffaloCost = treeData.units * 2 * MOTHER_BUFFALO_PRICE;
@@ -548,7 +512,7 @@ const CostEstimationTableContent = ({
                 // Let's use the explicit check if possible, or approximate.
                 // The User's previous screenshot showed Year 1 CPF = 15000 (implied target).
                 // So we use standard monthly cost.
-                const cpf = (isCpfStaggered ? 15000 : 18000) / 12;
+                const cpf = 15000 / 12;
 
                 tempCumulativeForBreakEven += (rev - cpf);
 
@@ -925,22 +889,6 @@ const CostEstimationTableContent = ({
                                 </select>
                             </div>
 
-                            {/* CPF Toggle integrated into same row */}
-                            <div className="bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200 flex items-center gap-3 hover:bg-white transition-colors cursor-pointer group shadow-sm">
-                                <div className="flex items-center gap-2 pl-1 border-r border-slate-200 pr-3">
-                                    <Calculator className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-indigo-500 transition-colors">CPF</span>
-                                </div>
-                                <div
-                                    onClick={() => setIsCpfStaggered?.(!isCpfStaggered)}
-                                    className="flex items-center gap-2"
-                                >
-                                    <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">{isCpfStaggered ? "3 Months" : "12 Months"}</span>
-                                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 relative ${isCpfStaggered ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                                        <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${isCpfStaggered ? 'translate-x-4' : 'translate-x-0'}`} />
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     )}
                 </div>
@@ -970,7 +918,7 @@ const CostEstimationTableContent = ({
                                 formatCurrency={formatCurrency}
                                 setHeaderStats={setHeaderStats}
                                 selectedYearIndex={globalYearIndex}
-                                isCpfStaggered={isCpfStaggered}
+                                isCGFEnabled={isCGFEnabled}
                             />
                         )}
 
@@ -1015,7 +963,6 @@ const CostEstimationTableContent = ({
                                 endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.years * 12) - 1) / 12)}
                                 endMonth={(treeData.startMonth + (treeData.years * 12) - 1) % 12}
                                 selectedYearIndex={globalYearIndex}
-                                isCpfStaggered={isCpfStaggered}
                             />
                         )}
 

@@ -207,3 +207,4 @@ export const TreeBranch = ({ parent, all, level = 0, getDisplayName, zoom = 1 }:
         </div>
     );
 };
+
