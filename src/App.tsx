@@ -36,7 +36,7 @@ import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
 // Privacy
 import PrivacyPolicy from './components/sidenavbar/public/PrivacyPolicy';
 import TrueHarvestPrivacyPolicy from './components/sidenavbar/true-harvest/TrueHarvestPrivacyPolicy';
-import TrueHarvestDeactivateUser from './components/sidenavbar/true-harvest/TrueHarvestDeactivateUser';
+import TrueHarvestDeleteUser from './components/sidenavbar/true-harvest/TrueHarvestDeleteUser';
 import TrueHarvestSupport from './components/sidenavbar/true-harvest/TrueHarvestSupport';
 import LandifyLegal from './components/sidenavbar/landify/LandifyLegal';
 import LandifySupport from './components/sidenavbar/landify/LandifySupport';
@@ -240,7 +240,7 @@ function App() {
           <Route path="/support" element={<Support />} />
 
           <Route path="/true-harvest-privacy-policy" element={<TrueHarvestPrivacyPolicy />} />
-          <Route path="/true-harvest-deactivate-user" element={<TrueHarvestDeactivateUser />} />
+          <Route path="/true-harvest-delete-user" element={<TrueHarvestDeleteUser />} />
           <Route path="/true-harvest-support" element={<TrueHarvestSupport />} />
 
           <Route path="/landify/legal" element={<LandifyLegal />} />

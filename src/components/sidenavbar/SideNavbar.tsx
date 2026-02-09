@@ -48,7 +48,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
     else if (currentPath.includes('/support')) activeTab = 'support';
     else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
-    else if (currentPath.includes('/true-harvest-deactivate-user')) activeTab = 'true-harvest-deactivate-user';
+    else if (currentPath.includes('/true-harvest-delete-user')) activeTab = 'true-harvest-delete-user';
     else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
     else if (currentPath.includes('/unit-calculator')) {
         activeTab = 'unit-calculator';
@@ -123,7 +123,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 </button>
                             </li>
                         )}
-                         <li>
+                        <li>
                             <button className={navItemClass('acf')} onClick={(e) => { e.stopPropagation(); navigate('/acf'); }}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                     <FileText size={18} className={activeTab === 'acf' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
@@ -234,7 +234,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 </div>
                             </button>
                         </li>
-                       
+
 
 
 
@@ -271,10 +271,10 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </button>
                         </li>
                         <li>
-                            <button className={navItemClass('true-harvest-deactivate-user')} onClick={(e) => { e.stopPropagation(); navigate('/true-harvest-deactivate-user', { state: { fromDashboard: true } }); }}>
+                            <button className={navItemClass('true-harvest-delete-user')} onClick={(e) => { e.stopPropagation(); navigate('/true-harvest-delete-user', { state: { fromDashboard: true } }); }}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <UserMinus size={18} className={activeTab === 'true-harvest-deactivate-user' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">True Harvest Deactivate</span>}
+                                    <UserMinus size={18} className={activeTab === 'true-harvest-delete-user' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">True Harvest Delete</span>}
                                 </div>
                             </button>
                         </li>
@@ -341,8 +341,8 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </button>
                         </div>
                     )}
-                </div>
-            </nav>
+                </div >
+            </nav >
         </>
     );
 };

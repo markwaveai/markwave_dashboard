@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AlertCircle, X } from 'lucide-react';
 import { API_ENDPOINTS } from './trueharvest-api';
 
-const DeactivateUser: React.FC = () => {
+const DeleteUser: React.FC = () => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
     const [formData, setFormData] = useState({
@@ -38,7 +38,8 @@ const DeactivateUser: React.FC = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'Failed to send OTP');
+                const errorMessage = data.detail || data.message || data.error || (typeof data === 'string' ? data : 'Failed to send OTP');
+                throw new Error(errorMessage);
             }
 
             setShowConfirm(false);
@@ -52,7 +53,7 @@ const DeactivateUser: React.FC = () => {
         }
     };
 
-    const handleDeactivate = async (e: React.FormEvent) => {
+    const handleDelete = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
@@ -70,17 +71,18 @@ const DeactivateUser: React.FC = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'Failed to deactivate user');
+                const errorMessage = data.detail || data.message || data.error || (typeof data === 'string' ? data : 'Failed to delete user');
+                throw new Error(errorMessage);
             }
 
-            showSnackbar(data.message || 'User deactivated successfully', 'success');
+            showSnackbar(data.message || 'User deleted successfully', 'success');
 
             // Reset form to show the initial state again
             setOtpSent(false);
             setFormData({ mobile: '' });
             setOtp('');
         } catch (err: any) {
-            showSnackbar(err.message || 'Error deactivating user', 'error');
+            showSnackbar(err.message || 'Error deleting user', 'error');
         } finally {
             setLoading(false);
         }
@@ -116,9 +118,9 @@ const DeactivateUser: React.FC = () => {
                                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
                                     <AlertCircle className="w-10 h-10 text-red-500" />
                                 </div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-3">Confirm Deactivation</h3>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-3">Confirm Deletion</h3>
                                 <p className="text-gray-500 leading-relaxed mb-8">
-                                    Are you sure you want to deactivate your account? This action will restrict access to your data. We will send an OTP to <span className="font-bold text-gray-900">+91 {formData.mobile}</span> to verify this request.
+                                    Are you sure you want to delete your account? This action will restrict access to your data. We will send an OTP to <span className="font-bold text-gray-900">+91 {formData.mobile}</span> to verify this request.
                                 </p>
 
                                 <div className="flex flex-col w-full gap-3">
@@ -142,14 +144,14 @@ const DeactivateUser: React.FC = () => {
                     </div>
                 )}
 
-                <p className="text-[#1a1f3c] text-sm font-medium mb-8">Deactivate your account securely</p>
+                <p className="text-[#1a1f3c] text-sm font-medium mb-8">Delete your account securely</p>
 
                 <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row max-w-5xl w-full transition-all duration-500">
                     {/* Left Side: Image */}
                     <div className="lg:w-3/5 w-full h-[300px] lg:h-auto overflow-hidden p-6">
                         <img
                             src="/app_icon.png"
-                            alt="Deactivation Banner"
+                            alt="Deletion Banner"
                             className="w-full h-full object-cover rounded-2xl"
                             onError={(e) => {
                                 (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=2070&auto=format&fit=crop';
@@ -160,7 +162,7 @@ const DeactivateUser: React.FC = () => {
                     {/* Right Side: Form */}
                     <div className="lg:w-2/5 w-full p-10 flex flex-col justify-center bg-white min-h-[500px]">
                         <div className="text-center mb-10">
-                            <h2 className="text-3xl font-bold text-[#1a1f3c] mb-2">Deactivate Account</h2>
+                            <h2 className="text-3xl font-bold text-[#1a1f3c] mb-2">Delete Account</h2>
                             <p className="text-gray-500 font-medium">We're sorry to see you go.</p>
                         </div>
 
@@ -188,7 +190,7 @@ const DeactivateUser: React.FC = () => {
                                 </button>
                             </form>
                         ) : (
-                            <form onSubmit={handleDeactivate} className="space-y-6 text-center animate-[slideIn_0.4s_ease-out]">
+                            <form onSubmit={handleDelete} className="space-y-6 text-center animate-[slideIn_0.4s_ease-out]">
                                 <p className="text-gray-500 font-medium">
                                     OTP sent to <span className="text-[#1a1f3c] font-bold">+91 {formData.mobile}</span>
                                 </p>
@@ -213,7 +215,7 @@ const DeactivateUser: React.FC = () => {
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
                                     )}
-                                    {loading ? 'DEACTIVATING...' : 'DEACTIVATE ACCOUNT'}
+                                    {loading ? 'DELETING...' : 'DELETE ACCOUNT'}
                                 </button>
 
                                 <div className="space-y-3 pt-2">
@@ -245,4 +247,4 @@ const DeactivateUser: React.FC = () => {
     );
 };
 
-export default DeactivateUser;
+export default DeleteUser;
