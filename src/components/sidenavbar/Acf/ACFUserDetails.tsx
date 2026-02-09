@@ -102,8 +102,10 @@ const ACFUserDetails: React.FC = () => {
                         </div>
                         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 mt-2">
                             <span className="flex items-center gap-2"><User size={14} className="text-slate-400" /> +91 {userDisplay.mobile}</span>
-                            <span className="flex items-center gap-2"><Calendar size={14} className="text-slate-400" /> Joined {userDisplay.joinDate}</span>
-                            <span className="flex items-center gap-2"><Box size={14} className="text-slate-400" /> {userDisplay.units} Units Purchased</span>
+                            {/* <span className="flex items-center gap-2"><Calendar size={14} className="text-slate-400" /> Joined {userDisplay.joinDate}</span> */}
+                            <span className="flex items-center gap-2">
+                                <Box size={14} className="text-slate-400" /> {userDisplay.units} {Number(userDisplay.units) === 1 ? 'Unit' : 'Units'} Purchased
+                            </span>
                         </div>
                     </div>
                 </div>

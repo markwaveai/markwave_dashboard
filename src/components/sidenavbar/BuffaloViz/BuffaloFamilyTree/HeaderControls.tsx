@@ -163,7 +163,7 @@ const HeaderControls = ({
                                 }`}
                             onClick={() => setActiveTab("familyTree")}
                         >
-                            <span className="text-base leading-none">🌳</span>
+                            <span className="text-base leading-none">🌴</span>
                             {/* Floating Tooltip */}
                             <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
                                 Tree View
@@ -246,8 +246,9 @@ const HeaderControls = ({
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total ROI</span>
                             <span className="text-sm font-black text-slate-900">
                                 {formatCurrency(
-                                    (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) +
-                                    treeData.summaryStats.totalAssetValue
+                                    activeTab === "costEstimation" && headerStats
+                                        ? (isCGFEnabled ? (headerStats.cumulativeNetRevenueWithCaring ?? headerStats.cumulativeNetRevenue) : headerStats.cumulativeNetRevenue) + headerStats.totalAssetValue
+                                        : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) + treeData.summaryStats.totalAssetValue
                                 )}
                             </span>
                         </div>

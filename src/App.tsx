@@ -268,19 +268,33 @@ function App() {
 const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session | null, isAdmin: boolean, handleLogout: () => void }) => {
   const location = useLocation();
 
-  // Redirect to login if no session for protected routes
-  // But wait, we have mixed routes here. 
-  // Let's keep strict protection for the main dashboard routes and conditional for others?
-  // Actually, to keep sidebar persistent, the hierarchy must be:
-  // <Route element={<DashboardLayout />}>
-  //    <Route path="/protected" ... />
-  //    <Route path="/public-with-sidebar" ... />
-  // </Route>
+  // Define routes that should ALWAYS show the sidebar (protected dashboard content)
+  const protectedPrefixes = [
+    '/dashboard',
+    '/orders',
+    '/user-management',
+    '/users/customers',
+    '/products',
+    '/acf',
+    '/support-tickets'
+  ];
 
-  // If we want Breadcrumb to persist, DashboardLayout MUST be the parent.
-  // Routes that shouldn't have sidebar (like public unauth) should be outside.
+  const isProtectedPath = protectedPrefixes.some(prefix => location.pathname.startsWith(prefix));
 
-  // If a route like /privacy-policy is public but shows sidebar IF logged in:
+  // If the user navigates from the dashboard (via sidebar), state.fromDashboard will be true
+  const isFromDashboard = location.state?.fromDashboard;
+
+  // Standalone mode is for public/hybrid pages accessed directly via URL
+  const isStandalone = !isProtectedPath && !isFromDashboard;
+
+  if (isStandalone) {
+    return (
+      <main className="h-screen w-full overflow-y-auto bg-slate-100">
+        <Outlet />
+      </main>
+    );
+  }
+
   return (
     <Breadcrumb
       adminMobile={session?.mobile}

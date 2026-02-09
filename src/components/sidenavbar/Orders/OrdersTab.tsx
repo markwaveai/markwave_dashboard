@@ -93,6 +93,21 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 
     // Tooltip State
     const [tooltipInfo, setTooltipInfo] = useState<{ tx: any; top: number; left: number } | null>(null);
+    const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const showTooltip = (tx: any, top: number, left: number) => {
+        if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
+        }
+        setTooltipInfo({ tx, top, left });
+    };
+
+    const hideTooltip = () => {
+        closeTimeoutRef.current = setTimeout(() => {
+            setTooltipInfo(null);
+        }, 200);
+    };
 
     const findVal = (obj: any, keys: string[], partials: string[]) => {
         if (!obj) return '-';
@@ -468,13 +483,9 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                             if (top + 125 > viewportHeight) top = viewportHeight - 140;
                                                             if (top - 125 < 0) top = 140;
 
-                                                            setTooltipInfo({
-                                                                tx,
-                                                                top,
-                                                                left: rect.right + 10
-                                                            });
+                                                            showTooltip(tx, top, rect.right + 10);
                                                         }}
-                                                        onMouseLeave={() => setTooltipInfo(null)}
+                                                        onMouseLeave={hideTooltip}
                                                     >
                                                         <span>{tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cheque'}</span>
                                                     </div>
@@ -578,8 +589,13 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                 left: left,
                                 transform: 'translateY(-50%)',
                             }}
-                            onMouseEnter={() => { }}
-                            onMouseLeave={() => setTooltipInfo(null)}
+                            onMouseEnter={() => {
+                                if (closeTimeoutRef.current) {
+                                    clearTimeout(closeTimeoutRef.current);
+                                    closeTimeoutRef.current = null;
+                                }
+                            }}
+                            onMouseLeave={hideTooltip}
                         >
                             <div className="absolute top-1/2 right-full -mt-2 border-8 border-transparent border-r-slate-900"></div>
                             <div className="text-[13px] font-bold text-slate-50 mb-3 pb-2 border-b border-slate-700">Payment Details</div>

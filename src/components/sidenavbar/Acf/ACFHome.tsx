@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
@@ -58,6 +58,21 @@ const ACFHome: React.FC = () => {
 
     // Tooltip State
     const [tooltipInfo, setTooltipInfo] = useState<{ tx: any; top: number; left: number } | null>(null);
+    const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const showTooltip = (tx: any, top: number, left: number) => {
+        if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
+        }
+        setTooltipInfo({ tx, top, left });
+    };
+
+    const hideTooltip = () => {
+        closeTimeoutRef.current = setTimeout(() => {
+            setTooltipInfo(null);
+        }, 200);
+    };
 
     // Locale search state for debouncing
     const [localSearch, setLocalSearch] = useState(storeSearch);
@@ -201,7 +216,6 @@ const ACFHome: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 m-0">ACF Orders</h1>
-                    <p className="text-slate-500 mt-1">Manage EMI installments for Crowd Farming units</p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -340,13 +354,9 @@ const ACFHome: React.FC = () => {
                                                         if (top + 125 > viewportHeight) top = viewportHeight - 140;
                                                         if (top - 125 < 0) top = 140;
 
-                                                        setTooltipInfo({
-                                                            tx: order.transaction,
-                                                            top,
-                                                            left: rect.right + 10
-                                                        });
+                                                        showTooltip(order.transaction, top, rect.right + 10);
                                                     }}
-                                                    onMouseLeave={() => setTooltipInfo(null)}
+                                                    onMouseLeave={hideTooltip}
                                                 >
                                                     {order.transaction.paymentType.replace('_', ' ')}
                                                 </div>
@@ -429,8 +439,13 @@ const ACFHome: React.FC = () => {
                         left: tooltipInfo.left,
                         transform: 'translateY(-50%)',
                     }}
-                    onMouseEnter={() => { }}
-                    onMouseLeave={() => setTooltipInfo(null)}
+                    onMouseEnter={() => {
+                        if (closeTimeoutRef.current) {
+                            clearTimeout(closeTimeoutRef.current);
+                            closeTimeoutRef.current = null;
+                        }
+                    }}
+                    onMouseLeave={hideTooltip}
                 >
                     <div className="absolute top-1/2 right-full -mt-2 border-8 border-transparent border-r-slate-900"></div>
                     <div className="text-[13px] font-bold text-slate-50 mb-4 pb-2 border-b border-slate-800 flex items-center justify-between">
