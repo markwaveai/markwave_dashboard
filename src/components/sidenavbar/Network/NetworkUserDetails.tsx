@@ -41,7 +41,35 @@ const NetworkUserDetailsPage: React.FC = () => {
     }
 
     const { user, stats, network_tree } = data;
-    const achievedRewards = Array.isArray(stats?.achieved_rewards) ? stats.achieved_rewards : [];
+    // Parse achieved_rewards: It might be an array (old) or object (new)
+    // We want a list of keys effectively: ["30", "50", "100"] if they exist
+    // Parse achieved_rewards: It might be an array (old) or object (new)
+    const achievedRewardsData = stats?.achieved_rewards || {};
+
+    // We want a list of keys effectively: ["30", "50", "100"] if they exist
+    const achievedRewardsKeys = Array.isArray(achievedRewardsData)
+        ? achievedRewardsData
+        : (typeof achievedRewardsData === 'object' ? Object.keys(achievedRewardsData) : []);
+
+    // Helper to get reward label
+    const getRewardLabel = (milestone: number, defaultLabel: string) => {
+        const mStr = milestone.toString();
+        if (Array.isArray(achievedRewardsData)) {
+            // If it's an array, we don't have custom labels, return default
+            return defaultLabel;
+        }
+        // If it's an object, check if there is a value for this key
+        // Need to cast to any or check type because typescript might complain about index signature if not defined in stats type
+        const val = (achievedRewardsData as any)[mStr];
+        return val && typeof val === 'string' ? val : defaultLabel;
+    };
+
+    // Helper to check if a milestone is achieved
+    const isAchieved = (milestone: string | number) => {
+        const mStr = milestone.toString();
+        // Check if key exists in achieved_rewards OR if units metric suffices (backup)
+        return achievedRewardsKeys.includes(mStr) || (stats?.indirect_referrals_units || 0) >= Number(milestone);
+    };
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
@@ -52,7 +80,7 @@ const NetworkUserDetailsPage: React.FC = () => {
                 >
                     <ArrowLeft size={24} />
                 </button>
-                <h1 className="text-2xl font-bold text-gray-800">Network User Details</h1>
+                <h1 className="text-2xl font-bold text-gray-800">User Network Details</h1>
             </div>
 
             <div className="max-w-7xl mx-auto space-y-6">
@@ -158,7 +186,7 @@ const NetworkUserDetailsPage: React.FC = () => {
                                 <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Total Coins</div>
                                 <div className="text-xl lg:text-2xl font-black text-amber-600 flex items-center gap-1.5">
                                     <Award className="w-5 h-5" />
-                                    {stats?.total_coins?.toLocaleString('en-IN')}
+                                    {(stats?.total_coins || 0).toLocaleString('en-IN')}
                                 </div>
                             </div>
 
@@ -166,7 +194,7 @@ const NetworkUserDetailsPage: React.FC = () => {
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
                                 <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Spent Coins</div>
                                 <div className="text-xl lg:text-2xl font-black text-red-600">
-                                    {stats?.spending_coins?.toLocaleString('en-IN')}
+                                    {(stats?.spending_coins || 0).toLocaleString('en-IN')}
                                 </div>
                             </div>
 
@@ -174,7 +202,7 @@ const NetworkUserDetailsPage: React.FC = () => {
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
                                 <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Remaining Coins</div>
                                 <div className="text-xl lg:text-2xl font-black text-green-600">
-                                    {stats?.remaining_coins?.toLocaleString('en-IN')}
+                                    {(stats?.remaining_coins || 0).toLocaleString('en-IN')}
                                 </div>
                             </div>
                         </div>
@@ -258,37 +286,37 @@ const NetworkUserDetailsPage: React.FC = () => {
                                         {/* Milestone 30 - Thailand */}
                                         <div className="absolute left-[30%] -translate-x-1/2 flex flex-col items-center">
                                             <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
-                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${achievedRewards.includes('Thailand Trip') || (stats?.indirect_referrals_units || 0) >= 30 ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>Thailand Trip</div>
-                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${achievedRewards.includes('Thailand Trip') || (stats?.indirect_referrals_units || 0) >= 30 ? 'bg-blue-600 border-blue-400 text-white shadow-lg ring-4 ring-blue-50' : 'bg-white border-blue-100 text-blue-400 shadow-md group-hover:scale-110'}`}>
+                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${isAchieved(30) ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>{getRewardLabel(30, 'Thailand Trip')}</div>
+                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isAchieved(30) ? 'bg-blue-600 border-blue-400 text-white shadow-lg ring-4 ring-blue-50' : 'bg-white border-blue-100 text-blue-400 shadow-md group-hover:scale-110'}`}>
                                                     <Plane size={20} />
                                                 </div>
                                             </div>
-                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${achievedRewards.includes('Thailand Trip') || (stats?.indirect_referrals_units || 0) >= 30 ? 'bg-blue-600 border-white ring-4 ring-blue-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
-                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${achievedRewards.includes('Thailand Trip') || (stats?.indirect_referrals_units || 0) >= 30 ? 'text-blue-600' : 'text-slate-400'}`}>30</div>
+                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${isAchieved(30) ? 'bg-blue-600 border-white ring-4 ring-blue-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
+                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${isAchieved(30) ? 'text-blue-600' : 'text-slate-400'}`}>30</div>
                                         </div>
 
                                         {/* Milestone 50 - iPhone */}
                                         <div className="absolute left-[50%] -translate-x-1/2 flex flex-col items-center">
                                             <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
-                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${achievedRewards.includes('iPhone') || (stats?.indirect_referrals_units || 0) >= 50 ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-600 border border-purple-100'}`}>iPhone</div>
-                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${achievedRewards.includes('iPhone') || (stats?.indirect_referrals_units || 0) >= 50 ? 'bg-purple-600 border-purple-400 text-white shadow-lg ring-4 ring-purple-50' : 'bg-white border-purple-100 text-purple-400 shadow-md group-hover:scale-110'}`}>
+                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${isAchieved(50) ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-600 border border-purple-100'}`}>{getRewardLabel(50, 'iPhone')}</div>
+                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isAchieved(50) ? 'bg-purple-600 border-purple-400 text-white shadow-lg ring-4 ring-purple-50' : 'bg-white border-purple-100 text-purple-400 shadow-md group-hover:scale-110'}`}>
                                                     <PhoneIcon size={20} />
                                                 </div>
                                             </div>
-                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${achievedRewards.includes('iPhone') || (stats?.indirect_referrals_units || 0) >= 50 ? 'bg-purple-600 border-white ring-4 ring-purple-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
-                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${achievedRewards.includes('iPhone') || (stats?.indirect_referrals_units || 0) >= 50 ? 'text-purple-600' : 'text-slate-400'}`}>50</div>
+                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${isAchieved(50) ? 'bg-purple-600 border-white ring-4 ring-purple-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
+                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${isAchieved(50) ? 'text-purple-600' : 'text-slate-400'}`}>50</div>
                                         </div>
 
                                         {/* Milestone 100 - Scooty */}
                                         <div className="absolute left-[100%] -translate-x-1/2 flex flex-col items-center">
                                             <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
-                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${achievedRewards.includes('Scooty') || (stats?.indirect_referrals_units || 0) >= 100 ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>Scooty</div>
-                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${achievedRewards.includes('Scooty') || (stats?.indirect_referrals_units || 0) >= 100 ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg ring-4 ring-indigo-50' : 'bg-white border-indigo-100 text-indigo-400 shadow-md group-hover:scale-110'}`}>
+                                                <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${isAchieved(100) ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>{getRewardLabel(100, 'Ather E Bike')}</div>
+                                                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isAchieved(100) ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg ring-4 ring-indigo-50' : 'bg-white border-indigo-100 text-indigo-400 shadow-md group-hover:scale-110'}`}>
                                                     <Bike size={22} />
                                                 </div>
                                             </div>
-                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${achievedRewards.includes('Scooty') || (stats?.indirect_referrals_units || 0) >= 100 ? 'bg-indigo-600 border-white ring-4 ring-indigo-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
-                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${achievedRewards.includes('Scooty') || (stats?.indirect_referrals_units || 0) >= 100 ? 'text-indigo-600' : 'text-slate-400'}`}>100</div>
+                                            <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${isAchieved(100) ? 'bg-indigo-600 border-white ring-4 ring-indigo-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
+                                            <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${isAchieved(100) ? 'text-indigo-600' : 'text-slate-400'}`}>100</div>
                                         </div>
                                     </div>
                                 </div>

@@ -54,6 +54,7 @@ const TreeRow = ({
                         )}
 
                         {/* Avatar */}
+                        {/* Avatar */}
                         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${level === 0 ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
                             {node.name ? node.name[0].toUpperCase() : 'U'}
                         </div>
@@ -141,10 +142,10 @@ const NetworkTreeTable = ({ data }: { data: any }) => {
     };
 
     return (
-        <div className="overflow-hidden bg-white">
-            <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                    <thead className="bg-slate-50/80 text-gray-400 font-bold uppercase text-[10px] tracking-widest border-b border-gray-100">
+        <div className="overflow-hidden bg-white rounded-lg border border-gray-200">
+            <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                <table className="min-w-full text-left text-sm relative">
+                    <thead className="sticky top-0 z-10 bg-slate-50 text-gray-400 font-bold uppercase text-[10px] tracking-widest border-b border-gray-100 shadow-sm">
                         <tr>
                             <th className="px-4 py-4">User Details</th>
                             <th className="px-3 py-4 text-center">Role</th>

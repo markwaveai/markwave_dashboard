@@ -150,14 +150,14 @@ const NetworkTab: React.FC = () => {
                     <table className="w-full text-sm text-left text-gray-500">
                         <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                             <tr>
-                                <th className="px-4 py-3">S.No</th>
-                                <th className="px-4 py-3">Name</th>
-                                <th className="px-4 py-3">Mobile</th>
-                                <th className="px-4 py-3">Role</th>
-                                <th className="px-4 py-3">Referrals</th>
-                                <th className="px-4 py-3">Units</th>
-                                <th className="px-4 py-3">Coins Earned</th>
-                                <th className="px-4 py-3">Joined Date</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">S.No</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">Name</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">Mobile</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">Role</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">Referrals</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">Units</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">Coins Earned</th>
+                                <th className="px-4 py-3 text-center whitespace-nowrap">Joined Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -171,14 +171,14 @@ const NetworkTab: React.FC = () => {
                                 users.map((user: any, index: number) => (
                                     <tr
                                         key={user.mobile || index}
-                                        className="bg-white border-b hover:bg-gray-50 cursor-pointer"
+                                        className="bg-white border-b hover:bg-gray-50 cursor-pointer text-center whitespace-nowrap"
                                         onClick={() => navigate(`/user-management/network/${user.mobile}`)}
                                     >
                                         <td className="px-4 py-3">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                         <td className="px-4 py-3 font-medium text-gray-900">
                                             {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || '-'}
                                         </td>
-                                        <td className="px-4 py-3">{user.mobile}</td>
+                                        <td className="px-4 py-3 font-mono">{user.mobile}</td>
                                         <td className="px-4 py-3">
                                             <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
                                                 {user.role}

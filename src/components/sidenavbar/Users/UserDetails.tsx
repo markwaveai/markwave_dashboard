@@ -169,17 +169,16 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                         <table className="w-full text-sm text-left text-gray-500">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold">S.No</th>
-                                    <th className="px-6 py-4 font-semibold">Name</th>
-                                    <th className="px-6 py-4 font-semibold">Mobile</th>
-                                    <th className="px-6 py-4 font-semibold">Role</th>
-                                    <th className="px-6 py-4 font-semibold text-center">Earned Coins</th>
-                                    <th className="px-6 py-4 font-semibold text-center">Used Coins</th>
-
-                                    <th className="px-6 py-4 font-semibold">Referred By</th>
-                                    <th className="px-6 py-4 font-semibold">Verified</th>
-                                    <th className="px-6 py-4 font-semibold">Created Date</th>
-                                    <th className="px-6 py-4 font-semibold text-center">Actions</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">S.No</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Name</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Mobile</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Role</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Earned Coins</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Used Coins</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Referred By</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Verified</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Created Date</th>
+                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -187,16 +186,16 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                                     <TableSkeleton cols={10} rows={10} />
                                 ) : managedUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={10} className="px-6 py-12 text-center text-gray-400 text-base">No users found matching your filters</td>
+                                        <td colSpan={10} className="px-4 py-12 text-center text-gray-400 text-base">No users found matching your filters</td>
                                     </tr>
                                 ) : (
                                     managedUsers.map((user: any, index: number) => (
-                                        <tr key={user.mobile || index} className="bg-white hover:bg-gray-50/80 transition-colors group">
-                                            <td className="px-6 py-4 text-gray-400 font-mono">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                            <td className="px-6 py-4 font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                                        <tr key={user.mobile || index} className="bg-white hover:bg-gray-50/80 transition-colors group text-center whitespace-nowrap">
+                                            <td className="px-4 py-4 text-gray-400 font-mono">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                            <td className="px-4 py-4 font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
                                                 {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || '-'}
                                             </td>
-                                            <td className="px-6 py-4 font-mono text-gray-600">
+                                            <td className="px-4 py-4 font-mono text-gray-600">
                                                 <span
                                                     className="hover:text-blue-600 hover:underline cursor-pointer decoration-2 underline-offset-2"
                                                     onClick={() => handleMobileClick(user.mobile)}
@@ -204,43 +203,50 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                                                     {user.mobile || '-'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${user.role === 'Admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
-                                                    }`}>
-                                                    {user.role === 'SpecialCategory' ? 'Special Category' : (user.role || 'Investor')}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-100">{user.earned_coins || 0}</span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">{user.used_coins || 0}</span>
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <div className="font-medium text-gray-900">{user.refered_by_name || '-'}</div>
-                                                <div className="text-xs text-gray-400 font-mono mt-0.5">
-                                                    {user.refered_by_mobile || ''}
+                                            <td className="px-4 py-4">
+                                                <div className="flex justify-center">
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${user.role === 'Admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                                                        }`}>
+                                                        {user.role === 'SpecialCategory' ? 'Special Category' : (user.role || 'Investor')}
+                                                    </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full text-xs font-semibold border ${user.verified ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                                                    }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${user.verified ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                                    {user.verified ? 'Verified' : 'Pending'}
-                                                </span>
+                                            <td className="px-4 py-4">
+                                                <span className="font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-100">{user.earned_coins || 0}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-500 font-mono text-xs">
+                                            <td className="px-4 py-4">
+                                                <span className="font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">{user.used_coins || 0}</span>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex flex-col items-center">
+                                                    <div className="font-medium text-gray-900">{user.refered_by_name || '-'}</div>
+                                                    <div className="text-xs text-gray-400 font-mono mt-0.5">
+                                                        {user.refered_by_mobile || ''}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex justify-center">
+                                                    <span className={`flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full text-xs font-semibold border ${user.verified ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                                                        }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${user.verified ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                                        {user.verified ? 'Verified' : 'Pending'}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4 text-gray-500 font-mono text-xs">
                                                 {user.user_created_date ? new Date(user.user_created_date).toLocaleDateString() : '-'}
                                             </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <button
-                                                    onClick={(e) => handleEditClick(e, user)}
-                                                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                                    title="Edit User"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
+                                            <td className="px-4 py-4">
+                                                <div className="flex justify-center">
+                                                    <button
+                                                        onClick={(e) => handleEditClick(e, user)}
+                                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                        title="Edit User"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

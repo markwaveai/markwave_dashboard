@@ -4,6 +4,7 @@ import { Play, RotateCcw, Calendar, Loader2, ToggleLeft, ToggleRight, LayoutGrid
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { formatCurrency, SimpleTooltip } from './CommonComponents';
+import OrgTreeIcon from './OrgTreeIcon';
 
 
 const HeaderControls = ({
@@ -162,7 +163,7 @@ const HeaderControls = ({
                                 }`}
                             onClick={() => setActiveTab("familyTree")}
                         >
-                            <span className="text-base leading-none">🌴</span>
+                            <OrgTreeIcon className="w-5 h-5" />
                             {/* Floating Tooltip */}
                             <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
                                 Tree View

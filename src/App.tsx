@@ -177,7 +177,7 @@ function App() {
 
           {/* Strictly Protected Routes */}
           <Route element={<RequireAuth session={session} isAdmin={isAdmin} handleLogout={handleLogout}><Outlet /></RequireAuth>}>
-            <Route path="/dashboard" element={<DashboardHome />} />
+            {/* <Route path="/dashboard" element={<DashboardHome />} /> */}
 
             <Route path="/orders" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
@@ -204,7 +204,7 @@ function App() {
             <Route path="/user-management/network/:mobile" element={<NetworkUserDetailsPage />} />
 
             <Route path="/acf" element={<ACFHome />} />
-            <Route path="/acf/details/:userId/:orderId" element={<ACFUserDetails />} />
+            {/* <Route path="/acf/details/:userId/:orderId" element={<ACFUserDetails />} /> */}
 
             <Route path="/support-tickets" element={<SupportTicketsTab />} />
           </Route>

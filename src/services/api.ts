@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from '../config/api';
 import { User, CreateUserRequest, ApiResponse } from '../types';
 
 const api = axios.create({
-  timeout: 10000,
+  timeout: 30000,
 });
 
 export const userService = {
@@ -60,10 +60,18 @@ export const userService = {
   createUser: async (userData: CreateUserRequest): Promise<ApiResponse<any>> => {
     try {
       const response = await api.post(API_ENDPOINTS.createUser(), userData);
+
+      // Check if response indicates an error despite 200 OK (soft error)
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || response.data.detail || 'Failed to create user' };
+      }
+
       return { data: response.data, message: 'User created successfully' };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating user:', error);
-      return { error: 'Failed to create user' };
+      // Extract the actual error message from the API response
+      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || error?.response?.data?.error || 'Failed to create user';
+      return { error: errorMessage };
     }
   },
 
