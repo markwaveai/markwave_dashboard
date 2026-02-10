@@ -52,11 +52,9 @@ const TreeRow = ({
                         ) : (
                             <div className="w-6" /> // Spacer
                         )}
-
                         {/* Avatar */}
-                        {/* Avatar */}
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${level === 0 ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-600'}`}>
-                            {node.name ? node.name[0].toUpperCase() : 'U'}
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border border-slate-200 shadow-sm ${level === 0 ? 'bg-indigo-50 text-indigo-500' : 'bg-slate-100 text-slate-400'}`}>
+                            <User size={14} />
                         </div>
 
                         {/* Name & Mobile */}

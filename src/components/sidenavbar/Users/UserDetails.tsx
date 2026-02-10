@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { fetchManagedUsers } from '../../../store/slices/usersSlice';
 import Pagination from '../../common/Pagination';
 import TableSkeleton from '../../common/TableSkeleton';
-import { CreateUser, CreateUserFormData, CreateUserProps } from './CreateUser';
-import { Plus, Pencil } from 'lucide-react';
+import { CreateUser, CreateUserFormData } from './CreateUser';
+import { Plus, Pencil, Trash2, User, Calendar, RotateCcw } from 'lucide-react';
 
 
 interface UserDetailsProps {
@@ -95,24 +95,22 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen relative">
-            <div className="bg-white border-b border-gray-200 p-6 flex flex-col gap-6">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900">User Details</h2>
-                        <p className="text-sm text-gray-500 mt-1">Manage Users and Referrals</p>
-                    </div>
+        <div className="bg-[#f8fafc] min-h-screen pb-24 font-sans text-slate-900">
+            {/* Header and Filters Section */}
+            <div className="p-6">
+                <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-[#1e293b]">User Management</h2>
                 </div>
 
-                {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Filters Row */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-6">
                     {/* Role Filter */}
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</label>
+                    <div className="flex items-center gap-3">
+                        <label className="text-sm font-semibold text-slate-500 whitespace-nowrap">Role:</label>
                         <select
                             value={role}
                             onChange={handleRoleChange}
-                            className="block w-full px-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border outline-none transition-all"
+                            className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all min-w-[140px]"
                         >
                             <option value="">All Roles</option>
                             <option value="Investor">Investor</option>
@@ -122,12 +120,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                     </div>
 
                     {/* Verified Filter */}
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Verified Status</label>
+                    <div className="flex items-center gap-3">
+                        <label className="text-sm font-semibold text-slate-500 whitespace-nowrap">Verified Status:</label>
                         <select
                             value={verified}
                             onChange={handleVerifiedChange}
-                            className="block w-full px-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border outline-none transition-all"
+                            className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all min-w-[140px]"
                         >
                             <option value="">All Statuses</option>
                             <option value="true">Verified</option>
@@ -136,18 +134,21 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                     </div>
 
                     {/* Date Filter */}
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Created Date</label>
-                        <input
-                            type="date"
-                            value={createdDate}
-                            onChange={handleDateChange}
-                            className="block w-full px-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border outline-none transition-all"
-                        />
+                    <div className="flex items-center gap-3">
+                        <label className="text-sm font-semibold text-slate-500 whitespace-nowrap">Created Date:</label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                value={createdDate}
+                                onChange={handleDateChange}
+                                placeholder="mm/dd/yyyy"
+                                className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all min-w-[180px]"
+                            />
+                        </div>
                     </div>
 
-                    {/* Clear Filters */}
-                    <div className="flex items-end">
+                    {/* Reset Button */}
+                    <div className="ml-auto">
                         <button
                             onClick={() => {
                                 setRole('');
@@ -155,96 +156,114 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                                 setCreatedDate('');
                                 setCurrentPage(1);
                             }}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 hover:text-gray-900 transition-all active:scale-[0.98]"
+                            className="flex items-center gap-2 px-5 py-2 border border-blue-200 rounded-xl text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 transition-all active:scale-95 shadow-sm shadow-blue-100/50"
                         >
+                            <RotateCcw size={14} />
                             Reset Filters
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="p-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-gray-500">
-                            <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+            {/* Table Section */}
+            <div className="px-6">
+                <div className="bg-white rounded-[2rem] shadow-sm border border-slate-50 overflow-hidden">
+                    <div className="overflow-x-auto [scrollbar-width:thin]">
+                        <table className="w-full text-left">
+                            <thead className="bg-[#fcfdfe] border-b border-slate-100">
                                 <tr>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">S.No</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Name</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Mobile</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Role</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Earned Coins</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Used Coins</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Referred By</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Verified</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Created Date</th>
-                                    <th className="px-4 py-4 font-semibold text-center whitespace-nowrap">Actions</th>
+                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight">User Name</th>
+                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight">Mobile</th>
+                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-center">Role</th>
+                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-center">Referred By</th>
+                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-center">Verified</th>
+                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-center">Created Date</th>
+                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-50">
+                            <tbody className="divide-y divide-slate-100">
                                 {managedLoading ? (
-                                    <TableSkeleton cols={10} rows={10} />
+                                    <TableSkeleton cols={7} rows={10} />
                                 ) : managedUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={10} className="px-4 py-12 text-center text-gray-400 text-base">No users found matching your filters</td>
+                                        <td colSpan={7} className="px-6 py-20 text-center">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <User size={32} className="text-slate-300" />
+                                                <p className="text-slate-400 font-medium">No users found matching your filters</p>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ) : (
                                     managedUsers.map((user: any, index: number) => (
-                                        <tr key={user.mobile || index} className="bg-white hover:bg-gray-50/80 transition-colors group text-center whitespace-nowrap">
-                                            <td className="px-4 py-4 text-gray-400 font-mono">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                            <td className="px-4 py-4 font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                                                {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || '-'}
+                                        <tr key={user.mobile || index} className="hover:bg-slate-50/50 transition-colors group">
+                                            {/* User Name */}
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 shadow-sm overflow-hidden">
+                                                        <User size={20} className="text-slate-400" />
+                                                    </div>
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="font-bold text-slate-800 text-sm truncate leading-tight">
+                                                            {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || 'Test User'}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </td>
-                                            <td className="px-4 py-4 font-mono text-gray-600">
+
+                                            {/* Mobile */}
+                                            <td className="px-6 py-5">
                                                 <span
-                                                    className="hover:text-blue-600 hover:underline cursor-pointer decoration-2 underline-offset-2"
+                                                    className="text-slate-600 font-bold text-[0.9rem] hover:text-blue-600 cursor-pointer transition-colors"
                                                     onClick={() => handleMobileClick(user.mobile)}
                                                 >
-                                                    {user.mobile || '-'}
+                                                    {user.mobile || '9999999999'}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-4">
+
+                                            {/* Role */}
+                                            <td className="px-6 py-5 text-center">
                                                 <div className="flex justify-center">
-                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${user.role === 'Admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                                                    <span className={`px-4 py-1.5 rounded-2xl text-[0.75rem] font-bold border ${user.role === 'Employee'
+                                                        ? 'bg-purple-50 text-purple-600 border-purple-200/50'
+                                                        : 'bg-blue-50 text-blue-600 border-blue-200/50'
                                                         }`}>
                                                         {user.role === 'SpecialCategory' ? 'Special Category' : (user.role || 'Investor')}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-4">
-                                                <span className="font-semibold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-100">{user.earned_coins || 0}</span>
+
+
+                                            {/* Referred By */}
+                                            <td className="px-6 py-5 text-center font-medium text-slate-500 text-[0.85rem]">
+                                                {user.refered_by_name || '-'}
                                             </td>
-                                            <td className="px-4 py-4">
-                                                <span className="font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">{user.used_coins || 0}</span>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex flex-col items-center">
-                                                    <div className="font-medium text-gray-900">{user.refered_by_name || '-'}</div>
-                                                    <div className="text-xs text-gray-400 font-mono mt-0.5">
-                                                        {user.refered_by_mobile || ''}
+
+                                            {/* Verified */}
+                                            <td className="px-6 py-5">
+                                                <div className="flex justify-center">
+                                                    <div className="flex items-center gap-2 w-fit px-1">
+                                                        <div className={`w-2 h-2 rounded-full ${user.verified ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'}`}></div>
+                                                        <span className={`text-[0.8rem] font-bold ${user.verified ? 'text-emerald-600' : 'text-amber-500'}`}>
+                                                            {user.verified ? 'Verified' : 'Pending'}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex justify-center">
-                                                    <span className={`flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full text-xs font-semibold border ${user.verified ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                                                        }`}>
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${user.verified ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                                        {user.verified ? 'Verified' : 'Pending'}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4 text-gray-500 font-mono text-xs">
+
+                                            {/* Created Date */}
+                                            <td className="px-6 py-5 text-center font-medium text-slate-500 text-[0.85rem]">
                                                 {user.user_created_date ? new Date(user.user_created_date).toLocaleDateString() : '-'}
                                             </td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex justify-center">
+
+                                            {/* Actions */}
+                                            <td className="px-6 py-5 text-right">
+                                                <div className="flex justify-end items-center gap-1">
                                                     <button
                                                         onClick={(e) => handleEditClick(e, user)}
-                                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                        className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                                                         title="Edit User"
                                                     >
-                                                        <Pencil className="w-4 h-4" />
+                                                        <Pencil className="w-4.5 h-4.5" />
                                                     </button>
                                                 </div>
                                             </td>
@@ -256,7 +275,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                     </div>
                 </div>
 
-                <div className="mt-6">
+                {/* Pagination */}
+                <div className="mt-8 flex justify-end">
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages || 1}
@@ -265,19 +285,18 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                 </div>
             </div>
 
-            {/* Floating Action Button */}
+            {/* Add User Floating Button */}
             <button
                 onClick={() => {
                     setEditingUser(null);
                     setIsCreateModalOpen(true);
                 }}
-                className="fixed bottom-8 right-8 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl hover:scale-110 active:scale-95 transition-all z-40 group focus:outline-none focus:ring-4 focus:ring-blue-500/30"
-                aria-label="Add User"
+                className="fixed bottom-10 right-10 flex items-center gap-3 pl-6 pr-4 py-3.5 bg-blue-600 text-white rounded-[2rem] shadow-[0_12px_40px_rgba(37,99,235,0.35)] hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all z-40 group focus:outline-none"
             >
-                <Plus className="w-6 h-6" />
-                <span className="absolute right-full mr-4 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    Create User
-                </span>
+                <span className="font-bold text-sm tracking-wide">Add User</span>
+                <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
+                    <Plus className="w-5 h-5 stroke-[2.5]" />
+                </div>
             </button>
 
             {/* Create/Edit User Modal */}
@@ -286,7 +305,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                 onClose={handleCloseModal}
                 onSuccess={() => {
                     dispatch(fetchManagedUsers(fetchParams));
-                    /* Optional: Show toast */
                 }}
                 initialData={editingUser}
                 isEditMode={!!editingUser}
