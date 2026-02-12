@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
-import { User, CreateUserRequest, ApiResponse } from '../types';
+import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest } from '../types';
 
 const api = axios.create({
   timeout: 30000,
@@ -106,6 +106,59 @@ export const userService = {
     } catch (error) {
       console.error('Health check failed:', error);
       return false;
+    }
+  }
+};
+
+export const farmService = {
+  getFarms: async (status?: string): Promise<Farm[]> => {
+    try {
+      const params = status && status !== '--' ? { status } : {};
+      const response = await api.get<Farm[]>(API_ENDPOINTS.getFarms(), { params });
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching farms:', error);
+      throw error;
+    }
+  },
+
+  addFarm: async (farmData: CreateFarmRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(API_ENDPOINTS.addFarm(), farmData, {
+        headers: {
+          'x-admin-mobile': adminMobile
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to add farm' };
+      }
+
+      return { data: response.data, message: 'Farm added successfully' };
+    } catch (error: any) {
+      console.error('Error adding farm:', error);
+      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to add farm';
+      return { error: errorMessage };
+    }
+  },
+
+  updateFarm: async (farmId: string, farmData: CreateFarmRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.put(API_ENDPOINTS.updateFarm(farmId), farmData, {
+        headers: {
+          'x-admin-mobile': adminMobile
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to update farm' };
+      }
+
+      return { data: response.data, message: 'Farm updated successfully' };
+    } catch (error: any) {
+      console.error('Error updating farm:', error);
+      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to update farm';
+      return { error: errorMessage };
     }
   }
 };

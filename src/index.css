@@ -538,3 +538,14 @@ modal-footer {
 .nav-link.active {
   @apply bg-blue-600 text-white shadow-lg shadow-blue-500/20 font-semibold;
 }
+
+/* Hide Spin Buttons */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}

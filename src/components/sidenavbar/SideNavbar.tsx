@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     ClipboardList, Users, ShoppingBag, LogOut, UserCheck,
-    Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy,
+    Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, Warehouse,
     UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
@@ -39,6 +39,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/acf')) activeTab = 'acf';
     else if (currentPath.includes('/user-management') || currentPath.includes('/users/customers')) activeTab = 'user-management';
     else if (currentPath.includes('/products')) activeTab = 'products';
+    else if (currentPath.includes('/farm-management')) activeTab = 'farm';
     else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
     else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
     else if (currentPath.includes('/true-harvest-support')) activeTab = 'true-harvest-support';
@@ -157,6 +158,16 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                         <ShoppingBag size={18} className={activeTab === 'products' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
                                         {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Products</span>}
+                                    </div>
+                                </button>
+                            </li>
+                        )}
+                        {hasSession && (
+                            <li>
+                                <button className={navItemClass('farm')} onClick={(e) => { e.stopPropagation(); navigate('/farm-management'); }}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Warehouse size={18} className={activeTab === 'farm' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Farm</span>}
                                     </div>
                                 </button>
                             </li>
@@ -286,7 +297,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 </div>
                             </button>
                         </li>
-                        <li>
+                        {/* <li>
                             <button className={navItemClass('landify-legal')} onClick={(e) => { e.stopPropagation(); navigate('/landify/legal', { state: { fromDashboard: true } }); }}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                     <ShieldIcon size={18} className={activeTab === 'landify-legal' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
@@ -309,8 +320,8 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Landify Deactivate</span>}
                                 </div>
                             </button>
-                        </li>
-                        <li>
+                        </li> */}
+                        {/* <li>
                             <button className={navItemClass('support')} onClick={(e) => { e.stopPropagation(); navigate('/support', { state: { fromDashboard: true } }); }}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                     <LifeBuoy size={18} className={activeTab === 'support' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
@@ -325,7 +336,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Support Ticket</span>}
                                 </div>
                             </button>
-                        </li>
+                        </li> */}
                     </ul>
 
                     {hasSession && (

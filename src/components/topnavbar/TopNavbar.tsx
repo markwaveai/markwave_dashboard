@@ -29,6 +29,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
     const { adminProfile } = useAppSelector((state: RootState) => state.users);
 
     const [displayAdminName, setDisplayAdminName] = useState(adminName);
+    const [displayRole, setDisplayRole] = useState(adminRole);
 
     useEffect(() => {
         if (adminProfile) {
@@ -40,10 +41,12 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
                 fullName = user.name;
             }
             if (fullName) setDisplayAdminName(fullName);
-        } else if (adminName) {
-            setDisplayAdminName(adminName);
+            if (user.role) setDisplayRole(user.role);
+        } else {
+            if (adminName) setDisplayAdminName(adminName);
+            if (adminRole) setDisplayRole(adminRole);
         }
-    }, [adminProfile, adminName]);
+    }, [adminProfile, adminName, adminRole]);
 
     return (
         <>
@@ -81,7 +84,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
                                     {displayAdminName || 'Admin'}
                                 </span>
                                 <span className="text-slate-400 text-xs font-medium">
-                                    {adminRole || 'Administrator'}
+                                    {displayRole || 'Administrator'}
                                 </span>
                             </div>
                             <div className="flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold shadow-md shadow-blue-500/20 w-10 h-10 text-sm ring-2 ring-white/10 transition-transform group-hover:scale-105">
@@ -96,7 +99,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
             <AdminDetailsModal
                 adminName={displayAdminName}
                 adminMobile={adminMobile}
-                adminRole={adminRole}
+                adminRole={displayRole}
                 lastLogin={lastLogin}
                 presentLogin={presentLogin}
                 adminReferralCode={adminReferralCode}

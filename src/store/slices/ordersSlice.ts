@@ -50,9 +50,32 @@ export const fetchPendingUnits = createAsyncThunk(
 
 export const approveOrder = createAsyncThunk(
     'orders/approveOrder',
-    async ({ unitId, adminMobile, comments }: { unitId: string; adminMobile: string; comments?: string }, { dispatch, rejectWithValue, getState }) => {
+    async ({
+        unitId,
+        adminMobile,
+        comments,
+        paymentReceived,
+        paymentProof,
+        unitsChecked,
+        coinsChecked
+    }: {
+        unitId: string;
+        adminMobile: string;
+        comments?: string;
+        paymentReceived?: boolean;
+        paymentProof?: boolean;
+        unitsChecked?: boolean;
+        coinsChecked?: boolean;
+    }, { dispatch, rejectWithValue, getState }) => {
         try {
-            await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId, comments }, {
+            await axios.post(API_ENDPOINTS.approveUnit(), {
+                orderId: unitId,
+                comments,
+                paymentReceived,
+                paymentProof,
+                unitsChecked,
+                coinsChecked
+            }, {
                 headers: { 'X-Admin-Mobile': adminMobile }
             });
             // Refresh list after success, preserving filters
@@ -75,9 +98,32 @@ export const approveOrder = createAsyncThunk(
 
 export const rejectOrder = createAsyncThunk(
     'orders/rejectOrder',
-    async ({ unitId, adminMobile, comments }: { unitId: string; adminMobile: string; comments?: string }, { dispatch, rejectWithValue, getState }) => {
+    async ({
+        unitId,
+        adminMobile,
+        comments,
+        paymentReceived,
+        paymentProof,
+        unitsChecked,
+        coinsChecked
+    }: {
+        unitId: string;
+        adminMobile: string;
+        comments?: string;
+        paymentReceived?: boolean;
+        paymentProof?: boolean;
+        unitsChecked?: boolean;
+        coinsChecked?: boolean;
+    }, { dispatch, rejectWithValue, getState }) => {
         try {
-            await axios.post(API_ENDPOINTS.rejectUnit(), { orderId: unitId, comments }, {
+            await axios.post(API_ENDPOINTS.rejectUnit(), {
+                orderId: unitId,
+                comments,
+                paymentReceived,
+                paymentProof,
+                unitsChecked,
+                coinsChecked
+            }, {
                 headers: { 'X-Admin-Mobile': adminMobile }
             });
             // Refresh list after success, preserving filters
@@ -105,6 +151,8 @@ export const fetchStatusCounts = createAsyncThunk(
             const statuses = [
                 'All Status',
                 'PENDING_ADMIN_VERIFICATION',
+                'PENDING_SUPER_ADMIN_VERIFICATION',
+                'PENDING_SUPER_ADMIN_REJECTION',
                 'PAID',
                 'REJECTED',
                 'PENDING_PAYMENT'
@@ -146,10 +194,11 @@ export interface OrdersState {
     totalCount: number;
     totalAllOrders: number;
     pendingAdminApprovalCount: number;
+    pendingSuperAdminApprovalCount: number;
+    pendingSuperAdminRejectionCount: number;
     paidCount: number;
     rejectedCount: number;
     paymentDueCount: number;
-    coinsRedeemedCount: number;
     statusCounts: { [key: string]: number };
     filters: {
         searchQuery: string; // Keeping for client-side or future use
@@ -197,10 +246,11 @@ const initialState: OrdersState = {
     totalCount: 0,
     totalAllOrders: 0,
     pendingAdminApprovalCount: 0,
+    pendingSuperAdminApprovalCount: 0,
+    pendingSuperAdminRejectionCount: 0,
     paidCount: 0,
     rejectedCount: 0,
     paymentDueCount: 0,
-    coinsRedeemedCount: 0,
     statusCounts: {},
     filters: {
         searchQuery: localStorage.getItem('orders_searchQuery') || '',
@@ -224,8 +274,17 @@ const ordersSlice = createSlice({
         setOrdersError: (state, action: PayloadAction<string | null>) => {
             state.error = action.payload;
         },
-        setSearchQuery: (state, action: PayloadAction<string>) => {
+        setSearchQuery(state, action: PayloadAction<string>) {
             state.filters.searchQuery = action.payload;
+            state.filters.page = 1; // Reset to page 1 on search
+        },
+        // Optimize: Batch update filters
+        setAllFilters(state, action: PayloadAction<Partial<typeof state.filters>>) {
+            if (action.payload.page !== undefined) state.filters.page = action.payload.page;
+            if (action.payload.statusFilter !== undefined) state.filters.statusFilter = action.payload.statusFilter;
+            if (action.payload.paymentFilter !== undefined) state.filters.paymentFilter = action.payload.paymentFilter;
+            if (action.payload.paymentTypeFilter !== undefined) state.filters.paymentTypeFilter = action.payload.paymentTypeFilter;
+            if (action.payload.transferModeFilter !== undefined) state.filters.transferModeFilter = action.payload.transferModeFilter;
         },
         setPaymentFilter: (state, action: PayloadAction<string>) => {
             state.filters.paymentFilter = action.payload; // Legacy, using paymentTypeFilter now ideally, but keeping for compatibility if needed.
@@ -283,11 +342,12 @@ const ordersSlice = createSlice({
                 if (typeof payload.total_all_orders === 'number') {
                     state.totalAllOrders = payload.total_all_orders;
                 }
-                if (typeof payload.pending_admin_approval_count === 'number') state.pendingAdminApprovalCount = payload.pending_admin_approval_count;
-                if (typeof payload.paid_count === 'number') state.paidCount = payload.paid_count;
-                if (typeof payload.rejected_count === 'number') state.rejectedCount = payload.rejected_count;
-                if (typeof payload.payment_due_count === 'number') state.paymentDueCount = payload.payment_due_count;
-                if (typeof payload.coins_redeemed_count === 'number') state.coinsRedeemedCount = payload.coins_redeemed_count;
+                if (payload.pending_admin_approval_count !== undefined) state.pendingAdminApprovalCount = Number(payload.pending_admin_approval_count);
+                if (payload.pending_super_admin_approval_count !== undefined) state.pendingSuperAdminApprovalCount = Number(payload.pending_super_admin_approval_count);
+                if (payload.pending_super_admin_rejection_count !== undefined) state.pendingSuperAdminRejectionCount = Number(payload.pending_super_admin_rejection_count);
+                if (payload.paid_count !== undefined) state.paidCount = Number(payload.paid_count);
+                if (payload.rejected_count !== undefined) state.rejectedCount = Number(payload.rejected_count);
+                if (payload.payment_due_count !== undefined) state.paymentDueCount = Number(payload.payment_due_count);
 
             } else if (Array.isArray(payload)) {
                 state.pendingUnits = payload;
@@ -341,6 +401,13 @@ const ordersSlice = createSlice({
                 if (typeof totalAll === 'number') {
                     state.totalAllOrders = totalAll;
                 }
+                // Also update standalone counts for backward compatibility/direct access
+                if (status === 'PENDING_ADMIN_VERIFICATION') state.pendingAdminApprovalCount = count;
+                if (status === 'PENDING_SUPER_ADMIN_VERIFICATION') state.pendingSuperAdminApprovalCount = count;
+                if (status === 'PENDING_SUPER_ADMIN_REJECTION') state.pendingSuperAdminRejectionCount = count;
+                if (status === 'PAID') state.paidCount = count;
+                if (status === 'REJECTED') state.rejectedCount = count;
+                if (status === 'PENDING_PAYMENT') state.paymentDueCount = count;
             });
             // Explicitly ensure 'All Status' matches totalAllOrders if available
             if (state.totalAllOrders > 0) {
@@ -354,6 +421,7 @@ export const {
     setPendingUnits,
     setOrdersError,
     setSearchQuery,
+    setAllFilters,
     setPaymentFilter,
     setTransferModeFilter,
     setStatusFilter,

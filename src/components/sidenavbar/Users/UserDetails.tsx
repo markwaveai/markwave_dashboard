@@ -234,8 +234,13 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
 
 
                                             {/* Referred By */}
-                                            <td className="px-6 py-5 text-center font-medium text-slate-500 text-[0.85rem]">
-                                                {user.refered_by_name || '-'}
+                                            <td className="px-6 py-5 text-center text-[0.85rem]">
+                                                <div className="flex flex-col items-center">
+                                                    <span className="font-semibold text-slate-700">{user.refered_by_name || '-'}</span>
+                                                    {user.refered_by_mobile && (
+                                                        <span className="text-[0.75rem] text-slate-400 font-medium">{user.refered_by_mobile}</span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             {/* Verified */}

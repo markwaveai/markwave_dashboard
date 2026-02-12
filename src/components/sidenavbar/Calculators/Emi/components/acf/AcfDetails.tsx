@@ -22,6 +22,9 @@ const AcfDetails = () => {
 
     // Asset Value derived from actual simulation logic
     const projectedAssetValue = useMemo(() => {
+        if (acfTenureMonths === 11) {
+            return 350000 * acfUnits;
+        }
         const herdAges = simulateHerd(acfTenureMonths, acfUnits);
         return calculateAssetValueFromSimulation(herdAges, acfUnits);
     }, [acfTenureMonths, acfUnits, simulateHerd, calculateAssetValueFromSimulation]);

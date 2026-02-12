@@ -92,6 +92,7 @@ const OrderDetailsPage: React.FC = () => {
             case 'PAID':
             case 'Approved': return 'bg-green-100 text-green-800 border-green-200';
             case 'PENDING_ADMIN_VERIFICATION': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'PENDING_SUPER_ADMIN_VERIFICATION': return 'bg-purple-100 text-purple-800 border-purple-200';
             case 'REJECTED': return 'bg-red-100 text-red-800 border-red-200';
             case 'PENDING_PAYMENT': return 'bg-blue-100 text-blue-800 border-blue-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -102,7 +103,8 @@ const OrderDetailsPage: React.FC = () => {
         switch (status) {
             case 'PAID':
             case 'Approved': return <CheckCircle size={16} className="mr-1.5" />;
-            case 'PENDING_ADMIN_VERIFICATION': return <Clock size={16} className="mr-1.5" />;
+            case 'PENDING_ADMIN_VERIFICATION':
+            case 'PENDING_SUPER_ADMIN_VERIFICATION': return <Clock size={16} className="mr-1.5" />;
             case 'REJECTED': return <AlertCircle size={16} className="mr-1.5" />;
             case 'PENDING_PAYMENT': return <CreditCard size={16} className="mr-1.5" />;
             default: return null;
@@ -113,7 +115,8 @@ const OrderDetailsPage: React.FC = () => {
         switch (status) {
             case 'PAID':
             case 'Approved': return 'Paid';
-            case 'PENDING_ADMIN_VERIFICATION': return 'Admin Approval';
+            case 'PENDING_ADMIN_VERIFICATION': return 'Pending Admin Approval';
+            case 'PENDING_SUPER_ADMIN_VERIFICATION': return 'Super Admin Approval';
             case 'REJECTED': return 'Rejected';
             case 'PENDING_PAYMENT': return 'Payment Due';
             default: return status?.replace(/_/g, ' ') || '-';
@@ -296,34 +299,6 @@ const OrderDetailsPage: React.FC = () => {
                                     <SummaryRow label="Cost per Unit" value={`₹ ${order?.unitCost?.toLocaleString()}`} />
                                     <SummaryRow label="CPF Included" value={order?.withCpf ? 'Yes' : 'No'} />
                                 </div>
-
-                                <div className="pt-4 border-t border-gray-100">
-                                    <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Timeline</p>
-                                    <div className="relative pl-4 space-y-4 border-l-2 border-gray-100 ml-1">
-                                        <TimelineItem
-                                            time={order?.submittedAt ? new Date(order.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-                                            date={order?.submittedAt ? new Date(order.submittedAt).toLocaleDateString() : '-'}
-                                            title="Order Submitted"
-                                            active
-                                        />
-                                        <TimelineItem
-                                            time={order?.placedAt ? new Date(order.placedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-                                            date={order?.placedAt ? new Date(order.placedAt).toLocaleDateString() : '-'}
-                                            title="Order Placed"
-                                            active
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Footer Actions */}
-                            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 grid grid-cols-2 gap-3">
-                                <button className="w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-                                    Download Invoice
-                                </button>
-                                <button className="w-full py-2 px-4 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm">
-                                    Contact Investor
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -354,12 +329,5 @@ const SummaryRow = ({ label, value }: any) => (
     </div>
 );
 
-const TimelineItem = ({ title, date, time, active }: any) => (
-    <div className="relative">
-        <div className={`absolute -left-[21px] top-1 h-3 w-3 rounded-full border-2 border-white ${active ? 'bg-blue-500' : 'bg-gray-300'} ring-1 ring-gray-100`}></div>
-        <p className="text-sm font-medium text-gray-900">{title}</p>
-        <p className="text-xs text-gray-500">{date} • {time}</p>
-    </div>
-);
 
 export default OrderDetailsPage;

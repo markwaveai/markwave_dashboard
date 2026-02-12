@@ -12,7 +12,6 @@ const NetworkUserDetailsPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const { networkUserDetails } = useAppSelector((state) => state.users);
     const { data, loading, error } = networkUserDetails;
-    const [selectedRewardTab, setSelectedRewardTab] = React.useState<'reward1' | 'reward2'>('reward1');
 
     useEffect(() => {
         if (mobile) {
@@ -66,10 +65,10 @@ const NetworkUserDetailsPage: React.FC = () => {
     };
 
     // Helper to check if a milestone is achieved
-    const isAchieved = (milestone: string | number) => {
+    const isAchieved = (milestone: string | number, currentUnits: number) => {
         const mStr = milestone.toString();
         // Check if key exists in achieved_rewards OR if units metric suffices (backup)
-        return achievedRewardsKeys.includes(mStr) || (stats?.indirect_referrals_units || 0) >= Number(milestone);
+        return achievedRewardsKeys.includes(mStr) || currentUnits >= Number(milestone);
     };
 
     return (
@@ -136,23 +135,16 @@ const NetworkUserDetailsPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-8">
-                    {/* Direct Referrals */}
+                    {/* Coins Overview */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 px-1">
-                            <Users className="text-blue-600" size={20} />
-                            <h3 className="text-lg font-bold text-gray-800">Direct Referrals</h3>
+                            <Award className="text-amber-600" size={20} />
+                            <h3 className="text-lg font-bold text-gray-800">Coins Overview</h3>
                         </div>
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Direct Referrals</div>
-                                <div className="text-xl lg:text-2xl font-black text-slate-800">{stats?.direct_referrals_count || 0}</div>
-                            </div>
-                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Direct Referrals Units</div>
-                                <div className="text-xl lg:text-2xl font-black text-blue-600">{stats?.direct_referrals_units || 0}</div>
-                            </div>
-                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Direct Referral Coins</div>
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Total Coins</div>
                                 <div className="text-xl lg:text-2xl font-black text-amber-600 flex items-center gap-1.5"><Award className="w-5 h-5" />{(stats?.total_coins || 0).toLocaleString('en-IN')}</div>
                             </div>
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
@@ -160,121 +152,140 @@ const NetworkUserDetailsPage: React.FC = () => {
                                 <div className="text-xl lg:text-2xl font-black text-red-600">{(stats?.spending_coins || 0).toLocaleString('en-IN')}</div>
                             </div>
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Remaining Coins</div>
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Remaining</div>
                                 <div className="text-xl lg:text-2xl font-black text-green-600">{(stats?.remaining_coins || 0).toLocaleString('en-IN')}</div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Indirect Referrals & Rewards */}
-                    <div className="space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
-                            <div className="flex items-center gap-2">
-                                <Gift className="text-purple-600" size={20} />
-                                <h3 className="text-lg font-bold text-gray-800">Indirect Referrals & Rewards</h3>
+                    {/* Direct Referrals */}
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-2 px-1">
+                            <Users className="text-blue-600" size={20} />
+                            <h3 className="text-lg font-bold text-gray-800">Direct Referrals</h3>
+                        </div>
+
+                        {/* Direct Stats - Only Referrals & Units */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Direct Referrals</div>
+                                <div className="text-xl lg:text-2xl font-black text-slate-800">{stats?.direct_referrals_count || 0}</div>
                             </div>
-                            <div className="flex p-1 bg-slate-100 rounded-xl w-fit border border-slate-200 shadow-sm">
-                                <button
-                                    onClick={() => setSelectedRewardTab('reward1')}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedRewardTab === 'reward1' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    Reward 1
-                                </button>
-                                <button
-                                    onClick={() => setSelectedRewardTab('reward2')}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedRewardTab === 'reward2' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    Reward 2
-                                </button>
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Direct Units</div>
+                                <div className="text-xl lg:text-2xl font-black text-blue-600">{stats?.direct_referrals_units || 0}</div>
+                            </div>
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Direct Referral Coins</div>
+                                <div className="text-xl lg:text-2xl font-black text-amber-600 flex items-center gap-1.5"><Award className="w-5 h-5" />{(stats?.direct_referrals_coins || 0).toLocaleString('en-IN')}</div>
                             </div>
                         </div>
 
-                        {selectedRewardTab === 'reward1' ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                    <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals</div>
-                                    <div className="text-xl lg:text-2xl font-black text-slate-800">{stats?.indirect_referrals_count || 0}</div>
+                        {/* Direct Rewards Status */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 xl:p-10">
+                            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-32 gap-4">
+                                <div>
+                                    <h4 className="text-lg font-bold text-gray-800">Direct Rewards Status</h4>
+                                    <p className="text-sm text-gray-500 mt-1">Unlock exclusive benefits through direct referrals</p>
                                 </div>
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                    <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals Units</div>
-                                    <div className="text-xl lg:text-2xl font-black text-purple-600">{stats?.indirect_referrals_units || 0}</div>
-                                </div>
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                    <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals Coins</div>
-                                    <div className="text-xl lg:text-2xl font-black text-amber-600">{(stats?.indirect_referrals_coins || 0).toLocaleString('en-IN')}</div>
+                                <div className="text-right">
+                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">UNITS MILESTONE</div>
+                                    <div className="text-3xl font-black text-blue-600 leading-none">
+                                        {stats?.direct_referrals_units || 0}
+                                        <span className="text-gray-200 text-xl font-medium ml-2">/ 100</span>
+                                    </div>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                        <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals</div>
-                                        <div className="text-xl lg:text-2xl font-black text-slate-800">{stats?.indirect_referrals_count || 0}</div>
-                                    </div>
-                                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
-                                        <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals Units</div>
-                                        <div className="text-xl lg:text-2xl font-black text-purple-600">{stats?.indirect_referrals_units || 0}</div>
-                                    </div>
-                                </div>
 
-                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 xl:p-10">
-                                    <div className="flex items-center justify-between mb-10">
-                                        <div>
-                                            <h4 className="text-base font-bold text-gray-800">Rewards Status</h4>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {stats?.current_reward ? <>Current Reward: <span className="text-purple-600 font-bold">{stats.current_reward}</span></> : 'Unlock exclusive benefits through indirect referrals'}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Units Milestone</div>
-                                            <div className="text-lg font-black text-purple-600">{stats?.indirect_referrals_units || 0} <span className="text-gray-300 font-normal ml-1">/ 100</span></div>
-                                        </div>
-                                    </div>
+                            <div className="relative px-4 sm:px-8 pb-8">
+                                <div className="relative h-3 mx-0 sm:mx-4">
+                                    {/* Background Track */}
+                                    <div className="absolute inset-0 bg-blue-50 rounded-full"></div>
 
-                                    <div className="relative py-12 px-8 bg-slate-50/70 rounded-2xl border border-slate-100/50">
-                                        <div className="relative h-3 mx-2">
-                                            <div className="absolute inset-0 bg-gray-200 rounded-full"></div>
-                                            <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(147,51,234,0.4)]" style={{ width: `${Math.min(((stats?.indirect_referrals_units || 0) / 100) * 100, 100)}%` }}></div>
-                                            <div className="absolute inset-0 pointer-events-none">
-                                                {[10, 20, 40, 60, 70, 80, 90].map((tick) => (
-                                                    <div key={tick} className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full border-2 z-20 transition-all duration-500 ${(stats?.indirect_referrals_units || 0) >= tick ? 'bg-indigo-500 border-indigo-300' : 'bg-white border-gray-200'}`} style={{ left: `${tick}%` }} />
-                                                ))}
-                                            </div>
-                                            <div className="absolute inset-0 h-3">
-                                                <div className="absolute left-0 -translate-x-1/2 flex flex-col items-center">
-                                                    <div className="w-6 h-6 rounded-full bg-blue-500 border-4 border-white shadow-lg z-30 transition-all"></div>
-                                                    <div className="absolute -bottom-10 text-[11px] font-black text-slate-600">0</div>
+                                    {/* Active Progress */}
+                                    <div
+                                        className="absolute inset-y-0 left-0 bg-blue-500 rounded-full transition-all duration-1000 ease-out"
+                                        style={{ width: `${Math.min(((stats?.direct_referrals_units || 0) / 100) * 100, 100)}%` }}
+                                    ></div>
+
+                                    {/* Milestones Container */}
+                                    <div className="absolute inset-0 h-3">
+                                        {/* Start Point (0) */}
+                                        <div className="absolute left-0 -translate-x-1/2 flex flex-col items-center">
+                                            <div className="w-5 h-5 rounded-full bg-blue-500 border-[3px] border-white shadow-sm z-10"></div>
+                                            <div className="absolute -bottom-8 text-xs font-bold text-slate-400">0</div>
+                                        </div>
+
+                                        {/* Milestone 30 - Thailand Trip */}
+                                        <div className="absolute left-[30%] -translate-x-1/2 flex flex-col items-center">
+                                            {/* Label & Icon */}
+                                            <div className="absolute -top-[100px] flex flex-col items-center group">
+                                                <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${isAchieved(30, stats?.direct_referrals_units || 0) ? 'bg-blue-600 text-white scale-100 opacity-100' : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
+                                                    {getRewardLabel(30, "Eligible to Thailand Trip")}
                                                 </div>
-                                                <div className="absolute left-[30%] -translate-x-1/2 flex flex-col items-center">
-                                                    <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
-                                                        <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${isAchieved(30) ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>{getRewardLabel(30, 'Thailand Trip')}</div>
-                                                        <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isAchieved(30) ? 'bg-blue-600 border-blue-400 text-white shadow-lg ring-4 ring-blue-50' : 'bg-white border-blue-100 text-blue-400 shadow-md group-hover:scale-110'}`}><Plane size={20} /></div>
-                                                    </div>
-                                                    <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${isAchieved(30) ? 'bg-blue-600 border-white ring-4 ring-blue-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
-                                                    <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${isAchieved(30) ? 'text-blue-600' : 'text-slate-400'}`}>30</div>
-                                                </div>
-                                                <div className="absolute left-[50%] -translate-x-1/2 flex flex-col items-center">
-                                                    <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
-                                                        <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${isAchieved(50) ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-600 border border-purple-100'}`}>{getRewardLabel(50, 'iPhone')}</div>
-                                                        <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isAchieved(50) ? 'bg-purple-600 border-purple-400 text-white shadow-lg ring-4 ring-purple-50' : 'bg-white border-purple-100 text-purple-400 shadow-md group-hover:scale-110'}`}><PhoneIcon size={20} /></div>
-                                                    </div>
-                                                    <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${isAchieved(50) ? 'bg-purple-600 border-white ring-4 ring-purple-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
-                                                    <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${isAchieved(50) ? 'text-purple-600' : 'text-slate-400'}`}>50</div>
-                                                </div>
-                                                <div className="absolute left-[100%] -translate-x-1/2 flex flex-col items-center">
-                                                    <div className="absolute -top-[82px] flex flex-col items-center group cursor-pointer">
-                                                        <div className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 shadow-sm whitespace-nowrap ${isAchieved(100) ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>{getRewardLabel(100, 'Ather E Bike')}</div>
-                                                        <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isAchieved(100) ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg ring-4 ring-indigo-50' : 'bg-white border-indigo-100 text-indigo-400 shadow-md group-hover:scale-110'}`}><Bike size={22} /></div>
-                                                    </div>
-                                                    <div className={`w-6 h-6 rounded-full border-4 z-30 transition-all duration-500 ${isAchieved(100) ? 'bg-indigo-600 border-white ring-4 ring-indigo-50 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}></div>
-                                                    <div className={`absolute -bottom-10 text-[11px] font-black transition-colors ${isAchieved(100) ? 'text-indigo-600' : 'text-slate-400'}`}>100</div>
+                                                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isAchieved(30, stats?.direct_referrals_units || 0) ? 'bg-blue-600 text-white shadow-blue-200 scale-110' : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
+                                                    <Plane size={22} strokeWidth={2.5} />
                                                 </div>
                                             </div>
+                                            {/* Dot on line */}
+                                            <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${isAchieved(30, stats?.direct_referrals_units || 0) ? 'bg-blue-600 border-white' : 'bg-white border-blue-100'}`}></div>
+                                            <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${isAchieved(30, stats?.direct_referrals_units || 0) ? 'text-blue-600' : 'text-slate-400'}`}>30</div>
+                                        </div>
+
+                                        {/* Milestone 50 - iPhone */}
+                                        <div className="absolute left-[50%] -translate-x-1/2 flex flex-col items-center">
+                                            <div className="absolute -top-[100px] flex flex-col items-center group">
+                                                <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${isAchieved(50, stats?.direct_referrals_units || 0) ? 'bg-purple-600 text-white scale-100 opacity-100' : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
+                                                    {getRewardLabel(50, "Eligible to iPhone")}
+                                                </div>
+                                                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isAchieved(50, stats?.direct_referrals_units || 0) ? 'bg-purple-600 text-white shadow-purple-200 scale-110' : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
+                                                    <PhoneIcon size={22} strokeWidth={2.5} />
+                                                </div>
+                                            </div>
+                                            <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${isAchieved(50, stats?.direct_referrals_units || 0) ? 'bg-purple-600 border-white' : 'bg-white border-blue-100'}`}></div>
+                                            <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${isAchieved(50, stats?.direct_referrals_units || 0) ? 'text-purple-600' : 'text-slate-400'}`}>50</div>
+                                        </div>
+
+                                        {/* Milestone 100 - Ather E Bike */}
+                                        <div className="absolute left-[100%] -translate-x-1/2 flex flex-col items-center">
+                                            <div className="absolute -top-[100px] flex flex-col items-center group">
+                                                <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${isAchieved(100, stats?.direct_referrals_units || 0) ? 'bg-indigo-600 text-white scale-100 opacity-100' : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
+                                                    {getRewardLabel(100, "Eligible to Ather E Bike")}
+                                                </div>
+                                                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isAchieved(100, stats?.direct_referrals_units || 0) ? 'bg-indigo-600 text-white shadow-indigo-200 scale-110' : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
+                                                    <Bike size={24} strokeWidth={2.5} />
+                                                </div>
+                                            </div>
+                                            <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${isAchieved(100, stats?.direct_referrals_units || 0) ? 'bg-indigo-600 border-white' : 'bg-white border-blue-100'}`}></div>
+                                            <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${isAchieved(100, stats?.direct_referrals_units || 0) ? 'text-indigo-600' : 'text-slate-400'}`}>100</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
+                    </div>
+
+                    {/* Indirect Referrals */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-1">
+                            <Gift className="text-purple-600" size={20} />
+                            <h3 className="text-lg font-bold text-gray-800">Indirect Referrals</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals</div>
+                                <div className="text-xl lg:text-2xl font-black text-slate-800">{stats?.indirect_referrals_count || 0}</div>
+                            </div>
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals Units</div>
+                                <div className="text-xl lg:text-2xl font-black text-purple-600">{stats?.indirect_referrals_units || 0}</div>
+                            </div>
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center transition-all hover:shadow-md">
+                                <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2">Indirect Referrals Coins</div>
+                                <div className="text-xl lg:text-2xl font-black text-amber-600">{(stats?.indirect_referrals_coins || 0).toLocaleString('en-IN')}</div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">

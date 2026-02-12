@@ -35,8 +35,24 @@ const ImageNamesModal: React.FC<ImageNamesModalProps> = () => {
     const imageFields: [string, any][] = [];
 
     if (data && data.transaction) {
+        // Check for Cheque Front Image (various common spellings)
+        const frontVal = data.transaction.frontImageUrl || data.transaction.front_image_url || data.transaction.frontImage || data.transaction.cheque_front_image_url;
+        if (frontVal) {
+            imageFields.push(['Cheque Front', frontVal]);
+        }
+
+        // Check for Cheque Back Image (various common spellings)
+        const backVal = data.transaction.backImageUrl || data.transaction.back_image_url || data.transaction.backImage || data.transaction.cheque_back_image_url;
+        if (backVal) {
+            imageFields.push(['Cheque Back', backVal]);
+        }
+
         if (data.transaction.paymentScreenshotUrl) {
-            imageFields.push(['Transaction: PaymentScreenshotUrl', data.transaction.paymentScreenshotUrl]);
+            imageFields.push(['Payment Proof', data.transaction.paymentScreenshotUrl]);
+        }
+        // Fallback for payment_proof_Url if not covered by paymentScreenshotUrl
+        if (!data.transaction.paymentScreenshotUrl && data.transaction.payment_proof_Url) {
+            imageFields.push(['Payment Proof', data.transaction.payment_proof_Url]);
         }
     }
 

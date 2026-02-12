@@ -51,6 +51,7 @@ const BuffaloVisualizationTab = React.lazy(() => import('./components/sidenavbar
 const EmiCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Emi/EmiCalculatorTab'));
 const AcfCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Acf/AcfCalculatorTab'));
 const UnitCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Unit/UnitCalculatorTab'));
+const FarmManagement = React.lazy(() => import('./components/sidenavbar/Farm/FarmManagement'));
 
 
 
@@ -203,10 +204,15 @@ function App() {
             <Route path="/user-management/network" element={<NetworkTab />} />
             <Route path="/user-management/network/:mobile" element={<NetworkUserDetailsPage />} />
 
-            <Route path="/acf" element={<ACFHome />} />
+            {/* <Route path="/acf" element={<ACFHome />} /> */}
             {/* <Route path="/acf/details/:userId/:orderId" element={<ACFUserDetails />} /> */}
 
-            <Route path="/support-tickets" element={<SupportTicketsTab />} />
+            {/* <Route path="/support-tickets" element={<SupportTicketsTab />} /> */}
+            <Route path="/farm-management" element={
+              <React.Suspense fallback={<OrdersPageSkeleton />}>
+                <FarmManagement />
+              </React.Suspense>
+            } />
           </Route>
 
           {/* Public/Hybrid Routes - Layout visible if logged in */}
@@ -244,15 +250,15 @@ function App() {
           <Route path="/deactivate-user" element={<DeactivateUserPage />} />
 
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/support" element={<Support />} />
+          {/* <Route path="/support" element={<Support />} /> */}
 
           <Route path="/true-harvest-privacy-policy" element={<TrueHarvestPrivacyPolicy />} />
           <Route path="/true-harvest-delete-user" element={<TrueHarvestDeleteUser />} />
           <Route path="/true-harvest-support" element={<TrueHarvestSupport />} />
 
-          <Route path="/landify/legal" element={<LandifyLegal />} />
+          {/* <Route path="/landify/legal" element={<LandifyLegal />} />
           <Route path="/landify/support" element={<LandifySupport />} />
-          <Route path="/landify/deactivate" element={<LandifyDeactivateUser />} />
+          <Route path="/landify/deactivate" element={<LandifyDeactivateUser />} /> */}
         </Route>
 
         {/* Backward Compatibility Redirects */}
@@ -283,10 +289,11 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/users/customers',
     '/products',
     '/acf',
-    '/support-tickets'
+    '/support-tickets',
+    '/farm-management'
   ];
 
-  const isProtectedPath = protectedPrefixes.some(prefix => location.pathname.startsWith(prefix));
+  const isProtectedPath = protectedPrefixes.some(prefix => location.pathname.startsWith(prefix)) && !location.pathname.startsWith('/acf-calculator');
 
   // If the user navigates from the dashboard (via sidebar), state.fromDashboard will be true
   const isFromDashboard = location.state?.fromDashboard;

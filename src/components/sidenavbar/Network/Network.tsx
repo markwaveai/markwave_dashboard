@@ -66,75 +66,81 @@ const NetworkTab: React.FC = () => {
     const totalPages = stats ? Math.ceil(stats.user_count / stats.limit) : 0;
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50">
-            <div className="p-6 bg-white border-b border-gray-200">
-                <h2 className="text-2xl font-bold mb-4">Network Overview</h2>
+        <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
+            <div className="p-8 pb-4">
+                <h1 className="text-2xl font-bold text-[#1E293B] mb-8">Network Overview</h1>
 
                 {/* Stats Cards */}
                 {stats && (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-blue-50 p-4 rounded-lg flex items-center gap-4 transition-transform duration-200 hover:-translate-y-0.5 shadow-sm border border-blue-100">
-                            <div className="p-3 bg-blue-100 rounded-full text-blue-600">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        {/* Total Users Card */}
+                        <div className="bg-[#EBF2FF] rounded-2xl p-6 flex items-center gap-4 relative overflow-hidden shadow-sm border border-white/50">
+                            <div className="w-12 h-12 bg-[#3B82F6] rounded-xl flex items-center justify-center text-white shadow-md z-10">
                                 <Users size={24} />
                             </div>
-                            <div>
-                                <div className="text-sm text-gray-500">Total Users</div>
-                                <div className="text-xl font-bold">{stats.user_count}</div>
+                            <div className="z-10">
+                                <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Total Users</div>
+                                <div className="text-3xl font-bold text-[#1E293B]">{stats.user_count}</div>
                             </div>
                         </div>
-                        <div className="bg-yellow-50 p-4 rounded-lg flex items-center gap-4 transition-transform duration-200 hover:-translate-y-0.5 shadow-sm border border-yellow-100">
-                            <div className="p-3 bg-yellow-100 rounded-full text-yellow-600">
+
+                        {/* Distributed Coins Card */}
+                        <div className="bg-[#FFF8E6] rounded-2xl p-6 flex items-center gap-4 relative overflow-hidden shadow-sm border border-white/50">
+                            <div className="w-12 h-12 bg-[#F59E0B] rounded-xl flex items-center justify-center text-white shadow-md z-10">
                                 <Award size={24} />
                             </div>
-                            <div>
-                                <div className="text-sm text-gray-500">Distributed Coins</div>
-                                <div className="text-xl font-bold">{stats.total_distributed_coins?.toLocaleString('en-IN')}</div>
-                                <div className="text-xs text-gray-400">Target: {stats.total_target_coins?.toLocaleString('en-IN')}</div>
+                            <div className="z-10 flex-grow">
+                                <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Distributed Coins</div>
+                                <div className="text-3xl font-bold text-[#1E293B]">{stats.total_distributed_coins?.toLocaleString('en-IN')}</div>
+                            </div>
+                            <div className="absolute top-4 right-6 text-[10px] font-bold text-[#64748B] z-10">
+                                Target: {stats.total_target_coins?.toLocaleString('en-IN') || '1,75,00,000'}
                             </div>
                         </div>
-                        <div className="bg-green-50 p-4 rounded-lg flex items-center gap-4 transition-transform duration-200 hover:-translate-y-0.5 shadow-sm border border-green-100">
-                            <div className="p-3 bg-green-100 rounded-full text-green-600">
+
+                        {/* Purchased Units Card */}
+                        <div className="bg-[#E9F7EF] rounded-2xl p-6 flex items-center gap-4 relative overflow-hidden shadow-sm border border-white/50">
+                            <div className="w-12 h-12 bg-[#10B981] rounded-xl flex items-center justify-center text-white shadow-md z-10">
                                 <ShoppingBag size={24} />
                             </div>
-                            <div>
-                                <div className="text-sm text-gray-500">Purchased Units</div>
-                                <div className="text-xl font-bold">{stats.total_purchased_units || 0}</div>
-                                <div className="text-xs text-gray-400">Target: {stats.total_target_units || 0}</div>
+                            <div className="z-10 flex-grow">
+                                <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Purchased Units</div>
+                                <div className="text-3xl font-bold text-[#1E293B]">{stats.total_purchased_units || 0}</div>
+                            </div>
+                            <div className="absolute top-4 right-6 text-[10px] font-bold text-[#64748B] z-10">
+                                Target: {stats.total_target_units?.toLocaleString('en-IN') || '100000'}
                             </div>
                         </div>
                     </div>
                 )}
 
                 {/* Filters */}
-                <div className="flex items-center gap-4 flex-wrap">
-                    <div className="flex flex-col min-w-[200px]">
-                        <label className="text-sm font-medium text-gray-700 mb-1">Search</label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => {
-                                    const val = e.target.value.replace(/\D/g, ''); // Only digits
-                                    if (val.length <= 10) { // Max 10 digits
-                                        setSearch(val);
-                                        setCurrentPage(1);
-                                    }
-                                }}
-                                placeholder="Search by mobile..."
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                            />
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Search className="h-4 w-4 text-gray-400" />
-                            </div>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div className="relative w-full max-w-sm">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            <Search className="h-4 w-4 text-[#94A3B8]" />
                         </div>
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, ''); // Only digits
+                                if (val.length <= 10) { // Max 10 digits
+                                    setSearch(val);
+                                    setCurrentPage(1);
+                                }
+                            }}
+                            placeholder="Search by mobile..."
+                            className="block w-full pl-11 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/20 transition-all shadow-sm"
+                        />
                     </div>
 
-                    <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs font-semibold text-[#64748B]">Role</span>
                         <select
                             value={role}
                             onChange={handleRoleChange}
-                            className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
+                            className="bg-white border border-[#E2E8F0] text-[#1E293B] text-sm font-medium rounded-xl block px-4 py-2 focus:ring-2 focus:ring-[#3B82F6]/20 outline-none transition-all cursor-pointer shadow-sm"
                         >
                             <option value="">All</option>
                             <option value="Investor">Investor</option>
@@ -143,57 +149,73 @@ const NetworkTab: React.FC = () => {
                         </select>
                     </div>
                 </div>
-            </div>
 
-            <div className="p-6">
-                <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-                    <table className="w-full text-sm text-left text-gray-500">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                            <tr>
-                                <th className="px-4 py-3 text-center whitespace-nowrap">S.No</th>
-                                <th className="px-4 py-3 text-center whitespace-nowrap">Name</th>
-                                <th className="px-4 py-3 text-center whitespace-nowrap">Mobile</th>
-                                <th className="px-4 py-3 text-center whitespace-nowrap">Role</th>
-                                <th className="px-4 py-3 text-center whitespace-nowrap">Referrals</th>
-                                <th className="px-4 py-3 text-center whitespace-nowrap">Units</th>
-                                <th className="px-4 py-3 text-center whitespace-nowrap">Coins Earned</th>
-                                <th className="px-4 py-3 text-center whitespace-nowrap">Joined Date</th>
+                {/* Table Container */}
+                <div className="bg-white rounded-[2rem] shadow-sm border border-[#F1F5F9] overflow-hidden">
+                    <table className="w-full text-sm text-left border-collapse">
+                        <thead>
+                            <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
+                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">S.No</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Name</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Mobile</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Role</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Referrals</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Units</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Coins Earned</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Joined Date</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-[#F1F5F9]">
                             {loading ? (
                                 <TableSkeleton cols={8} rows={10} />
                             ) : users.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-4 py-8 text-center text-gray-400">No users found</td>
+                                    <td colSpan={8} className="px-6 py-20 text-center text-[#94A3B8]">No users found</td>
                                 </tr>
                             ) : (
                                 users.map((user: any, index: number) => (
                                     <tr
                                         key={user.mobile || index}
-                                        className="bg-white border-b hover:bg-gray-50 cursor-pointer text-center whitespace-nowrap"
+                                        className="hover:bg-[#F8FAFC] transition-colors cursor-pointer"
                                         onClick={() => navigate(`/user-management/network/${user.mobile}`)}
                                     >
-                                        <td className="px-4 py-3">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                        <td className="px-4 py-3 font-medium text-gray-900">
-                                            {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || '-'}
+                                        <td className="px-6 py-4 text-center text-[#64748B]">
+                                            {(currentPage - 1) * itemsPerPage + index + 1}
                                         </td>
-                                        <td className="px-4 py-3 font-mono">{user.mobile}</td>
-                                        <td className="px-4 py-3">
-                                            <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-[#F1F5F9] flex items-center justify-center overflow-hidden border border-[#E2E8F0]">
+                                                    <Users size={16} className="text-[#94A3B8]" />
+                                                </div>
+                                                <span className="font-semibold text-[#1E293B]">
+                                                    {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || '-'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-[#475569] font-medium">
+                                            {user.mobile}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${user.role === 'Investor' ? 'bg-[#FFF8E6] text-[#D97706]' :
+                                                user.role === 'Employee' ? 'bg-[#EBF2FF] text-[#2563EB]' :
+                                                    user.role === 'SpecialCategory' ? 'bg-[#F3E8FF] text-[#9333EA]' :
+                                                        'bg-[#F1F5F9] text-[#475569]'
+                                                }`}>
                                                 {user.role}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3">{user.referral_count}</td>
-                                        <td className="px-4 py-3">
-                                            <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
-                                                {user.units_purchased || 0}
+                                        <td className="px-6 py-4 text-center font-semibold text-[#1E293B]">
+                                            {user.referral_count}
+                                        </td>
+                                        <td className="px-6 py-4 text-center text-[#475569]">
+                                            {user.units_purchased || 0}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className="font-bold text-[#D97706]">
+                                                {user.total_coins?.toLocaleString('en-IN')}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 font-medium text-yellow-600">
-                                            {user.total_coins?.toLocaleString('en-IN')}
-                                        </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-6 py-4 text-center text-[#64748B]">
                                             {user.created_date ? new Date(user.created_date).toLocaleDateString() : '-'}
                                         </td>
                                     </tr>
@@ -203,12 +225,48 @@ const NetworkTab: React.FC = () => {
                     </table>
                 </div>
 
-                <div className="mt-4">
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages || 1}
-                        onPageChange={setCurrentPage}
-                    />
+                {/* Pagination */}
+                <div className="mt-8 flex justify-center pb-8">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm font-medium text-[#64748B] bg-white hover:bg-[#F8FAFC] disabled:opacity-50 transition-all shadow-sm"
+                        >
+                            Previous
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum = 1;
+                                if (totalPages <= 5) pageNum = i + 1;
+                                else if (currentPage <= 3) pageNum = i + 1;
+                                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                else pageNum = currentPage - 2 + i;
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${currentPage === pageNum
+                                            ? 'bg-[#3B82F6] text-white'
+                                            : 'bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]'
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm font-medium text-[#64748B] bg-white hover:bg-[#F8FAFC] disabled:opacity-50 transition-all shadow-sm"
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

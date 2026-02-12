@@ -39,4 +39,7 @@ export const API_ENDPOINTS = {
   deactivateConfirm: () => `${API_CONFIG.getBaseUrl()}/users/deactivate/confirm`,
   requestReactivationOtp: () => `${API_CONFIG.getBaseUrl()}/users/reactivate/request-otp`,
   confirmReactivation: () => `${API_CONFIG.getBaseUrl()}/users/reactivate/confirm`,
+  getFarms: () => `${API_CONFIG.getBaseUrl()}/farms/`,
+  addFarm: () => `${API_CONFIG.getBaseUrl()}/farms/`,
+  updateFarm: (id: string) => `${API_CONFIG.getBaseUrl()}/farms/${id}`,
 };

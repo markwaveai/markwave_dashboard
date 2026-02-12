@@ -187,3 +187,19 @@ export interface ApiResponse<T> {
   status?: string;
   statuscode?: number;
 }
+
+export interface Farm {
+  id: string;
+  location: string;
+  strength: number;
+  currentUnits: number;
+  availableUnits: number;
+  status: 'ACTIVE' | 'INACTIVE' | 'FULL';
+  createdAt: string;
+}
+
+export interface CreateFarmRequest {
+  location: string;
+  strength: number;
+  status: string;
+}
