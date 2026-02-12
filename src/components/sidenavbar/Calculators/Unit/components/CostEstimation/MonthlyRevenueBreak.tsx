@@ -692,9 +692,7 @@ const MonthlyRevenueBreak = ({
                         </div>
                     </div>
 
-                    <div className="text-center text-xs text-slate-400 mt-4">
-                        Notes: B gets one year free CPF start. CPF = ₹15,000/yr (monthly).
-                    </div>
+
                 </>
             ) : (
                 <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 shadow-sm text-center">

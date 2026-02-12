@@ -598,13 +598,13 @@ const MonthlyRevenueBreak = ({
                                                 </div>
                                             </th>
                                         ))}
-                                        <th className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-20 w-28 min-w-[7rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 border-l border-slate-200 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
-                                        <th className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700 border-l border-slate-200`}>
+                                        <th className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-20 w-28 min-w-[7rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
+                                        <th className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700`}>
                                             <SimpleTooltip content="Cattle Protection Fund" placement="bottom">
                                                 <span className="cursor-default">CPF</span>
                                             </SimpleTooltip>
                                         </th>
-                                        {isCGFEnabled && <th className="sticky right-[5rem] z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-rose-50 text-rose-700 border-l border-slate-200">
+                                        {isCGFEnabled && <th className="sticky right-[5rem] z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-rose-50 text-rose-700 ">
                                             <SimpleTooltip content="Cattle Growing Fund" placement="bottom">
                                                 <span className="cursor-default">CGF</span>
                                             </SimpleTooltip>
@@ -667,7 +667,7 @@ const MonthlyRevenueBreak = ({
                                                         } else if (revenue === 0 && monthDiff >= 2 && buffalo.generation === 0) {
                                                             // For Gen 0 buffaloes, show "Rest" for zero-revenue months after the landing period
                                                             cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                            displayText = "Rest";
+                                                            displayText = "-";
                                                         } else if (buffalo.generation > 0) {
                                                             // Children Logic
                                                             // monthDiff is 0-indexed offset from birthMonth. 
@@ -677,10 +677,12 @@ const MonthlyRevenueBreak = ({
                                                             } else if (monthDiff === 24) {
                                                                 cellClass = "text-amber-600 text-xs font-bold bg-amber-50";
                                                                 displayText = (
-                                                                    <div className="flex flex-col items-center leading-none">
-                                                                        <span>CPF Start</span>
-                                                                        <span className="text-[9px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
-                                                                    </div>
+                                                                    <SimpleTooltip content="For a calf, CPF starts from the 25th month" placement="top">
+                                                                        <div className="flex flex-col items-center leading-none">
+                                                                            <span>CPF Start</span>
+                                                                            <span className="text-[9px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
+                                                                        </div>
+                                                                    </SimpleTooltip>
                                                                 );
                                                             } else if (monthDiff >= 32) {
                                                                 // Generalized logic for Born/Transport events
@@ -711,29 +713,40 @@ const MonthlyRevenueBreak = ({
                                                                     // Which are the "Resting" months.
                                                                     // So "Rest" is the correct default here.
                                                                     cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                                    displayText = "Rest";
+                                                                    displayText = "Dry Period";
                                                                 } else {
                                                                     cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                                    displayText = "Rest";
+                                                                    displayText = "-";
                                                                 }
                                                             } else if (monthDiff < 34) { // 0-31
                                                                 displayText = "-";
                                                             } else {
                                                                 cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                                displayText = "Rest";
+                                                                displayText = "Dry Period";
                                                             }
                                                         } else if (monthDiff < 0 && buffalo.id === 'B') {
                                                             cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
                                                             displayText = "-";
                                                         } else if (monthDiff === 0) {
                                                             cellClass = "text-slate-500 text-xs font-medium bg-slate-50";
-                                                            displayText = "In Transit";
+                                                            displayText = (
+                                                                <SimpleTooltip
+                                                                    content={`5 days for procurement
+                                                                    7 days for quarantine (After procurement)
+                                                                    10 days for in-transit
+                                                                    7 days for quarantine (before onboarding)`}
+                                                                    placement="bottom"
+                                                                    className="whitespace-nowrap max-w-none min-w-max"
+                                                                >
+                                                                    <span className="border-slate-400">Procurement</span>
+                                                                </SimpleTooltip>
+                                                            );
                                                         } else if (monthDiff === 1) {
                                                             cellClass = "text-slate-500 text-xs font-medium bg-slate-50";
                                                             displayText = "Milk Yield Starts";
                                                         } else if (isCpfApplicable) {
                                                             cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                            displayText = "Rest";
+                                                            displayText = "Dry Period";
                                                         }
 
                                                         return (
@@ -742,14 +755,14 @@ const MonthlyRevenueBreak = ({
                                                             </td>
                                                         );
                                                     })}
-                                                    <td className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-10 px-2 py-3 text-center font-bold text-slate-700 border-l border-slate-200 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
+                                                    <td className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-10 px-2 py-3 text-center font-bold text-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
                                                         {formatCurrency(unitTotal)}
                                                     </td>
-                                                    <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-3 text-center font-medium text-amber-600 border-l border-slate-200 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
+                                                    <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-3 text-center font-medium text-amber-600 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
                                                         {formatCurrency(monthlyCpfValue)}
                                                     </td>
                                                     {isCGFEnabled && (
-                                                        <td className={`sticky right-[5rem] z-10 px-2 py-3 text-center font-medium text-rose-600 border-l border-slate-200 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
+                                                        <td className={`sticky right-[5rem] z-10 px-2 py-3 text-center font-medium text-rose-600 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
                                                             {formatCurrency(monthlyCgfValue)}
                                                         </td>
                                                     )}
@@ -790,11 +803,11 @@ const MonthlyRevenueBreak = ({
                                                 return ms + (monthlyRevenue[year]?.[month]?.buffaloes[b.id] || 0);
                                             }, 0), 0))}
                                         </td>
-                                        <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-4 text-center bg-amber-900 border-l border-slate-700 text-amber-200`}>
+                                        <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-4 text-center bg-amber-900 text-amber-200`}>
                                             {formatCurrency(cpfCost.annualCPFCost)}
                                         </td>
                                         {isCGFEnabled && (
-                                            <td className="sticky right-[5rem] z-10 px-2 py-4 text-center bg-rose-900 border-l border-slate-700 text-rose-200">
+                                            <td className="sticky right-[5rem] z-10 px-2 py-4 text-center bg-rose-900 text-rose-200">
                                                 {formatCurrency((Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0))}
                                             </td>
                                         )}
@@ -810,9 +823,7 @@ const MonthlyRevenueBreak = ({
                         </div>
                     </div>
 
-                    <div className="text-center text-xs text-slate-400 mt-4">
-                        Notes: B gets one year free CPF start. CPF = ₹15,000/yr (monthly).
-                    </div>
+
                 </>
             ) : (
                 <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 shadow-sm text-center">

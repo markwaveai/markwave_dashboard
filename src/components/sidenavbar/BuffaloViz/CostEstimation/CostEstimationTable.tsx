@@ -459,6 +459,31 @@ const CostEstimationTableContent = ({
             };
         };
 
+        const calculateMonthlyCGF = (simulationYearIndex: number, simulationMonthIndex: number) => {
+            if (!isCGFEnabled) return 0;
+            let monthlyCGF = 0;
+            const { absMonth } = getCalendarDate(simulationYearIndex, simulationMonthIndex);
+
+            Object.values(buffaloDetails as Record<string, any>).forEach((buffalo: any) => {
+                if (buffalo.generation > 0) {
+                    const birthYear = buffalo.birthYear;
+                    const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                    const birthAbsolute = birthYear * 12 + birthMonth;
+
+                    if (birthAbsolute <= absMonth) {
+                        const ageInMonths = (absMonth - birthAbsolute) + 1;
+                        let monthlyCost = 0;
+                        if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;
+                        else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400;
+                        else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800;
+                        else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500;
+                        monthlyCGF += monthlyCost;
+                    }
+                }
+            });
+            return monthlyCGF;
+        };
+
         // Calculate Simulation-Year based data
         const simulationYears = treeData.years;
         let cumulativeRevenueWithCPF = 0;
@@ -466,54 +491,9 @@ const CostEstimationTableContent = ({
         // We need to track break-even precisely monthly, but aggregate yearly for table
 
         // 1. Precise Break Even Check (Monthly Stream)
-        let tempCumulativeForBreakEven = 0;
-        const initialInv = initialInvestment.totalInvestment;
-
-        for (let simYear = 0; simYear < simulationYears; simYear++) {
-            for (let m = 0; m < 12; m++) {
-                const { year, month } = getCalendarDate(simYear, m);
-
-                // Revenue
-                const rev = investorMonthlyRevenue[year]?.[month] || 0;
-
-                // CPF Cost (Approx monthly allocation or lookup?)
-                // MonthlyRevenueBreak calculates explicit monthly CPF.
-                // Here we can use CPF_PER_MONTH = 15000/12 = 1250 constant for simplicity as per other components
-                // Or use isCpfApplicable logic?
-                // For simplicity and consistency with "Annual = 15000", we assume 1250/month is the standard distribution
-                // unless we want to be super precise with "Free Period".
-                // Given the user wants "Year 1 = 15000", uniform is safest for the Aggregate.
-                // However, precise "Free Period" logic (Month 6-18) makes Month 6-17 cost 0. 
-                // Which reduces Year 1 cost.
-                // Let's use the explicit check if possible, or approximate.
-                // The User's previous screenshot showed Year 1 CPF = 15000 (implied target).
-                // So we use standard monthly cost.
-                const cpf = 15000 / 12;
-
-                tempCumulativeForBreakEven += (rev - cpf);
-
-                // Revenue Only Break Even
-                // Note: Logic in previous code separated Revenue Only vs Total Value.
-                // We will stick to the Total Value check for "Break Even".
-                // But wait, the previous code had 'revenueBreakEven' and 'breakEven'(Asset+Rev).
-
-                // Let's replicate refined logic:
-            }
-        }
-
-        // Re-implementing the Loop with Simulation Year Aggregation for Table Data
-        let runningCumulativeRevenue = 0;
-
-        // Asset Value Calculation Helper (Projected at end of Sim Year)
-        const calculateAssetAtSimYearEnd = (simYear: number) => {
-            const { year, month } = getCalendarDate(simYear, 11);
-            return calculateTotalAssetValueForMonth(year, month);
-        };
-
-        // 1. Precise Break Even Check (Monthly Stream)
         // Run this FIRST so we know the Break Even Year for the table flags
         let cumRev = 0;
-
+        const initialInv = initialInvestment.totalInvestment;
 
         // We iterate ONE continuous stream of months for exact dates
         const totalMonths = simulationYears * 12;
@@ -525,8 +505,10 @@ const CostEstimationTableContent = ({
             const rev = investorMonthlyRevenue[year]?.[month] || 0;
             /* CPF */
             const cpf = monthlyCPFCost[year]?.[month] || 0;
+            /* CGF */
+            const cgf = calculateMonthlyCGF(simY, simM);
 
-            cumRev += (rev - cpf);
+            cumRev += (rev - cpf - cgf);
 
             // --- Total Value Break Even Check (Asset + Revenue) ---
             const currentAssetValue = calculateTotalAssetValueForMonth(year, month);
@@ -551,10 +533,18 @@ const CostEstimationTableContent = ({
 
         // 2. Table Data Aggregation
         let tableRevenueBreakEvenYearWithCPF: any = null;
+        let runningCumulativeRevenue = 0;
+
+        // Asset Value Calculation Helper (Projected at end of Sim Year)
+        const calculateAssetAtSimYearEnd = (simYear: number) => {
+            const { year, month } = getCalendarDate(simYear, 11);
+            return calculateTotalAssetValueForMonth(year, month);
+        };
 
         for (let i = 0; i < simulationYears; i++) {
             let annualRevenue = 0;
             let annualCPF = 0;
+            let annualCGF = 0;
 
             // Sum 12 months
             for (let m = 0; m < 12; m++) {
@@ -565,9 +555,12 @@ const CostEstimationTableContent = ({
                 /* CPF */
                 const cpfMonth = monthlyCPFCost[year]?.[month] || 0;
                 annualCPF += cpfMonth;
+                /* CGF */
+                const cgfMonth = calculateMonthlyCGF(i, m);
+                annualCGF += cgfMonth;
             }
 
-            const annualNet = annualRevenue - annualCPF;
+            const annualNet = annualRevenue - annualCPF - annualCGF;
             runningCumulativeRevenue += annualNet;
 
             const yearEndAsset = calculateAssetAtSimYearEnd(i);
@@ -602,6 +595,7 @@ const CostEstimationTableContent = ({
                 year: treeData.startYear + i,
                 annualRevenueWithCPF: annualNet, // Net Rev
                 cpfCost: annualCPF,
+                cgfCost: annualCGF,
                 cumulativeRevenueWithCPF: runningCumulativeRevenue,
                 assetValue: yearEndAsset,
                 totalValueWithCPF: totalValue,
@@ -627,7 +621,7 @@ const CostEstimationTableContent = ({
             initialInvestment: initialInvestment.totalInvestment,
             finalCumulativeRevenueWithCPF: breakEvenData.length > 0 ? breakEvenData[breakEvenData.length - 1].cumulativeRevenueWithCPF : 0
         };
-    }, [treeData.startYear, treeData.startMonth, treeData.years, buffaloDetails, initialInvestment, investorMonthlyRevenue, monthlyCPFCost]);
+    }, [treeData.startYear, treeData.startMonth, treeData.years, buffaloDetails, initialInvestment, investorMonthlyRevenue, monthlyCPFCost, isCGFEnabled]);
 
     const assetMarketValue = useMemo(() => {
         const assetValues: any[] = [];
@@ -820,7 +814,7 @@ const CostEstimationTableContent = ({
             <div className="bg-white border-b border-slate-200 sticky top-0 z-[60] shadow-sm">
                 <div className="flex flex-col items-center py-2 max-w-7xl mx-auto">
                     {/* Tabs - Single Row, Scroll if needed but hidden bar */}
-                    <div className="flex items-center justify-start md:justify-center gap-1 overflow-x-auto w-full px-2 py-1 no-scrollbar whitespace-nowrap">
+                    <div className="flex justify-start px-3 gap-1 overflow-x-auto max-w-full pr-5 no-scrollbar whitespace-nowrap">
                         {TAB_CONFIG.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -909,18 +903,7 @@ const CostEstimationTableContent = ({
                             />
                         )}
 
-                        {activeTab === "Break Even Timeline" && (
-                            <BreakEvenTimeline
-                                key={`${activeTab}-${treeData.startYear}-${treeData.startMonth}`}
-                                treeData={treeData}
-                                breakEvenAnalysis={breakEvenAnalysis}
-                                cpfToggle={cpfToggle}
-                                setCpfToggle={setCpfToggle}
-                                monthNames={monthNames}
-                                formatCurrency={formatCurrency}
-                                formatNumber={formatNumber}
-                            />
-                        )}
+
 
                         {activeTab === "Cattle Growing Fund" && (
                             <CattleGrowingFund
@@ -964,11 +947,13 @@ const CostEstimationTableContent = ({
                                 cpfToggle={cpfToggle}
                                 setCpfToggle={setCpfToggle}
                                 formatCurrency={formatCurrency}
+                                formatNumber={formatNumber}
                                 // Pass the revenue-only break-even dates
                                 revenueBreakEvenYearWithCPF={breakEvenAnalysis.revenueBreakEvenYearWithCPF}
                                 revenueBreakEvenMonthWithCPF={breakEvenAnalysis.revenueBreakEvenMonthWithCPF}
                                 revenueExactBreakEvenDateWithCPF={breakEvenAnalysis.revenueExactBreakEvenDateWithCPF}
                                 selectedYearIndex={globalYearIndex}
+                                isCGFEnabled={isCGFEnabled}
                             />
                         )}
 
@@ -992,6 +977,19 @@ const CostEstimationTableContent = ({
                                 yearlyCPFCost={yearlyCPFCost}
                                 selectedYear={startYear + globalYearIndex} // Added missing prop
                                 selectedYearIndex={globalYearIndex}
+                            />
+                        )}
+
+                        {activeTab === "Break Even Timeline" && (
+                            <BreakEvenTimeline
+                                treeData={treeData}
+                                monthNames={monthNames}
+                                formatCurrency={formatCurrency}
+                                formatNumber={formatNumber}
+                                yearRange={yearRange}
+                                breakEvenAnalysis={breakEvenAnalysis}
+                                assetMarketValue={assetMarketValue}
+                                isCGFEnabled={isCGFEnabled}
                             />
                         )}
 
@@ -1023,10 +1021,12 @@ const CostEstimationTableContent = ({
                                 yearRange={yearRange}
                             />
                         )}
+
+
                     </div>
 
                     {/* CPF Explanation Note - Sticky Footer */}
-                    <div className="mt-8 border-t border-slate-200 bg-white/95 backdrop-blur-sm p-4">
+                    <div className="mt-8 border-t border-slate-200 bg-white/95 backdrop-blur-sm p-4 mb-8">
                         <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3 shadow-sm">
                             <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                             <div>

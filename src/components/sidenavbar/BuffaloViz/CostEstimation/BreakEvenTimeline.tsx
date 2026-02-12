@@ -7,7 +7,8 @@ const BreakEvenTimeline: React.FC<any> = ({
     monthNames,
     formatCurrency,
     formatNumber,
-    yearRange
+    yearRange,
+    isCGFEnabled
 }) => {
     // Calculate months to break-even
     const calculateMonthsToBreakEven = (breakEvenDate: any) => {
@@ -41,7 +42,7 @@ const BreakEvenTimeline: React.FC<any> = ({
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Invested</span>
                     </div>
                     <div className="text-sm font-bold text-slate-800">{formatCurrency(breakEvenAnalysis.initialInvestment)}</div>
-                    <p className="text-[8px] text-slate-500 mt-0.5">Startup capital</p>
+                    {/* <p className="text-[8px] text-slate-500 mt-0.5">Startup capital</p> */}
                 </div>
                 {/* Total Net Revenue */}
                 <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group hover:border-emerald-200 transition-all">
@@ -52,7 +53,7 @@ const BreakEvenTimeline: React.FC<any> = ({
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Final Revenue</span>
                     </div>
                     <div className="text-sm font-bold text-slate-800">{formatCurrency(breakEvenAnalysis.finalCumulativeRevenueWithCPF)}</div>
-                    <p className="text-[8px] text-slate-500 mt-0.5">Milk sales</p>
+                    {/* <p className="text-[8px] text-slate-500 mt-0.5">Milk sales</p>  */}
                 </div>
                 {/* Time to Break Even */}
                 <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group hover:border-violet-200 transition-all">
@@ -65,11 +66,11 @@ const BreakEvenTimeline: React.FC<any> = ({
                     <div className="text-sm font-bold text-slate-800">
                         {hasBreakEven ? `${monthsToBreakEvenWithCPF} Months` : '---'}
                     </div>
-                    <p className="text-[8px] text-slate-500 mt-0.5">
+                    {/* <p className="text-[8px] text-slate-500 mt-0.5">
                         {hasBreakEven && safeBreakEvenDate
                             ? safeBreakEvenDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
                             : 'Extended'}
-                    </p>
+                    </p> */}
                 </div>
                 {/* Final Asset Value */}
                 <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group hover:border-blue-200 transition-all">
@@ -82,7 +83,7 @@ const BreakEvenTimeline: React.FC<any> = ({
                     <div className="text-sm font-bold text-slate-800">
                         {formatCurrency(breakEvenAnalysis.breakEvenData[breakEvenAnalysis.breakEvenData.length - 1]?.assetValue || 0)}
                     </div>
-                    <p className="text-[8px] text-slate-500 mt-0.5">Herd valuation</p>
+                    {/* <p className="text-[8px] text-slate-500 mt-0.5">Herd valuation</p> */}
                 </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -119,6 +120,9 @@ const BreakEvenTimeline: React.FC<any> = ({
                                             <td className="px-6 py-4 text-right">
                                                 <span className="text-sm font-semibold text-slate-700">{formatCurrency(data.annualRevenueWithCPF)}</span>
                                                 <span className="block text-[10px] text-amber-500 font-medium">CPF: -{formatNumber(data.cpfCost)}</span>
+                                                {isCGFEnabled && (
+                                                    <span className="block text-[10px] text-red-500 font-medium">CGF: -{formatNumber(data.cgfCost)}</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <span className="text-sm font-medium text-slate-600">{formatCurrency(data.assetValue)}</span>

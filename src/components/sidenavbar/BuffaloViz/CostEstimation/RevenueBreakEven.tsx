@@ -8,12 +8,14 @@ const RevenueBreakEven: React.FC<any> = ({
     cpfToggle,
     setCpfToggle,
     formatCurrency,
+    formatNumber,
     revenueBreakEvenYearWithoutCPF,
     revenueBreakEvenMonthWithoutCPF,
     revenueBreakEvenYearWithCPF,
     revenueBreakEvenMonthWithCPF,
     revenueExactBreakEvenDateWithoutCPF,
-    revenueExactBreakEvenDateWithCPF
+    revenueExactBreakEvenDateWithCPF,
+    isCGFEnabled
 }) => {
     const monthNames = [
         "January",
@@ -91,13 +93,10 @@ const RevenueBreakEven: React.FC<any> = ({
             {/* Context Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                 {/* Initial Investment */}
-                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
-                    <div className="text-center">
+                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                    <div className="text-center flex flex-col items-center">
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Initial Investment</p>
                         <h3 className="text-base font-bold text-slate-900 mt-0.5">{formatCurrency(initialInvestment.totalInvestment)}</h3>
-                    </div>
-                    <div className="mt-1 text-[9px] text-slate-400 text-center">
-                        {initialInvestment.totalBuffaloesAtStart} buffaloes + CPF
                     </div>
                 </div>
                 {/* Break Even Status */}
@@ -120,20 +119,27 @@ const RevenueBreakEven: React.FC<any> = ({
                     <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-400 to-emerald-600" />
                 </div>
                 {/* Unit Cost */}
-                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
                     <div className="text-center">
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Unit Cost</p>
                         <h3 className="text-base font-bold text-slate-800 mt-0.5">{formatCurrency(initialInvestment.motherBuffaloCost)}</h3>
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1 text-center">Mothers (Gen 0)</p>
                 </div>
                 {/* Initial CPF */}
-                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
-                    <div className="text-center">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Initial CPF</p>
+                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center relative group">
+                    <div className="text-center items-center">
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1">
+                            Initial CPF
+                        </div>
+
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max bg-slate-800 text-white text-[10px] rounded px-2 py-1 z-10 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-1 group-hover:translate-y-0">
+                            First Year Coverage
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                        </div>
+
                         <h3 className="text-base font-bold text-slate-800 mt-0.5">{formatCurrency(initialInvestment.cpfCost)}</h3>
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1 text-center">First Year Coverage</p>
                 </div>
             </div>
             {/* Break-Even Analysis Table */}
@@ -179,7 +185,10 @@ const RevenueBreakEven: React.FC<any> = ({
                                         </td>
                                         <td className="px-6 py-4 border-r border-slate-100 text-right">
                                             <div className="font-bold text-slate-700">{formatCurrency(annualRevenue)}</div>
-                                            <div className="text-xs text-slate-400 mt-1">Net of CPF</div>
+                                            <div className="block text-[10px] text-amber-500 font-medium">CPF: -{formatNumber(data.cpfCost)}</div>
+                                            {isCGFEnabled && (
+                                                <div className="block text-[10px] text-rose-500 font-medium">CGF: -{formatNumber(data.cgfCost)}</div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 border-r border-slate-100 text-right">
                                             <div className={`font-bold ${isRevenueBreakEven ? 'text-emerald-600' : 'text-blue-600'}`}>{formatCurrency(cumulativeRevenue)}</div>

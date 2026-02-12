@@ -163,7 +163,8 @@ const HeaderControls = ({
                                 }`}
                             onClick={() => setActiveTab("familyTree")}
                         >
-                            <OrgTreeIcon className="w-5 h-5" />
+                            {/* <OrgTreeIcon className="w-5 h-5" /> */}
+                            <img src="/tree.png" alt="tree" className="w-7 h-7" />
                             {/* Floating Tooltip */}
                             <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
                                 Tree View
@@ -171,13 +172,14 @@ const HeaderControls = ({
                             </span>
                         </button>
                         <button
-                            className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
+                            className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
                                 ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
                                 : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
                                 }`}
                             onClick={() => setActiveTab("costEstimation")}
                         >
-                            <span className="text-base leading-none">📊</span>
+                            {/* <span className="text-base leading-none">📊</span> */}
+                            <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
                             {/* Floating Tooltip */}
                             <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
                                 Revenue Projections
@@ -219,8 +221,9 @@ const HeaderControls = ({
                         <div className="w-px h-8 bg-slate-200" />
 
                         <SimpleTooltip
-                            content={isCGFEnabled ? "Total Recurring Revenue - (CPF +CGF)" : "Total Recurring Revenue - CPF"}
+                            content={isCGFEnabled ? `Total Recurring Revenue - (CPF +CGF)` : `Total Recurring Revenue - CPF`}
                             placement="bottom"
+                            className="whitespace-nowrap max-w-none"
                         >
                             <div className="flex flex-col items-center cursor-default">
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
