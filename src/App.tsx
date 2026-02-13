@@ -52,6 +52,8 @@ const EmiCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calcul
 const AcfCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Acf/AcfCalculatorTab'));
 const UnitCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Unit/UnitCalculatorTab'));
 const FarmManagement = React.lazy(() => import('./components/sidenavbar/Farm/FarmManagement'));
+const SelfBenefitsTab = React.lazy(() => import('./components/sidenavbar/SelfBenefits/SelfBenefitsTab'));
+const ReferralBenefitsTab = React.lazy(() => import('./components/sidenavbar/ReferralBenefits/ReferralBenefitsTab'));
 
 
 
@@ -141,8 +143,11 @@ function App() {
       presentLogin: newSession.currentLoginTime || new Date().toLocaleString(),
     }));
 
+    const userRoles = newSession.role ? newSession.role.split(',').map(r => r.trim()) : [];
+    const hasAdminAccess = userRoles.some(r => ['Admin', 'Animalkart admin', 'SuperAdmin'].includes(r));
+
     let defaultPath = '/orders';
-    if (newSession.role === 'Animalkart admin') {
+    if (hasAdminAccess) {
       defaultPath = '/orders';
     }
 
@@ -159,7 +164,8 @@ function App() {
     navigate('/login', { replace: true });
   };
 
-  const isAdmin = session?.role === 'Admin' || session?.role === 'Animalkart admin';
+  const userRoles = session?.role ? session.role.split(',').map(r => r.trim()) : [];
+  const isAdmin = userRoles.some(r => ['Admin', 'Animalkart admin', 'SuperAdmin'].includes(r));
 
   const getSortIcon = (key: string, currentSortConfig: any) => {
     if (currentSortConfig.key !== key) return '';
@@ -211,6 +217,16 @@ function App() {
             <Route path="/farm-management" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
                 <FarmManagement />
+              </React.Suspense>
+            } />
+            <Route path="/self-benefits" element={
+              <React.Suspense fallback={<OrdersPageSkeleton />}>
+                <SelfBenefitsTab />
+              </React.Suspense>
+            } />
+            <Route path="/referral-benefits" element={
+              <React.Suspense fallback={<OrdersPageSkeleton />}>
+                <ReferralBenefitsTab />
               </React.Suspense>
             } />
           </Route>
@@ -290,7 +306,9 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/products',
     '/acf',
     '/support-tickets',
-    '/farm-management'
+    '/farm-management',
+    '/self-benefits',
+    '/referral-benefits'
   ];
 
   const isProtectedPath = protectedPrefixes.some(prefix => location.pathname.startsWith(prefix)) && !location.pathname.startsWith('/acf-calculator');
@@ -337,7 +355,8 @@ const RequireAuth = ({ children, session, isAdmin, handleLogout }: { children: R
     );
   }
   // Rolecheck
-  if (session.role === 'Animalkart admin' && location.pathname.startsWith('/true-harvest')) {
+  const userRoles = session.role ? session.role.split(',').map(r => r.trim()) : [];
+  if (userRoles.includes('Animalkart admin') && !userRoles.includes('SuperAdmin') && location.pathname.startsWith('/true-harvest')) {
     return <Navigate to="/orders" replace />;
   }
   return <>{children}</>;

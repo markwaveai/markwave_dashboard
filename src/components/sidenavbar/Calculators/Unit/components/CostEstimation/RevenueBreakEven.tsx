@@ -8,12 +8,14 @@ const RevenueBreakEven: React.FC<any> = ({
     cpfToggle,
     setCpfToggle,
     formatCurrency,
+    formatNumber,
     revenueBreakEvenYearWithoutCPF,
     revenueBreakEvenMonthWithoutCPF,
     revenueBreakEvenYearWithCPF,
     revenueBreakEvenMonthWithCPF,
     revenueExactBreakEvenDateWithoutCPF,
-    revenueExactBreakEvenDateWithCPF
+    revenueExactBreakEvenDateWithCPF,
+    isCGFEnabled
 }) => {
     const monthNames = [
         "January",
@@ -89,59 +91,55 @@ const RevenueBreakEven: React.FC<any> = ({
     return (
         <div className="w-full mb-6 space-y-2">
             {/* Context Cards */}
-            <div className="flex overflow-x-auto pb-1 gap-1.5 md:grid md:grid-cols-2 lg:grid-cols-4 md:pb-0 no-scrollbar -mt-2 md:mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                 {/* Initial Investment */}
-                <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
-                    <div className="text-center">
-                        <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Investment</p>
-                        <h3 className="text-xs md:text-base font-bold text-slate-900 mt-0.5">{formatCurrency(initialInvestment.totalInvestment)}</h3>
-                    </div>
-                    <div className="hidden md:block mt-1 text-[9px] text-slate-400 text-center">
-                        {initialInvestment.totalBuffaloesAtStart} buffaloes + CPF
-                    </div>
-                    <div className="md:hidden mt-0.5 text-[7px] text-slate-400 text-center leading-none">
-                        {initialInvestment.totalBuffaloesAtStart} Buffs
+                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                    <div className="text-center flex flex-col items-center">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Initial Investment</p>
+                        <h3 className="text-base font-bold text-slate-900 mt-0.5">{formatCurrency(initialInvestment.totalInvestment)}</h3>
                     </div>
                 </div>
                 {/* Break Even Status */}
-                <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
+                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
                     <div className="text-center">
-                        <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Break-Even</p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Break-Even Point</p>
                         {revenueBreakEvenSummary.withCPF.date ? (
                             <div className="flex flex-col items-center">
-                                <h3 className="hidden md:block text-base font-bold text-emerald-700 mt-0.5">
+                                <h3 className="text-base font-bold text-emerald-700 mt-0.5">
                                     {monthNames[revenueBreakEvenSummary.withCPF.date.getMonth()]} {revenueBreakEvenSummary.withCPF.date.getFullYear()}
-                                </h3>
-                                <h3 className="md:hidden text-xs font-bold text-emerald-700 mt-0.5">
-                                    {monthNames[revenueBreakEvenSummary.withCPF.date.getMonth()].substring(0, 3)} {revenueBreakEvenSummary.withCPF.date.getFullYear()}
                                 </h3>
                                 <p className="text-[9px] text-emerald-600 mt-0.5 font-semibold px-1 py-0.5 bg-emerald-50 rounded inline-block">
                                     {revenueBreakEvenSummary.withCPF.monthsToBreakEven} Months
                                 </p>
                             </div>
                         ) : (
-                            <h3 className="text-xs md:text-base font-bold text-slate-400 mt-0.5">Not Proj.</h3>
+                            <h3 className="text-base font-bold text-slate-400 mt-0.5">Not Projected</h3>
                         )}
                     </div>
                     <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-400 to-emerald-600" />
                 </div>
                 {/* Unit Cost */}
-                <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
                     <div className="text-center">
-                        <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Unit Cost</p>
-                        <h3 className="text-xs md:text-base font-bold text-slate-800 mt-0.5">{formatCurrency(initialInvestment.motherBuffaloCost)}</h3>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Unit Cost</p>
+                        <h3 className="text-base font-bold text-slate-800 mt-0.5">{formatCurrency(initialInvestment.motherBuffaloCost)}</h3>
                     </div>
-                    <p className="hidden md:block text-[9px] text-slate-400 mt-1 text-center">Mothers (Gen 0)</p>
-                    <p className="md:hidden text-[7px] text-slate-400 mt-0.5 text-center leading-none">Mothers</p>
                 </div>
                 {/* Initial CPF */}
-                <div className="flex-none md:flex-1 w-[23%] md:w-full min-w-[85px] bg-white rounded-md p-1 md:p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
-                    <div className="text-center">
-                        <p className="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">Initial CPF</p>
-                        <h3 className="text-xs md:text-base font-bold text-slate-800 mt-0.5">{formatCurrency(initialInvestment.cpfCost)}</h3>
+                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center relative group">
+                    <div className="text-center items-center">
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1">
+                            Initial CPF
+                        </div>
+
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max bg-slate-800 text-white text-[10px] rounded px-2 py-1 z-10 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-1 group-hover:translate-y-0">
+                            First Year Coverage
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                        </div>
+
+                        <h3 className="text-base font-bold text-slate-800 mt-0.5">{formatCurrency(initialInvestment.cpfCost)}</h3>
                     </div>
-                    <p className="hidden md:block text-[9px] text-slate-400 mt-1 text-center">First Year Coverage</p>
-                    <p className="md:hidden text-[7px] text-slate-400 mt-0.5 text-center leading-none">Year 1</p>
                 </div>
             </div>
             {/* Break-Even Analysis Table */}
@@ -150,10 +148,10 @@ const RevenueBreakEven: React.FC<any> = ({
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200">
-                                <th className="px-2 py-2 md:px-6 md:py-4 text-[9px] md:text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 w-1/4 text-center">Year</th>
-                                <th className="px-2 py-2 md:px-6 md:py-4 text-[9px] md:text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 text-center w-1/4">Net Rev</th>
-                                <th className="px-2 py-2 md:px-6 md:py-4 text-[9px] md:text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 text-center w-1/4">Cumul.</th>
-                                <th className="px-2 py-2 md:px-6 md:py-4 text-[9px] md:text-xs font-bold text-slate-500 uppercase tracking-wider w-[25%] text-center">Recovery</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 w-1/4 text-center">Year</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 text-center w-1/4">Net Annual Revenue</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 text-center w-1/4">Cumulative Net</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-[25%] text-center">Investment Recovery</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -168,7 +166,7 @@ const RevenueBreakEven: React.FC<any> = ({
                                 );
                                 return (
                                     <tr key={data.year} className={`hover:bg-slate-50 transition-colors ${isRevenueBreakEven ? 'bg-emerald-50/50' : 'bg-white'}`}>
-                                        <td className="px-2 py-2 md:px-6 md:py-4 border-r border-slate-100 text-[9px] md:text-sm text-center">
+                                        <td className="px-6 py-4 border-r border-slate-100 text-sm text-center">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-700">
                                                     {(() => {
@@ -182,24 +180,27 @@ const RevenueBreakEven: React.FC<any> = ({
                                                         return `${startMonthName} ${startY} - ${endMonthName} ${endY}`;
                                                     })()}
                                                 </span>
-                                                {isRevenueBreakEven && <span className="text-[8px] md:text-[10px] text-emerald-600 font-bold uppercase tracking-wider mt-0.5">Break-Even</span>}
+                                                {isRevenueBreakEven && <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mt-0.5">Break-Even</span>}
                                             </div>
                                         </td>
-                                        <td className="px-2 py-2 md:px-6 md:py-4 border-r border-slate-100 text-right">
-                                            <div className="font-bold text-slate-700 text-[9px] md:text-base">{formatCurrency(annualRevenue)}</div>
-                                            <div className="text-[8px] md:text-xs text-slate-400 mt-0.5 md:mt-1">Net of CPF</div>
+                                        <td className="px-6 py-4 border-r border-slate-100 text-right">
+                                            <div className="font-bold text-slate-700">{formatCurrency(annualRevenue)}</div>
+                                            <div className="block text-[10px] text-amber-500 font-medium">CPF: -{formatNumber(data.cpfCost)}</div>
+                                            {isCGFEnabled && (
+                                                <div className="block text-[10px] text-rose-500 font-medium">CGF: -{formatNumber(data.cgfCost)}</div>
+                                            )}
                                         </td>
-                                        <td className="px-2 py-2 md:px-6 md:py-4 border-r border-slate-100 text-right">
-                                            <div className={`font-bold text-[9px] md:text-base ${isRevenueBreakEven ? 'text-emerald-600' : 'text-blue-600'}`}>{formatCurrency(cumulativeRevenue)}</div>
+                                        <td className="px-6 py-4 border-r border-slate-100 text-right">
+                                            <div className={`font-bold ${isRevenueBreakEven ? 'text-emerald-600' : 'text-blue-600'}`}>{formatCurrency(cumulativeRevenue)}</div>
                                         </td>
-                                        <td className="px-2 py-2 md:px-6 md:py-4 text-[9px] md:text-sm">
-                                            <div className="flex items-center gap-1.5 md:gap-3">
-                                                <div className="flex-1 h-1.5 md:h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <td className="px-6 py-4 text-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                                                     <div className={`h-full rounded-full transition-all duration-500 ${recoveryPercentage >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(recoveryPercentage, 100)}%` }} />
                                                 </div>
-                                                <div className="text-[8px] md:text-xs font-bold text-slate-600 min-w-[30px] md:min-w-[40px] text-right">{recoveryPercentage.toFixed(0)}%</div>
+                                                <div className="text-xs font-bold text-slate-600 min-w-[40px] text-right">{recoveryPercentage.toFixed(0)}%</div>
                                             </div>
-                                            <div className="mt-0.5 md:mt-1 text-[8px] md:text-xs text-slate-400">{status}</div>
+                                            <div className="mt-1 text-xs text-slate-400">{status}</div>
                                         </td>
                                     </tr>
                                 );

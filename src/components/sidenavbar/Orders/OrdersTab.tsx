@@ -107,8 +107,9 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
     const adminProfile = useAppSelector((state: RootState) => state.users.adminProfile);
 
     const effectiveRole = adminProfile?.role || authRole;
-    const isSuperAdmin = effectiveRole === 'SuperAdmin';
-    const isAdmin = effectiveRole === 'Admin' || effectiveRole === 'Animalkart admin';
+    const userRoles = effectiveRole ? effectiveRole.split(',').map((r: string) => r.trim()) : [];
+    const isSuperAdmin = userRoles.includes('SuperAdmin');
+    const isAdmin = userRoles.some((r: string) => r === 'Admin' || r === 'Animalkart admin');
     const [searchParams, setSearchParams] = useSearchParams();
 
     // Tooltip State
@@ -678,7 +679,8 @@ const OrderVerificationModal: React.FC = () => {
     const adminRole = useAppSelector((state: RootState) => state.auth?.adminRole);
 
     const effectiveRole = adminProfile?.role || adminRole;
-    const isSuperAdmin = effectiveRole === 'SuperAdmin';
+    const userRoles = effectiveRole ? effectiveRole.split(',').map((r: string) => r.trim()) : [];
+    const isSuperAdmin = userRoles.includes('SuperAdmin');
 
     const entry = useMemo(() => pendingUnits.find(e => e.order?.id === unitId), [pendingUnits, unitId]);
     const orderId = entry?.order?.id || unitId;

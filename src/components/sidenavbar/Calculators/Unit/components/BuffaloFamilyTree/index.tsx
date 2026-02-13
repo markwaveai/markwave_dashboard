@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import HeaderControls from './HeaderControls';
 import TreeVisualization from './TreeVisualization';
 import { formatCurrency, formatNumber, calculateAgeInMonths, getBuffaloValueByAge } from './CommonComponents';
@@ -12,9 +11,8 @@ interface BuffaloFamilyTreeProps {
 }
 
 export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProps) {
-    // Initialize with current date
-    // Initialize with default date: Jan 1, 2026
     const [searchParams, setSearchParams] = useSearchParams();
+    const location = useLocation();
 
     // Obfuscation helpers
     const encodeParams = (data: any) => {
@@ -37,13 +35,14 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     const p = decodeParams(searchParams.get('p'));
     const viewParam = p?.tab;
     const unitsParam = p?.units;
-    const monthsParam = p?.months;
+    const yearsParam = p?.years;
+    const endMonthParam = p?.endMonth;
     const yearParam = p?.year;
     const monthParam = p?.month;
-
     // Initialize state from URL params if present
     const [units, setUnits] = useState(unitsParam ? parseInt(unitsParam) : 1);
-    const [durationMonths, setDurationMonths] = useState(monthsParam ? parseInt(monthsParam) : 120);
+    const [years, setYears] = useState(yearsParam ? parseInt(yearsParam) : 10);
+    const [endMonth, setEndMonth] = useState(endMonthParam !== undefined ? parseInt(endMonthParam) : 11);
     const [startYear, setStartYear] = useState(yearParam ? parseInt(yearParam) : 2026);
     const [startMonth, setStartMonth] = useState(monthParam ? parseInt(monthParam) : 0);
     const [startDay, setStartDay] = useState(1);
@@ -58,35 +57,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
         return viewParam === "revenue-projection" ? "costEstimation" : "familyTree";
     });
     const [headerStats, setHeaderStats] = useState(null);
-
-    // Update URL params when state changes
-    useEffect(() => {
-        const config: any = {};
-        // activeTab sync disabled per user request to keep URLs clean
-        // if (activeTab === "costEstimation") config.tab = "revenue-projection";
-
-        if (units !== 1) config.units = units.toString();
-        if (durationMonths !== 120) config.months = durationMonths.toString();
-        if (startYear !== 2026) config.year = startYear.toString();
-        if (startMonth !== 0) config.month = startMonth.toString();
-
-        // Check if config is empty
-        if (Object.keys(config).length === 0) {
-            if (searchParams.get('p')) {
-                setSearchParams({}, { replace: true });
-            }
-            return;
-        }
-
-        const encoded = encodeParams(config);
-        const currentP = searchParams.get('p');
-
-        if (encoded && encoded !== currentP) {
-            setSearchParams({ p: encoded }, { replace: true });
-        } else if (!encoded && currentP) {
-            setSearchParams({}, { replace: true });
-        }
-    }, [units, durationMonths, startYear, startMonth]);
+    const [isCGFEnabled, setIsCGFEnabled] = useState(true);
 
     const containerRef = useRef<any>(null);
     const treeContainerRef = useRef<any>(null);
@@ -107,37 +78,59 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
         }
     }, [startYear, startMonth]);
 
-    // Load from local storage on mount
+    // Load config from local storage on mount
     useEffect(() => {
         try {
-            const savedData = localStorage.getItem('unit_calc_tree_data');
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                // Also restore config
-                if (parsed.startYear) setStartYear(parsed.startYear);
-                if (parsed.startMonth !== undefined) setStartMonth(parsed.startMonth);
-                if (parsed.startDay) setStartDay(parsed.startDay);
-                if (parsed.units) setUnits(parsed.units);
-                if (parsed.durationMonths) setDurationMonths(parsed.durationMonths);
-                else if (parsed.years) setDurationMonths(parsed.years * 12); // Backwards compatibility
+            const savedConfig = localStorage.getItem('buffalo_sim_config');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                if (config.years) setYears(config.years);
+                if (config.endMonth !== undefined) setEndMonth(config.endMonth);
+                else if (config.durationMonths) {
+                    setYears(Math.ceil(config.durationMonths / 12));
+                    setEndMonth(11); // Default to December
+                }
+                if (config.startYear) setStartYear(config.startYear);
+                if (config.startMonth !== undefined) setStartMonth(config.startMonth);
+                if (config.startDay) setStartDay(config.startDay);
 
-                // Need to restore treeData but ensure it's valid
-                setTreeData(parsed);
+                // Trigger an initial simulation after a short delay to ensure state updates are applied
+                setTimeout(() => {
+                    setShouldAutoRun(true);
+                }, 100);
             }
         } catch (e) {
-            console.error("Failed to load tree data", e);
+            console.error("Failed to load simulation config", e);
         }
     }, []);
 
-    // Save to local storage whenever treeData changes
+    const [shouldAutoRun, setShouldAutoRun] = useState(false);
+
     useEffect(() => {
-        if (treeData) {
-            localStorage.setItem('unit_calc_tree_data', JSON.stringify({
-                ...treeData,
-                // Ensure config is saved too if it's not part of treeData (it is, but double check)
-            }));
+        if (shouldAutoRun) {
+            runSimulation();
+            setShouldAutoRun(false);
         }
-    }, [treeData]);
+    }, [shouldAutoRun]);
+
+    // Save only config to local storage whenever it changes
+    useEffect(() => {
+        try {
+            const config = {
+                units,
+                years,
+                endMonth,
+                startYear,
+                startMonth,
+                startDay,
+                hasSimulation: !!treeData
+            };
+            localStorage.setItem('buffalo_sim_config', JSON.stringify(config));
+        } catch (e) {
+            // This is just for config, so it shouldn't fail, but good to have
+            console.warn("Failed to save simulation config", e);
+        }
+    }, [units, years, endMonth, startYear, startMonth, startDay, treeData]);
 
     // Staggered revenue configuration
     const revenueConfig = {
@@ -336,7 +329,10 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     const runSimulation = () => {
         setLoading(true);
         {
-            const totalMonthsDuration = durationMonths;
+            // Calculate totalMonthsDuration from Start Year/Month and End Year/Month
+            // Total Duration in months = ((FinalYear * 12) + FinalMonth) - ((StartYear * 12) + StartMonth) + 1
+            const finalYear = startYear + years - 1;
+            const totalMonthsDuration = ((finalYear * 12) + endMonth) - (startYear * 12 + startMonth) + 1;
             const herd: any[] = [];
 
             // Create initial buffaloes (2 per unit) with staggered acquisition
@@ -393,7 +389,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
             // End Date = July 2026 + 120 months = June 2036.
             // Calendar Years: 2026, ... 2036 (11 years).
 
-            // const totalMonthsDuration = totalYears * 12; // REMOVED
+            // const totalMonthsDuration = totalYears * 12; // REPLACED
             const endYearValue = startYear + Math.floor((startMonth + totalMonthsDuration - 1) / 12);
             const yearsToSimulate = endYearValue - startYear + 1;
 
@@ -458,6 +454,8 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
 
                         // Or simpler: iterate reasonable k
                         for (let k = 0; k < 15; k++) { // 15 cycles max (enough for 10-15 years)
+                            // First birth at month 32 (33rd month), then every 12 months
+                            // k=0: month 32, k=1: month 44, k=2: month 56, etc.
                             const milestoneAbs = parentBirthAbs + 32 + (k * 12);
 
                             if (milestoneAbs >= yearStartAbs && milestoneAbs <= yearEndAbs) {
@@ -519,10 +517,17 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
 
                 // Only count buffaloes born before or in the last year
                 if (buffalo.birthYear <= endYear) {
-                    // Double check if buffalo was born after simulation end (shouldn't be in herd, but safety check)
+                    // Double check if buffalo was born after simulation end
                     const birthAbsolute = buffalo.birthYear * 12 + (buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0));
                     if (birthAbsolute <= absoluteEndMonth) {
-                        totalAssetValue += getBuffaloValueByAge(ageInMonths);
+                        let value = getBuffaloValueByAge(ageInMonths);
+
+                        // Consistency Override: 0-12 months value is 0 in the first year only
+                        if (Number(endYear) === Number(startYear) && ageInMonths <= 12) {
+                            value = 0;
+                        }
+
+                        totalAssetValue += value;
                     }
                 }
             });
@@ -533,6 +538,40 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                 let totalRevenue = 0;
                 let totalCPFCost = 0;
                 let totalCaringCost = 0;
+
+                // Helper for standard CPF applicability
+                const isCpfApplicableForMonth = (buffalo: any, absMonthIndex: number) => {
+                    const cy = Math.floor(absMonthIndex / 12);
+                    const cm = absMonthIndex % 12;
+
+                    if (buffalo.generation === 0) {
+                        const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
+                        const absoluteStart = startYear * 12 + startMonth;
+                        const monthsSinceStart = absMonthIndex - absoluteStart;
+
+                        if (isFirstInUnit) {
+                            // Type A
+                            const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
+                                ? absMonthIndex >= buffalo.absoluteAcquisitionMonth
+                                : true;
+                            if (isPresent && monthsSinceStart >= 12) return true;
+                        } else {
+                            // Type B
+                            const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
+                                ? absMonthIndex >= buffalo.absoluteAcquisitionMonth
+                                : (cy > startYear || (cy === startYear && cm >= buffalo.acquisitionMonth));
+                            if (isPresentInSimulation) {
+                                const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
+                                if (!isFreePeriod) return true;
+                            }
+                        }
+                    } else {
+                        const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                        const ageInMonths = ((cy - buffalo.birthYear) * 12) + (cm - birthMonth);
+                        if (ageInMonths >= 24) return true;
+                    }
+                    return false;
+                };
 
                 // Calculate monthly revenue for all years
                 for (let i = 0; i < totalMonthsDuration; i++) {
@@ -561,78 +600,25 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                             monthlyTotalRevenue += revenue;
                         }
 
-                        // --- CPF Calculation ---
-                        let isCpfApplicable = false;
-
-                        // Current absolute month for CPF calc
-                        // const currentAbsolute = currentYear * 12 + currentMonth; // Already defined above
-
-                        if (buffalo.generation === 0) {
-                            const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
-                            if (isFirstInUnit) {
-                                // Type A: Full CPF from start (if present)
-                                // Check if buffalo is present (acquired)
-                                const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
-                                    ? currentAbsolute >= buffalo.absoluteAcquisitionMonth
-                                    : true; // Fallback
-
-                                if (isPresent) {
-                                    // Type A: Free Period for first 12 months
-                                    const absoluteStart = startYear * 12 + startMonth;
-                                    const monthsSinceStart = currentAbsolute - absoluteStart;
-
-                                    if (monthsSinceStart >= 12) {
-                                        isCpfApplicable = true;
-                                    }
-                                }
-                            } else {
-                                // Type B: Free Period Check
-                                const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
-                                    ? currentAbsolute >= buffalo.absoluteAcquisitionMonth
-                                    : (currentYear > startYear || (currentYear === startYear && currentMonth >= buffalo.acquisitionMonth));
-
-                                if (isPresentInSimulation) {
-                                    const absoluteStart = startYear * 12 + startMonth;
-                                    const monthsSinceStart = currentAbsolute - absoluteStart;
-
-                                    // Free Period: July to June of next year (months 6-17 if start is Jan)
-                                    // Logic: Start Month + 6 months is acquisition. Free for 1 year.
-                                    // Original Code: monthsSinceStart >= 6 && monthsSinceStart < 18
-                                    const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
-                                    if (!isFreePeriod) {
-                                        isCpfApplicable = true;
-                                    }
-                                }
-                            }
-                        } else {
-                            // Offspring: Pay CPF after 24 months
-                            const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
-                            const ageInMonths = ((currentYear - buffalo.birthYear) * 12) + (currentMonth - birthMonth);
-                            if (ageInMonths >= 24) {
-                                isCpfApplicable = true;
-                            }
-                        }
-
-                        if (isCpfApplicable) {
-                            monthlyTotalCPF += CPF_PER_MONTH;
-                        }
-
-                        // --- Caring Cost Logic (Matching CattleGrowingFund.jsx) ---
+                        // --- Caring Cost Logic ---
                         if (buffalo.generation > 0) {
                             const birthAbsolute = buffalo.birthYear * 12 + (buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0));
 
                             if (birthAbsolute <= currentAbsolute) {
-                                // Age Calculation: 1-based index (Born Jan, Current Jan = 1st month)
                                 const ageInMonths = (currentAbsolute - birthAbsolute) + 1;
-
                                 let monthlyCost = 0;
-                                if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;      // 13-18m: 6000 total
-                                else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400; // 19-24m: 8400 total
-                                else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800; // 25-30m: 10800 total
-                                else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500; // 31-36m: 15000 total
-
+                                if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;
+                                else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400;
+                                else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800;
+                                else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500;
                                 monthlyTotalCaringCost += monthlyCost;
                             }
+                        }
+                    });
+
+                    herd.forEach(buffalo => {
+                        if (isCpfApplicableForMonth(buffalo, currentAbsolute)) {
+                            monthlyTotalCPF += CPF_PER_MONTH;
                         }
                     });
 
@@ -717,19 +703,18 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                         if (buffalo.generation === 0) {
                             const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
                             if (isFirstInUnit) {
-                                isCpfApplicable = true;
+                                // Type A: 12 months from start (acquisition)
+                                const monthsSinceStart = currentAbsoluteMonth - (startYear * 12 + (startMonth || 0));
+                                if (monthsSinceStart >= 12) isCpfApplicable = true;
                             } else {
                                 // Type B: Free Period Check
-                                const currentAbsolute = y * 12 + m;
                                 const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
-                                    ? currentAbsolute >= buffalo.absoluteAcquisitionMonth
+                                    ? currentAbsoluteMonth >= buffalo.absoluteAcquisitionMonth
                                     : (y > startYear || (y === startYear && m >= buffalo.acquisitionMonth));
 
                                 if (isPresentInSimulation) {
-                                    // Free Period: 12 months starting 6 months after simulation start
                                     const absoluteStart = startYear * 12 + startMonth;
-                                    const currentAbsolute = y * 12 + m;
-                                    const monthsSinceStart = currentAbsolute - absoluteStart;
+                                    const monthsSinceStart = currentAbsoluteMonth - absoluteStart;
                                     const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
                                     if (!isFreePeriod) {
                                         isCpfApplicable = true;
@@ -758,7 +743,8 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
 
             setTreeData({
                 units,
-                durationMonths,
+                years: yearsToSimulate,
+                durationMonths: totalMonthsDuration,
                 startYear,
                 startMonth,
                 startDay,
@@ -770,7 +756,8 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                     totalRevenue: totalRevenue,
                     totalNetRevenue: totalNetRevenue,
                     totalNetRevenueWithCaring: totalNetRevenue - totalCaringCost,
-                    roi: (totalNetRevenue - totalCaringCost) + totalAssetValue,
+                    totalCaringCost: totalCaringCost,
+                    roi: (isCGFEnabled ? (totalNetRevenue - totalCaringCost) : totalNetRevenue) + totalAssetValue,
                     totalAssetValue: totalAssetValue,
                     duration: totalMonthsDuration / 12
                 },
@@ -791,7 +778,14 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                     if (buffalo.birthYear <= endYear) {
                         const targetMonth = (endMonthOfSimulation === 11) ? 12 : endMonthOfSimulation;
                         const ageInMonths = calculateAgeInMonths(buffalo, endYear, targetMonth);
-                        lineageAssetValue += getBuffaloValueByAge(ageInMonths);
+                        let value = getBuffaloValueByAge(ageInMonths);
+
+                        // Consistency Override: 0-12 months value is 0 in the first year only
+                        if (Number(endYear) === Number(startYear) && ageInMonths <= 12) {
+                            value = 0;
+                        }
+
+                        lineageAssetValue += value;
                     }
                 });
 
@@ -819,10 +813,12 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
 
     // Reset function
     const resetSimulation = () => {
-        localStorage.removeItem('unit_calc_tree_data');
+        localStorage.removeItem('buffalo_sim_config');
+        localStorage.removeItem('buffalo_tree_data'); // Clean up old large data
         setTreeData(null);
         setUnits(1);
-        setDurationMonths(120); // Default 10 years
+        setYears(10);
+        setEndMonth(11);
         setStartYear(2026);
         setStartMonth(0);
         setStartDay(1);
@@ -924,7 +920,6 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     const [isFullScreen, setIsFullScreen] = useState(false);
     const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
 
-
     // Scale data for Revenue Projections based on selected units
     const scaledTreeData = React.useMemo(() => {
         if (!treeData) return null;
@@ -941,6 +936,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                 totalRevenue: (treeData.summaryStats?.totalRevenue || 0) * multiplier,
                 totalNetRevenue: (treeData.summaryStats?.totalNetRevenue || 0) * multiplier,
                 totalNetRevenueWithCaring: (treeData.summaryStats?.totalNetRevenueWithCaring || 0) * multiplier,
+                totalCaringCost: (treeData.summaryStats?.totalCaringCost || 0) * multiplier,
                 roi: (treeData.summaryStats?.roi || 0) * multiplier,
                 totalAssetValue: (treeData.summaryStats?.totalAssetValue || 0) * multiplier,
             },
@@ -970,8 +966,10 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                 <HeaderControls
                     units={units}
                     setUnits={setUnits}
-                    durationMonths={durationMonths}
-                    setDurationMonths={setDurationMonths}
+                    years={years}
+                    setYears={setYears}
+                    endMonth={endMonth}
+                    setEndMonth={setEndMonth}
                     startYear={startYear}
                     setStartYear={setStartYear}
                     startMonth={startMonth}
@@ -987,6 +985,8 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     isViewRestricted={!tree}
+                    isCGFEnabled={isCGFEnabled}
+                    setIsCGFEnabled={setIsCGFEnabled}
                 />
             )}
 
@@ -1015,6 +1015,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                             setActiveGraph={setActiveGraph}
                             onBack={() => setActiveTab("familyTree")}
                             setHeaderStats={setHeaderStats}
+                            isCGFEnabled={isCGFEnabled}
                         />
                     </div>
                 ) : (

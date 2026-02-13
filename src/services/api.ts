@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
-import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest } from '../types';
+import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest, SelfBenefit, CreateSelfBenefitRequest, ReferralMilestone, CreateReferralMilestoneRequest, ReferralConfig, UpdateReferralConfigRequest } from '../types';
 
 const api = axios.create({
   timeout: 30000,
@@ -159,6 +159,133 @@ export const farmService = {
       console.error('Error updating farm:', error);
       const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to update farm';
       return { error: errorMessage };
+    }
+  }
+};
+
+export const selfBenefitService = {
+  getSelfBenefits: async (): Promise<SelfBenefit[]> => {
+    try {
+      const response = await api.get<SelfBenefit[]>(API_ENDPOINTS.getSelfBenefits());
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching self benefits:', error);
+      throw error;
+    }
+  },
+
+  createSelfBenefit: async (benefitData: CreateSelfBenefitRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(API_ENDPOINTS.getSelfBenefits(), benefitData, {
+        headers: {
+          'X-Admin-Mobile': adminMobile
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to create benefit' };
+      }
+
+      return { data: response.data, message: 'Benefit created successfully' };
+    } catch (error: any) {
+      console.error('Error creating benefit:', error);
+      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to create benefit';
+      return { error: errorMessage };
+    }
+  },
+
+  updateSelfBenefit: async (benefitId: string, benefitData: CreateSelfBenefitRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      // payload no longer requires id in the body
+      const { id, ...payload } = benefitData as any;
+      const response = await api.put(API_ENDPOINTS.updateSelfBenefit(encodeURIComponent(benefitId)), payload, {
+        headers: {
+          'X-Admin-Mobile': adminMobile,
+          'id': benefitId
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to update benefit' };
+      }
+
+      return { data: response.data, message: 'Benefit updated successfully' };
+    } catch (error: any) {
+      console.error('Error updating benefit:', error);
+      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to update benefit';
+      return { error: errorMessage };
+    }
+  },
+
+  updateGlobalStatus: async (isActive: boolean, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.patch(API_ENDPOINTS.updateGlobalStatus(), null, {
+        params: { is_active: isActive },
+        headers: {
+          'X-Admin-Mobile': adminMobile
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to update global status' };
+      }
+
+      return { data: response.data, message: `All benefits ${isActive ? 'activated' : 'disabled'} successfully` };
+    } catch (error: any) {
+      console.error('Error updating global status:', error);
+      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to update global status';
+      return { error: errorMessage };
+    }
+  }
+};
+
+export const referralBenefitService = {
+  getReferralMilestones: async (): Promise<ReferralMilestone[]> => {
+    try {
+      const response = await api.get<ReferralMilestone[]>(API_ENDPOINTS.getReferralMilestones());
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching referral milestones:', error);
+      throw error;
+    }
+  },
+  createReferralMilestone: async (data: CreateReferralMilestoneRequest): Promise<ApiResponse<ReferralMilestone>> => {
+    try {
+      const response = await api.post<ApiResponse<ReferralMilestone>>(API_ENDPOINTS.getReferralMilestones(), data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating referral milestone:', error);
+      throw error;
+    }
+  },
+  updateReferralMilestone: async (id: string, data: CreateReferralMilestoneRequest): Promise<ApiResponse<ReferralMilestone>> => {
+    try {
+      const response = await api.put<ApiResponse<ReferralMilestone>>(API_ENDPOINTS.updateReferralMilestone(id), data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating referral milestone:', error);
+      throw error;
+    }
+  }
+};
+
+export const referralConfigService = {
+  getReferralConfig: async (): Promise<ReferralConfig> => {
+    try {
+      const response = await api.get<ReferralConfig>(API_ENDPOINTS.getReferralConfig());
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching referral config:', error);
+      throw error;
+    }
+  },
+  updateReferralConfig: async (data: UpdateReferralConfigRequest): Promise<ApiResponse<ReferralConfig>> => {
+    try {
+      const response = await api.put<ApiResponse<ReferralConfig>>(API_ENDPOINTS.updateReferralConfig(), data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating referral config:', error);
+      throw error;
     }
   }
 };

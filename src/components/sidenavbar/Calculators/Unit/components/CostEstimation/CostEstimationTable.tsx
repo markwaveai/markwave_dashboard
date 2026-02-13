@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     Info,
     Calendar,
@@ -26,15 +26,24 @@ const CostEstimationTable = ({
     activeGraph,
     setActiveGraph,
     onBack,
-    setHeaderStats
+    setHeaderStats,
+    isCGFEnabled
 }: {
     treeData: any;
     activeGraph: string;
     setActiveGraph: (val: string) => void;
     onBack: () => void;
     setHeaderStats?: (stats: any) => void;
+    isCGFEnabled: boolean;
 }) => {
-    return <CostEstimationTableContent treeData={treeData} activeGraph={activeGraph} setActiveGraph={setActiveGraph} onBack={onBack} setHeaderStats={setHeaderStats} />;
+    return <CostEstimationTableContent
+        treeData={treeData}
+        activeGraph={activeGraph}
+        setActiveGraph={setActiveGraph}
+        onBack={onBack}
+        setHeaderStats={setHeaderStats}
+        isCGFEnabled={isCGFEnabled}
+    />;
 };
 
 const CostEstimationTableContent = ({
@@ -42,39 +51,26 @@ const CostEstimationTableContent = ({
     activeGraph,
     setActiveGraph,
     onBack,
-    setHeaderStats
+    setHeaderStats,
+    isCGFEnabled
 }: {
     treeData: any;
     activeGraph: string;
     setActiveGraph: (val: string) => void;
     onBack: () => void;
     setHeaderStats?: (stats: any) => void;
+    isCGFEnabled: boolean;
 }) => {
     const [activeTab, setActiveTab] = useState("Monthly Revenue Break");
     const [cpfToggle, setCpfToggle] = useState("withCPF");
     const [globalYearIndex, setGlobalYearIndex] = useState(0);
 
-    if (!propTreeData?.revenueData) {
-        return (
-            <div className="fixed inset-0 bg-white z-50 overflow-auto flex items-center justify-center">
-                <div className="text-center p-8">
-                    <div className="text-2xl text-red-500 mb-4">Revenue data not available</div>
-                    <button
-                        onClick={onBack}
-                        className="bg-red-500 text-white px-6 py-3 rounded-lg"
-                    >
-                        Go Back
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    const treeData = propTreeData;
+    const treeData = propTreeData || { buffaloes: [], startYear: 0, startMonth: 0, durationMonths: 0, revenueData: { yearlyData: [] } };
+    const units = treeData.units || 1;
     const startYear = treeData.startYear;
     const startMonth = treeData.startMonth;
 
-    const { yearlyData, totalRevenue, totalUnits, totalMatureBuffaloYears } = treeData.revenueData;
+    const { yearlyData = [], totalRevenue = 0, totalUnits = 0, totalMatureBuffaloYears = 0 } = treeData.revenueData || {};
 
     // Shared calculation functions
     const calculateAgeInMonths = (buffalo: any, targetYear: number, targetMonth: number = 0) => {
@@ -85,37 +81,28 @@ const CostEstimationTableContent = ({
         return Math.max(0, totalMonths);
     };
 
-    const getBuffaloDetails = () => {
+    const buffaloDetails = useMemo(() => {
         const buffaloDetails: any = {};
 
         // First pass: Create all buffalo entries
-        treeData.buffaloes.forEach((buffalo: any) => {
+        (treeData.buffaloes || []).forEach((buffalo: any) => {
             // Determine acquisition/birth month logic
             // For Gen 0, acquisitionMonth is set.
             // For Gen > 0, we can use birthMonth if available or inherit from parent acquisition if consistent.
             // In the new treeData, acquisitionMonth is passed down.
 
-            const birthMonth = buffalo.generation === 0
-                ? (buffalo.acquisitionMonth || 0)
-                : (buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0));
-
-            // Normalize data types for safer consumption
-            const gen = Number(buffalo.generation);
-            const acqMonth = Number(buffalo.acquisitionMonth || 0);
-            const absAcq = buffalo.absoluteAcquisitionMonth !== undefined
-                ? Number(buffalo.absoluteAcquisitionMonth)
-                : (Number(treeData.startYear) * 12 + acqMonth); // robust fallback
+            const birthMonth = buffalo.generation === 0 ? (buffalo.acquisitionMonth || 0) : (buffalo.acquisitionMonth || 0);
 
             buffaloDetails[buffalo.id] = {
                 id: buffalo.id,
-                name: buffalo.name || buffalo.id,
+                name: buffalo.name || buffalo.id, // Pass name, fallback to ID
                 originalId: buffalo.id,
-                generation: gen,
+                generation: buffalo.generation,
                 unit: buffalo.unit,
-                acquisitionMonth: acqMonth,
-                absoluteAcquisitionMonth: absAcq,
-                birthYear: Number(buffalo.birthYear),
-                birthMonth: Number(birthMonth),
+                acquisitionMonth: buffalo.acquisitionMonth,
+                absoluteAcquisitionMonth: buffalo.absoluteAcquisitionMonth, // Pass this down
+                birthYear: buffalo.birthYear,
+                birthMonth: birthMonth,
                 parentId: buffalo.parentId,
                 children: [],
                 grandchildren: []
@@ -123,7 +110,7 @@ const CostEstimationTableContent = ({
         });
 
         // Second pass: Link relationships
-        treeData.buffaloes.forEach((buffalo: any) => {
+        (treeData.buffaloes || []).forEach((buffalo: any) => {
             if (buffalo.parentId && buffaloDetails[buffalo.parentId]) {
                 const parent = buffaloDetails[buffalo.parentId];
                 parent.children.push(buffalo.id);
@@ -143,7 +130,7 @@ const CostEstimationTableContent = ({
         });
 
         return buffaloDetails;
-    };
+    }, [treeData.buffaloes]);
 
     const calculateMonthlyRevenueForBuffalo = (acquisitionMonth: number, currentMonth: number, currentYear: number, startYear: number, absoluteAcquisitionMonth?: number, generation = 0, buffaloId = '') => {
         let monthsSinceAcquisition;
@@ -176,135 +163,148 @@ const CostEstimationTableContent = ({
         }
     };
 
-    const calculateYearlyCPFCost = () => {
-        const buffaloDetails = getBuffaloDetails();
+    const { byYear: yearlyCPFCost, byMonth: monthlyCPFCost } = useMemo(() => {
         const cpfCostByYear: any = {};
-        const cpfCostByMonth: any = {}; // { year: { month: cost } }
-
+        const cpfCostByMonth: any = {};
         const CPF_PER_MONTH = 15000 / 12;
 
-        const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
-        const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
-        const absoluteEnd = absoluteStart + totalSimMonths - 1;
-        const endYearVal = Math.floor(absoluteEnd / 12);
-        const durationYears = endYearVal - treeData.startYear + 1;
+        const startAbs = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const endAbs = startAbs + (treeData.durationMonths) - 1;
+        const scanMaxAbs = (treeData.startYear + Math.ceil(treeData.durationMonths / 12) + 2) * 12;
 
-        for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
-            let totalCPFCost = 0;
-            cpfCostByMonth[year] = {};
+        // 1. Calculate Standard Monthly Eligibility for all months
+        const eligibilityMap: Record<string, Record<number, boolean>> = {};
+        Object.values(buffaloDetails).forEach((buffalo: any) => {
+            eligibilityMap[buffalo.id] = {};
+            for (let absM = treeData.startYear * 12 - 12; absM < scanMaxAbs; absM++) {
+                if (absM < startAbs || absM > endAbs) {
+                    eligibilityMap[buffalo.id][absM] = false;
+                    continue;
+                }
 
-            for (let month = 0; month < 12; month++) {
-                let monthlyTotalCPF = 0;
+                const year = Math.floor(absM / 12);
+                const month = absM % 12;
+                let isCpfApplicable = false;
+                const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
 
-                // Calculate for Unit 1 only, then multiply by total units
-                // Since buffaloDetails only contains Unit 1 buffaloes (as per scaledTreeData logic)
-                const unitBuffaloes = Object.values(buffaloDetails).filter((buffalo: any) => buffalo.unit === 1);
-                let monthsWithCPF = 0;
-                let buffaloesPayingCPF = 0;
-
-                unitBuffaloes.forEach((buffalo: any) => {
-                    // Cutoff Logic
-                    const currentAbsoluteMonth = year * 12 + month;
-                    const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-                    const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
-
-                    if (currentAbsoluteMonth < absoluteStartMonth || currentAbsoluteMonth > absoluteEndMonth) {
-                        return;
-                    }
-
-                    let isCpfApplicable = false;
-
-                    if (buffalo.generation === 0) {
-                        const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
-
-                        if (isFirstInUnit) {
-                            // Type A: Free Period for first 12 months
-                            const absoluteStart = treeData.startYear * 12 + treeData.startMonth;
-                            const monthsSinceStart = currentAbsoluteMonth - absoluteStart;
-
-                            if (monthsSinceStart >= 12) {
-                                isCpfApplicable = true;
-                            }
-                        } else {
-                            // Type B: Free Period Check
-                            const startYear = treeData.startYear;
-                            const isPresentInSimulation = buffalo.absoluteAcquisitionMonth !== undefined
-                                ? currentAbsoluteMonth >= buffalo.absoluteAcquisitionMonth
-                                : (year > startYear || (year === startYear && month >= buffalo.acquisitionMonth));
-
-                            if (isPresentInSimulation) {
-                                const absoluteStart = treeData.startYear * 12 + treeData.startMonth;
-                                const monthsSinceStart = currentAbsoluteMonth - absoluteStart;
-                                const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
-
-                                if (!isFreePeriod) {
-                                    isCpfApplicable = true;
-                                }
-                            }
-                        }
-                    } else if (buffalo.generation >= 1) {
-                        const ageInMonths = calculateAgeInMonths(buffalo, year, month);
-                        if (ageInMonths >= 24) {
-                            isCpfApplicable = true;
+                if (buffalo.generation === 0) {
+                    const monthsSinceStart = absM - startAbs;
+                    if (isFirstInUnit) {
+                        if (monthsSinceStart >= 12) isCpfApplicable = true;
+                    } else {
+                        const isPresent = buffalo.absoluteAcquisitionMonth !== undefined
+                            ? absM >= buffalo.absoluteAcquisitionMonth
+                            : (year > treeData.startYear || (year === treeData.startYear && month >= buffalo.acquisitionMonth));
+                        if (isPresent) {
+                            const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
+                            if (!isFreePeriod) isCpfApplicable = true;
                         }
                     }
-
-                    if (isCpfApplicable) {
-                        buffaloesPayingCPF++;
-                    }
-                });
-
-                monthlyTotalCPF += buffaloesPayingCPF * CPF_PER_MONTH * treeData.units; // Scale by units
-
-                cpfCostByMonth[year][month] = monthlyTotalCPF;
-                totalCPFCost += monthlyTotalCPF;
+                } else {
+                    const age = calculateAgeInMonths(buffalo, year, month);
+                    if (age >= 24) isCpfApplicable = true;
+                }
+                eligibilityMap[buffalo.id][absM] = isCpfApplicable;
             }
+        });
 
-            cpfCostByYear[year] = Math.round(totalCPFCost);
+        // 2. Initialize Yearly/Monthly Cost Storage
+        for (let year = treeData.startYear; year <= treeData.startYear + Math.ceil(treeData.durationMonths / 12); year++) {
+            cpfCostByMonth[year] = {};
+            for (let month = 0; month < 12; month++) {
+                cpfCostByMonth[year][month] = 0;
+            }
+        }
+
+        // 3. Assign Costs
+        Object.values(buffaloDetails).forEach((buffalo: any) => {
+            const eligibility = eligibilityMap[buffalo.id];
+
+            for (let absM = startAbs; absM <= endAbs; absM++) {
+                if (eligibility[absM]) {
+                    const y = Math.floor(absM / 12);
+                    const m = absM % 12;
+                    if (cpfCostByMonth[y]) {
+                        cpfCostByMonth[y][m] += CPF_PER_MONTH;
+                    }
+                }
+            }
+        });
+
+        // 4. Finalize Yearly Totals
+        for (let year = treeData.startYear; year <= treeData.startYear + Math.ceil(treeData.durationMonths / 12); year++) {
+            let total = 0;
+            for (let month = 0; month < 12; month++) {
+                total += cpfCostByMonth[year][month];
+            }
+            cpfCostByYear[year] = Math.round(total);
         }
 
         return { byYear: cpfCostByYear, byMonth: cpfCostByMonth };
-    };
+    }, [treeData.startYear, treeData.startMonth, treeData.durationMonths, buffaloDetails]);
 
-    const { byYear: yearlyCPFCost, byMonth: monthlyCPFCost } = calculateYearlyCPFCost();
+    // Calculate Yearly CGF Cost
+    const { byYear: yearlyCGFCost, byMonth: monthlyCGFCost } = useMemo(() => {
+        const cgfCostByYear: any = {};
+        const cgfCostByMonth: any = {};
 
-    const calculateYearlyDataWithCPF = () => {
-        return yearlyData.map((yearData: any) => {
-            const cpfCost = yearlyCPFCost[yearData.year] || 0;
-            const revenueWithoutCPF = yearData.revenue;
-            const revenueWithCPF = revenueWithoutCPF - cpfCost;
+        if (!isCGFEnabled) return { byYear: {}, byMonth: {} };
 
-            return {
-                ...yearData,
-                cpfCost,
-                revenueWithoutCPF,
-                revenueWithCPF
-            };
+        const startAbs = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const endAbs = startAbs + (treeData.durationMonths) - 1;
+
+        // Initialize
+        for (let year = treeData.startYear; year <= treeData.startYear + Math.ceil(treeData.durationMonths / 12); year++) {
+            cgfCostByMonth[year] = {};
+            for (let month = 0; month < 12; month++) {
+                cgfCostByMonth[year][month] = 0;
+            }
+        }
+
+        // Calculate CGF for each buffalo
+        Object.values(buffaloDetails).forEach((buffalo: any) => {
+            if (buffalo.generation > 0) {
+                const birthYear = buffalo.birthYear;
+                const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                const birthAbsolute = birthYear * 12 + birthMonth;
+
+                for (let absM = startAbs; absM <= endAbs; absM++) {
+                    const year = Math.floor(absM / 12);
+                    const month = absM % 12;
+
+                    if (birthAbsolute <= absM) {
+                        const ageInMonths = (absM - birthAbsolute) + 1;
+                        let monthlyCost = 0;
+                        if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;
+                        else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400;
+                        else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800;
+                        else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500;
+
+                        if (monthlyCost > 0) {
+                            if (cgfCostByMonth[year]) {
+                                cgfCostByMonth[year][month] += monthlyCost * units;
+                            }
+                        }
+                    }
+                }
+            }
         });
-    };
 
-    const yearlyDataWithCPF = calculateYearlyDataWithCPF();
+        // Sum up yearly
+        for (let year = treeData.startYear; year <= treeData.startYear + Math.ceil(treeData.durationMonths / 12); year++) {
+            let total = 0;
+            for (let month = 0; month < 12; month++) {
+                total += cgfCostByMonth[year][month];
+            }
+            cgfCostByYear[year] = Math.round(total);
+        }
 
-    const calculateCumulativeRevenueData = () => {
-        const cumulativeData: any[] = [];
-        let cumulativeRevenueWithoutCPF = 0;
-        let cumulativeRevenueWithCPF = 0;
+        return { byYear: cgfCostByYear, byMonth: cgfCostByMonth };
 
-        yearlyDataWithCPF.forEach((yearData: any, index: number) => {
-            cumulativeRevenueWithoutCPF += yearData.revenueWithoutCPF;
-            cumulativeRevenueWithCPF += yearData.revenueWithCPF;
+    }, [treeData.startYear, treeData.startMonth, treeData.durationMonths, buffaloDetails, isCGFEnabled, units]);
 
-            cumulativeData.push({
-                ...yearData,
-                cumulativeRevenueWithCPF: cumulativeRevenueWithCPF,
-                cumulativeCPFCost: cumulativeRevenueWithoutCPF - cumulativeRevenueWithCPF
-            });
-        });
-
-        return cumulativeData;
-    };
-
-    const cumulativeYearlyData = calculateCumulativeRevenueData();
+    // Moved calculation functions to after investorMonthlyRevenue definition
+    // ... code moved ...
 
     const getBuffaloValueByAge = (ageInMonths: number) => {
         if (ageInMonths >= 41) {
@@ -341,7 +341,7 @@ const CostEstimationTableContent = ({
     const MOTHER_BUFFALO_PRICE = 175000;
     const CPF_PER_UNIT = 15000;
 
-    const calculateInitialInvestment = () => {
+    const initialInvestment = useMemo(() => {
         const motherBuffaloCost = treeData.units * 2 * MOTHER_BUFFALO_PRICE;
         const cpfCost = treeData.units * CPF_PER_UNIT;
         return {
@@ -354,25 +354,17 @@ const CostEstimationTableContent = ({
             pricePerMotherBuffalo: MOTHER_BUFFALO_PRICE,
             cpfPerUnit: CPF_PER_UNIT
         };
-    };
-
-    const initialInvestment = calculateInitialInvestment();
+    }, [treeData.units]);
 
 
 
-    const calculateDetailedMonthlyRevenue = () => {
-        const buffaloDetails = getBuffaloDetails();
+    const { monthlyRevenue, investorMonthlyRevenue, revenueBuffaloDetails, buffaloValuesByYear } = useMemo(() => {
         const monthlyRevenue: any = {};
         const investorMonthlyRevenue: any = {};
         const buffaloValuesByYear: any = {};
 
-        const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
-        const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
-        const absoluteEnd = absoluteStart + totalSimMonths - 1;
-        const endYearVal = Math.floor(absoluteEnd / 12);
-        const durationYears = endYearVal - treeData.startYear + 1;
-
-        for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
+        const endYear = treeData.startYear + Math.ceil(treeData.durationMonths / 12);
+        for (let year = treeData.startYear; year <= endYear; year++) {
             monthlyRevenue[year] = {};
             investorMonthlyRevenue[year] = {};
             buffaloValuesByYear[year] = {};
@@ -387,7 +379,7 @@ const CostEstimationTableContent = ({
         }
 
         Object.values(buffaloDetails).forEach((buffalo: any) => {
-            for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
+            for (let year = treeData.startYear; year <= endYear; year++) {
                 const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
 
                 if (!buffaloValuesByYear[year][buffalo.id]) {
@@ -417,7 +409,7 @@ const CostEstimationTableContent = ({
                         // Cutoff Logic
                         const currentAbsoluteMonth = year * 12 + month;
                         const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-                        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+                        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths) - 1;
 
                         if (currentAbsoluteMonth < absoluteStartMonth || currentAbsoluteMonth > absoluteEndMonth) {
                             continue;
@@ -440,23 +432,73 @@ const CostEstimationTableContent = ({
                             buffalo.id
                         );
 
+                        const scaledRevenue = revenue * units;
                         if (revenue > 0) {
-                            monthlyRevenue[year][month].total += revenue;
-                            monthlyRevenue[year][month].buffaloes[buffalo.id] = revenue;
-                            // Investor Revenue is Total across all units. BuffaloDetails is 1 unit, so we MUST scale.
-                            investorMonthlyRevenue[year][month] += revenue * treeData.units;
+                            monthlyRevenue[year][month].total += scaledRevenue;
+                            monthlyRevenue[year][month].buffaloes[buffalo.id] = scaledRevenue;
+                            investorMonthlyRevenue[year][month] += scaledRevenue;
                         }
                     }
                 }
             }
         });
 
-        return { monthlyRevenue, investorMonthlyRevenue, buffaloDetails, buffaloValuesByYear };
+        return { monthlyRevenue, investorMonthlyRevenue, revenueBuffaloDetails: buffaloDetails, buffaloValuesByYear };
+    }, [treeData.startYear, treeData.startMonth, treeData.durationMonths, buffaloDetails, units]);
+
+    const calculateYearlyDataWithCPF = () => {
+        return yearlyData.map((yearData: any) => {
+            const cpfCost = (yearlyCPFCost[yearData.year] || 0) * units;
+            const cgfCost = (yearlyCGFCost[yearData.year] || 0); // Already scaled by units in calculation
+
+            // CORRECTED REVENUE CALCULATION:
+            // Instead of using 'yearData.revenue' which comes from treeData (and might be unscaled or incorrect),
+            // we calculate annual revenue by summing up the precise 'investorMonthlyRevenue' which IS scaled by units.
+            let correctedAnnualRevenue = 0;
+            const yRevenue = investorMonthlyRevenue[yearData.year];
+            if (yRevenue) {
+                correctedAnnualRevenue = (Object.values(yRevenue) as number[]).reduce((a: number, b: number) => a + b, 0);
+            }
+
+            const revenueWithoutCPF = correctedAnnualRevenue; // Use our corrected value
+            // Subtract both CPF and CGF from revenue
+            const revenueWithCPF = revenueWithoutCPF - cpfCost - cgfCost;
+
+            return {
+                ...yearData,
+                revenue: correctedAnnualRevenue, // Overwrite with corrected revenue
+                cpfCost,
+                cgfCost, // Add to data structure
+                revenueWithoutCPF,
+                revenueWithCPF
+            };
+        });
     };
 
-    const { monthlyRevenue, investorMonthlyRevenue, buffaloDetails, buffaloValuesByYear } = calculateDetailedMonthlyRevenue();
+    const yearlyDataWithCPF = calculateYearlyDataWithCPF();
 
-    const calculateBreakEvenAnalysis = () => {
+    const calculateCumulativeRevenueData = () => {
+        const cumulativeData: any[] = [];
+        let cumulativeRevenueWithoutCPF = 0;
+        let cumulativeRevenueWithCPF = 0;
+
+        yearlyDataWithCPF.forEach((yearData: any, index: number) => {
+            cumulativeRevenueWithoutCPF += yearData.revenueWithoutCPF;
+            cumulativeRevenueWithCPF += yearData.revenueWithCPF;
+
+            cumulativeData.push({
+                ...yearData,
+                cumulativeRevenueWithCPF: cumulativeRevenueWithCPF,
+                cumulativeCPFCost: cumulativeRevenueWithoutCPF - cumulativeRevenueWithCPF // This is technically "Lost Revenue" or "Total Cost" now
+            });
+        });
+
+        return cumulativeData;
+    };
+
+    const cumulativeYearlyData = calculateCumulativeRevenueData();
+
+    const breakEvenAnalysis = useMemo(() => {
         const breakEvenData = [];
         let breakEvenYearWithCPF = null;
         let breakEvenMonthWithCPF = null;
@@ -473,11 +515,17 @@ const CostEstimationTableContent = ({
                 // Only count buffaloes born before or in this month
                 if (buffalo.birthYear < targetYear || (buffalo.birthYear === targetYear && (buffalo.birthMonth || 0) <= targetMonth)) {
                     const ageInMonths = calculateAgeInMonths(buffalo, targetYear, targetMonth);
-                    totalValue += getBuffaloValueByAge(ageInMonths);
+                    let value = getBuffaloValueByAge(ageInMonths);
+
+                    // Consistency Override: 0-12 months value is 0 in the first year only
+                    if (Number(targetYear) === Number(treeData.startYear) && ageInMonths <= 12) {
+                        value = 0;
+                    }
+
+                    totalValue += value * units;
                 }
             });
-            // Scale by units because buffaloDetails represents a single unit's herd
-            return totalValue * treeData.units;
+            return totalValue;
         };
 
         // Helper to get calendar date from simulation index
@@ -491,64 +539,44 @@ const CostEstimationTableContent = ({
             };
         };
 
+        const calculateMonthlyCGF = (simulationYearIndex: number, simulationMonthIndex: number) => {
+            if (!isCGFEnabled) return 0;
+            let monthlyCGF = 0;
+            const { absMonth } = getCalendarDate(simulationYearIndex, simulationMonthIndex);
+
+            Object.values(buffaloDetails as Record<string, any>).forEach((buffalo: any) => {
+                if (buffalo.generation > 0) {
+                    const birthYear = buffalo.birthYear;
+                    const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                    const birthAbsolute = birthYear * 12 + birthMonth;
+
+                    if (birthAbsolute <= absMonth) {
+                        const ageInMonths = (absMonth - birthAbsolute) + 1;
+                        let monthlyCost = 0;
+                        if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;
+                        else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400;
+                        else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800;
+                        else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500;
+                        monthlyCGF += monthlyCost;
+                    }
+                }
+            });
+            return monthlyCGF;
+        };
+
         // Calculate Simulation-Year based data
-        const simulationYears = Math.ceil((treeData.durationMonths || (treeData.years * 12)) / 12);
+        const simulationYears = treeData.durationMonths / 12;
         let cumulativeRevenueWithCPF = 0;
 
         // We need to track break-even precisely monthly, but aggregate yearly for table
 
         // 1. Precise Break Even Check (Monthly Stream)
-        let tempCumulativeForBreakEven = 0;
-        const initialInv = initialInvestment.totalInvestment;
-
-        for (let simYear = 0; simYear < simulationYears; simYear++) {
-            for (let m = 0; m < 12; m++) {
-                const { year, month } = getCalendarDate(simYear, m);
-
-                // Revenue
-                const rev = investorMonthlyRevenue[year]?.[month] || 0;
-
-                // CPF Cost (Approx monthly allocation or lookup?)
-                // MonthlyRevenueBreak calculates explicit monthly CPF.
-                // Here we can use CPF_PER_MONTH = 15000/12 = 1250 constant for simplicity as per other components
-                // Or use isCpfApplicable logic?
-                // For simplicity and consistency with "Annual = 15000", we assume 1250/month is the standard distribution
-                // unless we want to be super precise with "Free Period".
-                // Given the user wants "Year 1 = 15000", uniform is safest for the Aggregate.
-                // However, precise "Free Period" logic (Month 6-18) makes Month 6-17 cost 0. 
-                // Which reduces Year 1 cost.
-                // Let's use the explicit check if possible, or approximate.
-                // The User's previous screenshot showed Year 1 CPF = 15000 (implied target).
-                // So we use standard monthly cost.
-                const cpf = 15000 / 12;
-
-                tempCumulativeForBreakEven += (rev - cpf);
-
-                // Revenue Only Break Even
-                // Note: Logic in previous code separated Revenue Only vs Total Value.
-                // We will stick to the Total Value check for "Break Even".
-                // But wait, the previous code had 'revenueBreakEven' and 'breakEven'(Asset+Rev).
-
-                // Let's replicate refined logic:
-            }
-        }
-
-        // Re-implementing the Loop with Simulation Year Aggregation for Table Data
-        let runningCumulativeRevenue = 0;
-
-        // Asset Value Calculation Helper (Projected at end of Sim Year)
-        const calculateAssetAtSimYearEnd = (simYear: number) => {
-            const { year, month } = getCalendarDate(simYear, 11);
-            return calculateTotalAssetValueForMonth(year, month);
-        };
-
-        // 1. Precise Break Even Check (Monthly Stream)
         // Run this FIRST so we know the Break Even Year for the table flags
         let cumRev = 0;
-
+        const initialInv = initialInvestment.totalInvestment;
 
         // We iterate ONE continuous stream of months for exact dates
-        const totalMonths = treeData.durationMonths || (simulationYears * 12);
+        const totalMonths = treeData.durationMonths;
         for (let absM = 0; absM < totalMonths; absM++) {
             const simY = Math.floor(absM / 12);
             const simM = absM % 12;
@@ -556,9 +584,11 @@ const CostEstimationTableContent = ({
 
             const rev = investorMonthlyRevenue[year]?.[month] || 0;
             /* CPF */
-            const cpf = monthlyCPFCost[year]?.[month] || 0;
+            const cpf = (monthlyCPFCost[year]?.[month] || 0) * units;
+            /* CGF */
+            const cgf = calculateMonthlyCGF(simY, simM) * units;
 
-            cumRev += (rev - cpf);
+            cumRev += (rev - cpf - cgf);
 
             // --- Total Value Break Even Check (Asset + Revenue) ---
             const currentAssetValue = calculateTotalAssetValueForMonth(year, month);
@@ -583,10 +613,19 @@ const CostEstimationTableContent = ({
 
         // 2. Table Data Aggregation
         let tableRevenueBreakEvenYearWithCPF: any = null;
+        let runningCumulativeRevenue = 0;
 
-        for (let i = 0; i < simulationYears; i++) {
+        // Asset Value Calculation Helper (Projected at end of Sim Year)
+        const calculateAssetAtSimYearEnd = (simYear: number) => {
+            const { year, month } = getCalendarDate(simYear, 11);
+            return calculateTotalAssetValueForMonth(year, month);
+        };
+
+        const yearsToSimulate = Math.ceil(treeData.durationMonths / 12);
+        for (let i = 0; i < yearsToSimulate; i++) {
             let annualRevenue = 0;
             let annualCPF = 0;
+            let annualCGF = 0;
 
             // Sum 12 months
             for (let m = 0; m < 12; m++) {
@@ -595,11 +634,14 @@ const CostEstimationTableContent = ({
                 const rev = investorMonthlyRevenue[year]?.[month] || 0;
                 annualRevenue += rev;
                 /* CPF */
-                const cpfMonth = monthlyCPFCost[year]?.[month] || 0;
+                const cpfMonth = (monthlyCPFCost[year]?.[month] || 0) * units;
                 annualCPF += cpfMonth;
+                /* CGF */
+                const cgfMonth = calculateMonthlyCGF(i, m) * units;
+                annualCGF += cgfMonth;
             }
 
-            const annualNet = annualRevenue - annualCPF;
+            const annualNet = annualRevenue - annualCPF - annualCGF;
             runningCumulativeRevenue += annualNet;
 
             const yearEndAsset = calculateAssetAtSimYearEnd(i);
@@ -625,8 +667,6 @@ const CostEstimationTableContent = ({
 
             // Stats
             const recPct = (totalValue / initialInv) * 100;
-            const revOnlyPct = (runningCumulativeRevenue / initialInv) * 100; // Recalculate precisely
-
             let status = "In Progress";
             if (recPct >= 100) status = "✔ Break-Even";
             else if (recPct >= 75) status = "75% Recovered";
@@ -635,13 +675,13 @@ const CostEstimationTableContent = ({
             breakEvenData.push({
                 year: treeData.startYear + i,
                 annualRevenueWithCPF: annualNet, // Net Rev
-                cpfCost: annualCPF,
+                cpfCost: annualCPF, // Already scaled inside loop
+                cgfCost: annualCGF, // Already scaled inside loop
                 cumulativeRevenueWithCPF: runningCumulativeRevenue,
                 assetValue: yearEndAsset,
                 totalValueWithCPF: totalValue,
-
                 recoveryPercentageWithCPF: recPct,
-                revenueOnlyPercentageWithCPF: revOnlyPct,
+                revenueOnlyPercentageWithCPF: (runningCumulativeRevenue / initialInv) * 100, // Added precise calc
                 statusWithCPF: status,
                 revenueOnlyStatusWithCPF: 'In Progress',
                 isBreakEvenWithCPF: isBE,
@@ -662,19 +702,16 @@ const CostEstimationTableContent = ({
             initialInvestment: initialInvestment.totalInvestment,
             finalCumulativeRevenueWithCPF: breakEvenData.length > 0 ? breakEvenData[breakEvenData.length - 1].cumulativeRevenueWithCPF : 0
         };
-    };
+    }, [treeData.startYear, treeData.startMonth, treeData.years, buffaloDetails, initialInvestment, investorMonthlyRevenue, monthlyCPFCost, isCGFEnabled]);
 
-
-    const breakEvenAnalysis = calculateBreakEvenAnalysis();
-
-    const calculateAssetMarketValue = () => {
+    const assetMarketValue = useMemo(() => {
         const assetValues: any[] = [];
         // Correctly calculate end year including partial years (same as index.jsx)
-        const totalMonthsDuration = Math.min(120, treeData.durationMonths || (treeData.years * 12));
+        const totalMonthsDuration = treeData.durationMonths;
         const endYear = treeData.startYear + Math.floor((treeData.startMonth + totalMonthsDuration - 1) / 12);
 
         const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-        const absoluteEndMonth = absoluteStartMonth + totalMonthsDuration - 1;
+        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths) - 1;
         const endMonthOfSimulation = absoluteEndMonth % 12;
 
         for (let year = treeData.startYear; year <= endYear; year++) {
@@ -700,8 +737,8 @@ const CostEstimationTableContent = ({
                     const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
                     let value = getBuffaloValueByAge(ageInMonths);
 
-                    // Override: 0-12 months value is 0 in the first year only
-                    if (year === treeData.startYear && ageInMonths <= 12) {
+                    // Consistency Override: 0-12 months value is 0 in the first year only
+                    if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
                         value = 0;
                     }
 
@@ -731,31 +768,17 @@ const CostEstimationTableContent = ({
 
             const yearData = yearlyData.find((d: any) => d.year === year);
 
-            // Scale by units as buffaloDetails contains only unit 1
-            const scaledTotalAssetValue = totalAssetValue * treeData.units;
-
-            // Scale age categories
-            const scaledAgeCategories: any = {};
-            Object.keys(ageCategories).forEach(key => {
-                scaledAgeCategories[key] = {
-                    count: ageCategories[key].count * treeData.units,
-                    value: ageCategories[key].value * treeData.units
-                };
-            });
-
             assetValues.push({
                 year: year,
-                totalBuffaloes: (yearData?.totalBuffaloes || 0), // Already scaled in yearlyData
-                ageCategories: scaledAgeCategories,
-                totalAssetValue: scaledTotalAssetValue,
-                motherBuffaloes: scaledAgeCategories['41+ months'].count
+                totalBuffaloes: (yearData?.totalBuffaloes || 0) * units,
+                ageCategories: ageCategories,
+                totalAssetValue: totalAssetValue * units,
+                motherBuffaloes: ageCategories['41+ months'].count * units
             });
         }
 
         return assetValues;
-    };
-
-    const assetMarketValue = calculateAssetMarketValue();
+    }, [treeData.years, treeData.startYear, treeData.startMonth, buffaloDetails, yearlyData]);
 
     const calculateDetailedAssetValue = (year: any) => {
         const ageGroups: any = {
@@ -781,42 +804,31 @@ const CostEstimationTableContent = ({
                 }
 
                 if (ageInMonths >= 41) {
-                    ageGroups['41+ months'].count++;
-                    ageGroups['41+ months'].value += value;
+                    ageGroups['41+ months'].count += units;
+                    ageGroups['41+ months'].value += value * units;
                 } else if (ageInMonths >= 35) {
-                    ageGroups['35-40 months'].count++;
-                    ageGroups['35-40 months'].value += value;
+                    ageGroups['35-40 months'].count += units;
+                    ageGroups['35-40 months'].value += value * units;
                 } else if (ageInMonths >= 25) {
-                    ageGroups['25-34 months'].count++;
-                    ageGroups['25-34 months'].value += value;
+                    ageGroups['25-34 months'].count += units;
+                    ageGroups['25-34 months'].value += value * units;
                 } else if (ageInMonths >= 19) {
-                    ageGroups['19-24 months'].count++;
-                    ageGroups['19-24 months'].value += value;
+                    ageGroups['19-24 months'].count += units;
+                    ageGroups['19-24 months'].value += value * units;
                 } else if (ageInMonths >= 13) {
-                    ageGroups['13-18 months'].count++;
-                    ageGroups['13-18 months'].value += value;
+                    ageGroups['13-18 months'].count += units;
+                    ageGroups['13-18 months'].value += value * units;
                 } else {
-                    ageGroups['0-12 months'].count++;
-                    ageGroups['0-12 months'].value += value;
+                    ageGroups['0-12 months'].count += units;
+                    ageGroups['0-12 months'].value += value * units;
                 }
 
-                totalValue += value;
-                totalCount++;
+                totalValue += value * units;
+                totalCount += units;
             }
         });
 
-        // Do not scale by units again
-        const scaledTotalValue = totalValue;
-        const scaledTotalCount = totalCount;
-
-        const scaledAgeGroups: any = {};
-        Object.keys(ageGroups).forEach(key => {
-            scaledAgeGroups[key] = {
-                ...ageGroups[key]
-            };
-        });
-
-        return { ageGroups: scaledAgeGroups, totalValue: scaledTotalValue, totalCount: scaledTotalCount };
+        return { ageGroups, totalValue, totalCount };
     };
 
     const calculateCumulativeRevenueUntilYear = (unit: number, selectedYear: number) => {
@@ -833,8 +845,43 @@ const CostEstimationTableContent = ({
             cumulativeRevenue[buffalo.id] = total;
         });
 
-        return cumulativeRevenue;
+        return Object.fromEntries(
+            Object.entries(cumulativeRevenue).map(([id, val]) => [id, (val as number) * units])
+        );
     };
+
+    // Sync Header Stats - Hoisted from MonthlyRevenueBreak to ensure updates from any tab
+    React.useEffect(() => {
+        if (typeof setHeaderStats === 'function' && yearlyDataWithCPF.length > 0) {
+            // 1. Calculate Cumulative Financials
+            let totalRevenue = 0;
+            let totalCPF = 0;
+            let totalCGF = 0;
+
+            yearlyDataWithCPF.forEach((data: any) => {
+                totalRevenue += data.revenue;
+                totalCPF += data.cpfCost;
+                totalCGF += data.cgfCost;
+            });
+
+            const cumulativeNetRevenue = totalRevenue - totalCPF;
+            const cumulativeNetRevenueWithCaring = cumulativeNetRevenue - totalCGF;
+
+            // 2. Calculate Asset Value & Count at End of Simulation
+            const endYearIndex = Math.ceil(treeData.durationMonths / 12) - 1;
+            const displayEndYear = treeData.startYear + endYearIndex;
+            const { totalValue, totalCount } = calculateDetailedAssetValue(displayEndYear);
+
+            setHeaderStats({
+                cumulativeNetRevenue,
+                cumulativeNetRevenueWithCaring,
+                totalRevenue,
+                totalAssetValue: totalValue,
+                totalBuffaloes: totalCount,
+                endYear: displayEndYear
+            });
+        }
+    }, [yearlyDataWithCPF, treeData.durationMonths, treeData.startYear, setHeaderStats, units]); // Added units dependency explicitely (though yearlyDataWithCPF changes with units)
 
     const calculateTotalCumulativeRevenueUntilYear = (unit: number, selectedYear: number) => {
         const cumulativeRevenue = calculateCumulativeRevenueUntilYear(unit, selectedYear);
@@ -842,19 +889,9 @@ const CostEstimationTableContent = ({
     };
 
     // Calculate dynamic year ranges
-    // Calculate precise calendar years duration
-    // For Data Generation, we need full calendar years
-    const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
-    const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
-    const absoluteEnd = absoluteStart + totalSimMonths - 1;
-    const endYearVal = Math.floor(absoluteEnd / 12);
-    const durationYears = endYearVal - treeData.startYear + 1;
-
-    // For Dropdown Display, we use Simulation Years (12-month chunks)
-    const simulationYearsCount = Math.ceil(totalSimMonths / 12);
-
+    // Calculate dynamic year ranges
     // const startYear = treeData.startYear; // startYear is already in scope from state
-    const endYear = startYear + durationYears - 1;
+    const endYear = startYear + treeData.years - 1;
     const yearRange = `${startYear}-${endYear}`;
 
     const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -871,13 +908,29 @@ const CostEstimationTableContent = ({
         { id: "CPF + CGF", icon: Calculator, label: "CPF + CGF Analysis" }
     ];
 
+    if (!propTreeData?.revenueData) {
+        return (
+            <div className="fixed inset-0 bg-white z-50 overflow-auto flex items-center justify-center">
+                <div className="text-center p-8">
+                    <div className="text-2xl text-red-500 mb-4">Revenue data not available</div>
+                    <button
+                        onClick={onBack}
+                        className="bg-red-500 text-white px-6 py-3 rounded-lg"
+                    >
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col h-full overflow-hidden relative bg-slate-50">
             {/* Top Navigation Bar */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-[60] shadow-sm">
-                <div className="flex flex-col items-center justify-center py-0.5 md:py-2 max-w-7xl mx-auto gap-0.5">
+                <div className="flex flex-col items-center py-2 max-w-7xl mx-auto">
                     {/* Tabs - Single Row, Scroll if needed but hidden bar */}
-                    <div className="flex items-center justify-start md:justify-center gap-1 overflow-x-auto w-full px-1 md:px-2 py-0.5 no-scrollbar whitespace-nowrap">
+                    <div className="flex justify-start px-3 gap-1 overflow-x-auto max-w-full pr-5 no-scrollbar whitespace-nowrap">
                         {TAB_CONFIG.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -886,47 +939,53 @@ const CostEstimationTableContent = ({
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`
-                                  flex items-center gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[10px] md:text-xs font-semibold transition-all duration-200 border flex-shrink-0
+                                  flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border flex-shrink-0
                                   ${isActive
                                             ? 'bg-slate-900 text-white border-slate-900 shadow-md transform scale-105'
                                             : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300'
                                         }
                                 `}
                                 >
-                                    <Icon className={`w-3 h-3 md:w-3.5 md:h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                                     <span>{tab.label}</span>
                                 </button>
-
                             );
                         })}
                     </div>
 
-                    {["Monthly Revenue Break", "Cattle Growing Fund", "CPF + CGF", "Asset Market Value"].includes(activeTab) && (
-                        <div className="flex items-center gap-1.5 md:gap-3 px-1 md:px-4 py-0 md:py-2 md:border-l border-slate-200 shrink-0 w-full justify-center">
-                            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Year</span>
-                            <select
-                                value={globalYearIndex}
-                                onChange={(e) => setGlobalYearIndex(Number(e.target.value))}
-                                className="bg-white border border-slate-200 text-slate-700 text-[10px] md:text-xs font-bold rounded-lg px-2 py-1 md:px-2 md:py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm hover:border-slate-300 transition-colors"
-                            >
-                                {Array.from({ length: simulationYearsCount }).map((_, i) => {
-                                    // Calculate month range for this SIMULATION year (12-month chunk)
-                                    const simYearStartAbs = absoluteStart + (i * 12);
-                                    const simYearEndAbs = Math.min(absoluteEnd, simYearStartAbs + 11);
+                    {/* Integrated Year Selector & CPF Toggle (Bottom Row) */}
+                    {(
+                        <div className="pb-2 flex-shrink-0 animate-fade-in-up flex items-center justify-center gap-4">
+                            <div className="bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200 flex items-center gap-3 hover:bg-white transition-colors cursor-pointer group shadow-sm">
+                                <div className="flex items-center gap-2 pl-1 border-r border-slate-200 pr-3">
+                                    <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-indigo-500 transition-colors">Year</span>
+                                </div>
+                                <select
+                                    value={globalYearIndex}
+                                    onChange={(e) => setGlobalYearIndex(parseInt(e.target.value))}
+                                    className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer min-w-[120px] appearance-none hover:text-indigo-600 transition-colors text-center"
+                                    style={{ backgroundImage: 'none' }}
+                                >
+                                    {Array.from({ length: Math.ceil(treeData.durationMonths / 12) }, (_, i) => {
+                                        const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (i * 12);
+                                        const sYear = Math.floor(startAbs / 12);
+                                        const sMonth = startAbs % 12;
+                                        const sDate = new Date(sYear, sMonth, 1);
+                                        const eDate = new Date(sYear, sMonth + 11, 1);
 
-                                    const startMonthName = monthNames[simYearStartAbs % 12].slice(0, 3);
-                                    const endMonthName = monthNames[simYearEndAbs % 12].slice(0, 3);
+                                        const startStr = sDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                                        const endStr = eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
-                                    const startYearNum = Math.floor(simYearStartAbs / 12);
-                                    const endYearNum = Math.floor(simYearEndAbs / 12);
+                                        return (
+                                            <option key={i} value={i}>
+                                                {startStr} - {endStr}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
 
-                                    return (
-                                        <option key={i} value={i}>
-                                            {startMonthName} {startYearNum} - {endMonthName} {endYearNum} (Year {i + 1})
-                                        </option>
-                                    );
-                                })}
-                            </select>
                         </div>
                     )}
                 </div>
@@ -938,7 +997,7 @@ const CostEstimationTableContent = ({
                 {/* Dashboard Header */}
 
 
-                <div className="w-full max-w-7xl mx-auto px-2 md:px-8 pt-4 md:pt-8 pb-24 md:pb-8">
+                <div className="w-full max-w-7xl mx-auto px-8 pt-16 pb-8">
 
 
 
@@ -956,21 +1015,11 @@ const CostEstimationTableContent = ({
                                 formatCurrency={formatCurrency}
                                 setHeaderStats={setHeaderStats}
                                 selectedYearIndex={globalYearIndex}
+                                isCGFEnabled={isCGFEnabled}
                             />
                         )}
 
-                        {activeTab === "Break Even Timeline" && (
-                            <BreakEvenTimeline
-                                key={`${activeTab}-${treeData.startYear}-${treeData.startMonth}`}
-                                treeData={treeData}
-                                breakEvenAnalysis={breakEvenAnalysis}
-                                cpfToggle={cpfToggle}
-                                setCpfToggle={setCpfToggle}
-                                monthNames={monthNames}
-                                formatCurrency={formatCurrency}
-                                formatNumber={formatNumber}
-                            />
-                        )}
+
 
                         {activeTab === "Cattle Growing Fund" && (
                             <CattleGrowingFund
@@ -982,8 +1031,8 @@ const CostEstimationTableContent = ({
                                 yearlyData={yearlyData}
                                 formatCurrency={formatCurrency}
                                 startYear={startYear}
-                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) / 12)}
-                                endMonth={(treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) % 12}
+                                endYear={startYear + Math.ceil(treeData.durationMonths / 12)}
+                                endMonth={(treeData.startMonth + (treeData.durationMonths) - 1) % 12}
                                 selectedYearIndex={globalYearIndex}
                             />
                         )}
@@ -997,8 +1046,8 @@ const CostEstimationTableContent = ({
                                 calculateAgeInMonths={calculateAgeInMonths}
                                 monthNames={monthNames}
                                 startYear={startYear}
-                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) / 12)}
-                                endMonth={(treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) % 12}
+                                endYear={startYear + Math.ceil(treeData.durationMonths / 12)}
+                                endMonth={(treeData.startMonth + (treeData.durationMonths) - 1) % 12}
                                 selectedYearIndex={globalYearIndex}
                             />
                         )}
@@ -1014,11 +1063,13 @@ const CostEstimationTableContent = ({
                                 cpfToggle={cpfToggle}
                                 setCpfToggle={setCpfToggle}
                                 formatCurrency={formatCurrency}
+                                formatNumber={formatNumber}
                                 // Pass the revenue-only break-even dates
                                 revenueBreakEvenYearWithCPF={breakEvenAnalysis.revenueBreakEvenYearWithCPF}
                                 revenueBreakEvenMonthWithCPF={breakEvenAnalysis.revenueBreakEvenMonthWithCPF}
                                 revenueExactBreakEvenDateWithCPF={breakEvenAnalysis.revenueExactBreakEvenDateWithCPF}
                                 selectedYearIndex={globalYearIndex}
+                                isCGFEnabled={isCGFEnabled}
                             />
                         )}
 
@@ -1034,8 +1085,8 @@ const CostEstimationTableContent = ({
                                 assetMarketValue={assetMarketValue}
                                 formatCurrency={formatCurrency}
                                 startYear={startYear}
-                                endYear={treeData.startYear + Math.floor((treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) / 12)}
-                                endMonth={(treeData.startYear * 12 + treeData.startMonth + (treeData.durationMonths || treeData.years * 12) - 1) % 12}
+                                endYear={startYear + Math.ceil(treeData.durationMonths / 12)}
+                                endMonth={(treeData.startYear * 12 + treeData.startMonth + (treeData.durationMonths) - 1) % 12}
                                 yearRange={yearRange}
                                 yearlyData={yearlyData}
                                 monthlyRevenue={monthlyRevenue}
@@ -1045,17 +1096,30 @@ const CostEstimationTableContent = ({
                             />
                         )}
 
+                        {activeTab === "Break Even Timeline" && (
+                            <BreakEvenTimeline
+                                treeData={treeData}
+                                monthNames={monthNames}
+                                formatCurrency={formatCurrency}
+                                formatNumber={formatNumber}
+                                yearRange={yearRange}
+                                breakEvenAnalysis={breakEvenAnalysis}
+                                assetMarketValue={assetMarketValue}
+                                isCGFEnabled={isCGFEnabled}
+                            />
+                        )}
+
                         {activeTab === "Herd Performance" && (
                             <HerdPerformance
                                 key={`${activeTab}-${treeData.startYear}-${treeData.startMonth}`}
-                                yearlyData={yearlyData}
+                                yearlyData={yearlyDataWithCPF}
                                 monthlyRevenue={monthlyRevenue}
                                 selectedYearIndex={globalYearIndex}
                                 activeGraph={activeGraph}
                                 setActiveGraph={setActiveGraph}
                                 startYear={startYear}
-                                endYear={endYear}
-                                yearRange={yearRange}
+                                endYear={startYear + Math.ceil(treeData.durationMonths / 12)}
+                                yearRange={`${startYear}-${startYear + Math.ceil(treeData.durationMonths / 12)}`}
                                 breakEvenAnalysis={breakEvenAnalysis}
                                 assetMarketValue={assetMarketValue}
                             />
@@ -1069,20 +1133,21 @@ const CostEstimationTableContent = ({
                                 formatNumber={formatNumber}
                                 treeData={treeData}
                                 startYear={startYear}
-                                endYear={endYear}
-                                yearRange={yearRange}
+                                endYear={startYear + Math.ceil(treeData.durationMonths / 12)}
+                                yearRange={`${startYear}-${startYear + Math.ceil(treeData.durationMonths / 12)}`}
                             />
                         )}
+
+
                     </div>
 
                     {/* CPF Explanation Note - Sticky Footer */}
-                    {/* CPF Explanation Note - Sticky Footer */}
-                    <div className="mt-4 md:mt-8 border-t border-slate-200 bg-white/95 backdrop-blur-sm p-2 md:p-4">
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 md:p-4 flex gap-2 md:gap-3 shadow-sm items-start md:items-center">
-                            <Info className="h-4 w-4 md:h-5 md:w-5 text-blue-600 flex-shrink-0 mt-0.5 md:mt-0" aria-hidden="true" />
+                    <div className="mt-8 border-t border-slate-200 bg-white/95 backdrop-blur-sm p-4 mb-8">
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3 shadow-sm">
+                            <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                             <div>
-                                <h3 className="text-xs md:text-sm font-semibold text-blue-900 leading-tight md:leading-normal">Cattle Protection Fund (CPF): Income Guarantee & Asset Security</h3>
-                                <p className="mt-0.5 md:mt-1 text-[10px] md:text-sm text-blue-700 leading-tight md:leading-relaxed">
+                                <h3 className="text-sm font-semibold text-blue-900">Cattle Protection Fund (CPF): Income Guarantee & Asset Security</h3>
+                                <p className="mt-1 text-sm text-blue-700 leading-relaxed">
                                     Your income is guaranteed through the Cattle Protection Fund. This safety measure secures your animals,
                                     decreases revenue risk, and ensures growing assets. It is a vital step for long-term stability.
                                 </p>
@@ -1091,7 +1156,7 @@ const CostEstimationTableContent = ({
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

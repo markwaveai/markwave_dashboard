@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
     ClipboardList, Users, ShoppingBag, LogOut, UserCheck,
-    Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, Warehouse,
-    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft
+    Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, Warehouse, Award,
+    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -39,6 +39,8 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/acf')) activeTab = 'acf';
     else if (currentPath.includes('/user-management') || currentPath.includes('/users/customers')) activeTab = 'user-management';
     else if (currentPath.includes('/products')) activeTab = 'products';
+    else if (currentPath.includes('/self-benefits')) activeTab = 'self-benefits';
+    else if (currentPath.includes('/referral-benefits')) activeTab = 'referral-benefits';
     else if (currentPath.includes('/farm-management')) activeTab = 'farm';
     else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
     else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
@@ -158,6 +160,26 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                         <ShoppingBag size={18} className={activeTab === 'products' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
                                         {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Products</span>}
+                                    </div>
+                                </button>
+                            </li>
+                        )}
+                        {hasSession && (
+                            <li>
+                                <button className={navItemClass('self-benefits')} onClick={(e) => { e.stopPropagation(); navigate('/self-benefits'); }}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Award size={18} className={activeTab === 'self-benefits' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Self Benefits</span>}
+                                    </div>
+                                </button>
+                            </li>
+                        )}
+                        {hasSession && (
+                            <li>
+                                <button className={navItemClass('referral-benefits')} onClick={(e) => { e.stopPropagation(); navigate('/referral-benefits'); }}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Star size={18} className={activeTab === 'referral-benefits' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Referral Benefits</span>}
                                     </div>
                                 </button>
                             </li>

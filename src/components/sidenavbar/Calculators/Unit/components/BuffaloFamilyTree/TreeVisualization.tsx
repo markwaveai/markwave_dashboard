@@ -24,11 +24,24 @@ const TreeVisualization = ({
     const [activeFounderId, setActiveFounderId] = useState("all");
     const [activeLayout, setActiveLayout] = useState("layout1");
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showLines, setShowLines] = useState(true);
 
     // Create a stable dependency key to prevent re-running on reference changes if content is same
     const dataDependency = treeData
         ? `${treeData.buffaloes?.length || 0}-${treeData.summaryStats?.totalNetRevenue || 0}`
         : '';
+
+
+
+    // Handle Layout Change - Instant
+    const handleLayoutChange = (layout: string) => {
+        if (activeLayout === layout) return;
+        setActiveLayout(layout);
+        // Force refresh immediately after render cycle
+        setTimeout(() => {
+            forceRefreshLines();
+        }, 0);
+    };
 
     // Reset to "all" when treeData changes (new simulation)
     useEffect(() => {
@@ -64,40 +77,31 @@ const TreeVisualization = ({
         return () => clearTimeout(timer);
     }, [dataDependency]);
 
-    // Update arrows when layout or zoom changes
-    useEffect(() => {
-        // Immediate update
+    // Force updates with synthetic events to ensure Xarrows detects the new positions
+    const forceRefreshLines = () => {
         updateXarrow();
-
-        // Update repeatedly during the transition (500ms)
-        const interval = setInterval(() => {
-            updateXarrow();
-        }, 20);
-
-        // Final update after transition
-        const timeout = setTimeout(() => {
-            clearInterval(interval);
-            updateXarrow();
-        }, 550);
-
-        return () => {
-            clearInterval(interval);
-            clearTimeout(timeout);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeLayout, zoom, isProcessing]);
-
-    // Handle Layout Change with Loader
-    const handleLayoutChange = (layout: string) => {
-        if (activeLayout === layout) return;
-        setIsProcessing(true);
-        // Use timeout to allow UI to render loader before processing layout change
-        setTimeout(() => {
-            setActiveLayout(layout);
-            // Keep processing true a bit longer for the transition
-            setTimeout(() => setIsProcessing(false), 600);
-        }, 50);
+        // Dispatch window resize to force re-calculation
+        window.dispatchEvent(new Event('resize'));
+        // Dispatch scroll on container if possible
+        if (containerRef.current) {
+            containerRef.current.dispatchEvent(new Event('scroll'));
+        }
     };
+
+    // Final strict update when processing finishes
+    useEffect(() => {
+        if (!isProcessing) {
+            // Use a few strategic refreshes instead of an aggressive animation loop
+            const timers = [
+                setTimeout(updateXarrow, 50),
+                setTimeout(forceRefreshLines, 250),
+                setTimeout(forceRefreshLines, 800)
+            ];
+            return () => timers.forEach(t => clearTimeout(t));
+        }
+    }, [isProcessing, updateXarrow]);
+
+
 
     if (!treeData) {
         return (
@@ -248,6 +252,60 @@ const TreeVisualization = ({
         }
     };
 
+    // --- Layout 3: Horizontal (Left-Right) ---
+    const LEVEL_WIDTH = 200;
+    const layoutHorizontal = (node: any, minY: number, maxY: number, level: number, startX: number) => {
+        const y = minY + (maxY - minY) / 2;
+        const x = startX + (level * LEVEL_WIDTH);
+
+        positionedNodes.push({ ...node, x, y, level });
+
+        if (node.children.length > 0) {
+            let currentMinY = minY;
+            const exponent = 0.75; // Slightly stricter for vertical space
+            const totalWeight = node.children.reduce((sum: any, child: any) => sum + Math.pow(child.leaves, exponent), 0);
+            const availableY = maxY - minY;
+
+            node.children.forEach((child: any) => {
+                const weight = Math.pow(child.leaves, exponent);
+                const share = weight / totalWeight;
+                const childYSpan = availableY * share;
+                const childMaxY = currentMinY + childYSpan;
+
+                layoutHorizontal(child, currentMinY, childMaxY, level + 1, startX);
+                currentMinY = childMaxY;
+            });
+        }
+    };
+
+    // --- Layout 4: Compact (Sankey-ish) ---
+    const COMPACT_LEVEL_WIDTH = 250;
+    // Uses significantly tighter vertical packing
+    const layoutCompact = (node: any, minY: number, maxY: number, level: number, startX: number) => {
+        const y = minY + (maxY - minY) / 2;
+        const x = startX + (level * COMPACT_LEVEL_WIDTH);
+
+        positionedNodes.push({ ...node, x, y, level });
+
+        if (node.children.length > 0) {
+            let currentMinY = minY;
+            // Tighter packing logic
+            const totalLeaves = node.children.reduce((sum: any, child: any) => sum + child.leaves, 0);
+            const availableY = maxY - minY;
+
+            // Allocate space purely based on leaf count for maximum density
+            const heightPerLeaf = availableY / totalLeaves;
+
+            node.children.forEach((child: any) => {
+                const childHeight = child.leaves * heightPerLeaf;
+                const childMaxY = currentMinY + childHeight;
+
+                layoutCompact(child, currentMinY, childMaxY, level + 1, startX);
+                currentMinY = childMaxY;
+            });
+        }
+    };
+
     // Vertical Stacking Logic
     let currentRootY = INITIAL_Y;
     const treeSeparators: any[] = [];
@@ -260,7 +318,7 @@ const TreeVisualization = ({
             // }
             currentRootY += ROOT_SPACING_Y;
         });
-    } else {
+    } else if (activeLayout === 'layout2') {
         // Layout 2: Vertical
         let currentY = 150;
 
@@ -277,6 +335,35 @@ const TreeVisualization = ({
                 treeSeparators.push(treeBottom + 200);
             }
             currentY = treeBottom + 400;
+        });
+    } else if (activeLayout === 'layout3') {
+        // Layout 3: Horizontal
+        let currentX = 150;
+        roots.forEach((root: any, idx: any) => {
+            // Estimate height based on leaves - Increased for better spacing
+            const TREE_HEIGHT = Math.max(400, root.leaves * 70);
+
+            layoutHorizontal(root, currentRootY, currentRootY + TREE_HEIGHT, 0, currentX);
+
+            // Calculate separator
+            if (idx < roots.length - 1) {
+                treeSeparators.push(currentRootY + TREE_HEIGHT + 20);
+            }
+            currentRootY += TREE_HEIGHT + 40;
+        });
+    } else if (activeLayout === 'layout4') {
+        // Layout 4: Compact Pill
+        let currentX = 350;
+        roots.forEach((root: any, idx: any) => {
+            // Tighter height - Increased from 50 to 60 for safe spacing "pill" variant
+            const TREE_HEIGHT = Math.max(330, root.leaves * 45);
+
+            layoutCompact(root, currentRootY, currentRootY + TREE_HEIGHT, 0, currentX);
+
+            if (idx < roots.length - 1) {
+                treeSeparators.push(currentRootY + TREE_HEIGHT + 20);
+            }
+            currentRootY += TREE_HEIGHT + 40;
         });
     }
 
@@ -295,32 +382,33 @@ const TreeVisualization = ({
     }
 
     // Add Padding
-    const PADDING = activeLayout === 'layout1' ? 300 : 150;
+    const PADDING = 100; // Standardize padding
 
-    // Shift X if nodes are too far left (negative) or too close to 0 edge
-    // Original center was 1000.
-    const calculatedWidth = (maxX - minX) + (PADDING * 2);
-    const calculatedHeight = (maxY - minY) + (PADDING * 2);
+    // Calculate dimensions based on actual content range
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
 
-    const containerWidth = activeLayout === 'layout1' ? calculatedWidth + 500 : Math.max(2000, calculatedWidth);
-    const containerHeight = activeLayout === 'layout1' ? calculatedHeight : Math.max(4000, calculatedHeight);
+    const calculatedWidth = contentWidth + (PADDING * 2);
+    const calculatedHeight = contentHeight + (PADDING * 2);
 
-    // If minX is negative, we need to shift everyone right? 
-    // Or just ensure width accommodates it. 
-    // But if x is -500, and width is 3000, it will be off screen on left if origin is 0,0.
-    // We can let the user scroll to it, if the container is large enough and we start "center".
-    // The container "Scroll Content" usually starts at 0,0.
-    // It's better to normalize coordinates so minX >= PADDING.
-    const xOffset = minX < PADDING ? PADDING - minX : 0;
-    const yOffset = minY < PADDING ? PADDING - minY : 0;
+    // Apply strict sizing for horizontal layouts to ensure scroll works
+    // Added extra buffer to width/height to prevent clipping of labels or tooltips
+    const containerWidth = activeLayout === 'layout1' ? calculatedWidth + 500 : Math.max(calculatedWidth + 300, 1500);
+    const containerHeight = activeLayout === 'layout1' ? calculatedHeight : Math.max(calculatedHeight + 200, 1200);
 
-    if (xOffset > 0 || yOffset > 0) {
-        positionedNodes.forEach(n => {
-            if (xOffset > 0) n.x += xOffset;
-            if (yOffset > 0) n.y += yOffset;
-        });
-        // separators are just Y, no update needed
-        // Labels for vertical need update? Labels use rootNode.x, so they are updated through finding node.
+    // Normalize coordinates so content starts exactly at PADDING
+    const xOffset = PADDING - minX;
+    const yOffset = PADDING - minY;
+
+    // Apply offset to all nodes
+    positionedNodes.forEach(n => {
+        n.x += xOffset;
+        n.y += yOffset;
+    });
+
+    // Separators need separate offset update as they are just Y values
+    for (let i = 0; i < treeSeparators.length; i++) {
+        treeSeparators[i] += yOffset;
     }
 
     const lineColors = ["#ff9800", "#3f51b5", "#009688", "#e91e63"];
@@ -344,7 +432,7 @@ const TreeVisualization = ({
                             <span className="hidden sm:inline">{isFullScreen ? "Exit" : "Expand"}</span>
                         </button>
                         <div className="px-2 py-2.5 flex items-center gap-1 bg-slate-50/50 group-hover/layout:bg-white transition-colors">
-                            <span className="text-[10px] font-bold text-slate-400">LAYOUT {activeLayout === 'layout1' ? '1' : '2'}</span>
+                            <span className="text-[10px] font-bold text-slate-400">LAYOUT {activeLayout.replace('layout', '')}</span>
                             <ChevronDown size={14} className="text-slate-400 group-hover/layout:rotate-180 transition-transform duration-300" />
                         </div>
                     </div>
@@ -368,6 +456,24 @@ const TreeVisualization = ({
                                 }`}
                         >
                             Layout 2
+                        </button>
+                        <button
+                            onClick={() => handleLayoutChange("layout3")}
+                            className={`flex items-center justify-between w-full px-3 py-1.5 rounded-md text-[10px] font-bold tracking-wide uppercase transition-all ${activeLayout === "layout3"
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'
+                                }`}
+                        >
+                            Layout 3
+                        </button>
+                        <button
+                            onClick={() => handleLayoutChange("layout4")}
+                            className={`flex items-center justify-between w-full px-3 py-1.5 rounded-md text-[10px] font-bold tracking-wide uppercase transition-all ${activeLayout === "layout4"
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'
+                                }`}
+                        >
+                            Layout 4
                         </button>
                     </div>
                 </div>
@@ -434,7 +540,6 @@ const TreeVisualization = ({
                     {/* Stats Content */}
                     <div className="p-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75">
                         {/* Buffaloes */}
-                        {/* Buffaloes */}
                         <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
                             <span className="text-xs font-medium text-slate-500">Buffaloes</span>
                             <span className="text-sm font-black text-slate-800">{stats.count}</span>
@@ -450,7 +555,6 @@ const TreeVisualization = ({
                             </span>
                         </div>
 
-                        {/* Asset Value */}
                         {/* Asset Value */}
                         <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
                             <span className="text-xs font-medium text-slate-500">Asset Val</span>
@@ -523,31 +627,59 @@ const TreeVisualization = ({
             >
                 <div
                     ref={treeContainerRef}
-                    className="relative transition-all duration-500 ease-in-out flex items-center justify-center p-20"
+                    className="relative flex items-center justify-center p-20"
                     style={{
                         transform: `scale(${zoom})`,
-                        transformOrigin: 'center center',
+                        transformOrigin: 'top left',
                         width: `${containerWidth}px`,
                         height: `${containerHeight}px`,
                     }}
                 >
-                    <Xwrapper>
-                        {/* Edges */}
-                        {positionedNodes.map(node => {
+                    <Xwrapper key={activeLayout}>
+                        {/* Edges - Only render when showLines is true */}
+                        {showLines && positionedNodes.map(node => {
                             if (!node.parentId) return null;
                             const isVertical = activeLayout === 'layout2';
+                            const isHorizontal = activeLayout === 'layout3' || activeLayout === 'layout4';
+
+                            // Define anchors and path based on layout
+                            let startAnchor: any = "middle";
+                            let endAnchor: any = "middle";
+                            let path: any = "straight";
+                            let curveness = 0;
+                            let gridBreak = "50%";
+
+                            if (activeLayout === 'layout2') {
+                                // Vertical Tree - Orthogonal (Grid) lines look best
+                                startAnchor = "bottom";
+                                endAnchor = "top";
+                                path = "grid";
+                            } else if (activeLayout === 'layout3') {
+                                // Horizontal Tree - Orthogonal (Grid) lines look best
+                                startAnchor = "right";
+                                endAnchor = "left";
+                                path = "grid";
+                            } else if (activeLayout === 'layout4') {
+                                // Compact/Sankey - Smooth lines look best
+                                startAnchor = "right";
+                                endAnchor = "left";
+                                path = "smooth";
+                                curveness = 0.5;
+                            }
+
                             return (
                                 <Xarrow
-                                    key={`edge-${node.id}`}
+                                    key={`edge-${node.id}-${activeLayout}`}
                                     start={`buffalo-${node.parentId}`}
                                     end={`buffalo-${node.id}`}
-                                    color={isVertical ? (lineColors[(Math.max(0, node.level - 1)) % lineColors.length] || "#64748b") : "#64748b"}
-                                    strokeWidth={isVertical ? 2 : 1.5}
-                                    curveness={isVertical ? 0.4 : 0}
-                                    path={isVertical ? "smooth" : "straight"}
+                                    color={lineColors[(Math.max(0, node.level - 1)) % lineColors.length] || "#64748b"}
+                                    strokeWidth={activeLayout === 'layout4' ? 2.5 : 2}
+                                    curveness={curveness}
+                                    path={path}
+                                    gridBreak={gridBreak}
                                     showHead={false}
-                                    startAnchor={isVertical ? "bottom" : "middle"}
-                                    endAnchor={isVertical ? "top" : "middle"}
+                                    startAnchor={startAnchor}
+                                    endAnchor={endAnchor}
                                     dashness={false}
                                     zIndex={0}
                                 />
@@ -563,22 +695,39 @@ const TreeVisualization = ({
                             />
                         ))}
 
-                        {/* Tree Labels for Vertical Layout */}
-                        {activeLayout === 'layout2' && roots.map((root: any, idx: any) => {
+                        {/* Tree Labels for Vertical & Horizontal Layouts */}
+                        {(activeLayout === 'layout2' || activeLayout === 'layout3' || activeLayout === 'layout4') && roots.map((root: any, idx: any) => {
                             // Find root node in positionedNodes because we might have shifted X
                             const rootNode = positionedNodes.find(n => n.id === root.id);
                             if (!rootNode) return null;
+
+                            // Calculate Label Position
+                            let labelStyle: React.CSSProperties = {};
+                            if (activeLayout === 'layout2') {
+                                // Vertical: Center above
+                                labelStyle = {
+                                    left: rootNode.x,
+                                    top: rootNode.y - 100,
+                                    transform: 'translateX(-50%)'
+                                };
+                            } else {
+                                // Horizontal (3 & 4): Above, Left aligned or Centered on Root
+                                labelStyle = {
+                                    left: rootNode.x, // Align with root X
+                                    top: rootNode.y - 80, // Slightly closer than vertical layout
+                                    transform: 'translateX(-20%)', // Slight shift to center visually over root area
+                                    textAlign: 'left'
+                                };
+                            }
+
+
                             return (
                                 <div
                                     key={`label-${root.id}`}
-                                    className="absolute text-center z-20"
-                                    style={{
-                                        left: rootNode.x,
-                                        top: rootNode.y - 100,
-                                        transform: 'translateX(-50%)'
-                                    }}
+                                    className="absolute z-20"
+                                    style={labelStyle}
                                 >
-                                    <div className="text-sm font-black text-slate-800 uppercase tracking-wide">
+                                    <div className="text-sm font-black text-slate-800 uppercase tracking-wide whitespace-nowrap">
                                         Unit 1 - {root.id}
                                     </div>
                                     <div className="text-[10px] text-slate-500 font-medium whitespace-nowrap">
@@ -605,10 +754,114 @@ const TreeVisualization = ({
                                     founder={node.parentId === null}
                                     displayName={getBuffaloDisplayName(node)}
                                     elementId={`buffalo-${node.id}`}
+                                    variant={activeLayout === 'layout4' ? 'pill' : 'circle'}
+                                    tooltipPosition={activeLayout === 'layout4' ? 'right' : 'bottom'}
                                 />
                             </div>
                         ))}
                     </Xwrapper>
+
+                    {/* Generic Year/Generation Markers */}
+                    {(() => {
+                        if (positionedNodes.length === 0) return null;
+
+                        // Helper to format year text
+                        const getYearText = (nodes: any[]) => {
+                            const years = nodes.map(n => {
+                                // For Foundation (Gen 0), use the acquisition year (Start Year) instead of birth year
+                                if (n.generation === 0 && n.absoluteAcquisitionMonth) {
+                                    return Math.floor(n.absoluteAcquisitionMonth / 12);
+                                }
+                                return n.birthYear;
+                            }).filter(y => y);
+
+                            if (years.length === 0) return "";
+                            const min = Math.min(...years);
+                            const max = Math.max(...years);
+                            return min === max ? `${min}` : `${min}-${max}`;
+                        };
+
+                        // --- Horizontal Layouts (3 & 4) ---
+                        // Roots are stacked vertically (sharing X columns), so we can use Global Headers
+                        if (activeLayout === 'layout3' || activeLayout === 'layout4') {
+                            const maxLevel = Math.max(...positionedNodes.map(n => n.level));
+                            const markers = [];
+                            // Find global top Y for headers
+                            const minY = Math.min(...positionedNodes.map(n => n.y));
+
+                            for (let l = 0; l <= maxLevel; l++) {
+                                const nodesInLevel = positionedNodes.filter(n => n.level === l);
+                                if (nodesInLevel.length === 0) continue;
+
+                                // In these layouts, X is consistent for a level
+                                const avgX = nodesInLevel[0].x;
+                                const yearText = getYearText(nodesInLevel);
+                                const label = l === 0 ? 'Foundation' : `Gen ${l}`;
+
+                                markers.push(
+                                    <div key={`header-${l}`}
+                                        className="absolute text-center z-10"
+                                        style={{
+                                            left: avgX,
+                                            top: minY - 40, // Consistent top placement
+                                            transform: 'translate(-50%, -100%)',
+                                            minWidth: 100
+                                        }}
+                                    >
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</div>
+                                        <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full inline-block shadow-sm">
+                                            {yearText}
+                                        </div>
+                                        {/* Vertical Grid Line suggestion */}
+                                        <div className="absolute top-full left-1/2 w-px h-[2000px] bg-slate-50/0 pointer-events-none" />
+                                    </div>
+                                );
+                            }
+                            return markers;
+                        }
+
+                        // --- Vertical Layout (2) ---
+                        // Roots are stacked vertically, so each tree needs its own side labels
+                        if (activeLayout === 'layout2') {
+                            return roots.map((root: any) => {
+                                const treeNodes = positionedNodes.filter(n => n.rootId === root.id || n.id === root.id);
+                                if (treeNodes.length === 0) return null;
+
+                                const maxLevel = Math.max(...treeNodes.map(n => n.level));
+                                // Place labels to the left of this tree's leftmost node
+                                const minTreeX = Math.min(...treeNodes.map(n => n.x));
+
+                                const labels = [];
+                                for (let l = 0; l <= maxLevel; l++) {
+                                    const levelNodes = treeNodes.filter(n => n.level === l);
+                                    if (levelNodes.length === 0) continue;
+
+                                    // In Layout 2, Y is consistent for a level within a tree
+                                    const avgY = levelNodes[0].y;
+                                    const yearText = getYearText(levelNodes);
+                                    const label = l === 0 ? 'Foundation' : `Gen ${l}`;
+
+                                    labels.push(
+                                        <div key={`row-label-${root.id}-${l}`}
+                                            className="absolute text-right z-10 flex flex-col items-end justify-center"
+                                            style={{
+                                                left: minTreeX - 25,
+                                                top: avgY,
+                                                transform: 'translate(-100%, -50%)',
+                                                paddingRight: '12px'
+                                            }}
+                                        >
+                                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wide whitespace-nowrap mb-0.5">{label}</div>
+                                            <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md whitespace-nowrap shadow-sm border border-indigo-100">{yearText}</div>
+                                        </div>
+                                    );
+                                }
+                                return <React.Fragment key={`markers-${root.id}`}>{labels}</React.Fragment>;
+                            });
+                        }
+
+                        return null;
+                    })()}
                 </div>
             </div>
         </div>

@@ -3,15 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { Play, RotateCcw, Calendar, Loader2, ToggleLeft, ToggleRight, LayoutGrid, ChevronDown } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { formatCurrency, formatLargeCurrency } from './CommonComponents';
-import algorithmConfig from '../../algorithms.json';
+import { formatCurrency, SimpleTooltip } from './CommonComponents';
+import OrgTreeIcon from './OrgTreeIcon';
 
 
 const HeaderControls = ({
     units,
     setUnits,
-    durationMonths,
-    setDurationMonths,
+    years,
+    setYears,
+    endMonth,
+    setEndMonth,
     startYear,
     setStartYear,
     startMonth,
@@ -26,12 +28,16 @@ const HeaderControls = ({
     headerStats,
     activeTab,
     setActiveTab,
-    isViewRestricted
+    isCGFEnabled,
+    setIsCGFEnabled,
+    isViewRestricted,
 }: {
     units: number;
     setUnits: (val: number) => void;
-    durationMonths: number;
-    setDurationMonths: (val: number) => void;
+    years: number;
+    setYears: (val: number) => void;
+    endMonth: number;
+    setEndMonth: (val: number) => void;
     startYear: number;
     setStartYear: (val: number) => void;
     startMonth: number;
@@ -46,6 +52,8 @@ const HeaderControls = ({
     headerStats: any;
     activeTab: string;
     setActiveTab: (val: string) => void;
+    isCGFEnabled: boolean;
+    setIsCGFEnabled: (val: boolean) => void;
     isViewRestricted?: boolean;
 }) => {
     const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -54,81 +62,51 @@ const HeaderControls = ({
     // Generate days array based on days in month
     const dayOptions = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-    const [isCGFEnabled, setIsCGFEnabled] = useState(false);
 
-    // Calculate Initial Stats based on Units (Dynamic)
-    const motherPrice = algorithmConfig.assetValue.motherPrice;
-    const cpfPerUnit = algorithmConfig.cpf.annualCostPerUnit;
-
-    // Per Unit: 2 Mothers + 1 CPF Unit Cost?
-    // Logic from CostEstimationTable: motherBuffaloCost = units * 2 * MOTHER_BUFFALO_PRICE
-    // cpfCost = units * CPF_PER_UNIT
-
-    const initialBuffaloCost = (units || 0) * 2 * motherPrice;
-    const initialCpfCost = (units || 0) * cpfPerUnit;
-    const totalInitialInvestment = initialBuffaloCost + initialCpfCost;
-
-
+    // Handle number input changes to prevent showing 0 when empty
     const handleNumberChange = (value: string | number, setter: (val: any) => void) => {
         if (value === '' || isNaN(Number(value))) {
-            setter(''); // Allow empty string state for editing
+            setter('');
         } else {
-            const num = parseInt(value.toString(), 10);
-            if (num > 999) setter(999);
-            else setter(num);
-        }
-    };
-
-    const handleBlur = (setter: (val: any) => void, val: any, defaultVal: number = 1) => {
-        if (!val || val < 1) {
-            setter(defaultVal);
-        } else {
-            // ensure integer
-            setter(Math.floor(Number(val)));
+            let num = parseInt(value.toString(), 10);
+            if (num > 999) num = 999;
+            setter(num);
         }
     };
 
     // Auto-run simulation on inputs change
     useEffect(() => {
         runSimulation();
-    }, [units, durationMonths, startYear, startMonth, startDay]);
+    }, [units, years, endMonth, startYear, startMonth, startDay]);
 
     return (
-        <div className="bg-white border-b border-slate-200 px-2 py-1.5 sm:px-4 sm:py-2 pb-1.5 sm:pb-2 z-[80] relative">
-            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center lg:justify-between gap-1 sm:gap-2">
+        <div className="bg-white border-b border-slate-200 px-4 py-3 pb-8 z-[80] relative">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
 
                 {/* Left Section: Configuration & Actions */}
-                <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex items-center gap-4">
 
-                    {/* Unified Left Card */}
-                    <div className="flex items-center bg-white border border-slate-100 rounded-xl px-1 sm:px-2 py-1 shadow-sm h-full min-h-[32px] sm:min-h-[36px]">
+                    {/* Configuration Group */}
+                    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 shadow-sm">
 
                         {/* Units Input */}
-                        <div className="flex flex-col items-center px-0.5 sm:px-1 min-w-[2.5rem] sm:min-w-[3rem]">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Units</span>
-                            <div className="flex items-center">
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="999"
-                                    className="w-10 sm:w-14 bg-transparent text-xs sm:text-sm font-bold text-slate-700 text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    value={units}
-                                    onWheel={(e) => (e.target as HTMLElement).blur()}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        // Strictly prevent negative values
-                                        if (val.includes('-')) return;
-                                        handleNumberChange(val, setUnits);
-                                    }}
-                                    onBlur={() => handleBlur(setUnits, units, 1)}
-                                />
-                            </div>
+                        <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Units</span>
+                            <input
+                                type="number"
+                                min="1"
+                                max="999"
+                                className="w-12 bg-white/50 border border-slate-200 rounded px-1 text-sm font-semibold text-slate-700 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                value={units || ''}
+                                onChange={(e) => handleNumberChange(e.target.value, setUnits)}
+                                placeholder="1-999"
+                            />
                         </div>
 
                         {/* Start Date Picker */}
-                        <div className="flex flex-col items-center px-0.5 sm:px-1 min-w-[3.5rem] sm:min-w-[4rem]">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Start</span>
-                            <div className="relative w-20 sm:w-24 flex justify-center">
+                        <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200 relative">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start</span>
+                            <div className="relative w-24">
                                 <DatePicker
                                     selected={new Date(startYear, startMonth, 1)}
                                     onChange={(date: Date | null) => {
@@ -136,13 +114,12 @@ const HeaderControls = ({
                                             setStartYear(date.getFullYear());
                                             setStartMonth(date.getMonth());
                                             setStartDay(1);
-                                            setDurationMonths(120); // Reset to 10 years logic
                                         }
                                     }}
                                     minDate={new Date(2026, 0, 1)}
                                     dateFormat="MMM yyyy"
                                     showMonthYearPicker
-                                    className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-700 cursor-pointer focus:outline-none text-center hover:text-indigo-600 transition-colors"
+                                    className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
                                     placeholderText="Select"
                                     onKeyDown={(e) => e.preventDefault()}
                                     popperClassName="!z-[100]"
@@ -151,36 +128,27 @@ const HeaderControls = ({
                             </div>
                         </div>
 
-                        {/* End Date Picker - Month/Year Selection */}
-                        <div className="flex flex-col items-center px-0.5 sm:px-1 min-w-[3.5rem] sm:min-w-[4rem]">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">End Date</span>
-                            <div className="relative w-20 sm:w-24 flex justify-center">
+                        {/* End Date Picker - Swapped Position & DatePicker added */}
+                        <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200 relative">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">End</span>
+                            <div className="relative w-24">
                                 <DatePicker
-                                    selected={(() => {
-                                        const endDate = new Date(startYear, startMonth + durationMonths - 1); // -1 because duration includes start month
-                                        return endDate;
-                                    })()}
+                                    selected={new Date(startYear + (isNaN(years) ? 0 : years - 1), endMonth, 1)}
                                     onChange={(date: Date | null) => {
                                         if (date) {
                                             const selectedYear = date.getFullYear();
                                             const selectedMonth = date.getMonth();
-
-                                            // Diff in months: (SelectedY - StartY)*12 + (SelectedM - StartM) + 1
-                                            // +1 because if start Jan, end Jan, that's 1 month duration.
-                                            let newDuration = ((selectedYear - startYear) * 12) + (selectedMonth - startMonth) + 1;
-
-                                            // Constants
-                                            const MIN_DURATION = 37; // 3 years locking (Earliest exit Jan 2029)
-                                            const MAX_DURATION = 120; // 10 years
-
-                                            setDurationMonths(Math.max(MIN_DURATION, Math.min(MAX_DURATION, newDuration)));
+                                            const newYears = selectedYear - startYear + 1;
+                                            setYears(newYears);
+                                            setEndMonth(selectedMonth);
                                         }
                                     }}
-                                    minDate={new Date(startYear, startMonth + 36)} // 3 years locking (Starts from 37th month)
-                                    maxDate={new Date(startYear, startMonth + 119)} // 10 years - 1 month
-                                    showMonthYearPicker
+                                    minDate={new Date(startYear + 3, 0, 1)}
+                                    maxDate={new Date(startYear + 9, 11, 1)}
                                     dateFormat="MMM yyyy"
-                                    className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-700 cursor-pointer focus:outline-none text-center hover:text-indigo-600 transition-colors"
+                                    showMonthYearPicker
+                                    className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
+                                    placeholderText="Select"
                                     onKeyDown={(e) => e.preventDefault()}
                                     popperClassName="!z-[100]"
                                     popperPlacement="bottom-start"
@@ -188,79 +156,125 @@ const HeaderControls = ({
                             </div>
                         </div>
 
-                        {/* Initial Investment & CPF Combined */}
-                        <div className="flex flex-col items-center px-0.5 sm:px-1">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Initial Inv</span>
-                            <div className="flex flex-col items-center leading-none">
-                                <span className="text-xs sm:text-sm font-black text-slate-800">{formatLargeCurrency(totalInitialInvestment)}</span>
-                                <span className="text-[8px] sm:text-[9px] font-bold text-blue-600 mt-0 whitespace-nowrap">CPF: {formatLargeCurrency(initialCpfCost)}</span>
-                            </div>
+                        {/* Duration (Years) Input - Swapped Position */}
+                        <div className="flex items-center gap-1 px-1 py-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Years</span>
+                            <input
+                                type="number"
+                                min="4"
+                                max="10"
+                                className="w-10 bg-white/50 border border-slate-200 rounded px-1 text-sm font-semibold text-slate-700 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                value={years || ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '') {
+                                        setYears(NaN);
+                                    } else {
+                                        let num = parseInt(val, 10);
+                                        if (!isNaN(num)) {
+                                            if (num > 10) num = 10;
+                                            if (num < 4) num = 4;
+                                            setYears(num);
+                                        }
+                                    }
+                                }}
+                                placeholder="4-10"
+                            />
                         </div>
 
                     </div>
+
                     {/* Run Button */}
 
                 </div>
 
-
                 {/* Center Section: View Toggle */}
-                {treeData && !isViewRestricted && (
-                    <div className="bg-white p-0.5 sm:p-1 rounded-xl border border-slate-100 shadow-sm flex items-center gap-0.5 sm:gap-1">
+                {treeData && (
+                    <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner">
                         <button
-                            className={`px-2 py-0.5 sm:px-3 sm:py-1 text-[8px] sm:text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200 flex flex-col items-center leading-none gap-0.5 ${activeTab === "familyTree"
-                                ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100'
-                                : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-50'
+                            disabled={isViewRestricted}
+                            className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
+                                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                                : isViewRestricted ? 'opacity-50 cursor-not-allowed text-slate-400' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
                                 }`}
                             onClick={() => setActiveTab("familyTree")}
                         >
-                            <span>Tree</span>
-                            <span>View</span>
+                            {/* <OrgTreeIcon className="w-5 h-5" /> */}
+                            <img src="/tree.png" alt="tree" className="w-7 h-7" />
+                            {/* Floating Tooltip */}
+                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                                Tree View
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-slate-800"></span>
+                            </span>
                         </button>
                         <button
-                            className={`px-2 py-0.5 sm:px-3 sm:py-1 text-[8px] sm:text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200 flex flex-col items-center leading-none gap-0.5 ${activeTab === "costEstimation"
-                                ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100'
-                                : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-50'
+                            className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
+                                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                                : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
                                 }`}
                             onClick={() => setActiveTab("costEstimation")}
                         >
-                            <span>Revenue</span>
-                            <span>Projections</span>
+                            {/* <span className="text-base leading-none">📊</span> */}
+                            <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
+                            {/* Floating Tooltip */}
+                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                                Revenue Projections
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-slate-800"></span>
+                            </span>
                         </button>
-
                     </div>
                 )}
 
                 {/* Right Section: Summary Stats */}
                 {treeData && treeData.summaryStats && (
-                    <div className="flex items-center gap-2 sm:gap-3 bg-white px-1.5 sm:px-2 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 min-h-[32px] sm:min-h-[36px]">
+                    <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm">
 
+                        <SimpleTooltip content={`Total buffaloes after ${years} years`} placement="bottom">
+                            <div className="flex flex-col items-center cursor-default">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
+                                <span className="text-sm font-black text-slate-800">
+                                    {activeTab === "costEstimation" && headerStats?.totalBuffaloes !== undefined
+                                        ? headerStats.totalBuffaloes
+                                        : treeData.summaryStats.totalBuffaloes}
+                                </span>
+                            </div>
+                        </SimpleTooltip>
 
-
-
-
-                        <div className="flex flex-col items-center">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Buffaloes</span>
-                            <span className="text-xs sm:text-sm font-black text-slate-800">{treeData.summaryStats.totalBuffaloes}</span>
-                        </div>
-
-                        <div className="w-px h-6 sm:h-8 bg-slate-200" />
+                        <div className="w-px h-8 bg-slate-200" />
 
                         {/* Asset Value - Added */}
-                        <div className="flex flex-col items-center">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Asset Val</span>
-                            <span className="text-xs sm:text-sm font-black text-blue-600">{formatLargeCurrency(treeData.summaryStats.totalAssetValue)}</span>
-                        </div>
+                        <SimpleTooltip content="Buffaloes asset value" placement="bottom">
+                            <div className="flex flex-col items-center cursor-default">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Value</span>
+                                <span className="text-sm font-black text-blue-600">
+                                    {formatCurrency(activeTab === "costEstimation" && headerStats?.totalAssetValue !== undefined
+                                        ? headerStats.totalAssetValue
+                                        : treeData.summaryStats.totalAssetValue)}
+                                </span>
+                            </div>
+                        </SimpleTooltip>
 
-                        <div className="w-px h-6 sm:h-8 bg-slate-200" />
+                        <div className="w-px h-8 bg-slate-200" />
 
-                        <div className="flex flex-col items-center">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">
-                                {isCGFEnabled ? "Net (-(CPF+CGF))" : "Net (-CPF)"}
-                            </span>
-                            <span className={`text-xs sm:text-sm font-black ${isCGFEnabled ? 'text-emerald-600' : 'text-emerald-600'}`}>
-                                {formatLargeCurrency(isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)}
-                            </span>
-                        </div>
+                        <SimpleTooltip
+                            content={isCGFEnabled ? `Total Recurring Revenue - (CPF +CGF)` : `Total Recurring Revenue - CPF`}
+                            placement="bottom"
+                            className="whitespace-nowrap max-w-none"
+                        >
+                            <div className="flex flex-col items-center cursor-default">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                    {isCGFEnabled ? "Net (-(CPF+CGF))" : "Net (-CPF)"}
+                                </span>
+                                <span className="text-sm font-black text-emerald-600">
+                                    {formatCurrency(
+                                        activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
+                                            ? (isCGFEnabled ? headerStats.cumulativeNetRevenueWithCaring || headerStats.cumulativeNetRevenue : headerStats.cumulativeNetRevenue)
+                                            : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)
+                                    )}
+                                </span>
+                            </div>
+                        </SimpleTooltip>
+
 
                         {/* CGF Toggle - Integrated */}
                         <button
@@ -268,23 +282,26 @@ const HeaderControls = ({
                             className={`flex items-center justify-center p-1.5 rounded-full transition-all ${isCGFEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                             title={isCGFEnabled ? "Disable CGF Mode" : "Enable CGF Mode"}
                         >
-                            <span className="text-[8px] sm:text-[9px] font-bold uppercase mr-1.5">CGF</span>
+                            <span className="text-[9px] font-bold uppercase mr-1.5">CGF</span>
                             <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 relative ${isCGFEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}>
                                 <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${isCGFEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                             </div>
                         </button>
 
-                        <div className="w-px h-6 sm:h-8 bg-slate-200" />
+                        <div className="w-px h-8 bg-slate-200" />
 
-                        <div className="flex flex-col items-center">
-                            <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0">Total ROI</span>
-                            <span className="text-xs sm:text-sm font-black text-slate-900">
-                                {formatLargeCurrency(
-                                    (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) +
-                                    treeData.summaryStats.totalAssetValue
-                                )}
-                            </span>
-                        </div>
+                        <SimpleTooltip content="Total Projected Revenue" placement="bottom">
+                            <div className="flex flex-col items-center cursor-default">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total PR</span>
+                                <span className="text-sm font-black text-slate-900">
+                                    {formatCurrency(
+                                        activeTab === "costEstimation" && headerStats
+                                            ? (isCGFEnabled ? (headerStats.cumulativeNetRevenueWithCaring ?? headerStats.cumulativeNetRevenue) : headerStats.cumulativeNetRevenue) + headerStats.totalAssetValue
+                                            : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) + treeData.summaryStats.totalAssetValue
+                                    )}
+                                </span>
+                            </div>
+                        </SimpleTooltip>
 
 
 

@@ -133,13 +133,8 @@ export const calculateMonthlyRevenueForBuffalo = (acquisitionMonth: number, curr
 
 export const calculateYearlyCPFCost = (treeData: any, buffaloDetails: any, calculateAgeInMonths: (buffalo: any, y: number, m: number) => number) => {
     const cpfCostByYear: any = {};
-    const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
-    const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
-    const absoluteEnd = absoluteStart + totalSimMonths - 1;
-    const endYearVal = Math.floor(absoluteEnd / 12);
-    const durationYears = endYearVal - treeData.startYear + 1;
 
-    for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
+    for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
         let totalCPFCost = 0;
 
         for (let unit = 1; unit <= treeData.units; unit++) {
@@ -149,7 +144,7 @@ export const calculateYearlyCPFCost = (treeData: any, buffaloDetails: any, calcu
 
             unitBuffaloes.forEach((buffalo: any) => {
                 if (buffalo.id === 'M1') {
-                    unitCPFCost += 13000;
+                    unitCPFCost += 15000;
                 }
                 else if (buffalo.id === 'M2') {
                     // No CPF
@@ -157,7 +152,7 @@ export const calculateYearlyCPFCost = (treeData: any, buffaloDetails: any, calcu
                 else if (buffalo.generation === 1 || buffalo.generation === 2) {
                     const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
                     if (ageInMonths >= 36) {
-                        unitCPFCost += 13000;
+                        unitCPFCost += 15000;
                     }
                 }
             });
@@ -173,7 +168,7 @@ export const calculateYearlyCPFCost = (treeData: any, buffaloDetails: any, calcu
 
 export const calculateInitialInvestment = (treeData: any) => {
     const MOTHER_BUFFALO_PRICE = 175000;
-    const CPF_PER_UNIT = 13000;
+    const CPF_PER_UNIT = 15000;
     const motherBuffaloCost = treeData.units * 2 * MOTHER_BUFFALO_PRICE;
     const cpfCost = treeData.units * CPF_PER_UNIT;
     return {
@@ -199,13 +194,7 @@ export const calculateDetailedMonthlyRevenue = (
     const investorMonthlyRevenue: any = {};
     const buffaloValuesByYear: any = {};
 
-    const totalSimMonths = Math.min(120, treeData.durationMonths || (treeData.years * 12));
-    const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
-    const absoluteEnd = absoluteStart + totalSimMonths - 1;
-    const endYearVal = Math.floor(absoluteEnd / 12);
-    const durationYears = endYearVal - treeData.startYear + 1;
-
-    for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
+    for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
         monthlyRevenue[year] = {};
         investorMonthlyRevenue[year] = {};
         buffaloValuesByYear[year] = {};
@@ -217,7 +206,7 @@ export const calculateDetailedMonthlyRevenue = (
     }
 
     Object.values(buffaloDetails).forEach((buffalo: any) => {
-        for (let year = treeData.startYear; year < treeData.startYear + durationYears; year++) {
+        for (let year = treeData.startYear; year <= treeData.startYear + treeData.years; year++) {
             const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
 
             if (!buffaloValuesByYear[year][buffalo.id]) {

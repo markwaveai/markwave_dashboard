@@ -203,3 +203,55 @@ export interface CreateFarmRequest {
   strength: number;
   status: string;
 }
+
+export interface SelfBenefit {
+  id: string;
+  title: string;
+  description: string;
+  units_required: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSelfBenefitRequest {
+  id?: string;
+  title: string;
+  description: string;
+  units_required: number;
+  is_active: boolean;
+}
+export interface ReferralMilestone {
+  id: string;
+  threshold: number;
+  reward: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateReferralMilestoneRequest {
+  threshold: number;
+  reward: string;
+  description?: string;
+  is_active: boolean;
+}
+
+export interface ReferralConfig {
+  stage1_percentage: number;
+  stage2_percentage: number;
+  stage1_active: boolean;
+  stage2_active: boolean;
+  is_global_active: boolean;
+  id: string;
+  updated_at: string;
+}
+
+export interface UpdateReferralConfigRequest {
+  stage1_percentage?: number;
+  stage2_percentage?: number;
+  stage1_active?: boolean;
+  stage2_active?: boolean;
+  is_global_active?: boolean;
+}
