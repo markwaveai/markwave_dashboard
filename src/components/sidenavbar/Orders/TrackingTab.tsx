@@ -36,7 +36,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
                         setRealTrackingData(data);
                     }
                 } catch (err) {
-                    console.error("Failed to fetch tracking", err);
+                    // Silently fail or handle error
                 } finally {
                     setTrackingLoading(false);
                 }
@@ -156,7 +156,6 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
                 alert(`Failed to update status: ${data.message}`);
             }
         } catch (err) {
-            console.error("Failed to update status", err);
             alert("Error updating status");
         } finally {
             setActionLoading(null);

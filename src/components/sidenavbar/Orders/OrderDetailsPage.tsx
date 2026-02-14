@@ -34,11 +34,8 @@ const OrderDetailsPage: React.FC = () => {
 
     // Find order in current list
     const foundEntry = useMemo(() => {
-        console.log('OrderDetailsPage Debug V2: orderId param:', orderId);
         if (!pendingUnits || !orderId) return null;
-        const found = pendingUnits.find((u: any) => u.order?.id === orderId);
-        console.log('Found entry in standard list:', found ? 'Yes' : 'No');
-        return found;
+        return pendingUnits.find((u: any) => u.order?.id === orderId);
     }, [pendingUnits, orderId]);
 
     useEffect(() => {

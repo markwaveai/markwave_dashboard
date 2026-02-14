@@ -166,9 +166,10 @@ export const farmService = {
 };
 
 export const selfBenefitService = {
-  getSelfBenefits: async (): Promise<SelfBenefit[]> => {
+  getSelfBenefits: async (farmId?: string): Promise<SelfBenefit[]> => {
     try {
-      const response = await api.get<SelfBenefit[]>(API_ENDPOINTS.getSelfBenefits());
+      const params = farmId ? { farm_id: farmId } : {};
+      const response = await api.get<SelfBenefit[]>(API_ENDPOINTS.getSelfBenefits(), { params });
       return response.data || [];
     } catch (error) {
       console.error('Error fetching self benefits:', error);
@@ -242,9 +243,10 @@ export const selfBenefitService = {
 };
 
 export const referralBenefitService = {
-  getReferralMilestones: async (): Promise<ReferralMilestone[]> => {
+  getReferralMilestones: async (farmId?: string): Promise<ReferralMilestone[]> => {
     try {
-      const response = await api.get<ReferralMilestone[]>(API_ENDPOINTS.getReferralMilestones());
+      const params = farmId ? { farm_id: farmId } : {};
+      const response = await api.get<ReferralMilestone[]>(API_ENDPOINTS.getReferralMilestones(), { params });
       return response.data || [];
     } catch (error) {
       console.error('Error fetching referral milestones:', error);
@@ -272,9 +274,10 @@ export const referralBenefitService = {
 };
 
 export const referralConfigService = {
-  getReferralConfig: async (): Promise<ReferralConfig> => {
+  getReferralConfig: async (farmId?: string): Promise<ReferralConfig> => {
     try {
-      const response = await api.get<ReferralConfig>(API_ENDPOINTS.getReferralConfig());
+      const params = farmId ? { farm_id: farmId } : {};
+      const response = await api.get<ReferralConfig>(API_ENDPOINTS.getReferralConfig(), { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching referral config:', error);

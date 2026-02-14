@@ -4,7 +4,14 @@ import { selfBenefitService } from '../../../services/api';
 import BenefitModal from './CreateBenefitModal';
 import { SelfBenefit } from '../../../types';
 
-const SelfBenefitsList: React.FC = () => {
+interface SelfBenefitsListProps {
+    farmId?: string;
+    benefits?: SelfBenefit[];
+    loading?: boolean;
+    onRefresh?: () => void;
+}
+
+const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: propBenefits, loading: propLoading, onRefresh }) => {
     const [benefits, setBenefits] = useState<SelfBenefit[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -23,13 +30,15 @@ const SelfBenefitsList: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        fetchBenefits();
-    }, []);
+        if (farmId) {
+            fetchBenefits();
+        }
+    }, [farmId]);
 
     const fetchBenefits = async (silent = false) => {
         try {
             if (!silent) setLoading(true);
-            const data = await selfBenefitService.getSelfBenefits();
+            const data = await selfBenefitService.getSelfBenefits(farmId);
             setBenefits(data);
             setError(null);
         } catch (err) {
@@ -61,7 +70,11 @@ const SelfBenefitsList: React.FC = () => {
         try {
             const result = await selfBenefitService.updateGlobalStatus(status, adminMobile);
             if (!result.error) {
-                await fetchBenefits();
+                if (onRefresh) {
+                    onRefresh();
+                } else {
+                    await fetchBenefits();
+                }
                 setShowToggleConfirm(false);
             } else {
                 alert(result.error);
@@ -74,9 +87,12 @@ const SelfBenefitsList: React.FC = () => {
         }
     };
 
-    const filteredBenefits = benefits;
+    const displayBenefits = propBenefits || benefits;
+    const isLoading = propLoading !== undefined ? propLoading : loading;
 
-    if (loading) {
+    const filteredBenefits = displayBenefits;
+
+    if (isLoading) {
         return (
             <div className="flex flex-col h-full bg-[#f8fafc] p-10 min-h-screen items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#22c55e]"></div>
@@ -105,10 +121,10 @@ const SelfBenefitsList: React.FC = () => {
         );
     }
 
-    const anyActive = benefits.some(b => b.is_active);
+    const anyActive = displayBenefits.some(b => b.is_active);
 
     return (
-        <div className="flex flex-col bg-[#f4f7fa] p-6 font-sans">
+        <div className="flex flex-col bg-[#f4f7fa] p-6 font-sans min-h-full">
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
                 <div>
@@ -120,58 +136,67 @@ const SelfBenefitsList: React.FC = () => {
             </div>
 
             {/* Actions & Search Bar */}
-            <div className="bg-white p-4 rounded-[1.5rem] shadow-sm mb-6 border border-[#f1f5f9] flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    {anyActive ? (
-                        <button
-                            type="button"
-                            onClick={() => handleToggleAll(false)}
-                            disabled={globalActionLoading}
-                            className="flex items-center gap-2 bg-[#fef2f2] text-[#ef4444] px-5 py-2.5 rounded-xl font-bold hover:bg-[#fee2e2] border border-[#ef4444]/10 transition-all disabled:opacity-50 text-sm shadow-sm"
-                        >
-                            <XCircle size={16} fill="#ef4444" className="text-[#fef2f2]" />
-                            Disable All Benefits
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => handleToggleAll(true)}
-                            disabled={globalActionLoading}
-                            className="flex items-center gap-2 bg-[#ecfdf5] text-[#10b981] px-5 py-2.5 rounded-xl font-bold hover:bg-[#d1fae5] border border-[#10b981]/10 transition-all disabled:opacity-50 text-sm shadow-sm"
-                        >
-                            <CheckCircle2 size={16} fill="#10b981" className="text-[#ecfdf5]" />
-                            Activate All Benefits
-                        </button>
-                    )}
-                </div>
+            {filteredBenefits.length > 0 && (
+                <div className="bg-white p-4 rounded-[1.5rem] shadow-sm mb-6 border border-[#f1f5f9] flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        {anyActive ? (
+                            <button
+                                type="button"
+                                onClick={() => handleToggleAll(false)}
+                                disabled={globalActionLoading}
+                                className="flex items-center gap-2 bg-[#fef2f2] text-[#ef4444] px-5 py-2.5 rounded-xl font-bold hover:bg-[#fee2e2] border border-[#ef4444]/10 transition-all disabled:opacity-50 text-sm shadow-sm"
+                            >
+                                <XCircle size={16} fill="#ef4444" className="text-[#fef2f2]" />
+                                Disable All Benefits
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => handleToggleAll(true)}
+                                disabled={globalActionLoading}
+                                className="flex items-center gap-2 bg-[#ecfdf5] text-[#10b981] px-5 py-2.5 rounded-xl font-bold hover:bg-[#d1fae5] border border-[#10b981]/10 transition-all disabled:opacity-50 text-sm shadow-sm"
+                            >
+                                <CheckCircle2 size={16} fill="#10b981" className="text-[#ecfdf5]" />
+                                Activate All Benefits
+                            </button>
+                        )}
+                    </div>
 
-                <button
-                    type="button"
-                    onClick={() => {
-                        setSelectedBenefit(null);
-                        setIsModalOpen(true);
-                    }}
-                    className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-[#10b981]/10 active:scale-95 text-sm"
-                >
-                    <Plus size={18} strokeWidth={3} />
-                    Add New Benefit
-                </button>
-            </div>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSelectedBenefit(null);
+                            setIsModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-[#10b981]/10 active:scale-95 text-sm"
+                    >
+                        <Plus size={18} strokeWidth={3} />
+                        Add New Benefit
+                    </button>
+                </div>
+            )}
 
             {/* Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20">
-                {filteredBenefits.length === 0 ? (
-                    <div className="col-span-full flex flex-col items-center justify-center p-20 bg-white rounded-[2rem] border-2 border-dashed border-[#e2e8f0] text-center">
-                        <div className="w-20 h-20 bg-[#f8fafc] rounded-full flex items-center justify-center mb-6 text-[#94a3b8]">
-                            <Gift size={40} />
+            {filteredBenefits.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
+                    <div className="w-full max-w-lg flex flex-col items-center text-center p-10">
+                        <div className="w-24 h-24 bg-white rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-center mb-8 relative group">
+                            <div className="absolute inset-0 bg-gradient-to-tr from-[#10b981]/20 to-transparent rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                            <Gift size={48} className="text-[#10b981] relative z-10" strokeWidth={1.5} />
+                            <div className="absolute -top-2 -right-2 bg-[#ecfdf5] text-[#10b981] text-[10px] font-black px-2 py-1 rounded-full border border-[#10b981]/10 shadow-sm">
+                                EMPTY
+                            </div>
                         </div>
-                        <h3 className="text-xl font-bold text-[#1e293b] mb-2">No benefits available</h3>
-                        <p className="text-[#64748b] max-w-sm mx-auto font-medium">
-                            There are currently no active benefits to display. Start by adding one!
+
+                        <h3 className="text-3xl font-[900] text-[#1e293b] mb-4 tracking-tight">No Benefits Found</h3>
+                        <p className="text-[#64748b] text-lg font-medium leading-relaxed mb-4 max-w-md mx-auto">
+                            You haven't created any self-benefits yet. Start by adding rewards for your members based on their unit purchases.
                         </p>
                     </div>
-                ) : (
-                    filteredBenefits.map((benefit) => (
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20">
+                    {filteredBenefits.map((benefit) => (
                         <div
                             key={benefit.id}
                             className={`bg-white rounded-[1.5rem] shadow-sm border border-[#f1f5f9] p-5 flex items-center gap-6 relative group transition-all hover:shadow-xl hover:scale-[1.01]`}
@@ -225,7 +250,11 @@ const SelfBenefitsList: React.FC = () => {
                                                 adminMobile
                                             );
                                             if (!result.error) {
-                                                await fetchBenefits(true);
+                                                if (onRefresh) {
+                                                    onRefresh();
+                                                } else {
+                                                    await fetchBenefits(true);
+                                                }
                                             } else {
                                                 console.error(result.error);
                                             }
@@ -260,9 +289,9 @@ const SelfBenefitsList: React.FC = () => {
                                 </button>
                             </div>
                         </div>
-                    ))
-                )}
-            </div>
+                    ))}
+                </div>
+            )}
 
             <BenefitModal
                 isOpen={isModalOpen}
@@ -272,7 +301,11 @@ const SelfBenefitsList: React.FC = () => {
                     setSelectedBenefit(null);
                 }}
                 onSuccess={() => {
-                    fetchBenefits(true);
+                    if (onRefresh) {
+                        onRefresh();
+                    } else {
+                        fetchBenefits(true);
+                    }
                 }}
             />
         </div>

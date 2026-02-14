@@ -195,6 +195,8 @@ export interface Farm {
   currentUnits: number;
   availableUnits: number;
   status: 'ACTIVE' | 'INACTIVE' | 'FULL';
+  isSelfBenefitsActive: boolean;
+  isReferralBenefitsActive: boolean;
   createdAt: string;
 }
 
@@ -202,6 +204,8 @@ export interface CreateFarmRequest {
   location: string;
   strength: number;
   status: string;
+  isSelfBenefitsActive?: boolean;
+  isReferralBenefitsActive?: boolean;
 }
 
 export interface SelfBenefit {

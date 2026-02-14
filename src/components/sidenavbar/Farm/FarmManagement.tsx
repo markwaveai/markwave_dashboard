@@ -1,29 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Tractor,
     Package,
     PieChart,
     Bell,
-    Search,
     Pencil,
     Plus,
-    MapPin,
     Loader2
 } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
 import { farmService } from '../../../services/api';
 import { Farm, CreateFarmRequest } from '../../../types';
 import Snackbar from '../../common/Snackbar';
+import CreateFarmModal from './CreateFarmModal';
 
 const FarmManagement: React.FC = () => {
     const { adminMobile } = useAppSelector((state) => state.auth);
     const [farms, setFarms] = useState<Farm[]>([]);
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('--');
-    const [selectedFarmId, setSelectedFarmId] = useState<string | null>(null);
-    const locationInputRef = useRef<HTMLInputElement>(null);
+    const [processingAction, setProcessingAction] = useState<{ id: string, type: string } | null>(null);
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedFarm, setSelectedFarm] = useState<Farm | null>(null);
 
     // Snackbar state
     const [snackbar, setSnackbar] = useState<{ message: string | null; type: 'success' | 'error' | null }>({
@@ -31,22 +31,15 @@ const FarmManagement: React.FC = () => {
         type: null,
     });
 
-    // Form state
-    const [newFarm, setNewFarm] = useState({
-        location: '',
-        strength: '',
-        status: 'ACTIVE',
-    });
-
-    const fetchFarms = async () => {
+    const fetchFarms = async (showLoading = true) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const data = await farmService.getFarms(statusFilter);
             setFarms(data);
         } catch (error) {
             setSnackbar({ message: 'Failed to fetch farms', type: 'error' });
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
@@ -54,76 +47,81 @@ const FarmManagement: React.FC = () => {
         fetchFarms();
     }, [statusFilter]);
 
-    const handleAddFarm = async () => {
-        if (!newFarm.location || !newFarm.strength || !newFarm.status) {
-            setSnackbar({ message: 'Please fill in all fields', type: 'error' });
-            return;
-        }
+    const handleEditClick = (farm: Farm) => {
+        setSelectedFarm(farm);
+        setIsModalOpen(true);
+    };
 
+    const handleStatusToggle = async (farm: Farm) => {
         if (!adminMobile) {
             setSnackbar({ message: 'Admin mobile number not found. Please log in again.', type: 'error' });
             return;
         }
 
         try {
-            setSubmitting(true);
+            setProcessingAction({ id: farm.id, type: 'status' });
+            const newStatus = farm.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
             const farmData: CreateFarmRequest = {
-                location: newFarm.location,
-                strength: parseInt(newFarm.strength),
-                status: newFarm.status,
+                location: farm.location,
+                strength: farm.strength,
+                status: newStatus,
+                isSelfBenefitsActive: farm.isSelfBenefitsActive,
+                isReferralBenefitsActive: farm.isReferralBenefitsActive,
             };
 
-            let response;
-            if (selectedFarmId) {
-                response = await farmService.updateFarm(selectedFarmId, farmData, adminMobile);
-            } else {
-                response = await farmService.addFarm(farmData, adminMobile);
-            }
-
-            if (parseInt(newFarm.strength) <= 0) {
-                setSnackbar({ message: 'Capacity must be a positive number', type: 'error' });
-                return;
-            }
+            const response = await farmService.updateFarm(farm.id, farmData, adminMobile);
 
             if (response.error) {
                 setSnackbar({ message: response.error, type: 'error' });
             } else {
                 setSnackbar({
-                    message: selectedFarmId ? 'Farm updated successfully!' : 'Farm added successfully!',
+                    message: `Farm status updated to ${newStatus}!`,
                     type: 'success'
                 });
-                resetForm();
-                fetchFarms(); // Refresh list
+                await fetchFarms(false); // Silent refresh
             }
         } catch (error) {
             setSnackbar({ message: 'An unexpected error occurred', type: 'error' });
         } finally {
-            setSubmitting(false);
+            setProcessingAction(null);
         }
     };
 
-    const resetForm = () => {
-        setNewFarm({ location: '', strength: '', status: 'ACTIVE' });
-        setSelectedFarmId(null);
+    const handleBenefitToggle = async (farm: Farm, field: 'isSelfBenefitsActive' | 'isReferralBenefitsActive') => {
+        if (!adminMobile) {
+            setSnackbar({ message: 'Admin mobile number not found. Please log in again.', type: 'error' });
+            return;
+        }
+
+        try {
+            setProcessingAction({ id: farm.id, type: field });
+            const farmData: CreateFarmRequest = {
+                location: farm.location,
+                strength: farm.strength,
+                status: farm.status,
+                isSelfBenefitsActive: farm.isSelfBenefitsActive,
+                isReferralBenefitsActive: farm.isReferralBenefitsActive,
+                [field]: !farm[field]
+            };
+
+            const response = await farmService.updateFarm(farm.id, farmData, adminMobile);
+
+            if (response.error) {
+                setSnackbar({ message: response.error, type: 'error' });
+            } else {
+                setSnackbar({
+                    message: `${field === 'isSelfBenefitsActive' ? 'Self Benefits' : 'Referral Benefits'} updated!`,
+                    type: 'success'
+                });
+                await fetchFarms(false);
+            }
+        } catch (error) {
+            setSnackbar({ message: 'An unexpected error occurred', type: 'error' });
+        } finally {
+            setProcessingAction(null);
+        }
     };
 
-    const handleEditClick = (farm: Farm) => {
-        setNewFarm({
-            location: farm.location,
-            strength: farm.strength.toString(),
-            status: farm.status,
-        });
-        setSelectedFarmId(farm.id);
-        // Scroll to form and focus
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => {
-            locationInputRef.current?.focus();
-        }, 100);
-    };
-
-    const filteredFarms = farms.filter(farm =>
-        farm.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     const calculateStats = () => {
         const totalFarms = farms.length;
@@ -132,10 +130,10 @@ const FarmManagement: React.FC = () => {
         const remaining = globalCapacity - filled;
 
         return [
-            { title: 'Total Farms', value: totalFarms.toString(), icon: <Tractor size={20} />, color: 'bg-blue-50 text-blue-600' },
-            { title: 'Global Capacity', value: globalCapacity.toLocaleString(), subValue: 'Units', icon: <Package size={20} />, color: 'bg-blue-50 text-blue-600' },
-            { title: 'Filled', value: filled.toLocaleString(), subValue: 'Units', icon: <PieChart size={20} />, color: 'bg-blue-50 text-blue-600' },
-            { title: 'Remaining', value: remaining.toLocaleString(), subValue: 'Units', icon: <Bell size={20} />, color: 'bg-blue-50 text-blue-600' },
+            { title: 'Total Farms', value: totalFarms.toString(), icon: <Tractor size={16} />, color: 'bg-blue-50 text-blue-600' },
+            { title: 'Global Capacity', value: globalCapacity.toLocaleString(), subValue: 'Units', icon: <Package size={16} />, color: 'bg-blue-50 text-blue-600' },
+            { title: 'Filled', value: filled.toLocaleString(), subValue: 'Units', icon: <PieChart size={16} />, color: 'bg-blue-50 text-blue-600' },
+            { title: 'Remaining', value: remaining.toLocaleString(), subValue: 'Units', icon: <Bell size={16} />, color: 'bg-blue-50 text-blue-600' },
         ];
     };
 
@@ -152,7 +150,7 @@ const FarmManagement: React.FC = () => {
     };
 
     return (
-        <div className="p-8 bg-[#f8fafc] min-h-screen">
+        <div className="p-8 bg-[#f8fafc] min-h-screen relative pb-24">
             <Snackbar
                 message={snackbar.message}
                 type={snackbar.type}
@@ -160,97 +158,23 @@ const FarmManagement: React.FC = () => {
             />
 
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-800 mb-2">Farm Management</h1>
-            </div>
-
-            {/* Add/Update Farm Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2 text-blue-600 font-semibold">
-                        <MapPin size={20} />
-                        <span>{selectedFarmId ? 'Update Farm ' : 'Add New Farm '}</span>
-                    </div>
-                    {selectedFarmId && (
-                        <button
-                            onClick={resetForm}
-                            className="text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors"
-                        >
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-600">Farm Location</label>
-                        <input
-                            ref={locationInputRef}
-                            type="text"
-                            placeholder="Enter location (e.g. Kurnool)"
-                            value={newFarm.location}
-                            onChange={(e) => setNewFarm({ ...newFarm, location: e.target.value })}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-600">Total Capacity (Units)</label>
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            placeholder="e.g. 5000"
-                            value={newFarm.strength}
-                            onChange={(e) => {
-                                const val = e.target.value.replace(/[^0-9]/g, '');
-                                setNewFarm({ ...newFarm, strength: val });
-                            }}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-600">Status</label>
-                        <select
-                            value={newFarm.status}
-                            onChange={(e) => setNewFarm({ ...newFarm, status: e.target.value })}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
-                        >
-                            <option value="ACTIVE">Active</option>
-                            <option value="INACTIVE">Inactive</option>
-                        </select>
-                    </div>
-
-                    <button
-                        onClick={handleAddFarm}
-                        disabled={submitting}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {submitting ? (
-                            <Loader2 size={20} className="animate-spin" />
-                        ) : selectedFarmId ? (
-                            <Pencil size={20} />
-                        ) : (
-                            <Plus size={20} />
-                        )}
-                        {selectedFarmId ? 'Update Farm' : 'Add Farm'}
-                    </button>
-                </div>
+            <div className="mb-8 flex items-center justify-between">
+                <h1 className="text-3xl font-bold text-slate-800">Farm Management</h1>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 {stats.map((stat, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className={`${stat.color} p-2 rounded-lg`}>
+                    <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className={`${stat.color} p-1.5 rounded-lg`}>
                                 {stat.icon}
                             </div>
-                            <span className="text-slate-500 font-medium text-sm">{stat.title}</span>
+                            <span className="text-slate-500 font-medium text-xs">{stat.title}</span>
                         </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-slate-800">{stat.value}</span>
-                            {stat.subValue && <span className="text-slate-400 text-sm">{stat.subValue}</span>}
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-xl font-bold text-slate-800">{stat.value}</span>
+                            {stat.subValue && <span className="text-slate-400 text-[10px]">{stat.subValue}</span>}
                         </div>
                     </div>
                 ))}
@@ -271,16 +195,6 @@ const FarmManagement: React.FC = () => {
                             <option value="INACTIVE">Inactive</option>
                             <option value="FULL">Full</option>
                         </select>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Filter farms..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 w-full md:w-64 transition-all"
-                            />
-                        </div>
                     </div>
                 </div>
 
@@ -290,7 +204,7 @@ const FarmManagement: React.FC = () => {
                             <Loader2 className="animate-spin text-blue-600" size={40} />
                             <p className="text-slate-500 font-medium">Loading farm inventory...</p>
                         </div>
-                    ) : filteredFarms.length === 0 ? (
+                    ) : farms.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
                             <div className="bg-slate-50 p-4 rounded-full text-slate-400">
                                 <Tractor size={40} />
@@ -303,15 +217,17 @@ const FarmManagement: React.FC = () => {
                                 <tr className="bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                                     <th className="px-6 py-4">Farm Location</th>
                                     <th className="px-6 py-4">Capacity Status</th>
-                                    <th className="px-6 py-4 text-center">Status</th>
-                                    <th className="px-6 py-4 text-center">Total Capacity</th>
+                                    <th className="px-6 py-4 text-center">Farm Status</th>
+                                    <th className="px-6 py-4 text-center">Self Benefit</th>
+                                    <th className="px-6 py-4 text-center">Referral Benefit</th>
+                                    <th className="px-6 py-4 text-center">Total Cap.</th>
                                     <th className="px-6 py-4 text-center">Onboarded</th>
                                     <th className="px-6 py-4 text-center">Remaining</th>
                                     <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {filteredFarms.map((farm) => {
+                                {farms.map((farm) => {
                                     const percentage = farm.strength > 0 ? ((farm.currentUnits || 0) / farm.strength) * 100 : 0;
                                     return (
                                         <tr key={farm.id} className="hover:bg-slate-50/50 transition-colors">
@@ -333,23 +249,63 @@ const FarmManagement: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-5 text-center">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${farm.status === 'ACTIVE'
-                                                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                                                    : farm.status === 'FULL'
-                                                        ? 'bg-orange-50 text-orange-600 border border-orange-100'
-                                                        : 'bg-slate-100 text-slate-500 border border-slate-200'
-                                                    }`}>
-                                                    {farm.status}
-                                                </span>
+                                                <button
+                                                    onClick={() => handleStatusToggle(farm)}
+                                                    disabled={processingAction?.id === farm.id && processingAction?.type === 'status'}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${farm.status === 'ACTIVE'
+                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                                        : farm.status === 'FULL'
+                                                            ? 'bg-orange-50 text-orange-600 border border-orange-100'
+                                                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                                        }`}
+                                                >
+                                                    {processingAction?.id === farm.id && processingAction?.type === 'status' ? (
+                                                        <Loader2 size={12} className="animate-spin" />
+                                                    ) : (
+                                                        farm.status
+                                                    )}
+                                                </button>
                                             </td>
-                                            <td className="px-6 py-5 text-center font-semibold text-slate-600">{farm.strength.toLocaleString()}</td>
-                                            <td className="px-6 py-5 text-center font-semibold text-slate-600">{(farm.currentUnits || 0).toLocaleString()}</td>
-                                            <td className="px-6 py-5 text-center font-bold text-blue-600">{farm.availableUnits.toLocaleString()}</td>
+                                            <td className="px-6 py-5 text-center">
+                                                <button
+                                                    onClick={() => handleBenefitToggle(farm, 'isSelfBenefitsActive')}
+                                                    disabled={processingAction?.id === farm.id && processingAction?.type === 'isSelfBenefitsActive'}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${farm.isSelfBenefitsActive
+                                                        ? 'bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100'
+                                                        : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
+                                                        }`}
+                                                >
+                                                    {processingAction?.id === farm.id && processingAction?.type === 'isSelfBenefitsActive' ? (
+                                                        <Loader2 size={12} className="animate-spin" />
+                                                    ) : (
+                                                        farm.isSelfBenefitsActive ? 'Enabled' : 'Disabled'
+                                                    )}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
+                                                <button
+                                                    onClick={() => handleBenefitToggle(farm, 'isReferralBenefitsActive')}
+                                                    disabled={processingAction?.id === farm.id && processingAction?.type === 'isReferralBenefitsActive'}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${farm.isReferralBenefitsActive
+                                                        ? 'bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100'
+                                                        : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
+                                                        }`}
+                                                >
+                                                    {processingAction?.id === farm.id && processingAction?.type === 'isReferralBenefitsActive' ? (
+                                                        <Loader2 size={12} className="animate-spin" />
+                                                    ) : (
+                                                        farm.isReferralBenefitsActive ? 'Enabled' : 'Disabled'
+                                                    )}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-5 text-center font-semibold text-slate-600 tracking-tight">{farm.strength.toLocaleString()}</td>
+                                            <td className="px-6 py-5 text-center font-semibold text-slate-600 tracking-tight">{(farm.currentUnits || 0).toLocaleString()}</td>
+                                            <td className="px-6 py-5 text-center font-bold text-blue-600 tracking-tight">{farm.availableUnits.toLocaleString()}</td>
                                             <td className="px-6 py-5">
-                                                <div className="flex items-center justify-end gap-2">
+                                                <div className="flex items-center justify-end">
                                                     <button
                                                         onClick={() => handleEditClick(farm)}
-                                                        className={`p-2 rounded-lg transition-all ${selectedFarmId === farm.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                                        className="p-2 rounded-lg transition-all text-slate-400 hover:text-blue-600 hover:bg-blue-50"
                                                     >
                                                         <Pencil size={18} />
                                                     </button>
@@ -360,12 +316,13 @@ const FarmManagement: React.FC = () => {
                                 })}
                             </tbody>
                         </table>
-                    )}
+                    )
+                    }
                 </div>
 
-                {!loading && filteredFarms.length > 0 && (
+                {!loading && farms.length > 0 && (
                     <div className="p-6 border-t border-slate-50 flex items-center justify-between">
-                        <span className="text-sm text-slate-500">Showing {filteredFarms.length} of {farms.length} farms</span>
+                        <span className="text-sm text-slate-500">Showing {farms.length} of {farms.length} farms</span>
                         <div className="flex items-center gap-2">
                             <button className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-600 border border-slate-200 rounded-lg disabled:opacity-50">
                                 Previous
@@ -380,6 +337,38 @@ const FarmManagement: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Add Farm Floating Button */}
+            <button
+                onClick={() => {
+                    setSelectedFarm(null);
+                    setIsModalOpen(true);
+                }}
+                className="fixed bottom-10 right-10 flex items-center gap-2 pl-4 pr-2 py-2 bg-blue-600 text-white rounded-full shadow-[0_12px_40px_rgba(37,99,235,0.35)] hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all z-40 group focus:outline-none"
+            >
+                <span className="font-bold text-xs tracking-wide">Add Farm</span>
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+            </button>
+
+            <CreateFarmModal
+                isOpen={isModalOpen}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedFarm(null);
+                }}
+                onSuccess={(msg) => {
+                    setSnackbar({ message: msg, type: 'success' });
+                    fetchFarms();
+                }}
+                initialData={selectedFarm ? {
+                    ...selectedFarm,
+                    strength: selectedFarm.strength.toString()
+                } : null}
+                isEditMode={!!selectedFarm}
+                adminMobile={adminMobile || undefined}
+            />
         </div>
     );
 };

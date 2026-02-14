@@ -6,9 +6,21 @@ import CreateReferralMilestoneModal from './CreateReferralMilestoneModal';
 
 interface ReferralBenefitsTabProps {
     isEmbedded?: boolean;
+    farmId?: string;
+    preloadedMilestones?: ReferralMilestone[];
+    preloadedConfig?: ReferralConfig | null;
+    externalLoading?: boolean;
+    onRefresh?: () => void;
 }
 
-const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = false }) => {
+const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
+    isEmbedded = false,
+    farmId,
+    preloadedMilestones,
+    preloadedConfig,
+    externalLoading,
+    onRefresh
+}) => {
     const [milestones, setMilestones] = useState<ReferralMilestone[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -21,15 +33,17 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
     const [processingId, setProcessingId] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchAllData();
-    }, []);
+        if (!preloadedMilestones && farmId) {
+            fetchAllData();
+        }
+    }, [farmId, preloadedMilestones]);
 
     const fetchAllData = async (silent = false) => {
         try {
             if (!silent) setLoading(true);
             const [milestoneData, configData] = await Promise.all([
-                referralBenefitService.getReferralMilestones(),
-                referralConfigService.getReferralConfig()
+                referralBenefitService.getReferralMilestones(farmId),
+                referralConfigService.getReferralConfig(farmId)
             ]);
             setMilestones(milestoneData || []);
             setConfig(configData);
@@ -49,7 +63,11 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                 console.error('Error updating config:', response.error);
                 return;
             }
-            setConfig(prev => prev ? { ...prev, ...updates } : null);
+            if (onRefresh) {
+                onRefresh();
+            } else {
+                setConfig(prev => prev ? { ...prev, ...updates } : null);
+            }
         } catch (err) {
             console.error('Error updating referral config:', err);
         }
@@ -75,7 +93,11 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
         return <Star size={24} strokeWidth={2.5} />;
     };
 
-    if (loading) {
+    const displayMilestones = preloadedMilestones || milestones;
+    const displayConfig = preloadedConfig || config;
+    const isLoading = externalLoading !== undefined ? externalLoading : loading;
+
+    if (isLoading) {
         return (
             <div className="flex flex-col h-full bg-[#f8fafc] p-10 min-h-screen items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#10b981]"></div>
@@ -119,15 +141,7 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                 <div>
                     <h3 className="text-xl font-black text-[#1e293b] tracking-tight leading-none mb-1">Coins rewards</h3>
                 </div>
-                <button
-                    onClick={() => updateConfig({ is_global_active: !config?.is_global_active })}
-                    className={`px-5 py-2.5 rounded-xl font-black text-[10px] tracking-widest uppercase transition-all shadow-lg active:scale-95 ${config?.stage1_active || config?.stage2_active
-                        ? 'bg-[#fef2f2] text-[#ef4444] border border-[#ef4444]/10 hover:bg-[#fee2e2]'
-                        : 'bg-[#ecfdf5] text-[#10b981] border border-[#10b981]/10 hover:bg-[#d1fae5]'
-                        }`}
-                >
-                    {config?.stage1_active || config?.stage2_active ? 'Disable Offers' : 'Activate all coins rewards'}
-                </button>
+
             </div>
 
             {/* Redesigned Commission Cards Grid */}
@@ -139,8 +153,8 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                         <button
                             onClick={() => {
                                 setEditingStage(1);
-                                setEditValue(config?.stage1_percentage?.toString() || '0');
-                                setEditActiveStatus(config?.stage1_active || false);
+                                setEditValue(displayConfig?.stage1_percentage?.toString() || '0');
+                                setEditActiveStatus(displayConfig?.stage1_active || false);
                             }}
                             className="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#10b981] transition-all"
                         >
@@ -148,18 +162,20 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                         </button>
                     </div>
                     <button
-                        onClick={() => updateConfig({
-                            stage1_active: !config?.stage1_active,
-                            stage1_percentage: config?.stage1_percentage
-                        })}
-                        className={`absolute top-4 right-4 w-8 h-4.5 rounded-full transition-all duration-500 relative ${config?.stage1_active ? 'bg-[#10b981] shadow-lg shadow-[#10b981]/10' : 'bg-slate-200'}`}
+                        onClick={() => {
+                            updateConfig({
+                                stage1_active: !displayConfig?.stage1_active,
+                                stage1_percentage: displayConfig?.stage1_percentage
+                            });
+                        }}
+                        className={`absolute top-4 right-4 w-8 h-4.5 rounded-full transition-all duration-500 relative ${displayConfig?.stage1_active ? 'bg-[#10b981] shadow-lg shadow-[#10b981]/10' : 'bg-slate-200'}`}
                     >
-                        <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-all duration-500 shadow-sm ${config?.stage1_active ? 'left-4' : 'left-0.5'}`} />
+                        <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-all duration-500 shadow-sm ${displayConfig?.stage1_active ? 'left-4' : 'left-0.5'}`} />
                     </button>
 
                     <div className="flex flex-col items-center justify-center pt-0.5 pb-2">
                         <div className="flex items-baseline gap-0.5">
-                            <span className="text-3xl font-[1000] text-[#1e293b] tracking-tighter leading-none">{config?.stage1_percentage}</span>
+                            <span className="text-3xl font-[1000] text-[#1e293b] tracking-tighter leading-none">{displayConfig?.stage1_percentage}</span>
                             <span className="text-sm font-black text-[#1e293b] mt-auto pb-0.5">%</span>
                         </div>
 
@@ -224,14 +240,16 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
 
                     <div className="border-t border-slate-50 pt-3 flex justify-center">
                         <button
-                            onClick={() => updateConfig({
-                                stage1_active: !config?.stage1_active,
-                                stage1_percentage: config?.stage1_percentage
-                            })}
-                            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase transition-all active:scale-95 ${config?.stage1_active ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                            onClick={() => {
+                                updateConfig({
+                                    stage1_active: !displayConfig?.stage1_active,
+                                    stage1_percentage: displayConfig?.stage1_percentage
+                                });
+                            }}
+                            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase transition-all active:scale-95 ${displayConfig?.stage1_active ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
                         >
-                            <div className={`w-1 h-1 rounded-full ${config?.stage1_active ? 'bg-[#10b981]' : 'bg-slate-300'}`} />
-                            {config?.stage1_active ? 'Active' : 'Inactive'}
+                            <div className={`w-1 h-1 rounded-full ${displayConfig?.stage1_active ? 'bg-[#10b981]' : 'bg-slate-300'}`} />
+                            {displayConfig?.stage1_active ? 'Active' : 'Inactive'}
                         </button>
                     </div>
                 </div>
@@ -243,8 +261,8 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                         <button
                             onClick={() => {
                                 setEditingStage(2);
-                                setEditValue(config?.stage2_percentage?.toString() || '0');
-                                setEditActiveStatus(config?.stage2_active || false);
+                                setEditValue(displayConfig?.stage2_percentage?.toString() || '0');
+                                setEditActiveStatus(displayConfig?.stage2_active || false);
                             }}
                             className="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#10b981] transition-all"
                         >
@@ -252,18 +270,20 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                         </button>
                     </div>
                     <button
-                        onClick={() => updateConfig({
-                            stage2_active: !config?.stage2_active,
-                            stage2_percentage: config?.stage2_percentage
-                        })}
-                        className={`absolute top-4 right-4 w-8 h-4.5 rounded-full transition-all duration-500 relative ${config?.stage2_active ? 'bg-[#10b981] shadow-lg shadow-[#10b981]/10' : 'bg-slate-200'}`}
+                        onClick={() => {
+                            updateConfig({
+                                stage2_active: !displayConfig?.stage2_active,
+                                stage2_percentage: displayConfig?.stage2_percentage
+                            });
+                        }}
+                        className={`absolute top-4 right-4 w-8 h-4.5 rounded-full transition-all duration-500 relative ${displayConfig?.stage2_active ? 'bg-[#10b981] shadow-lg shadow-[#10b981]/10' : 'bg-slate-200'}`}
                     >
-                        <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-all duration-500 shadow-sm ${config?.stage2_active ? 'left-4' : 'left-0.5'}`} />
+                        <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-all duration-500 shadow-sm ${displayConfig?.stage2_active ? 'left-4' : 'left-0.5'}`} />
                     </button>
 
                     <div className="flex flex-col items-center justify-center pt-0.5 pb-2">
                         <div className="flex items-baseline gap-0.5">
-                            <span className="text-3xl font-[1000] text-[#1e293b] tracking-tighter leading-none">{config?.stage2_percentage}</span>
+                            <span className="text-3xl font-[1000] text-[#1e293b] tracking-tighter leading-none">{displayConfig?.stage2_percentage}</span>
                             <span className="text-sm font-black text-[#1e293b] mt-auto pb-0.5">%</span>
                         </div>
 
@@ -328,14 +348,16 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
 
                     <div className="border-t border-slate-50 pt-3 flex justify-center">
                         <button
-                            onClick={() => updateConfig({
-                                stage2_active: !config?.stage2_active,
-                                stage2_percentage: config?.stage2_percentage
-                            })}
-                            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase transition-all active:scale-95 ${config?.stage2_active ? 'bg-[#ecfdf5] text-[#10b981] hover:bg-[#d1fae5]' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                            onClick={() => {
+                                updateConfig({
+                                    stage2_active: !displayConfig?.stage2_active,
+                                    stage2_percentage: displayConfig?.stage2_percentage
+                                });
+                            }}
+                            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase transition-all active:scale-95 ${displayConfig?.stage2_active ? 'bg-[#ecfdf5] text-[#10b981] hover:bg-[#d1fae5]' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
                         >
-                            <div className={`w-1 h-1 rounded-full ${config?.stage2_active ? 'bg-[#10b981]' : 'bg-slate-300'}`} />
-                            {config?.stage2_active ? 'Active' : 'Inactive'}
+                            <div className={`w-1 h-1 rounded-full ${displayConfig?.stage2_active ? 'bg-[#10b981]' : 'bg-slate-300'}`} />
+                            {displayConfig?.stage2_active ? 'Active' : 'Inactive'}
                         </button>
                     </div>
                 </div>
@@ -362,19 +384,18 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
             <div className="mt-6 relative">
                 <div className="overflow-x-auto custom-scrollbar pt-8 pb-16">
                     <div className="flex items-center gap-0 px-6 min-w-max relative">
-                        {milestones.length === 0 ? (
+                        {displayMilestones.length === 0 ? (
                             <div className="w-full h-96 flex flex-col items-center justify-center bg-white rounded-[3rem] border-4 border-dashed border-[#e2e8f0] text-center px-40 mx-4">
                                 <div className="w-24 h-24 bg-[#f8fafc] rounded-full flex items-center justify-center mb-8 text-[#94a3b8]">
                                     <Star size={48} className="opacity-40" />
                                 </div>
-                                <h3 className="text-2xl font-black text-[#1e293b] mb-3">Roadmap is empty</h3>
-                                <p className="text-[#64748b] max-w-sm mx-auto font-bold opacity-60">Start mapping out your referral program by adding the first milestone.</p>
+                                <h3 className="text-2xl font-black text-[#1e293b] mb-3">No Rewards Found</h3>
                             </div>
                         ) : (
-                            milestones.map((milestone: ReferralMilestone, index: number) => (
+                            displayMilestones.map((milestone: ReferralMilestone, index: number) => (
                                 <div key={milestone.id} className="flex items-center relative group/milestone">
                                     {/* Connecting Line */}
-                                    {index !== milestones.length - 1 && (
+                                    {index !== displayMilestones.length - 1 && (
                                         <div className={`absolute left-[calc(100%-1.5rem)] right-[-1.5rem] top-[45%] -translate-y-1/2 h-0.5 z-0 overflow-hidden transition-all duration-700 ${milestone.is_active ? 'bg-[#10b981]' : 'bg-[#e2e8f0]'}`}>
                                             <div className="w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
                                         </div>
@@ -420,7 +441,11 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                                                             description: milestone.description
                                                         });
                                                         if (!result.error) {
-                                                            await fetchAllData(true);
+                                                            if (onRefresh) {
+                                                                onRefresh();
+                                                            } else {
+                                                                await fetchAllData(true);
+                                                            }
                                                         }
                                                     } catch (err) {
                                                         console.error("Failed to toggle status", err);
@@ -460,9 +485,6 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                 </div>
             </div>
 
-            {/* Indirect Referral Rewards Title Section */}
-
-
             <div className="pb-32" />
 
             <CreateReferralMilestoneModal
@@ -473,7 +495,11 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = 
                     setSelectedMilestone(null);
                 }}
                 onSuccess={() => {
-                    fetchAllData(true);
+                    if (onRefresh) {
+                        onRefresh();
+                    } else {
+                        fetchAllData(true);
+                    }
                 }}
             />
 

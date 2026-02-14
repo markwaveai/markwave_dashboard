@@ -15,10 +15,12 @@ import {
     setActiveUnitIndex,
     approveOrder,
     rejectOrder,
-    fetchStatusCounts,
+    setFarmFilter,
 } from '../../../store/slices/ordersSlice';
 import { setProofModal, setApprovalModal, setSnackbar } from '../../../store/slices/uiSlice';
 import Pagination from '../../common/Pagination';
+import { farmService } from '../../../services/api';
+import type { Farm } from '../../../types';
 
 import TableSkeleton from '../../common/TableSkeleton';
 import TrackingTab from './TrackingTab';
@@ -55,8 +57,6 @@ const UTRCopyButton: React.FC<{ value: string }> = ({ value }) => {
     );
 };
 
-interface OrdersTabProps {
-}
 const findVal = (obj: any, keys: string[], partials: string[]) => {
     if (!obj) return '-';
     for (const k of keys) {
@@ -68,7 +68,7 @@ const findVal = (obj: any, keys: string[], partials: string[]) => {
     return foundKey ? obj[foundKey] : '-';
 };
 
-const OrdersTab: React.FC<OrdersTabProps> = () => {
+const OrdersTab: React.FC = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
@@ -87,8 +87,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         paymentDueCount,
         filters,
         expansion,
-        actionLoading,
-        statusCounts
+        actionLoading
     } = useAppSelector((state: RootState) => state.orders);
 
     const { expandedOrderId } = expansion;
@@ -98,6 +97,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         paymentTypeFilter,
         statusFilter,
         transferModeFilter,
+        farmFilter,
         page,
         pageSize
     } = filters;
@@ -111,6 +111,25 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
     const isSuperAdmin = userRoles.includes('SuperAdmin');
     const isAdmin = userRoles.some((r: string) => r === 'Admin' || r === 'Animalkart admin');
     const [searchParams, setSearchParams] = useSearchParams();
+
+    // Farm State
+    const [farms, setFarms] = useState<Farm[]>([]);
+    const [farmsLoading, setFarmsLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchFarms = async () => {
+            setFarmsLoading(true);
+            try {
+                const data = await farmService.getFarms('ACTIVE');
+                setFarms(data);
+            } catch (error) {
+                console.error('Error fetching farms:', error);
+            } finally {
+                setFarmsLoading(false);
+            }
+        };
+        fetchFarms();
+    }, []);
 
     // Tooltip State
     const [tooltipInfo, setTooltipInfo] = useState<{ tx: any; top: number; left: number; flipped: boolean } | null>(null);
@@ -159,6 +178,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         const statusParam = searchParams.get('status');
         const paymentParam = searchParams.get('payment');
         const modeParam = searchParams.get('mode');
+        const farmParam = searchParams.get('farm');
 
         const pageNum = pageParam ? parseInt(pageParam, 10) : 1;
 
@@ -167,6 +187,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
         if (statusParam && statusParam !== statusFilter) updates.statusFilter = statusParam;
         if (paymentParam && paymentParam !== paymentTypeFilter) updates.paymentFilter = paymentParam;
         if (modeParam && modeParam !== transferModeFilter) updates.transferModeFilter = modeParam;
+        if (farmParam && farmParam !== farmFilter) updates.farmFilter = farmParam;
 
         if (Object.keys(updates).length > 0) {
             dispatch(setAllFilters(updates));
@@ -177,9 +198,6 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
     // Debounce Search
     const [localSearch, setLocalSearch] = useState(searchQuery);
     const [expandedTrackerKeys, setExpandedTrackerKeys] = useState<Record<string, boolean>>({});
-
-    // Local state to track which specific order action is processing
-    const [processingAction, setProcessingAction] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null);
 
     const handleApproveWrapper = (id: string) => {
         dispatch(setApprovalModal({ isOpen: true, unitId: id }));
@@ -198,7 +216,8 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                 paymentStatus: statusFilter,
                 paymentType: paymentTypeFilter,
                 transferMode: transferModeFilter,
-                search: localSearch
+                search: localSearch,
+                farmId: farmFilter
             }));
 
             if (localSearch !== searchQuery) {
@@ -221,19 +240,16 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             return () => clearTimeout(timer);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [localSearch, dispatch, searchQuery, adminMobile, pageSize, statusFilter, paymentTypeFilter, transferModeFilter, page]);
+    }, [localSearch, dispatch, searchQuery, adminMobile, pageSize, statusFilter, paymentTypeFilter, transferModeFilter, page, farmFilter]);
 
-    // Persist filters to localStorage
     useEffect(() => {
         localStorage.setItem('orders_searchQuery', searchQuery);
-        localStorage.setItem('orders_paymentFilter', paymentTypeFilter);
         localStorage.setItem('orders_paymentTypeFilter', paymentTypeFilter);
         localStorage.setItem('orders_statusFilter', statusFilter);
         localStorage.setItem('orders_transferModeFilter', transferModeFilter);
+        localStorage.setItem('orders_farmFilter', farmFilter);
         localStorage.setItem('orders_page', String(page));
-    }, [searchQuery, paymentTypeFilter, statusFilter, transferModeFilter, page]);
-
-
+    }, [searchQuery, paymentTypeFilter, statusFilter, transferModeFilter, page, farmFilter]);
 
     const handleStatusFilterChange = (status: string) => {
         dispatch(setStatusFilter(status));
@@ -253,6 +269,18 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             const newParams = new URLSearchParams(prev);
             if (type === 'All Payments') newParams.delete('payment');
             else newParams.set('payment', type);
+            newParams.set('page', '1');
+            return newParams;
+        });
+    };
+
+    const handleFarmChange = (farmId: string) => {
+        dispatch(setFarmFilter(farmId));
+        dispatch(setPage(1));
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            if (farmId === 'All Farms') newParams.delete('farm');
+            else newParams.set('farm', farmId);
             newParams.set('page', '1');
             return newParams;
         });
@@ -278,7 +306,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 
     // Pagination
     const totalPages = Math.ceil((totalCount || 0) / pageSize);
-    const currentCols = (showActions || statusFilter === 'REJECTED') ? 8 : 7;
+    const currentCols = (showActions || statusFilter === 'REJECTED') ? 9 : 8; // Increased by 1 for Delivery Location
 
     // Filter Buttons Config
     const filterButtons = [
@@ -297,14 +325,20 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
                 <h2 className="text-xl font-bold m-0 text-slate-800">Order Management</h2>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <input
-                        type="date"
-                        className="h-[38px] px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full sm:w-auto"
-                        style={{ maxWidth: '160px' }}
-                    />
+                    <select
+                        className="h-[38px] px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full sm:w-[180px] cursor-pointer"
+                        value={farmFilter}
+                        onChange={(e) => handleFarmChange(e.target.value)}
+                        disabled={farmsLoading}
+                    >
+                        <option value="All Farms">All Farms</option>
+                        {farms.map(farm => (
+                            <option key={farm.id} value={farm.id}>{farm.location}</option>
+                        ))}
+                    </select>
                     <input
                         type="text"
-                        placeholder="Search by Order ID, Name, Mobile..."
+                        placeholder="Search by Order ID, Mobile"
                         className="h-[38px] px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full sm:w-[250px]"
                         value={localSearch}
                         onChange={(e) => setLocalSearch(e.target.value)}
@@ -345,6 +379,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
 
                             <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">User Details</th>
                             <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Order Details</th>
+                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center text-nowrap">Delivery Location</th>
                             <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Units</th>
                             <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Status</th>
                             <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-2 py-4 text-center" style={{ minWidth: '160px' }}>
@@ -358,6 +393,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                     <option value="BANK_TRANSFER">Bank Transfer</option>
                                     <option value="CHEQUE">Cheque</option>
                                     <option value="ONLINE">Online/UPI</option>
+                                    <option value="CASH_PAYMENT">Cash Payment / Counter</option>
                                     <option value="CASH">Cash</option>
                                     <option value="COINS_REDEEM">Coins Redeem</option>
                                 </select>
@@ -434,6 +470,9 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                     ) : <span className="text-[11px] text-slate-500">-</span>}
                                                 </div>
                                             </td>
+                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top text-center font-medium capitalize">
+                                                {unit.location || '-'}
+                                            </td>
                                             <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{unit.numUnits}</td>
                                             <td className="px-6 py-4 text-[13px] text-slate-700 align-top align-middle">
                                                 {(() => {
@@ -484,10 +523,14 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                     >
                                                         <span>{tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cheque'}</span>
                                                     </div>
+                                                ) : tx.paymentType === 'ONLINE' ? (
+                                                    'Online/UPI'
+                                                ) : tx.paymentType === 'CASH_PAYMENT' ? (
+                                                    'Cash Payment'
                                                 ) : tx.paymentType === 'COINS_REDEEM' ? (
                                                     'Coins Redeem'
                                                 ) : (
-                                                    tx.paymentType || '-'
+                                                    tx.paymentType?.replace('_', ' ') || '-'
                                                 )}
                                             </td>
 
@@ -555,15 +598,6 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                         newParams.set('page', String(p));
                         return newParams;
                     });
-                    dispatch(fetchPendingUnits({
-                        adminMobile,
-                        page: p,
-                        pageSize,
-                        paymentStatus: statusFilter,
-                        paymentType: paymentTypeFilter,
-                        transferMode: transferModeFilter,
-                        search: searchQuery
-                    }));
                 }}
             />
 

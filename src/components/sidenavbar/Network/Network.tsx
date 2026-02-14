@@ -80,7 +80,7 @@ const NetworkTab: React.FC = () => {
                             </div>
                             <div className="z-10">
                                 <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Total Users</div>
-                                <div className="text-3xl font-bold text-[#1E293B]">{stats.user_count}</div>
+                                <div className="text-2xl font-bold text-[#1E293B]">{stats.user_count}</div>
                             </div>
                         </div>
 
@@ -91,10 +91,10 @@ const NetworkTab: React.FC = () => {
                             </div>
                             <div className="z-10 flex-grow">
                                 <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Distributed Coins</div>
-                                <div className="text-3xl font-bold text-[#1E293B]">{stats.total_distributed_coins?.toLocaleString('en-IN')}</div>
-                            </div>
-                            <div className="absolute top-4 right-6 text-[10px] font-bold text-[#64748B] z-10">
-                                Target: {stats.total_target_coins?.toLocaleString('en-IN') || '1,75,00,000'}
+                                <div className="text-2xl font-bold text-[#1E293B]">{stats.total_distributed_coins?.toLocaleString('en-IN')}</div>
+                                <div className="text-[10px] font-bold text-[#64748B] mt-1">
+                                    Target: {stats.total_target_coins?.toLocaleString('en-IN') || '1,75,00,000'}
+                                </div>
                             </div>
                         </div>
 
@@ -105,10 +105,10 @@ const NetworkTab: React.FC = () => {
                             </div>
                             <div className="z-10 flex-grow">
                                 <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">Purchased Units</div>
-                                <div className="text-3xl font-bold text-[#1E293B]">{stats.total_purchased_units || 0}</div>
-                            </div>
-                            <div className="absolute top-4 right-6 text-[10px] font-bold text-[#64748B] z-10">
-                                Target: {stats.total_target_units?.toLocaleString('en-IN') || '100000'}
+                                <div className="text-2xl font-bold text-[#1E293B]">{stats.total_purchased_units || 0}</div>
+                                <div className="text-[10px] font-bold text-[#64748B] mt-1">
+                                    Target: {stats.total_target_units?.toLocaleString('en-IN') || '100000'}
+                                </div>
                             </div>
                         </div>
                     </div>

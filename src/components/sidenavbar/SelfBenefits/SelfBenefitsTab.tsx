@@ -1,14 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SelfBenefitsList from './SelfBenefitsList';
 import ReferralBenefitsTab from '../ReferralBenefits/ReferralBenefitsTab';
+import { farmService, selfBenefitService, referralBenefitService, referralConfigService } from '../../../services/api';
+import { SelfBenefit, ReferralMilestone, ReferralConfig } from '../../../types';
 
 const SelfBenefitsTab: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'self' | 'referral'>('self');
+    const [farms, setFarms] = useState<any[]>([]);
+    const [selectedFarmId, setSelectedFarmId] = useState<string>('');
+
+    // Hoisted Data State
+    const [selfBenefits, setSelfBenefits] = useState<SelfBenefit[]>([]);
+    const [referralMilestones, setReferralMilestones] = useState<ReferralMilestone[]>([]);
+    const [referralConfig, setReferralConfig] = useState<ReferralConfig | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        const fetchFarms = async () => {
+            try {
+                const data = await farmService.getFarms();
+                setFarms(data);
+                if (data.length > 0) {
+                    setSelectedFarmId(data[0].id);
+                }
+            } catch (error) {
+                console.error("Failed to fetch farms", error);
+            }
+        };
+        fetchFarms();
+    }, []);
+
+    const fetchAllData = async (farmId: string) => {
+        if (!farmId) return;
+        setLoading(true);
+        try {
+            const [benefits, milestones, config] = await Promise.all([
+                selfBenefitService.getSelfBenefits(farmId),
+                referralBenefitService.getReferralMilestones(farmId),
+                referralConfigService.getReferralConfig(farmId)
+            ]);
+            setSelfBenefits(benefits);
+            setReferralMilestones(milestones);
+            setReferralConfig(config);
+        } catch (error) {
+            console.error("Error fetching offer settings data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedFarmId) {
+            fetchAllData(selectedFarmId);
+        }
+    }, [selectedFarmId]);
 
     return (
         <div className="flex flex-col h-full bg-[#f4f7fa] font-sans">
             {/* Tab Navigation */}
             <div className="bg-white border-b border-gray-200 px-8 pt-6">
+                {/* Header Row */}
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-extrabold text-[#111827] tracking-tight">Manage Offers</h1>
+
+                    {/* Farm Selector */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select Farm:</span>
+                        <select
+                            value={selectedFarmId}
+                            onChange={(e) => setSelectedFarmId(e.target.value)}
+                            className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#10b981] focus:border-[#10b981] block p-2 outline-none transition-all hover:bg-gray-50"
+                        >
+                            {farms.map((farm) => (
+                                <option key={farm.id} value={farm.id}>
+                                    {farm.uniqueId}  {farm.location}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
                 <div className="flex gap-8">
                     <button
                         onClick={() => setActiveTab('self')}
@@ -33,7 +104,23 @@ const SelfBenefitsTab: React.FC = () => {
 
             {/* Tab Content */}
             <div className="flex-1 overflow-y-auto">
-                {activeTab === 'self' ? <SelfBenefitsList /> : <ReferralBenefitsTab isEmbedded={true} />}
+                {activeTab === 'self' ? (
+                    <SelfBenefitsList
+                        farmId={selectedFarmId}
+                        benefits={selfBenefits}
+                        loading={loading}
+                        onRefresh={() => fetchAllData(selectedFarmId)}
+                    />
+                ) : (
+                    <ReferralBenefitsTab
+                        isEmbedded={true}
+                        farmId={selectedFarmId}
+                        preloadedMilestones={referralMilestones}
+                        preloadedConfig={referralConfig}
+                        externalLoading={loading}
+                        onRefresh={() => fetchAllData(selectedFarmId)}
+                    />
+                )}
             </div>
         </div>
     );

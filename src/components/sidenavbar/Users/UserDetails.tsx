@@ -296,11 +296,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                     setEditingUser(null);
                     setIsCreateModalOpen(true);
                 }}
-                className="fixed bottom-10 right-10 flex items-center gap-3 pl-6 pr-4 py-3.5 bg-blue-600 text-white rounded-[2rem] shadow-[0_12px_40px_rgba(37,99,235,0.35)] hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all z-40 group focus:outline-none"
+                className="fixed bottom-10 right-10 flex items-center gap-2 pl-4 pr-2 py-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all z-40 group focus:outline-none"
             >
-                <span className="font-bold text-sm tracking-wide">Add User</span>
-                <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
-                    <Plus className="w-5 h-5 stroke-[2.5]" />
+                <span className="font-bold text-xs tracking-wide">Add User</span>
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
                 </div>
             </button>
 
