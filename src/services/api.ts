@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
-import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest, SelfBenefit, CreateSelfBenefitRequest, ReferralMilestone, CreateReferralMilestoneRequest, ReferralConfig, UpdateReferralConfigRequest } from '../types';
+import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest, SelfBenefit, CreateSelfBenefitRequest, ReferralMilestone, CreateReferralMilestoneRequest, ReferralConfig, UpdateReferralConfigRequest, RoleChangeRequest, RoleChangeRequestResponse } from '../types';
 
 const api = axios.create({
   timeout: 30000,
@@ -288,6 +288,40 @@ export const referralConfigService = {
     } catch (error) {
       console.error('Error updating referral config:', error);
       throw error;
+    }
+  }
+};
+
+export const roleRequestService = {
+  getRoleChangeRequests: async (statusFilter: string = 'ALL', adminMobile: string): Promise<RoleChangeRequest[]> => {
+    try {
+      const params = {
+        status_filter: statusFilter,
+        admin_mobile: adminMobile
+      };
+      const response = await api.get<RoleChangeRequestResponse>(API_ENDPOINTS.getRoleChangeRequests(), { params });
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error fetching role change requests:', error);
+      throw error;
+    }
+  },
+  actionRoleChangeRequest: async (requestId: string, approved: boolean, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      console.log(`[API] Role Action: ${requestId}`, { approved, adminMobile });
+      const response = await api.put(API_ENDPOINTS.actionRoleChangeRequest(requestId), { approved }, {
+        params: { admin_mobile: adminMobile },
+        headers: {
+          'X-Admin-Mobile': adminMobile,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      return { data: response.data, message: `Request ${approved ? 'approved' : 'rejected'} successfully` };
+    } catch (error: any) {
+      console.error(`Error ${approved ? 'approving' : 'rejecting'} role request:`, error);
+      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || `Failed to ${approved ? 'approve' : 'reject'} request`;
+      return { error: errorMessage };
     }
   }
 };

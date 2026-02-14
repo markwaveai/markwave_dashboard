@@ -255,3 +255,25 @@ export interface UpdateReferralConfigRequest {
   stage2_active?: boolean;
   is_global_active?: boolean;
 }
+
+export interface RoleChangeRequest {
+  id?: string;
+  _id?: string; // Some MongoDB-like APIs use _id
+  request_id: string;
+  requester_mobile: string;
+  requester_name: string;
+  target_mobile: string | null;
+  target_name: string;
+  current_role: string;
+  requested_role: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  created_at: string;
+  updated_at: string;
+  [key: string]: any; // Catch-all for other potential ID fields like 'uuid' or 'reference_id'
+}
+
+export interface RoleChangeRequestResponse {
+  statuscode: number;
+  status: string;
+  data: RoleChangeRequest[];
+}

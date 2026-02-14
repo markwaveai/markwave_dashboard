@@ -49,4 +49,6 @@ export const API_ENDPOINTS = {
   updateReferralMilestone: (id: string) => `${API_CONFIG.getBaseUrl()}/referral-benefits/milestones/${encodeURIComponent(id)}`,
   getReferralConfig: () => `${API_CONFIG.getBaseUrl()}/referral-benefits/config`,
   updateReferralConfig: () => `${API_CONFIG.getBaseUrl()}/referral-benefits/config`,
+  getRoleChangeRequests: () => `${API_CONFIG.getBaseUrl()}/users/role-change-requests`,
+  actionRoleChangeRequest: (id: string) => `${API_CONFIG.getBaseUrl()}/users/role-change-requests/${encodeURIComponent(id)}`,
 };
