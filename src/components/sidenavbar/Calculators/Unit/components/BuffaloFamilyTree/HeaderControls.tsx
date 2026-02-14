@@ -80,7 +80,7 @@ const HeaderControls = ({
     }, [units, years, endMonth, startYear, startMonth, startDay]);
 
     return (
-        <div className="bg-white border-b border-slate-200 px-4 py-3 pb-8 z-[80] relative">
+        <div className="bg-white border-b border-slate-200 px-4 py-2 z-[80] relative">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
 
                 {/* Left Section: Configuration & Actions */}

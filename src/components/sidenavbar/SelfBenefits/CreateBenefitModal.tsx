@@ -34,7 +34,7 @@ const BenefitModal: React.FC<BenefitModalProps> = ({ isOpen, onClose, onSuccess,
                 title: '',
                 description: '',
                 units_required: 0,
-                is_active: true
+                is_active: true // Default to active
             });
         }
     }, [benefit, isOpen]);
@@ -171,38 +171,20 @@ const BenefitModal: React.FC<BenefitModalProps> = ({ isOpen, onClose, onSuccess,
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* Units Required */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                                    <ShoppingBag size={12} /> Units
-                                </label>
-                                <input
-                                    type="number"
-                                    name="units_required"
-                                    value={formData.units_required}
-                                    onChange={handleChange}
-                                    min="0"
-                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-blue-600"
-                                    required
-                                />
-                            </div>
-
-                            {/* Active Status */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                                    Status
-                                </label>
-                                <select
-                                    name="is_active"
-                                    value={formData.is_active ? 'true' : 'false'}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.value === 'true' }))}
-                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-emerald-600"
-                                >
-                                    <option value="true">Active</option>
-                                    <option value="false">Inactive</option>
-                                </select>
-                            </div>
+                        {/* Units Required */}
+                        <div className="space-y-1.5 col-span-2">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                                <ShoppingBag size={12} /> Units
+                            </label>
+                            <input
+                                type="number"
+                                name="units_required"
+                                value={formData.units_required}
+                                onChange={handleChange}
+                                min="0"
+                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-blue-600"
+                                required
+                            />
                         </div>
 
                         {/* Actions */}
@@ -230,8 +212,8 @@ const BenefitModal: React.FC<BenefitModalProps> = ({ isOpen, onClose, onSuccess,
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
+                </div >
+            </div >
 
             {snackbar && (
                 <Snackbar

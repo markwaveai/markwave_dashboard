@@ -126,7 +126,8 @@ export const farmService = {
     try {
       const response = await api.post(API_ENDPOINTS.addFarm(), farmData, {
         headers: {
-          'x-admin-mobile': adminMobile
+          'X-Admin-Mobile': adminMobile,
+          'Content-Type': 'application/json'
         }
       });
 
@@ -146,7 +147,8 @@ export const farmService = {
     try {
       const response = await api.put(API_ENDPOINTS.updateFarm(farmId), farmData, {
         headers: {
-          'x-admin-mobile': adminMobile
+          'X-Admin-Mobile': adminMobile,
+          'Content-Type': 'application/json'
         }
       });
 

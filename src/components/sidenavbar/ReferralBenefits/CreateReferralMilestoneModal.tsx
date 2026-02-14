@@ -34,7 +34,7 @@ const CreateReferralMilestoneModal: React.FC<CreateReferralMilestoneModalProps> 
                 threshold: 0,
                 reward: '',
                 description: '',
-                is_active: true
+                is_active: true // Default to active for new milestones
             });
         }
     }, [milestone, isOpen]);
@@ -169,30 +169,7 @@ const CreateReferralMilestoneModal: React.FC<CreateReferralMilestoneModalProps> 
                             />
                         </div>
 
-                        {/* Status Select */}
-                        <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-[#94a3b8] uppercase tracking-[0.1em]">
-                                Initial Status
-                            </label>
-                            <div className="flex gap-2.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(prev => ({ ...prev, is_active: true }))}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-[13px] transition-all ${formData.is_active ? 'bg-[#ecfdf5] text-[#10b981] border-2 border-[#10b981]/20 ring-4 ring-[#10b981]/5' : 'bg-[#f8fafc] text-[#94a3b8] border-2 border-transparent'}`}
-                                >
-                                    <CheckCircle2 size={14} />
-                                    Active
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(prev => ({ ...prev, is_active: false }))}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-[13px] transition-all ${!formData.is_active ? 'bg-[#fef2f2] text-[#ef4444] border-2 border-[#ef4444]/20 ring-4 ring-[#ef4444]/5' : 'bg-[#f8fafc] text-[#94a3b8] border-2 border-transparent'}`}
-                                >
-                                    <XCircle size={14} />
-                                    Inactive
-                                </button>
-                            </div>
-                        </div>
+
 
                         {/* Actions */}
                         <div className="pt-2 flex gap-3">

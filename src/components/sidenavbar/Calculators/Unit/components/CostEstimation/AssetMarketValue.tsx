@@ -66,6 +66,7 @@ const AssetMarketValue = ({
 
     // Age-Based Valuation Breakdown function for selected year
     const calculateDetailedAssetValueForYear = (year: number) => {
+        const units = treeData.units || 1;
         const ageGroups: any = {
             '0-12 months': { count: 0, value: 0, unitValue: 10000 },
             '13-18 months': { count: 0, value: 0, unitValue: 25000 },
@@ -94,27 +95,27 @@ const AssetMarketValue = ({
                 }
 
                 if (ageInMonths >= 41) {
-                    ageGroups['41+ months'].count++;
-                    ageGroups['41+ months'].value += value;
+                    ageGroups['41+ months'].count += units;
+                    ageGroups['41+ months'].value += (value * units);
                 } else if (ageInMonths >= 35) {
-                    ageGroups['35-40 months'].count++;
-                    ageGroups['35-40 months'].value += value;
+                    ageGroups['35-40 months'].count += units;
+                    ageGroups['35-40 months'].value += (value * units);
                 } else if (ageInMonths >= 25) {
-                    ageGroups['25-34 months'].count++;
-                    ageGroups['25-34 months'].value += value;
+                    ageGroups['25-34 months'].count += units;
+                    ageGroups['25-34 months'].value += (value * units);
                 } else if (ageInMonths >= 19) {
-                    ageGroups['19-24 months'].count++;
-                    ageGroups['19-24 months'].value += value;
+                    ageGroups['19-24 months'].count += units;
+                    ageGroups['19-24 months'].value += (value * units);
                 } else if (ageInMonths >= 13) {
-                    ageGroups['13-18 months'].count++;
-                    ageGroups['13-18 months'].value += value;
+                    ageGroups['13-18 months'].count += units;
+                    ageGroups['13-18 months'].value += (value * units);
                 } else {
-                    ageGroups['0-12 months'].count++;
-                    ageGroups['0-12 months'].value += value;
+                    ageGroups['0-12 months'].count += units;
+                    ageGroups['0-12 months'].value += (value * units);
                 }
 
-                totalValue += value;
-                totalCount++;
+                totalValue += (value * units);
+                totalCount += units;
             }
         });
 
@@ -288,19 +289,23 @@ const AssetMarketValue = ({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {assetMarketValue.map((asset: any, yearIndex: number) => (
-                                        <tr key={yearIndex} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-4 py-3 font-semibold text-slate-900 border-r border-slate-100">Year {yearIndex + 1}</td>
-                                            <td className="px-4 py-3 font-bold text-center text-slate-800 border-r border-slate-100">{asset.totalBuffaloes}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['0-12 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['13-18 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['19-24 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['25-34 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['35-40 months']?.count || 0}</td>
-                                            <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{asset.ageCategories?.['41+ months']?.count || 0}</td>
-                                            <td className="px-4 py-3 font-bold text-right text-emerald-600">{formatCurrency(asset.totalAssetValue || 0)}</td>
-                                        </tr>
-                                    ))}
+                                    {assetMarketValue.map((asset: any, yearIndex: number) => {
+                                        return (
+                                            <tr key={yearIndex} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-4 py-3 font-semibold text-slate-900 border-r border-slate-100">Year {yearIndex + 1}</td>
+                                                <td className="px-4 py-3 font-bold text-center text-slate-800 border-r border-slate-100">{asset.totalBuffaloes}</td>
+                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['0-12 months']?.count || 0)}</td>
+                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['13-18 months']?.count || 0)}</td>
+                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['19-24 months']?.count || 0)}</td>
+                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['25-34 months']?.count || 0)}</td>
+                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['35-40 months']?.count || 0)}</td>
+                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['41+ months']?.count || 0)}</td>
+                                                <td className="px-4 py-3 font-bold text-right text-emerald-600">
+                                                    {formatCurrency(asset.totalAssetValue || 0)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

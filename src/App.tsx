@@ -54,8 +54,7 @@ const UnitCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calcu
 const FarmManagement = React.lazy(() => import('./components/sidenavbar/Farm/FarmManagement'));
 const SelfBenefitsTab = React.lazy(() => import('./components/sidenavbar/SelfBenefits/SelfBenefitsTab'));
 const ReferralBenefitsTab = React.lazy(() => import('./components/sidenavbar/ReferralBenefits/ReferralBenefitsTab'));
-
-
+const RoleRequestsTab = React.lazy(() => import('./components/sidenavbar/RoleRequests/RoleRequestsTab'));
 
 interface Session {
   mobile: string;
@@ -219,7 +218,7 @@ function App() {
                 <FarmManagement />
               </React.Suspense>
             } />
-            <Route path="/self-benefits" element={
+            <Route path="/offer-settings" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
                 <SelfBenefitsTab />
               </React.Suspense>
@@ -227,6 +226,11 @@ function App() {
             <Route path="/referral-benefits" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
                 <ReferralBenefitsTab />
+              </React.Suspense>
+            } />
+            <Route path="/role-requests" element={
+              <React.Suspense fallback={<OrdersPageSkeleton />}>
+                <RoleRequestsTab />
               </React.Suspense>
             } />
           </Route>
@@ -307,8 +311,9 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/acf',
     '/support-tickets',
     '/farm-management',
-    '/self-benefits',
-    '/referral-benefits'
+    '/offer-settings',
+    '/referral-benefits',
+    '/role-requests'
   ];
 
   const isProtectedPath = protectedPrefixes.some(prefix => location.pathname.startsWith(prefix)) && !location.pathname.startsWith('/acf-calculator');

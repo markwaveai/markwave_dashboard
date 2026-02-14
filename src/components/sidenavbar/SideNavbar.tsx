@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     ClipboardList, Users, ShoppingBag, LogOut, UserCheck,
     Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, Warehouse, Award,
-    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search
+    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search, UserCog
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -39,8 +39,9 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/acf')) activeTab = 'acf';
     else if (currentPath.includes('/user-management') || currentPath.includes('/users/customers')) activeTab = 'user-management';
     else if (currentPath.includes('/products')) activeTab = 'products';
-    else if (currentPath.includes('/self-benefits')) activeTab = 'self-benefits';
+    else if (currentPath.includes('/offer-settings')) activeTab = 'offer-settings';
     else if (currentPath.includes('/referral-benefits')) activeTab = 'referral-benefits';
+    else if (currentPath.includes('/role-requests')) activeTab = 'role-requests';
     else if (currentPath.includes('/farm-management')) activeTab = 'farm';
     else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
     else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
@@ -166,24 +167,25 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('self-benefits')} onClick={(e) => { e.stopPropagation(); navigate('/self-benefits'); }}>
+                                <button className={navItemClass('offer-settings')} onClick={(e) => { e.stopPropagation(); navigate('/offer-settings'); }}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Award size={18} className={activeTab === 'self-benefits' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Self Benefits</span>}
+                                        <Award size={18} className={activeTab === 'offer-settings' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Offer Settings</span>}
                                     </div>
                                 </button>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('referral-benefits')} onClick={(e) => { e.stopPropagation(); navigate('/referral-benefits'); }}>
+                                <button className={navItemClass('role-requests')} onClick={(e) => { e.stopPropagation(); navigate('/role-requests'); }}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Star size={18} className={activeTab === 'referral-benefits' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Referral Benefits</span>}
+                                        <UserCog size={18} className={activeTab === 'role-requests' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Role Requests</span>}
                                     </div>
                                 </button>
                             </li>
                         )}
+
                         {hasSession && (
                             <li>
                                 <button className={navItemClass('farm')} onClick={(e) => { e.stopPropagation(); navigate('/farm-management'); }}>
@@ -222,30 +224,32 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 {isSidebarOpen && isUnitCalcOpen && (
                                     <ul className="pl-4 mt-1 list-none flex flex-col gap-1 w-full border-l border-slate-700 ml-4">
                                         <li>
-                                            <Link
+                                            <div
                                                 className={`
-                            flex items-center w-full px-3 py-2 rounded-lg text-sm transition-all
+                            flex items-center w-full px-3 py-2 rounded-lg text-sm transition-all cursor-pointer
                             ${location.pathname.includes('/73d2a') ? 'text-blue-400 font-medium bg-blue-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'}
                           `}
-                                                to="/unit-calculator/73d2a"
-                                                state={{ fromDashboard: true }}
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate('/unit-calculator/73d2a', { state: { fromDashboard: true } });
+                                                }}
                                             >
                                                 With Tree
-                                            </Link>
+                                            </div>
                                         </li>
                                         <li>
-                                            <Link
+                                            <div
                                                 className={`
-                            flex items-center w-full px-3 py-2 rounded-lg text-sm transition-all
+                            flex items-center w-full px-3 py-2 rounded-lg text-sm transition-all cursor-pointer
                             ${location.pathname.includes('/92f1b') ? 'text-blue-400 font-medium bg-blue-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'}
                           `}
-                                                to="/unit-calculator/92f1b"
-                                                state={{ fromDashboard: true }}
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate('/unit-calculator/92f1b', { state: { fromDashboard: true } });
+                                                }}
                                             >
                                                 Without Tree
-                                            </Link>
+                                            </div>
                                         </li>
                                     </ul>
                                 )}

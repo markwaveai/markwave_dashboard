@@ -273,7 +273,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
     }, [dispatch, expandedOrderId]);
 
     // Column visibility logic
-    const showActions = statusFilter === 'PENDING_ADMIN_VERIFICATION' ||
+    const showActions = (statusFilter === 'PENDING_ADMIN_VERIFICATION' && isAdmin) ||
         ((statusFilter === 'PENDING_SUPER_ADMIN_VERIFICATION' || statusFilter === 'PENDING_SUPER_ADMIN_REJECTION') && isSuperAdmin);
 
     // Pagination
@@ -292,7 +292,7 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
     ];
 
     return (
-        <div className="p-8">
+        <div className="p-6">
             {/* New Header: Order Management Left, Date/Search Right */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
                 <h2 className="text-xl font-bold m-0 text-slate-800">Order Management</h2>
@@ -502,16 +502,16 @@ const OrdersTab: React.FC<OrdersTabProps> = () => {
                                                                 onClick={(e) => { e.stopPropagation(); handleApproveWrapper(unit.id); }}
                                                                 className={`px-4 py-2 rounded-lg text-sm font-bold text-white transition-all shadow-sm border-none cursor-pointer flex items-center justify-center min-w-[100px] 
                                                                     ${actionLoading ? 'opacity-50 cursor-not-allowed' : ''}
-                                                                    ${(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin && !isSuperAdmin) || ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin)
+                                                                    ${(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin) || ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin)
                                                                         ? 'bg-slate-400 hover:bg-slate-400 cursor-not-allowed opacity-60'
                                                                         : 'bg-blue-600 hover:bg-blue-700'}`}
                                                                 disabled={
                                                                     actionLoading ||
-                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin && !isSuperAdmin) ||
+                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin) ||
                                                                     ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin)
                                                                 }
                                                                 title={
-                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin && !isSuperAdmin) ? 'Only Admins can verify this stage' :
+                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin) ? 'Only Admins can verify this stage' :
                                                                         ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin) ? 'Only Super Admins can verify this stage' : ''
                                                                 }
                                                             >

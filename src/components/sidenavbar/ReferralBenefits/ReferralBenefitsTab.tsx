@@ -4,7 +4,11 @@ import { referralBenefitService, referralConfigService } from '../../../services
 import { ReferralMilestone, ReferralConfig } from '../../../types';
 import CreateReferralMilestoneModal from './CreateReferralMilestoneModal';
 
-const ReferralBenefitsTab: React.FC = () => {
+interface ReferralBenefitsTabProps {
+    isEmbedded?: boolean;
+}
+
+const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({ isEmbedded = false }) => {
     const [milestones, setMilestones] = useState<ReferralMilestone[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -14,14 +18,15 @@ const ReferralBenefitsTab: React.FC = () => {
     const [editingStage, setEditingStage] = useState<number | null>(null);
     const [editValue, setEditValue] = useState<string>('');
     const [editActiveStatus, setEditActiveStatus] = useState<boolean>(true);
+    const [processingId, setProcessingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchAllData();
     }, []);
 
-    const fetchAllData = async () => {
+    const fetchAllData = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const [milestoneData, configData] = await Promise.all([
                 referralBenefitService.getReferralMilestones(),
                 referralConfigService.getReferralConfig()
@@ -33,7 +38,7 @@ const ReferralBenefitsTab: React.FC = () => {
             console.error('Error fetching referral data:', err);
             setError('Failed to load referral data. Please try again later.');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -89,7 +94,7 @@ const ReferralBenefitsTab: React.FC = () => {
                     <h3 className="text-xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h3>
                     <p className="text-gray-500 mb-6">{error}</p>
                     <button
-                        onClick={fetchAllData}
+                        onClick={() => fetchAllData()}
                         className="px-6 py-2 bg-[#10b981] text-white rounded-xl hover:bg-[#059669] transition-all font-semibold shadow-md shadow-emerald-500/20"
                     >
                         Try Again
@@ -100,17 +105,17 @@ const ReferralBenefitsTab: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#f8fafc] font-sans overflow-y-auto max-h-screen custom-scrollbar">
+        <div className={`flex flex-col font-sans custom-scrollbar ${isEmbedded ? 'h-full' : 'min-h-screen overflow-y-auto max-h-screen'} bg-[#f8fafc]`}>
             {/* Header */}
-            <div className="p-8 pb-0">
+            <div className="p-6 pb-0">
                 <div>
-                    <h2 className="text-[2.25rem] font-[900] text-[#1e293b] tracking-tight leading-none mb-3">Referral Roadmap</h2>
+                    <h2 className="text-[2.25rem] font-[900] text-[#1e293b] tracking-tight leading-none mb-3">Manage Referral Benefits</h2>
                     <p className="text-[#64748b] text-base font-semibold opacity-80">Track milestones and unlock exclusive rewards through network growth.</p>
                 </div>
             </div>
 
             {/* Coins Rewards Heading & Global Activation Toggle */}
-            <div className="px-8 mt-8 flex items-end justify-between">
+            <div className="px-6 mt-6 flex items-end justify-between">
                 <div>
                     <h3 className="text-xl font-black text-[#1e293b] tracking-tight leading-none mb-1">Coins rewards</h3>
                 </div>
@@ -121,12 +126,12 @@ const ReferralBenefitsTab: React.FC = () => {
                         : 'bg-[#ecfdf5] text-[#10b981] border border-[#10b981]/10 hover:bg-[#d1fae5]'
                         }`}
                 >
-                    {config?.stage1_active || config?.stage2_active ? 'Disable all coins rewards' : 'Activate all coins rewards'}
+                    {config?.stage1_active || config?.stage2_active ? 'Disable Offers' : 'Activate all coins rewards'}
                 </button>
             </div>
 
             {/* Redesigned Commission Cards Grid */}
-            <div className="px-8 mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+            <div className="px-6 mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
                 {/* Stage 1 Card */}
                 <div className="bg-white rounded-[1.25rem] p-3.5 shadow-[0_5px_20px_rgba(0,0,0,0.01)] border border-[#f1f5f9] relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)] transition-all">
                     <div className="flex items-center justify-between mb-1 pr-10">
@@ -336,7 +341,7 @@ const ReferralBenefitsTab: React.FC = () => {
                 </div>
             </div>
 
-            <div className="px-8 mt-16 flex items-center justify-between">
+            <div className="px-6 mt-8 flex items-center justify-between">
                 <div>
                     <h3 className="text-xl font-black text-[#1e293b] tracking-tight leading-none mb-1">Direct Referral rewards</h3>
                     <p className="text-[#64748b] text-[13px] font-bold opacity-60">Unlock exclusive milestones through network growth.</p>
@@ -356,7 +361,7 @@ const ReferralBenefitsTab: React.FC = () => {
             {/* Roadmap Container */}
             <div className="mt-6 relative">
                 <div className="overflow-x-auto custom-scrollbar pt-8 pb-16">
-                    <div className="flex items-center gap-0 px-8 min-w-max relative">
+                    <div className="flex items-center gap-0 px-6 min-w-max relative">
                         {milestones.length === 0 ? (
                             <div className="w-full h-96 flex flex-col items-center justify-center bg-white rounded-[3rem] border-4 border-dashed border-[#e2e8f0] text-center px-40 mx-4">
                                 <div className="w-24 h-24 bg-[#f8fafc] rounded-full flex items-center justify-center mb-8 text-[#94a3b8]">
@@ -377,34 +382,75 @@ const ReferralBenefitsTab: React.FC = () => {
 
                                     {/* Card */}
                                     <div
-                                        className={`relative z-10 w-[200px] bg-white rounded-[2rem] shadow-[0_15px_35px_rgba(0,0,0,0.03)] border-2 p-4 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 flex flex-col mx-3 ${milestone.is_active ? 'border-[#10b981] ring-4 ring-[#10b981]/5' : 'border-[#f1f5f9] opacity-90'}`}
+                                        className={`relative z-10 w-[240px] bg-white rounded-[2rem] shadow-[0_15px_35px_rgba(0,0,0,0.03)] border-2 p-5 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 flex flex-col mx-3 ${milestone.is_active ? 'border-[#10b981] ring-4 ring-[#10b981]/5' : 'border-[#f1f5f9] opacity-90'}`}
                                     >
                                         {/* Action Header: Threshold Badge & Edit */}
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className={`px-2 py-0.5 rounded-lg font-black text-[8px] tracking-[0.1em] shadow-sm flex items-center justify-center ${milestone.is_active ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>
-                                                {milestone.threshold} UNITS
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className={`px-2.5 py-1 rounded-lg font-black text-[9px] tracking-[0.1em] shadow-sm flex items-center justify-center ${milestone.is_active ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>
+                                                {milestone.threshold} UNITS REQUIRED
                                             </div>
+                                        </div>
+
+                                        {/* Content: Icon & Text */}
+                                        <div className="flex items-start gap-4 mb-4">
+                                            <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl shadow-lg transition-all duration-500 group-hover/milestone:scale-105 shrink-0 ${milestone.is_active ? 'bg-gradient-to-br from-[#10b981] to-[#059669] text-white shadow-[#10b981]/20' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>
+                                                {getRewardIcon(milestone.reward)}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-black text-[#1e293b] leading-tight mb-1.5 tracking-tight transition-colors">{milestone.reward}</h3>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-4 h-10">
+                                            <p className="text-[#64748b] text-xs font-bold leading-relaxed opacity-80 line-clamp-2">{milestone.description || 'Exclusive reward for dedicated partners.'}</p>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-50">
+                                            <button
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    if (processingId === milestone.id) return;
+
+                                                    setProcessingId(milestone.id);
+                                                    try {
+                                                        const result = await referralBenefitService.updateReferralMilestone(milestone.id, {
+                                                            is_active: !milestone.is_active,
+                                                            threshold: milestone.threshold,
+                                                            reward: milestone.reward,
+                                                            description: milestone.description
+                                                        });
+                                                        if (!result.error) {
+                                                            await fetchAllData(true);
+                                                        }
+                                                    } catch (err) {
+                                                        console.error("Failed to toggle status", err);
+                                                    } finally {
+                                                        setProcessingId(null);
+                                                    }
+                                                }}
+                                                disabled={processingId === milestone.id}
+                                                className={`flex-1 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all shadow-sm active:scale-95 border flex items-center justify-center gap-1.5 ${milestone.is_active
+                                                    ? 'bg-[#ecfdf5] text-[#10b981] border-[#10b981]/20 hover:bg-[#d1fae5]'
+                                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-500'} ${processingId === milestone.id ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            >
+                                                {processingId === milestone.id ? (
+                                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                ) : null}
+                                                {milestone.is_active ? 'Active' : 'Inactive'}
+                                            </button>
+
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setSelectedMilestone(milestone);
                                                     setIsModalOpen(true);
                                                 }}
-                                                className="p-2.5 bg-[#f8fafc] text-slate-300 hover:bg-[#111827] hover:text-white rounded-xl transition-all active:scale-90"
+                                                className="px-4 py-2 bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-900 rounded-xl transition-all active:scale-95 flex items-center gap-1.5 shadow-sm group/edit"
                                                 title="Edit Milestone"
                                             >
-                                                <Edit2 size={14} strokeWidth={3} />
+                                                <Edit2 size={12} strokeWidth={3} className="group-hover/edit:text-[#10b981] transition-colors" />
+                                                <span className="text-[10px] font-black tracking-widest uppercase">Edit</span>
                                             </button>
-                                        </div>
-
-                                        {/* Content: Icon & Text */}
-                                        <div>
-                                            <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl mb-3 shadow-lg transition-all duration-500 group-hover/milestone:scale-105 ${milestone.is_active ? 'bg-gradient-to-br from-[#10b981] to-[#059669] text-white shadow-[#10b981]/20' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>
-                                                {getRewardIcon(milestone.reward)}
-                                            </div>
-
-                                            <h3 className="text-base font-black text-[#1e293b] leading-tight mb-2 tracking-tight transition-colors">{milestone.reward}</h3>
-                                            <p className="text-[#64748b] text-[11px] font-bold leading-snug opacity-80 h-8 line-clamp-2">{milestone.description || 'Exclusive reward for dedicated partners.'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -427,7 +473,7 @@ const ReferralBenefitsTab: React.FC = () => {
                     setSelectedMilestone(null);
                 }}
                 onSuccess={() => {
-                    fetchAllData();
+                    fetchAllData(true);
                 }}
             />
 

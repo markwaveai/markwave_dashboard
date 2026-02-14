@@ -446,7 +446,7 @@ const CostEstimationTableContent = ({
         return { monthlyRevenue, investorMonthlyRevenue, revenueBuffaloDetails: buffaloDetails, buffaloValuesByYear };
     }, [treeData.startYear, treeData.startMonth, treeData.durationMonths, buffaloDetails, units]);
 
-    const calculateYearlyDataWithCPF = () => {
+    const yearlyDataWithCPF = useMemo(() => {
         return yearlyData.map((yearData: any) => {
             const cpfCost = (yearlyCPFCost[yearData.year] || 0) * units;
             const cgfCost = (yearlyCGFCost[yearData.year] || 0); // Already scaled by units in calculation
@@ -473,9 +473,7 @@ const CostEstimationTableContent = ({
                 revenueWithCPF
             };
         });
-    };
-
-    const yearlyDataWithCPF = calculateYearlyDataWithCPF();
+    }, [yearlyData, yearlyCPFCost, yearlyCGFCost, units, investorMonthlyRevenue]);
 
     const calculateCumulativeRevenueData = () => {
         const cumulativeData: any[] = [];
@@ -770,15 +768,24 @@ const CostEstimationTableContent = ({
 
             assetValues.push({
                 year: year,
-                totalBuffaloes: (yearData?.totalBuffaloes || 0) * units,
-                ageCategories: ageCategories,
-                totalAssetValue: totalAssetValue * units,
-                motherBuffaloes: ageCategories['41+ months'].count * units
+                totalBuffaloes: (yearData?.totalBuffaloes || 0),
+                ageCategories: Object.keys(ageCategories).reduce((acc: any, key: string) => {
+                    const group = ageCategories[key];
+                    const units = Number(treeData.units || 1);
+                    acc[key] = {
+                        count: group.count * units,
+                        value: group.value * units
+                    };
+                    return acc;
+                }, {}),
+                totalAssetValue: totalAssetValue * Number(treeData.units || 1),
+                motherBuffaloes: ageCategories['41+ months'].count * Number(treeData.units || 1)
             });
         }
 
         return assetValues;
-    }, [treeData.years, treeData.startYear, treeData.startMonth, buffaloDetails, yearlyData]);
+    }, [treeData.years, treeData.startYear, treeData.startMonth, buffaloDetails, yearlyData, treeData.units]);
+
 
     const calculateDetailedAssetValue = (year: any) => {
         const ageGroups: any = {
@@ -928,9 +935,9 @@ const CostEstimationTableContent = ({
         <div className="flex flex-col h-full overflow-hidden relative bg-slate-50">
             {/* Top Navigation Bar */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-[60] shadow-sm">
-                <div className="flex flex-col items-center py-2 max-w-7xl mx-auto">
+                <div className="flex flex-col items-center py-1 max-w-7xl mx-auto">
                     {/* Tabs - Single Row, Scroll if needed but hidden bar */}
-                    <div className="flex justify-start px-3 gap-1 overflow-x-auto max-w-full pr-5 no-scrollbar whitespace-nowrap">
+                    <div className="flex justify-start px-3 gap-1 overflow-x-auto overflow-y-hidden max-w-full pr-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden whitespace-nowrap">
                         {TAB_CONFIG.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -939,12 +946,12 @@ const CostEstimationTableContent = ({
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`
-                                  flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border flex-shrink-0
-                                  ${isActive
+                                      flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border flex-shrink-0
+                                      ${isActive
                                             ? 'bg-slate-900 text-white border-slate-900 shadow-md transform scale-105'
                                             : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300'
                                         }
-                                `}
+                                    `}
                                 >
                                     <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                                     <span>{tab.label}</span>
@@ -955,7 +962,7 @@ const CostEstimationTableContent = ({
 
                     {/* Integrated Year Selector & CPF Toggle (Bottom Row) */}
                     {(
-                        <div className="pb-2 flex-shrink-0 animate-fade-in-up flex items-center justify-center gap-4">
+                        <div className="flex-shrink-0 animate-fade-in-up flex items-center justify-center gap-4">
                             <div className="bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200 flex items-center gap-3 hover:bg-white transition-colors cursor-pointer group shadow-sm">
                                 <div className="flex items-center gap-2 pl-1 border-r border-slate-200 pr-3">
                                     <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
@@ -997,7 +1004,7 @@ const CostEstimationTableContent = ({
                 {/* Dashboard Header */}
 
 
-                <div className="w-full max-w-7xl mx-auto px-8 pt-16 pb-8">
+                <div className="w-full max-w-7xl mx-auto px-8 pt-2 pb-8">
 
 
 

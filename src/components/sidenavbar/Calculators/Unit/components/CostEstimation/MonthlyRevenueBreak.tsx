@@ -539,26 +539,28 @@ const MonthlyRevenueBreak = ({
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Asset Value</p>
                                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
                                     {formatCurrency(
-                                        allUnitBuffaloes.reduce((sum: number, buffalo: any) => {
-                                            const { year, month } = getCalendarDate(selectedYearIndex, 11);
-                                            let isPresent = false;
-                                            if (buffalo.generation === 0) {
-                                                if (buffalo.absoluteAcquisitionMonth !== undefined) {
-                                                    isPresent = (year * 12 + month) >= buffalo.absoluteAcquisitionMonth;
+                                        selectedYearIndex === 0
+                                            ? 350000 * units
+                                            : allUnitBuffaloes.reduce((sum: number, buffalo: any) => {
+                                                const { year, month } = getCalendarDate(selectedYearIndex, 11);
+                                                let isPresent = false;
+                                                if (buffalo.generation === 0) {
+                                                    if (buffalo.absoluteAcquisitionMonth !== undefined) {
+                                                        isPresent = (year * 12 + month) >= buffalo.absoluteAcquisitionMonth;
+                                                    } else {
+                                                        isPresent = year > treeData.startYear || (year === treeData.startYear && month >= buffalo.acquisitionMonth);
+                                                    }
                                                 } else {
-                                                    isPresent = year > treeData.startYear || (year === treeData.startYear && month >= buffalo.acquisitionMonth);
+                                                    const birthYear = buffalo.birthYear;
+                                                    const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                                                    const absoluteBirth = birthYear * 12 + birthMonth;
+                                                    const currentAbsolute = year * 12 + month;
+                                                    isPresent = currentAbsolute >= absoluteBirth;
                                                 }
-                                            } else {
-                                                const birthYear = buffalo.birthYear;
-                                                const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
-                                                const absoluteBirth = birthYear * 12 + birthMonth;
-                                                const currentAbsolute = year * 12 + month;
-                                                isPresent = currentAbsolute >= absoluteBirth;
-                                            }
-                                            if (!isPresent) return sum;
-                                            const age = calculateAgeInMonths(buffalo, year, month);
-                                            return sum + (getBuffaloValueByAge(age) * units);
-                                        }, 0)
+                                                if (!isPresent) return sum;
+                                                const age = calculateAgeInMonths(buffalo, year, month);
+                                                return sum + (getBuffaloValueByAge(age) * units);
+                                            }, 0)
                                     )}
                                 </h3>
                             </div>
@@ -573,7 +575,7 @@ const MonthlyRevenueBreak = ({
 
                     </div>
 
-                    
+
 
                     {/* 3. Main Data Table */}
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
