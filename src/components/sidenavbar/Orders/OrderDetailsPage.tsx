@@ -229,8 +229,8 @@ const OrderDetailsPage: React.FC = () => {
                                         isCurrency
                                     />
                                     <InfoItem
-                                        label="UTR / Ref Number"
-                                        value={findVal(txData, ['utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id', 'cheque_no', 'cheque_number', 'chequeNo'], ['utr', 'txid', 'cheque'])}
+                                        label={txData?.paymentType === 'CASH' ? "Cashier Name" : "UTR / Ref Number"}
+                                        value={findVal(txData, ['cashier_name', 'utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id', 'cheque_no', 'cheque_number', 'chequeNo'], ['utr', 'txid', 'cheque'])}
                                         highlight
                                     />
                                     <InfoItem
@@ -238,9 +238,12 @@ const OrderDetailsPage: React.FC = () => {
                                         value={txData?.transferMode || txData?.paymentType || orderObj?.paymentType}
                                     />
                                     <InfoItem
-                                        label="Transaction Date"
-                                        value={findVal(txData, ['chequeDate', 'cheque_date', 'date', 'transactionDate', 'paymentDate'], ['date'])}
+                                        label={txData?.paymentType === 'CASH' ? "Cash Payment Date" : "Transaction Date"}
+                                        value={findVal(txData, ['cash_payment_date', 'chequeDate', 'cheque_date', 'date', 'transactionDate', 'paymentDate'], ['date'])}
                                     />
+                                    {txData?.paymentType === 'CASH' && txData?.cashier_phone && (
+                                        <InfoItem label="Cashier Phone" value={txData.cashier_phone} />
+                                    )}
                                     <InfoItem
                                         label="Account Number"
                                         value={findVal(txData, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no'])}
@@ -250,7 +253,7 @@ const OrderDetailsPage: React.FC = () => {
                                 {(() => {
                                     const frontImg = txData?.chequeFrontImage || txData?.frontImageUrl || txData?.front_image_url || txData?.frontImage || txData?.cheque_front_image_url;
                                     const backImg = txData?.chequeBackImage || txData?.backImageUrl || txData?.back_image_url || txData?.backImage || txData?.cheque_back_image_url;
-                                    const proofImg = txData?.paymentScreenshotUrl || txData?.screenshot || txData?.paymentProof;
+                                    const proofImg = txData?.voucher_image_url || txData?.paymentScreenshotUrl || txData?.screenshot || txData?.paymentProof || txData?.payment_proof_Url;
 
                                     if (!frontImg && !backImg && !proofImg) return null;
 

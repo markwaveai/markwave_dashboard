@@ -61,8 +61,12 @@ const ImageNamesModal: React.FC<ImageNamesModalProps> = () => {
         if (tx.paymentScreenshotUrl) {
             imageFields.push(['Payment Proof', tx.paymentScreenshotUrl]);
         }
-        // Fallback for payment_proof_Url if not covered by paymentScreenshotUrl
-        if (!tx.paymentScreenshotUrl && tx.payment_proof_Url) {
+        // Check for Cash Voucher
+        if (tx.voucher_image_url) {
+            imageFields.push(['Cash Voucher', tx.voucher_image_url]);
+        }
+        // Fallback for payment_proof_Url if not covered
+        if (!tx.paymentScreenshotUrl && !tx.voucher_image_url && tx.payment_proof_Url) {
             imageFields.push(['Payment Proof', tx.payment_proof_Url]);
         }
     }

@@ -696,7 +696,7 @@ const OrdersTab: React.FC = () => {
                                     <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
                                         {isCheque
                                             ? findVal(tx, ['cheque_date', 'chequeDate', 'date'], ['date'])
-                                            : findVal(tx, ['utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
+                                            : findVal(tx, ['cash_payment_date', 'transactionDate', 'paymentDate', 'utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid', 'date'])
                                         }
                                     </span>
                                     {!isCheque && (
@@ -760,7 +760,7 @@ const OrderVerificationModal: React.FC = () => {
     // Helper to find image URLs across possible key variations
     const frontImg = tx.chequeFrontImage || tx.frontImageUrl || tx.front_image_url || tx.frontImage || tx.cheque_front_image_url || null;
     const backImg = tx.chequeBackImage || tx.backImageUrl || tx.back_image_url || tx.backImage || tx.cheque_back_image_url || null;
-    const proofImg = tx.paymentScreenshotUrl || tx.payment_proof_Url || tx.proofImage || tx.paymentProof || null;
+    const proofImg = tx.voucher_image_url || tx.paymentScreenshotUrl || tx.payment_proof_Url || tx.proofImage || tx.paymentProof || null;
 
     // Reset when modal opens
     useEffect(() => {
@@ -1054,21 +1054,31 @@ const OrderVerificationModal: React.FC = () => {
                                     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                                         <div className="grid grid-cols-2 divide-x divide-slate-100">
                                             <div className="p-2">
-                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">{isCheque ? 'Cheque Number' : 'UTR / TX ID'}</div>
+                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">
+                                                    {isCheque ? 'Cheque Number' : tx.paymentType === 'CASH' ? 'Cashier Name' : 'UTR / TX ID'}
+                                                </div>
                                                 <div className="text-[10px] font-bold text-slate-700 truncate">
                                                     {isCheque
                                                         ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo', 'utrNumber'], ['cheque', 'utr'])
-                                                        : findVal(tx, ['utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid']) || '-'}
+                                                        : findVal(tx, ['cashier_name', 'utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid']) || '-'}
                                                 </div>
                                             </div>
                                             <div className="p-2 bg-slate-50/30">
-                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">{isCheque ? 'Cheque Date' : 'Transaction Date'}</div>
+                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">
+                                                    {isCheque ? 'Cheque Date' : tx.paymentType === 'CASH' ? 'Cash Payment Date' : 'Transaction Date'}
+                                                </div>
                                                 <div className="text-[10px] font-bold text-slate-700 truncate">
                                                     {isCheque
                                                         ? findVal(tx, ['cheque_date', 'chequeDate', 'date'], ['date'])
-                                                        : findVal(tx, ['transactionDate', 'paymentDate'], ['date']) || '-'}
+                                                        : findVal(tx, ['cash_payment_date', 'transactionDate', 'paymentDate'], ['date']) || '-'}
                                                 </div>
                                             </div>
+                                            {tx.paymentType === 'CASH' && tx.cashier_phone && (
+                                                <div className="p-2 bg-slate-50/30 border-t border-slate-100 col-span-2">
+                                                    <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Cashier Phone</div>
+                                                    <div className="text-[10px] font-bold text-slate-700 truncate">{tx.cashier_phone}</div>
+                                                </div>
+                                            )}
                                             {isBankTransfer && (
                                                 <div className="p-2 bg-slate-50/30 border-t border-slate-100 col-span-2">
                                                     <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Transfer Mode</div>
