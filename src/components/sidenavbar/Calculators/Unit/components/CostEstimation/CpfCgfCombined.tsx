@@ -174,7 +174,6 @@ const CpfCgfCombined = ({
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Cumulative CPF Cost</p>
                         <h3 className="text-base font-bold text-amber-600 mt-0.5">{formatCurrency(cumulativeCpf)}</h3>
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1">Until Year {selectedYearIndex + 1}</p>
                 </div>
 
                 {/* Cumulative CGF */}
@@ -183,7 +182,6 @@ const CpfCgfCombined = ({
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Cumulative CGF Cost</p>
                         <h3 className="text-base font-bold text-rose-600 mt-0.5">{formatCurrency(cumulativeCgf)}</h3>
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1">Until Year {selectedYearIndex + 1}</p>
                 </div>
 
                 {/* Combined Total */}
@@ -192,7 +190,6 @@ const CpfCgfCombined = ({
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Combined Cumulative Total</p>
                         <h3 className="text-base font-bold text-slate-900 mt-0.5">{formatCurrency(cumulativeTotal)}</h3>
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1">Total Investment</p>
                 </div>
             </div>
 

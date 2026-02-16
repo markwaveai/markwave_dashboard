@@ -839,7 +839,7 @@ const CostEstimationTableContent = ({
 
                     {/* Integrated Year Selector & CPF Toggle (Bottom Row) */}
                     {(
-                        <div className="pb-2 flex-shrink-0 animate-fade-in-up flex items-center justify-center gap-4">
+                        <div className="pt-[2px] pb-2 flex-shrink-0 animate-fade-in-up flex items-center justify-center gap-4">
                             <div className="bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200 flex items-center gap-3 hover:bg-white transition-colors cursor-pointer group shadow-sm">
                                 <div className="flex items-center gap-2 pl-1 border-r border-slate-200 pr-3">
                                     <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />

@@ -151,7 +151,6 @@ const RevenueBreakEven: React.FC<any> = ({
                                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 w-1/4 text-center">Year</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 text-center w-1/4">Net Annual Revenue</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 text-center w-1/4">Cumulative Net</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-[25%] text-center">Investment Recovery</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -192,15 +191,6 @@ const RevenueBreakEven: React.FC<any> = ({
                                         </td>
                                         <td className="px-6 py-4 border-r border-slate-100 text-right">
                                             <div className={`font-bold ${isRevenueBreakEven ? 'text-emerald-600' : 'text-blue-600'}`}>{formatCurrency(cumulativeRevenue)}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div className={`h-full rounded-full transition-all duration-500 ${recoveryPercentage >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(recoveryPercentage, 100)}%` }} />
-                                                </div>
-                                                <div className="text-xs font-bold text-slate-600 min-w-[40px] text-right">{recoveryPercentage.toFixed(0)}%</div>
-                                            </div>
-                                            <div className="mt-1 text-xs text-slate-400">{status}</div>
                                         </td>
                                     </tr>
                                 );

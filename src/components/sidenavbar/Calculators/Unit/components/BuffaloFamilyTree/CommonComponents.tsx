@@ -239,7 +239,7 @@ export const SimpleTooltip = ({
 }: {
     children: React.ReactNode,
     content: string,
-    placement?: 'left' | 'bottom' | 'top',
+    placement?: 'left' | 'bottom' | 'top' | 'bottom-right',
     className?: string
 }) => {
 
@@ -247,13 +247,17 @@ export const SimpleTooltip = ({
         ? "absolute right-full top-1/2 -translate-y-1/2 mr-3"
         : placement === 'top'
             ? "absolute bottom-full left-1/2 -translate-x-1/2 mb-3"
-            : "absolute top-full left-1/2 -translate-x-1/2 mt-3"; // bottom
+            : placement === 'bottom-right'
+                ? "absolute top-full right-0 mt-3"
+                : "absolute top-full left-1/2 -translate-x-1/2 mt-3"; // bottom
 
     const arrowClasses = placement === 'left'
         ? "absolute left-full top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-slate-800"
         : placement === 'top'
             ? "absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-t-[6px] border-t-slate-800"
-            : "absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-b-[6px] border-b-slate-800"; // bottom arrow
+            : placement === 'bottom-right'
+                ? "absolute bottom-full right-4 w-0 h-0 border-x-[6px] border-x-transparent border-b-[6px] border-b-slate-800"
+                : "absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-b-[6px] border-b-slate-800"; // bottom arrow
 
     const maxWidthClass = className.includes('max-w-') ? '' : 'max-w-[200px]';
 

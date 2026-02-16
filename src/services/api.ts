@@ -220,26 +220,7 @@ export const selfBenefitService = {
     }
   },
 
-  updateGlobalStatus: async (isActive: boolean, adminMobile: string): Promise<ApiResponse<any>> => {
-    try {
-      const response = await api.patch(API_ENDPOINTS.updateGlobalStatus(), null, {
-        params: { is_active: isActive },
-        headers: {
-          'X-Admin-Mobile': adminMobile
-        }
-      });
 
-      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
-        return { error: response.data.message || 'Failed to update global status' };
-      }
-
-      return { data: response.data, message: `All benefits ${isActive ? 'activated' : 'disabled'} successfully` };
-    } catch (error: any) {
-      console.error('Error updating global status:', error);
-      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to update global status';
-      return { error: errorMessage };
-    }
-  }
 };
 
 export const referralBenefitService = {

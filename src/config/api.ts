@@ -44,7 +44,7 @@ export const API_ENDPOINTS = {
   updateFarm: (id: string) => `${API_CONFIG.getBaseUrl()}/farms/${id}`,
   getSelfBenefits: () => `${API_CONFIG.getBaseUrl()}/self-benefits/`,
   updateSelfBenefit: (id: string) => `${API_CONFIG.getBaseUrl()}/self-benefits/${id}`,
-  updateGlobalStatus: () => `${API_CONFIG.getBaseUrl()}/self-benefits/global-status`,
+
   getReferralMilestones: () => `${API_CONFIG.getBaseUrl()}/referral-benefits/milestones`,
   updateReferralMilestone: (id: string) => `${API_CONFIG.getBaseUrl()}/referral-benefits/milestones/${encodeURIComponent(id)}`,
   getReferralConfig: () => `${API_CONFIG.getBaseUrl()}/referral-benefits/config`,

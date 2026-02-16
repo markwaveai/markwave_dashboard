@@ -100,7 +100,6 @@ const BreakEvenTimeline: React.FC<any> = ({
                                     <th className="px-6 py-3 text-right">Annual Net Sales</th>
                                     <th className="px-6 py-3 text-right">Asset Value</th>
                                     <th className="px-6 py-3 text-right">Cumulative Net</th>
-                                    <th className="px-6 py-3 text-center">Recovery</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -130,17 +129,6 @@ const BreakEvenTimeline: React.FC<any> = ({
                                             <td className="px-6 py-4 text-right">
                                                 <span className={`text-sm font-bold ${isBreakEven ? 'text-emerald-700' : 'text-indigo-600'}`}>${formatCurrency(data.cumulativeRevenueWithCPF + data.assetValue)}</span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col items-center">
-                                                    <div className="text-[10px] font-bold text-slate-600 mb-1">{data.recoveryPercentageWithCPF.toFixed(0)}%</div>
-                                                    <div className="w-20 bg-slate-100 rounded-full h-1">
-                                                        <div className={`h-full transition-all duration-500 ${data.recoveryPercentageWithCPF >= 100 ? 'bg-emerald-500' : 'bg-slate-300'}`} style={{ width: `${Math.min(100, data.recoveryPercentageWithCPF)}%` }} />
-                                                    </div>
-                                                    {isBreakEven && (
-                                                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-tighter mt-1 animate-pulse">Achieved</span>
-                                                    )}
-                                                </div>
-                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -166,14 +154,6 @@ const BreakEvenTimeline: React.FC<any> = ({
                                     )}
                                 </p>
                             </div>
-                        </div>
-                        <div className="flex flex-col items-center sm:items-end">
-                            <p className="text-[9px] uppercase text-slate-500 font-bold mb-0.5">Projected Net ROI</p>
-                            <p className="text-xl font-bold text-emerald-400">
-                                {((breakEvenAnalysis.finalCumulativeRevenueWithCPF +
-                                    (breakEvenAnalysis.breakEvenData[breakEvenAnalysis.breakEvenData.length - 1]?.assetValue || 0)) /
-                                    breakEvenAnalysis.initialInvestment * 100).toFixed(1)}%
-                            </p>
                         </div>
                     </div>
                 </div>

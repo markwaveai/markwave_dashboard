@@ -998,13 +998,14 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
             <div className="flex-1 overflow-hidden">
                 {activeTab === "familyTree" ? (
                     <TreeVisualization
-                        treeData={treeData}
+                        treeData={scaledTreeData}
                         zoom={zoom}
                         containerRef={containerRef}
                         treeContainerRef={treeContainerRef}
                         isFullScreen={isFullScreen}
                         toggleFullScreen={toggleFullScreen}
                         handleFitToScreen={handleFitToScreen}
+                        isCGFEnabled={isCGFEnabled}
                     />
 
                 ) : treeData ? (

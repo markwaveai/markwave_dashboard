@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, Award, Clock, AlertCircle, ShoppingBag, RotateCcw, Plus, Edit2, MoreVertical, XCircle, CheckCircle2, X, MonitorPlay } from 'lucide-react';
+import { Gift, Award, Clock, AlertCircle, ShoppingBag, RotateCcw, Plus, Edit2, MoreVertical, X, MonitorPlay } from 'lucide-react';
 import { selfBenefitService } from '../../../services/api';
 import BenefitModal from './CreateBenefitModal';
 import { SelfBenefit } from '../../../types';
@@ -8,7 +8,7 @@ interface SelfBenefitsListProps {
     farmId?: string;
     benefits?: SelfBenefit[];
     loading?: boolean;
-    onRefresh?: () => void;
+    onRefresh?: (silent?: boolean) => Promise<void> | void;
 }
 
 const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: propBenefits, loading: propLoading, onRefresh }) => {
@@ -18,8 +18,7 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedBenefit, setSelectedBenefit] = useState<SelfBenefit | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-    const [globalActionLoading, setGlobalActionLoading] = useState(false);
-    const [showToggleConfirm, setShowToggleConfirm] = useState(false);
+
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -62,30 +61,7 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
         return '';
     };
 
-    const handleToggleAll = async (status: boolean) => {
-        const adminMobile = getAdminMobile();
-        if (!adminMobile) return;
 
-        setGlobalActionLoading(true);
-        try {
-            const result = await selfBenefitService.updateGlobalStatus(status, adminMobile);
-            if (!result.error) {
-                if (onRefresh) {
-                    onRefresh();
-                } else {
-                    await fetchBenefits();
-                }
-                setShowToggleConfirm(false);
-            } else {
-                alert(result.error);
-            }
-        } catch (err) {
-            console.error('Error toggling all benefits:', err);
-            alert('An unexpected error occurred');
-        } finally {
-            setGlobalActionLoading(false);
-        }
-    };
 
     const displayBenefits = propBenefits || benefits;
     const isLoading = propLoading !== undefined ? propLoading : loading;
@@ -121,60 +97,22 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
         );
     }
 
-    const anyActive = displayBenefits.some(b => b.is_active);
+
 
     return (
-        <div className="flex flex-col bg-[#f4f7fa] p-6 font-sans min-h-full">
-            {/* Header */}
-            <div className="flex justify-between items-start mb-6">
-                <div>
-                    <h2 className="text-[2rem] font-extrabold text-[#111827] leading-tight">
-                        Manage Self Benefits
-                    </h2>
-                    <p className="text-[#6b7280] text-lg mt-1 font-medium">Configure and manage unit-based reward programs for members.</p>
-                </div>
-            </div>
-
-            {/* Actions & Search Bar */}
-            {filteredBenefits.length > 0 && (
-                <div className="bg-white p-4 rounded-[1.5rem] shadow-sm mb-6 border border-[#f1f5f9] flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        {anyActive ? (
-                            <button
-                                type="button"
-                                onClick={() => handleToggleAll(false)}
-                                disabled={globalActionLoading}
-                                className="flex items-center gap-2 bg-[#fef2f2] text-[#ef4444] px-5 py-2.5 rounded-xl font-bold hover:bg-[#fee2e2] border border-[#ef4444]/10 transition-all disabled:opacity-50 text-sm shadow-sm"
-                            >
-                                <XCircle size={16} fill="#ef4444" className="text-[#fef2f2]" />
-                                Disable All Benefits
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={() => handleToggleAll(true)}
-                                disabled={globalActionLoading}
-                                className="flex items-center gap-2 bg-[#ecfdf5] text-[#10b981] px-5 py-2.5 rounded-xl font-bold hover:bg-[#d1fae5] border border-[#10b981]/10 transition-all disabled:opacity-50 text-sm shadow-sm"
-                            >
-                                <CheckCircle2 size={16} fill="#10b981" className="text-[#ecfdf5]" />
-                                Activate All Benefits
-                            </button>
-                        )}
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setSelectedBenefit(null);
-                            setIsModalOpen(true);
-                        }}
-                        className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-[#10b981]/10 active:scale-95 text-sm"
-                    >
-                        <Plus size={18} strokeWidth={3} />
-                        Add New Benefit
-                    </button>
-                </div>
-            )}
+        <div className="flex flex-col bg-[#f4f7fa] p-6 font-sans min-h-full relative">
+            {/* Add Benefit Floating Button */}
+            <button
+                type="button"
+                onClick={() => {
+                    setSelectedBenefit(null);
+                    setIsModalOpen(true);
+                }}
+                className="absolute top-6 right-6 z-10 flex items-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-[#10b981]/10 active:scale-95 text-sm"
+            >
+                <Plus size={18} strokeWidth={3} />
+                Add New Benefit
+            </button>
 
             {/* Grid */}
             {filteredBenefits.length === 0 ? (
@@ -188,14 +126,14 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
                             </div>
                         </div>
 
-                        <h3 className="text-3xl font-[900] text-[#1e293b] mb-4 tracking-tight">No Benefits Found</h3>
+                        <h3 className="text-3xl font-[900] text-[#1e293b] mb-4 tracking-tight">No Self Benefits Found</h3>
                         <p className="text-[#64748b] text-lg font-medium leading-relaxed mb-4 max-w-md mx-auto">
-                            You haven't created any self-benefits yet. Start by adding rewards for your members based on their unit purchases.
+                            There are no self benefits for this farm.
                         </p>
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-20 mt-12">
                     {filteredBenefits.map((benefit) => (
                         <div
                             key={benefit.id}
@@ -251,7 +189,8 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
                                             );
                                             if (!result.error) {
                                                 if (onRefresh) {
-                                                    onRefresh();
+                                                    // Pass true to indicate silent refresh (no global loading)
+                                                    await onRefresh(true);
                                                 } else {
                                                     await fetchBenefits(true);
                                                 }

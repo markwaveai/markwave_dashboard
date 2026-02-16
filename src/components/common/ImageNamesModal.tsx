@@ -13,6 +13,16 @@ const ImageNamesModal: React.FC<ImageNamesModalProps> = () => {
     const [viewingImage, setViewingImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Auto-view if direct URL is provided
+    React.useEffect(() => {
+        if (isOpen && data?.directUrl) {
+            setViewingImage(data.directUrl);
+            setIsLoading(true);
+        } else if (!isOpen) {
+            setViewingImage(null);
+        }
+    }, [isOpen, data?.directUrl]);
+
     const onClose = () => {
         dispatch(setProofModal({ isOpen: false }));
     };
@@ -33,26 +43,27 @@ const ImageNamesModal: React.FC<ImageNamesModalProps> = () => {
     };
 
     const imageFields: [string, any][] = [];
+    const tx = data?.transaction || data;
 
-    if (data && data.transaction) {
+    if (tx) {
         // Check for Cheque Front Image (various common spellings)
-        const frontVal = data.transaction.frontImageUrl || data.transaction.front_image_url || data.transaction.frontImage || data.transaction.cheque_front_image_url;
+        const frontVal = tx.chequeFrontImage || tx.frontImageUrl || tx.front_image_url || tx.frontImage || tx.cheque_front_image_url;
         if (frontVal) {
             imageFields.push(['Cheque Front', frontVal]);
         }
 
         // Check for Cheque Back Image (various common spellings)
-        const backVal = data.transaction.backImageUrl || data.transaction.back_image_url || data.transaction.backImage || data.transaction.cheque_back_image_url;
+        const backVal = tx.chequeBackImage || tx.backImageUrl || tx.back_image_url || tx.backImage || tx.cheque_back_image_url;
         if (backVal) {
             imageFields.push(['Cheque Back', backVal]);
         }
 
-        if (data.transaction.paymentScreenshotUrl) {
-            imageFields.push(['Payment Proof', data.transaction.paymentScreenshotUrl]);
+        if (tx.paymentScreenshotUrl) {
+            imageFields.push(['Payment Proof', tx.paymentScreenshotUrl]);
         }
         // Fallback for payment_proof_Url if not covered by paymentScreenshotUrl
-        if (!data.transaction.paymentScreenshotUrl && data.transaction.payment_proof_Url) {
-            imageFields.push(['Payment Proof', data.transaction.payment_proof_Url]);
+        if (!tx.paymentScreenshotUrl && tx.payment_proof_Url) {
+            imageFields.push(['Payment Proof', tx.payment_proof_Url]);
         }
     }
 
@@ -103,22 +114,13 @@ const ImageNamesModal: React.FC<ImageNamesModalProps> = () => {
                             />
                         </div>
 
-                        <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                        <div className="flex justify-center mt-6 pt-4 border-t border-gray-200">
                             <button
-                                onClick={() => setViewingImage(null)}
-                                className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+                                onClick={handleClose}
+                                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors active:scale-95 text-sm"
                             >
-                                &larr; Back to List
+                                Close
                             </button>
-                            <a
-                                href={viewingImage}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm hover:shadow active:scale-95 transition-all text-sm font-medium flex items-center gap-2"
-                            >
-                                Open Original
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            </a>
                         </div>
                     </div>
                 ) : (

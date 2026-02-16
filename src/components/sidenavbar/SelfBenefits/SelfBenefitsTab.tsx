@@ -5,7 +5,10 @@ import { farmService, selfBenefitService, referralBenefitService, referralConfig
 import { SelfBenefit, ReferralMilestone, ReferralConfig } from '../../../types';
 
 const SelfBenefitsTab: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'self' | 'referral'>('self');
+    const [activeTab, setActiveTab] = useState<'self' | 'referral'>(() => {
+        const saved = localStorage.getItem('offer_manager_active_tab');
+        return (saved === 'self' || saved === 'referral') ? saved : 'self';
+    });
     const [farms, setFarms] = useState<any[]>([]);
     const [selectedFarmId, setSelectedFarmId] = useState<string>('');
 
@@ -15,13 +18,24 @@ const SelfBenefitsTab: React.FC = () => {
     const [referralConfig, setReferralConfig] = useState<ReferralConfig | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
+    // Persist active tab
+    useEffect(() => {
+        localStorage.setItem('offer_manager_active_tab', activeTab);
+    }, [activeTab]);
+
     useEffect(() => {
         const fetchFarms = async () => {
             try {
                 const data = await farmService.getFarms();
                 setFarms(data);
                 if (data.length > 0) {
-                    setSelectedFarmId(data[0].id);
+                    const savedFarmId = localStorage.getItem('offer_manager_selected_farm');
+                    const farmExists = data.find((f: any) => f.id === savedFarmId);
+                    if (savedFarmId && farmExists) {
+                        setSelectedFarmId(savedFarmId);
+                    } else {
+                        setSelectedFarmId(data[0].id);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch farms", error);
@@ -30,9 +44,9 @@ const SelfBenefitsTab: React.FC = () => {
         fetchFarms();
     }, []);
 
-    const fetchAllData = async (farmId: string) => {
+    const fetchAllData = async (farmId: string, silent = false) => {
         if (!farmId) return;
-        setLoading(true);
+        if (!silent) setLoading(true);
         try {
             const [benefits, milestones, config] = await Promise.all([
                 selfBenefitService.getSelfBenefits(farmId),
@@ -45,7 +59,7 @@ const SelfBenefitsTab: React.FC = () => {
         } catch (error) {
             console.error("Error fetching offer settings data:", error);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -68,7 +82,11 @@ const SelfBenefitsTab: React.FC = () => {
                         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select Farm:</span>
                         <select
                             value={selectedFarmId}
-                            onChange={(e) => setSelectedFarmId(e.target.value)}
+                            onChange={(e) => {
+                                const newId = e.target.value;
+                                setSelectedFarmId(newId);
+                                localStorage.setItem('offer_manager_selected_farm', newId);
+                            }}
                             className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#10b981] focus:border-[#10b981] block p-2 outline-none transition-all hover:bg-gray-50"
                         >
                             {farms.map((farm) => (
@@ -109,7 +127,7 @@ const SelfBenefitsTab: React.FC = () => {
                         farmId={selectedFarmId}
                         benefits={selfBenefits}
                         loading={loading}
-                        onRefresh={() => fetchAllData(selectedFarmId)}
+                        onRefresh={(silent) => fetchAllData(selectedFarmId, silent)}
                     />
                 ) : (
                     <ReferralBenefitsTab
@@ -118,7 +136,7 @@ const SelfBenefitsTab: React.FC = () => {
                         preloadedMilestones={referralMilestones}
                         preloadedConfig={referralConfig}
                         externalLoading={loading}
-                        onRefresh={() => fetchAllData(selectedFarmId)}
+                        onRefresh={(silent) => fetchAllData(selectedFarmId, silent)}
                     />
                 )}
             </div>

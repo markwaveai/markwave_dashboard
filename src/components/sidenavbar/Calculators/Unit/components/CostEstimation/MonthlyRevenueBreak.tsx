@@ -506,18 +506,6 @@ const MonthlyRevenueBreak = ({
                                         }, 0) - (cpfCost.annualCPFCost * units) - (Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0) * units))}
                                     </h3>
                                 </div>
-                                <div className="mt-1 flex items-center justify-center text-[9px] text-slate-400">
-                                    {(() => {
-                                        const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (selectedYearIndex * 12);
-                                        const sYear = Math.floor(startAbs / 12);
-                                        const sMonth = startAbs % 12;
-                                        const sDate = new Date(sYear, sMonth, 1);
-                                        const eDate = new Date(sYear, sMonth + 11, 1);
-                                        const startStr = sDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                                        const endStr = eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                                        return `${startStr} - ${endStr}`;
-                                    })()}
-                                </div>
                             </div>
                             <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-emerald-500" />
                         </div>
@@ -564,13 +552,6 @@ const MonthlyRevenueBreak = ({
                                     )}
                                 </h3>
                             </div>
-                            <p className="text-[9px] text-slate-400 mt-1">End                 {(() => {
-                                const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (selectedYearIndex * 12);
-                                const sYear = Math.floor(startAbs / 12);
-                                const sMonth = startAbs % 12;
-                                const eDate = new Date(sYear, sMonth + 11, 1);
-                                return eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                            })()}</p>
                         </div>
 
                     </div>
@@ -717,7 +698,7 @@ const MonthlyRevenueBreak = ({
                                                                     // Which are the "Resting" months.
                                                                     // So "Rest" is the correct default here.
                                                                     cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                                    displayText = "Dry Period";
+                                                                    displayText = "-";
                                                                 } else {
                                                                     cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
                                                                     displayText = "-";
@@ -726,7 +707,7 @@ const MonthlyRevenueBreak = ({
                                                                 displayText = "-";
                                                             } else {
                                                                 cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                                displayText = "Dry Period";
+                                                                displayText = "-";
                                                             }
                                                         } else if (monthDiff < 0 && buffalo.id === 'B') {
                                                             cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
@@ -750,7 +731,7 @@ const MonthlyRevenueBreak = ({
                                                             displayText = "Milk Yield Starts";
                                                         } else if (isCpfApplicable) {
                                                             cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
-                                                            displayText = "Dry Period";
+                                                            displayText = "-";
                                                         }
 
                                                         return (
@@ -842,8 +823,9 @@ const MonthlyRevenueBreak = ({
                         {/* Selector Removed - Controlled globally */}
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 

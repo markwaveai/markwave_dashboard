@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
-import { Check, Copy, User, X, AlertCircle } from 'lucide-react';
+import { Check, Copy, User, X, AlertCircle, ChevronDown } from 'lucide-react';
 import {
     setSearchQuery,
     setPaymentFilter,
@@ -321,10 +321,69 @@ const OrdersTab: React.FC = () => {
 
     return (
         <div className="p-6">
-            {/* New Header: Order Management Left, Date/Search Right */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
-                <h2 className="text-xl font-bold m-0 text-slate-800">Order Management</h2>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            {/* New Header: Order Management Left, Filters Right */}
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-6">
+                <h2 className="text-xl font-bold m-0 text-slate-800 shrink-0">Order Management</h2>
+                <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto relative z-20">
+                    {/* Search Input */}
+                    <div className="relative w-full sm:w-[250px]">
+                        <input
+                            type="text"
+                            placeholder="Search by Order ID, Mobile"
+                            className="h-[38px] px-3 py-2 pr-8 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full"
+                            value={localSearch}
+                            onChange={(e) => setLocalSearch(e.target.value)}
+                        />
+                        {localSearch && (
+                            <button
+                                onClick={() => setLocalSearch('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Status Filter Dropdown */}
+                    <div className="group relative inline-block text-left w-full sm:w-auto">
+                        <button
+                            type="button"
+                            className="inline-flex justify-between items-center w-full sm:w-[240px] px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all h-[38px]"
+                        >
+                            <div className="flex items-center gap-2 overflow-hidden">
+                                <span className="truncate">
+                                    {filterButtons.find(b => b.status === statusFilter)?.label || 'Filter Status'}
+                                </span>
+                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[11px] font-bold shrink-0">
+                                    {filterButtons.find(b => b.status === statusFilter)?.count ?? 0}
+                                </span>
+                            </div>
+                            <ChevronDown size={16} className="ml-2 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
+                        </button>
+
+                        {/* Dropdown menu */}
+                        <div className="absolute left-0 top-full mt-2 w-[240px] bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left overflow-hidden z-50">
+                            <div className="py-1.5">
+                                {filterButtons.map((btn) => (
+                                    <button
+                                        key={btn.status}
+                                        onClick={() => handleStatusFilterChange(btn.status)}
+                                        className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-left transition-colors ${statusFilter === btn.status
+                                            ? 'bg-blue-50 text-blue-700 font-semibold'
+                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                            }`}
+                                    >
+                                        <span>{btn.label}</span>
+                                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${statusFilter === btn.status ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+                                            {btn.count !== undefined ? btn.count : '-'}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Farm Filter */}
                     <select
                         className="h-[38px] px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full sm:w-[180px] cursor-pointer"
                         value={farmFilter}
@@ -336,33 +395,7 @@ const OrdersTab: React.FC = () => {
                             <option key={farm.id} value={farm.id}>{farm.location}</option>
                         ))}
                     </select>
-                    <input
-                        type="text"
-                        placeholder="Search by Order ID, Mobile"
-                        className="h-[38px] px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full sm:w-[250px]"
-                        value={localSearch}
-                        onChange={(e) => setLocalSearch(e.target.value)}
-                    />
                 </div>
-            </div>
-
-            {/* Pill Filters */}
-            <div className="flex flex-wrap gap-3 mb-6 items-center">
-                {filterButtons.map((btn) => (
-                    <button
-                        key={btn.status}
-                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full border text-[13px] font-semibold cursor-pointer transition-all ${statusFilter === btn.status
-                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
-                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300'
-                            }`}
-                        onClick={() => handleStatusFilterChange(btn.status)}
-                    >
-                        <span>{btn.label}</span>
-                        <span className={`px-2 py-0.5 rounded-xl text-[11px] ${statusFilter === btn.status ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                            {btn.count !== undefined ? btn.count : '-'}
-                        </span>
-                    </button>
-                ))}
             </div>
 
             {
@@ -632,17 +665,11 @@ const OrdersTab: React.FC = () => {
                                 }`}></div>
 
                             <div className="text-[13px] font-bold text-slate-50 mb-3 pb-2 border-b border-slate-700">Payment Details</div>
-                            <div className="flex justify-between gap-3 mb-1.5">
-                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Bank Name:</span>
-                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
-                                    {findVal(tx, ['payerBankName', 'bank_name', 'bankName', 'bank_details'], ['bank'])}
-                                </span>
-                            </div>
 
                             {/* Account Number - Only show if available */}
                             {(() => {
                                 const accNo = isCheque
-                                    ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
+                                    ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo', 'utrNumber'], ['cheque', 'utr'])
                                     : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no']);
 
                                 if (accNo && accNo !== '-') {
@@ -668,7 +695,7 @@ const OrdersTab: React.FC = () => {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
                                     <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
                                         {isCheque
-                                            ? findVal(tx, ['cheque_date', 'date'], ['date'])
+                                            ? findVal(tx, ['cheque_date', 'chequeDate', 'date'], ['date'])
                                             : findVal(tx, ['utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])
                                         }
                                     </span>
@@ -677,14 +704,6 @@ const OrdersTab: React.FC = () => {
                                     )}
                                 </div>
                             </div>
-                            {!isCheque && (
-                                <div className="flex justify-between gap-3 mb-1.5">
-                                    <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">IFSC:</span>
-                                    <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
-                                        {findVal(tx, ['payerIFSC', 'ifsc_code', 'ifsc', 'ifscCode'], ['ifsc'])}
-                                    </span>
-                                </div>
-                            )}
                             {tx.transferMode && (
                                 <div className="flex justify-between gap-3 mb-0">
                                     <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Mode:</span>
@@ -739,8 +758,8 @@ const OrderVerificationModal: React.FC = () => {
     const hasCoins = (entry?.order?.coinsRedeemed || 0) > 0 || isCoinsRedeem;
 
     // Helper to find image URLs across possible key variations
-    const frontImg = tx.frontImageUrl || tx.front_image_url || tx.frontImage || tx.cheque_front_image_url || null;
-    const backImg = tx.backImageUrl || tx.back_image_url || tx.backImage || tx.cheque_back_image_url || null;
+    const frontImg = tx.chequeFrontImage || tx.frontImageUrl || tx.front_image_url || tx.frontImage || tx.cheque_front_image_url || null;
+    const backImg = tx.chequeBackImage || tx.backImageUrl || tx.back_image_url || tx.backImage || tx.cheque_back_image_url || null;
     const proofImg = tx.paymentScreenshotUrl || tx.payment_proof_Url || tx.proofImage || tx.paymentProof || null;
 
     // Reset when modal opens
@@ -1033,41 +1052,28 @@ const OrderVerificationModal: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                                        <div className="grid grid-cols-3 divide-x divide-slate-100">
-                                            <div className="p-2 bg-slate-50/30">
-                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Bank Name</div>
-                                                <div className="text-[10px] font-bold text-slate-700 truncate" title={findVal(tx, ['payerBankName', 'bank_name', 'bankName', 'bank_details'], ['bank']) || '-'}>
-                                                    {findVal(tx, ['payerBankName', 'bank_name', 'bankName', 'bank_details'], ['bank']) || '-'}
-                                                </div>
-                                            </div>
+                                        <div className="grid grid-cols-2 divide-x divide-slate-100">
                                             <div className="p-2">
-                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">{isCheque ? 'Number' : 'IFSC Code'}</div>
+                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">{isCheque ? 'Cheque Number' : 'UTR / TX ID'}</div>
                                                 <div className="text-[10px] font-bold text-slate-700 truncate">
                                                     {isCheque
-                                                        ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo'], ['cheque'])
-                                                        : findVal(tx, ['payerIFSC', 'ifsc_code', 'ifsc', 'ifscCode'], ['ifsc']) || '-'}
-                                                </div>
-                                            </div>
-                                            <div className="p-2 bg-slate-50/30">
-                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">{isCheque ? 'Date' : 'UTR / TX ID'}</div>
-                                                <div className="text-[10px] font-bold text-slate-700 truncate">
-                                                    {isCheque
-                                                        ? findVal(tx, ['cheque_date', 'date'], ['date'])
+                                                        ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo', 'utrNumber'], ['cheque', 'utr'])
                                                         : findVal(tx, ['utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid']) || '-'}
                                                 </div>
                                             </div>
-                                            {/* Optional Row for Transfer Mode / Date if Bank Transfer */}
+                                            <div className="p-2 bg-slate-50/30">
+                                                <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">{isCheque ? 'Cheque Date' : 'Transaction Date'}</div>
+                                                <div className="text-[10px] font-bold text-slate-700 truncate">
+                                                    {isCheque
+                                                        ? findVal(tx, ['cheque_date', 'chequeDate', 'date'], ['date'])
+                                                        : findVal(tx, ['transactionDate', 'paymentDate'], ['date']) || '-'}
+                                                </div>
+                                            </div>
                                             {isBankTransfer && (
-                                                <>
-                                                    <div className="p-2 bg-slate-50/30 border-t border-slate-100">
-                                                        <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Mode</div>
-                                                        <div className="text-[10px] font-bold text-slate-700 truncate">{tx.transferMode || '-'}</div>
-                                                    </div>
-                                                    <div className="p-2 border-t border-slate-100 col-span-2">
-                                                        <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Transaction Date</div>
-                                                        <div className="text-[10px] font-bold text-slate-700 truncate">{tx.transactionDate || '-'}</div>
-                                                    </div>
-                                                </>
+                                                <div className="p-2 bg-slate-50/30 border-t border-slate-100 col-span-2">
+                                                    <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Transfer Mode</div>
+                                                    <div className="text-[10px] font-bold text-slate-700 truncate">{tx.transferMode || '-'}</div>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -1104,7 +1110,10 @@ const OrderVerificationModal: React.FC = () => {
                                             <>
                                                 {/* Cheque Front */}
                                                 <div className="flex flex-col gap-0.5 shrink-0">
-                                                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm relative group">
+                                                    <button
+                                                        onClick={() => dispatch(setProofModal({ isOpen: true, data: { ...tx, directUrl: frontImg, name: inv.name } }))}
+                                                        className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm relative group p-0 cursor-pointer"
+                                                    >
                                                         {frontImg ? (
                                                             <>
                                                                 <img src={frontImg} alt="Front" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
@@ -1117,13 +1126,16 @@ const OrderVerificationModal: React.FC = () => {
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-[7px] text-slate-400 font-bold uppercase text-center leading-tight p-1">No Front</div>
                                                         )}
-                                                    </div>
+                                                    </button>
                                                     <span className="text-[9px] font-bold text-slate-500 text-center">Front</span>
                                                 </div>
 
                                                 {/* Cheque Back */}
                                                 <div className="flex flex-col gap-0.5 shrink-0">
-                                                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm relative group">
+                                                    <button
+                                                        onClick={() => dispatch(setProofModal({ isOpen: true, data: { ...tx, directUrl: backImg, name: inv.name } }))}
+                                                        className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm relative group p-0 cursor-pointer"
+                                                    >
                                                         {backImg ? (
                                                             <>
                                                                 <img src={backImg} alt="Back" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
@@ -1136,13 +1148,16 @@ const OrderVerificationModal: React.FC = () => {
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-[7px] text-slate-400 font-bold uppercase text-center leading-tight p-1">No Back</div>
                                                         )}
-                                                    </div>
+                                                    </button>
                                                     <span className="text-[9px] font-bold text-slate-500 text-center">Back</span>
                                                 </div>
                                             </>
                                         ) : (
                                             /* Standard Payment Proof */
-                                            <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm relative group">
+                                            <button
+                                                onClick={() => dispatch(setProofModal({ isOpen: true, data: { ...tx, directUrl: proofImg, name: inv.name } }))}
+                                                className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex-shrink-0 shadow-sm relative group p-0 cursor-pointer"
+                                            >
                                                 {proofImg ? (
                                                     <>
                                                         <img src={proofImg} alt="Proof" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
@@ -1155,17 +1170,11 @@ const OrderVerificationModal: React.FC = () => {
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-[7px] text-slate-400 font-bold uppercase">No Image</div>
                                                 )}
-                                            </div>
+                                            </button>
                                         )}
 
                                         <div className="flex flex-col gap-0.5 ml-1">
-                                            <span className="text-[10px] font-bold text-slate-700">Proof Images</span>
-                                            <button
-                                                onClick={() => dispatch(setProofModal({ isOpen: true, data: { ...tx, payment_proof_Url: proofImg, name: inv.name } }))}
-                                                className="text-[9px] font-bold text-blue-600 hover:text-blue-700 transition-colors bg-blue-50/50 px-2 py-1 rounded-lg border border-blue-100 cursor-pointer w-fit"
-                                            >
-                                                View Full Size
-                                            </button>
+                                            <span className="text-[10px] text-slate-500 font-bold italic">Click on image to view full size</span>
                                         </div>
                                     </div>
                                 </div>

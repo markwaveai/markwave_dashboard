@@ -905,14 +905,14 @@ const CostEstimationTableContent = ({
         "July", "August", "September", "October", "November", "December"];
 
     const TAB_CONFIG = [
-        { id: "Monthly Revenue Break", icon: Calendar, label: "Monthly Revenue" },
-        { id: "Revenue Break Even", icon: Target, label: "Break Even Analysis" },
-        { id: "Asset Market Value", icon: TrendingUp, label: "Asset Valuation" },
-        { id: "Herd Performance", icon: Activity, label: "Herd Performance" },
-        { id: "Annual Herd Revenue", icon: PieChart, label: "Annual Revenue" },
-        { id: "Break Even Timeline", icon: Clock, label: "Break Even Timeline" },
-        { id: "Cattle Growing Fund", icon: Sprout, label: "Annual Caring Cost" },
-        { id: "CPF + CGF", icon: Calculator, label: "CPF + CGF Analysis" }
+        { id: "Monthly Revenue Break", icon: Calendar, label: "Monthly Revenue", showYearSelector: true },
+        { id: "Revenue Break Even", icon: Target, label: "Break Even Analysis", showYearSelector: false },
+        { id: "Asset Market Value", icon: TrendingUp, label: "Asset Valuation", showYearSelector: true },
+        { id: "Herd Performance", icon: Activity, label: "Herd Performance", showYearSelector: false },
+        { id: "Annual Herd Revenue", icon: PieChart, label: "Annual Revenue", showYearSelector: false },
+        { id: "Break Even Timeline", icon: Clock, label: "Break Even Timeline", showYearSelector: false },
+        { id: "Cattle Growing Fund", icon: Sprout, label: "Annual Caring Cost", showYearSelector: true },
+        { id: "CPF + CGF", icon: Calculator, label: "CPF + CGF Analysis", showYearSelector: true }
     ];
 
     if (!propTreeData?.revenueData) {
@@ -961,8 +961,8 @@ const CostEstimationTableContent = ({
                     </div>
 
                     {/* Integrated Year Selector & CPF Toggle (Bottom Row) */}
-                    {(
-                        <div className="flex-shrink-0 animate-fade-in-up flex items-center justify-center gap-4">
+                    {TAB_CONFIG.find(t => t.id === activeTab)?.showYearSelector && (
+                        <div className="pt-[2px] flex-shrink-0 animate-fade-in-up flex items-center justify-center gap-4">
                             <div className="bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200 flex items-center gap-3 hover:bg-white transition-colors cursor-pointer group shadow-sm">
                                 <div className="flex items-center gap-2 pl-1 border-r border-slate-200 pr-3">
                                     <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />

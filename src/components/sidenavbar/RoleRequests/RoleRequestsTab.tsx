@@ -249,20 +249,20 @@ const RoleRequestsTab: React.FC = () => {
                                         </div>
 
                                         {req.status === 'PENDING' && (
-                                            <div className="flex gap-2 shrink-0">
+                                            <div className="flex gap-2.5 shrink-0">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleAction(req, 'REJECT'); }}
-                                                    className="h-8 flex-1 bg-white border border-rose-200 text-rose-600 rounded-lg text-xs font-black uppercase tracking-wider hover:bg-rose-50 transition-colors flex items-center justify-center gap-1.5"
+                                                    className="flex-1 py-1.5 px-3 bg-white border border-rose-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-tighter hover:bg-rose-50 hover:border-rose-200 transition-all duration-200 flex items-center justify-center gap-2 group/btn"
                                                 >
-                                                    <XCircle size={14} />
-                                                    Reject
+                                                    <XCircle size={15} className="group-hover/btn:scale-110 transition-transform" strokeWidth={2.5} />
+                                                    REJECT
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleAction(req, 'APPROVE'); }}
-                                                    className="h-8 flex-1 bg-emerald-600 text-white rounded-lg text-xs font-black uppercase tracking-wider hover:bg-emerald-700 shadow-sm shadow-emerald-200 transition-all flex items-center justify-center gap-1.5"
+                                                    className="flex-1 py-1.5 px-3 bg-emerald-600 border border-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-tighter hover:bg-emerald-700 shadow-sm shadow-emerald-100 transition-all duration-200 flex items-center justify-center gap-2 group/btn"
                                                 >
-                                                    <CheckCircle2 size={14} />
-                                                    Approve
+                                                    <CheckCircle2 size={15} className="group-hover/btn:scale-110 transition-transform" strokeWidth={2.5} />
+                                                    APPROVE
                                                 </button>
                                             </div>
                                         )}

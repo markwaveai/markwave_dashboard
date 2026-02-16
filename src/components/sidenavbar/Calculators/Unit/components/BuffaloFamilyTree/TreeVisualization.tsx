@@ -11,6 +11,7 @@ const TreeVisualization = ({
     isFullScreen,
     toggleFullScreen,
     handleFitToScreen,
+    isCGFEnabled,
 }: {
     treeData: any;
     zoom: number;
@@ -19,6 +20,7 @@ const TreeVisualization = ({
     isFullScreen: boolean;
     toggleFullScreen: () => void;
     handleFitToScreen: () => void;
+    isCGFEnabled?: boolean;
 }) => {
     const updateXarrow = useXarrow();
     const [activeFounderId, setActiveFounderId] = useState("all");
@@ -30,8 +32,6 @@ const TreeVisualization = ({
     const dataDependency = treeData
         ? `${treeData.buffaloes?.length || 0}-${treeData.summaryStats?.totalNetRevenue || 0}`
         : '';
-
-
 
     // Handle Layout Change - Instant
     const handleLayoutChange = (layout: string) => {
@@ -146,13 +146,17 @@ const TreeVisualization = ({
         ? treeData.buffaloes
         : treeData.buffaloes.filter((b: any) => b.rootId === activeFounderId || b.id === activeFounderId);
 
+    const multiplier = treeData?.units || 1;
+
     const stats = {
-        count: filteredBuffaloes.length,
-        revenue: filteredBuffaloes.reduce((sum: any, b: any) => sum + (b.lifetimeRevenue || 0), 0),
-        netRevenue: activeFounderId === "all" && treeData.summaryStats ? treeData.summaryStats.totalNetRevenue : filteredBuffaloes.reduce((sum: any, b: any) => sum + (b.lifetimeNet || 0), 0),
-        assetValue: filteredBuffaloes.reduce((sum: any, b: any) => sum + (b.currentAssetValue || 0), 0),
-        producing: filteredBuffaloes.filter((b: any) => b.ageInMonths >= 34).length,
-        nonProducing: filteredBuffaloes.filter((b: any) => b.ageInMonths < 34).length
+        count: filteredBuffaloes.length * multiplier,
+        revenue: filteredBuffaloes.reduce((sum: any, b: any) => sum + (b.lifetimeRevenue || 0), 0) * multiplier,
+        netRevenue: activeFounderId === "all" && treeData.summaryStats
+            ? (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)
+            : filteredBuffaloes.reduce((sum: any, b: any) => sum + (b.lifetimeNet || 0), 0) * multiplier,
+        assetValue: filteredBuffaloes.reduce((sum: any, b: any) => sum + (b.currentAssetValue || 0), 0) * multiplier,
+        producing: filteredBuffaloes.filter((b: any) => b.ageInMonths >= 34).length * multiplier,
+        nonProducing: filteredBuffaloes.filter((b: any) => b.ageInMonths < 34).length * multiplier
     };
 
     // --- LAYOUT CALCULATION LOGIC ---
@@ -549,9 +553,7 @@ const TreeVisualization = ({
                         <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
                             <span className="text-xs font-medium text-slate-500">Net Rev</span>
                             <span className="text-sm font-black text-emerald-600">
-                                {stats.netRevenue > 100000
-                                    ? `${(stats.netRevenue / 100000).toFixed(2)}L`
-                                    : formatCurrency(stats.netRevenue)}
+                                {formatCurrency(stats.netRevenue)}
                             </span>
                         </div>
 
@@ -559,9 +561,7 @@ const TreeVisualization = ({
                         <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
                             <span className="text-xs font-medium text-slate-500">Asset Val</span>
                             <span className="text-sm font-black text-blue-600">
-                                {stats.assetValue > 100000
-                                    ? `${(stats.assetValue / 100000).toFixed(2)}L`
-                                    : formatCurrency(stats.assetValue)}
+                                {formatCurrency(stats.assetValue)}
                             </span>
                         </div>
 

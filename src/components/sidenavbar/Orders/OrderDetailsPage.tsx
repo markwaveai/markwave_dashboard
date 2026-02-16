@@ -230,12 +230,8 @@ const OrderDetailsPage: React.FC = () => {
                                     />
                                     <InfoItem
                                         label="UTR / Ref Number"
-                                        value={findVal(txData, ['utr', 'utr_no', 'utr_number', 'transaction_id', 'cheque_no', 'cheque_number', 'chequeNo'], ['utr', 'txid', 'cheque'])}
+                                        value={findVal(txData, ['utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id', 'cheque_no', 'cheque_number', 'chequeNo'], ['utr', 'txid', 'cheque'])}
                                         highlight
-                                    />
-                                    <InfoItem
-                                        label="Bank Name"
-                                        value={findVal(txData, ['bank_name', 'bankName', 'bank_details', 'payerBankName'], ['bank'])}
                                     />
                                     <InfoItem
                                         label="Payment Method"
@@ -243,7 +239,7 @@ const OrderDetailsPage: React.FC = () => {
                                     />
                                     <InfoItem
                                         label="Transaction Date"
-                                        value={findVal(txData, ['cheque_date', 'date', 'transactionDate', 'paymentDate'], ['date'])}
+                                        value={findVal(txData, ['chequeDate', 'cheque_date', 'date', 'transactionDate', 'paymentDate'], ['date'])}
                                     />
                                     <InfoItem
                                         label="Account Number"
@@ -251,20 +247,48 @@ const OrderDetailsPage: React.FC = () => {
                                     />
                                 </div>
 
-                                {(txData?.paymentScreenshotUrl || txData?.screenshot || txData?.paymentProof) && (
-                                    <div className="mt-8 border-t border-gray-100 pt-6">
-                                        <p className="text-sm font-medium text-gray-700 mb-3">Payment Proof</p>
-                                        <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 max-w-md">
-                                            <a href={txData?.paymentScreenshotUrl || txData?.screenshot || txData?.paymentProof} target="_blank" rel="noreferrer">
-                                                <img
-                                                    src={txData?.paymentScreenshotUrl || txData?.screenshot || txData?.paymentProof}
-                                                    alt="Payment Screenshot"
-                                                    className="w-full h-auto object-contain max-h-[400px]"
-                                                />
-                                            </a>
+                                {(() => {
+                                    const frontImg = txData?.chequeFrontImage || txData?.frontImageUrl || txData?.front_image_url || txData?.frontImage || txData?.cheque_front_image_url;
+                                    const backImg = txData?.chequeBackImage || txData?.backImageUrl || txData?.back_image_url || txData?.backImage || txData?.cheque_back_image_url;
+                                    const proofImg = txData?.paymentScreenshotUrl || txData?.screenshot || txData?.paymentProof;
+
+                                    if (!frontImg && !backImg && !proofImg) return null;
+
+                                    return (
+                                        <div className="mt-8 border-t border-gray-100 pt-6">
+                                            <p className="text-sm font-medium text-gray-700 mb-3">Payment Proof</p>
+                                            <div className="flex flex-wrap gap-4">
+                                                {frontImg && (
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48">
+                                                            <a href={frontImg} target="_blank" rel="noreferrer">
+                                                                <img src={frontImg} alt="Cheque Front" className="w-full h-32 object-contain" />
+                                                            </a>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-500 font-bold text-center">Front View</span>
+                                                    </div>
+                                                )}
+                                                {backImg && (
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48">
+                                                            <a href={backImg} target="_blank" rel="noreferrer">
+                                                                <img src={backImg} alt="Cheque Back" className="w-full h-32 object-contain" />
+                                                            </a>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-500 font-bold text-center">Back View</span>
+                                                    </div>
+                                                )}
+                                                {proofImg && !frontImg && (
+                                                    <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 max-w-md">
+                                                        <a href={proofImg} target="_blank" rel="noreferrer">
+                                                            <img src={proofImg} alt="Payment Screenshot" className="w-full h-auto object-contain max-h-[400px]" />
+                                                        </a>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
                             </div>
                         </div>
 

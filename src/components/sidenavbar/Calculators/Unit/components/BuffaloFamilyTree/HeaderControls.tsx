@@ -189,7 +189,7 @@ const HeaderControls = ({
                 </div>
 
                 {/* Center Section: View Toggle */}
-                {treeData && (
+                {treeData && !isViewRestricted && (
                     <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner">
                         <button
                             disabled={isViewRestricted}
@@ -258,7 +258,7 @@ const HeaderControls = ({
 
                         <SimpleTooltip
                             content={isCGFEnabled ? `Total Recurring Revenue - (CPF +CGF)` : `Total Recurring Revenue - CPF`}
-                            placement="bottom"
+                            placement="bottom-right"
                             className="whitespace-nowrap max-w-none"
                         >
                             <div className="flex flex-col items-center cursor-default">
@@ -290,7 +290,7 @@ const HeaderControls = ({
 
                         <div className="w-px h-8 bg-slate-200" />
 
-                        <SimpleTooltip content="Total Projected Revenue" placement="bottom">
+                        <SimpleTooltip content="Total Projected Revenue" placement="bottom-right">
                             <div className="flex flex-col items-center cursor-default">
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total PR</span>
                                 <span className="text-sm font-black text-slate-900">
