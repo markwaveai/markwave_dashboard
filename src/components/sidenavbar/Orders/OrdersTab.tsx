@@ -306,7 +306,7 @@ const OrdersTab: React.FC = () => {
 
     // Pagination
     const totalPages = Math.ceil((totalCount || 0) / pageSize);
-    const currentCols = (showActions || statusFilter === 'REJECTED') ? 9 : 8; // Increased by 1 for Delivery Location
+    const currentCols = (showActions || statusFilter === 'REJECTED' || statusFilter === 'PAID') ? 10 : 8; // Increased by 1 for Delivery Location + 1 for Approved Details/Actions
 
     // Filter Buttons Config
     const filterButtons = [
@@ -437,6 +437,7 @@ const OrdersTab: React.FC = () => {
                             <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Coins Redeemed</th>
                             {showActions && <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Actions</th>}
                             {statusFilter === 'REJECTED' && <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Rejected Reason</th>}
+                            {statusFilter === 'PAID' && <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Approved Details</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -600,6 +601,58 @@ const OrdersTab: React.FC = () => {
                                             {statusFilter === 'REJECTED' && <td className="px-6 py-4 text-[13px] text-slate-700 align-top">
                                                 {unit.rejectedReason || 'No reason provided'}
                                             </td>}
+                                            {statusFilter === 'PAID' && (
+                                                <td className="px-6 py-4 text-[13px] text-slate-700 align-top">
+                                                    <div className="flex flex-col gap-2 min-w-[200px]">
+                                                        {unit.history && unit.history.length > 0 ? (
+                                                            unit.history.map((h: any, i: number) => {
+                                                                if (h.action !== 'APPROVE') return null;
+                                                                const roleLabel = h.role === 'SuperAdmin' ? 'S.Admin' : h.role;
+                                                                return (
+                                                                    <div key={i} className="bg-slate-50/50 rounded-lg p-2 border border-slate-100">
+                                                                        <div className="flex justify-between items-start gap-2 mb-1">
+                                                                            <span className="font-bold text-slate-700 text-[11px] whitespace-nowrap">{roleLabel}</span>
+                                                                            <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap">{h.approvedAt || '-'}</span>
+                                                                        </div>
+                                                                        <div className="text-[11px] text-slate-600 font-semibold truncate" title={h.approvedByName || 'Admin'}>
+                                                                            {h.approvedByName || 'Admin'}
+                                                                        </div>
+                                                                        {h.checks && (
+                                                                            <div className="flex flex-wrap gap-1.5 mt-2 pt-1.5 border-t border-slate-100">
+                                                                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${h.checks.unitsChecked ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                                                                    <div className={`w-1 h-1 rounded-full ${h.checks.unitsChecked ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                                                                    <span className="text-[8px] font-bold uppercase">Units</span>
+                                                                                </div>
+                                                                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${h.checks.paymentProof ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                                                                    <div className={`w-1 h-1 rounded-full ${h.checks.paymentProof ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                                                                    <span className="text-[8px] font-bold uppercase">Proof</span>
+                                                                                </div>
+                                                                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${h.checks.paymentReceived ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                                                                    <div className={`w-1 h-1 rounded-full ${h.checks.paymentReceived ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                                                                    <span className="text-[8px] font-bold uppercase">Payment</span>
+                                                                                </div>
+                                                                                {h.checks.coinsChecked !== undefined && (
+                                                                                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${h.checks.coinsChecked ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                                                                        <div className={`w-1 h-1 rounded-full ${h.checks.coinsChecked ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                                                                        <span className="text-[8px] font-bold uppercase">Coins</span>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                        {h.comments && (
+                                                                            <div className="mt-1.5 text-[10px] text-slate-500 italic border-t border-slate-100 pt-1.5">
+                                                                                "{h.comments}"
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        ) : (
+                                                            <span className="text-slate-400 italic">No details</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
 
                                         {expandedOrderId === unit.id && (
@@ -1009,29 +1062,27 @@ const OrderVerificationModal: React.FC = () => {
                         {/* Interactive Sections - Unified for both Admin and SuperAdmin */}
                         <>
                             {/* Section: Units */}
-                            {!isCoinsRedeem && !isSuperAdmin && (
+                            {!isCoinsRedeem && (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                                             <span className="w-1 h-1 rounded-full bg-slate-400"></span>
                                             Units
                                         </div>
-                                        {!isSuperAdmin && (
-                                            <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 shadow-inner">
-                                                <button
-                                                    onClick={() => setStatus(s => ({ ...s, units: true }))}
-                                                    className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.units === true ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    OK
-                                                </button>
-                                                <button
-                                                    onClick={() => setStatus(s => ({ ...s, units: false }))}
-                                                    className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.units === false ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    NOT OK
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 shadow-inner">
+                                            <button
+                                                onClick={() => setStatus(s => ({ ...s, units: true }))}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.units === true ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                            >
+                                                OK
+                                            </button>
+                                            <button
+                                                onClick={() => setStatus(s => ({ ...s, units: false }))}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.units === false ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                            >
+                                                NOT OK
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="p-2 border border-slate-200 rounded-xl bg-white shadow-sm flex items-center gap-3">
                                         <div className="flex flex-col gap-0.5 px-1 py-0.5">
@@ -1043,7 +1094,7 @@ const OrderVerificationModal: React.FC = () => {
                             )}
 
                             {/* Section: Details */}
-                            {!isCoinsRedeem && !isSuperAdmin && (
+                            {!isCoinsRedeem && (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
@@ -1091,29 +1142,27 @@ const OrderVerificationModal: React.FC = () => {
                             )}
 
                             {/* Section: Payment Proof */}
-                            {!isCoinsRedeem && !isSuperAdmin && (
+                            {!isCoinsRedeem && (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                                             <span className="w-1 h-1 rounded-full bg-slate-400"></span>
                                             Payment Proof
                                         </div>
-                                        {!isSuperAdmin && (
-                                            <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 shadow-inner">
-                                                <button
-                                                    onClick={() => setStatus(s => ({ ...s, proof: true }))}
-                                                    className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.proof === true ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    OK
-                                                </button>
-                                                <button
-                                                    onClick={() => setStatus(s => ({ ...s, proof: false }))}
-                                                    className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.proof === false ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    NOT OK
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 shadow-inner">
+                                            <button
+                                                onClick={() => setStatus(s => ({ ...s, proof: true }))}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.proof === true ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                            >
+                                                OK
+                                            </button>
+                                            <button
+                                                onClick={() => setStatus(s => ({ ...s, proof: false }))}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.proof === false ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                            >
+                                                NOT OK
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="p-2 border border-slate-200 rounded-xl bg-white shadow-sm flex items-center gap-3 overflow-x-auto">
                                         {isCheque ? (
@@ -1191,29 +1240,27 @@ const OrderVerificationModal: React.FC = () => {
                             )}
 
                             {/* Section: Payment Received */}
-                            {!isCoinsRedeem && !isSuperAdmin && (
+                            {!isCoinsRedeem && (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                                             <span className="w-1 h-1 rounded-full bg-slate-400"></span>
                                             Payment Received
                                         </div>
-                                        {!isSuperAdmin && (
-                                            <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 shadow-inner">
-                                                <button
-                                                    onClick={() => setStatus(s => ({ ...s, payment: true }))}
-                                                    className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.payment === true ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    OK
-                                                </button>
-                                                <button
-                                                    onClick={() => setStatus(s => ({ ...s, payment: false }))}
-                                                    className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.payment === false ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    NOT OK
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 shadow-inner">
+                                            <button
+                                                onClick={() => setStatus(s => ({ ...s, payment: true }))}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.payment === true ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                            >
+                                                OK
+                                            </button>
+                                            <button
+                                                onClick={() => setStatus(s => ({ ...s, payment: false }))}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.payment === false ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                            >
+                                                NOT OK
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="p-2.5 bg-emerald-50/50 border border-emerald-100 rounded-xl flex items-center gap-2.5">
                                         <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200"></div>
@@ -1225,29 +1272,27 @@ const OrderVerificationModal: React.FC = () => {
                             )}
 
                             {/* Section: Coins Checked */}
-                            {hasCoins && !isSuperAdmin && (
+                            {hasCoins && (
                                 <div className="space-y-3 pt-3 border-t border-slate-100">
                                     <div className="flex items-center justify-between">
                                         <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                                             <span className="w-1 h-1 rounded-full bg-slate-400"></span>
                                             Coins Redemption
                                         </div>
-                                        {!isSuperAdmin && (
-                                            <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 shadow-inner">
-                                                <button
-                                                    onClick={() => setStatus(s => ({ ...s, coins: true }))}
-                                                    className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.coins === true ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    OK
-                                                </button>
-                                                <button
-                                                    onClick={() => setStatus(s => ({ ...s, coins: false }))}
-                                                    className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.coins === false ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    NOT OK
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 shadow-inner">
+                                            <button
+                                                onClick={() => setStatus(s => ({ ...s, coins: true }))}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.coins === true ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                            >
+                                                OK
+                                            </button>
+                                            <button
+                                                onClick={() => setStatus(s => ({ ...s, coins: false }))}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-bold uppercase transition-all border-none cursor-pointer ${status.coins === false ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                            >
+                                                NOT OK
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="p-2 border border-slate-200 rounded-xl bg-white shadow-sm flex items-center gap-3">
                                         <div className="flex flex-col gap-0.5 px-1 py-0.5">
