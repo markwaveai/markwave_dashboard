@@ -93,11 +93,18 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                     </div>
                     {isSidebarOpen && (
                         <div className="flex flex-col animate-[fadeIn_0.3s_ease-out]">
-                            <span className="font-bold text-lg tracking-tight leading-none text-white">AnimalKart</span>
-                            <span className="text-[10px] uppercase tracking-widest font-black text-indigo-400 mt-1">DASHBOARD</span>
+                            <span className="font-bold text-3xl tracking-tight leading-none text-white">AnimalKart</span>
                         </div>
                     )}
                 </div>
+
+                {/* Toggle Button - Outside scroll container, aligned with Orders */}
+                <button
+                    onClick={() => dispatch(toggleSidebar())}
+                    className="absolute -right-3 top-[calc(var(--navbar-height)+38px)] z-50 hidden md:flex items-center justify-center w-6 h-6 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-indigo-600 shadow-sm transition-colors"
+                >
+                    {isSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+                </button>
 
                 {/* Inner Scrollable Container */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col">
@@ -114,13 +121,12 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </li>
                         )} */}
                         {hasSession && (
-                            <li>
+                            <li className="relative group/toggle">
                                 <button className={navItemClass('orders')} onClick={() => navigate('/orders', { state: { fromDashboard: true } })}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                         <ClipboardList size={20} className={activeTab === 'orders' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
                                         {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Orders</span>}
                                     </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Orders</div>}
                                 </button>
                             </li>
                         )}

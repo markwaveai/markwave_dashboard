@@ -166,7 +166,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                     </span>
                                 </h1>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                    Placed on {order?.placedAt ? new Date(order.placedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                                    Placed on {order?.placedAt ? new Date(order.placedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
                                 </p>
                             </div>
                         </div>

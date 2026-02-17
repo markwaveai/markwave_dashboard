@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
-import { Check, Copy, User, X, AlertCircle, ChevronDown } from 'lucide-react';
+import { Check, Copy, User, X, AlertCircle, ChevronDown, Search } from 'lucide-react';
 import {
     setSearchQuery,
     setPaymentFilter,
@@ -246,24 +246,25 @@ const OrdersTab: React.FC = () => {
     }
 
     return (
-        <div className="w-full h-full">
+        <div className="w-full h-full bg-slate-50/50">
             {/* New Header: Order Management Left, Filters Right */}
             <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-6">
-                <h2 className="text-xl font-bold m-0 text-slate-800 shrink-0">Order Management</h2>
+                <h2 className="text-2xl font-bold m-0 text-slate-800 shrink-0">Order Management</h2>
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto relative z-20">
                     {/* Search Input */}
-                    <div className="relative w-full sm:w-[250px]">
+                    <div className="relative w-full sm:w-[280px]">
                         <input
                             type="text"
                             placeholder="Search by Order ID, Mobile"
-                            className="h-[38px] px-3 py-2 pr-8 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full"
+                            className="h-[42px] pl-4 pr-10 text-sm border-0 shadow-sm rounded-xl bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 w-full"
                             value={localSearch}
                             onChange={(e) => setLocalSearch(e.target.value)}
                         />
+                        <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
                         {localSearch && (
                             <button
                                 onClick={() => setLocalSearch('')}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                                className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                             >
                                 <X size={14} />
                             </button>
@@ -274,21 +275,17 @@ const OrdersTab: React.FC = () => {
                     <div className="group relative inline-block text-left w-full sm:w-auto">
                         <button
                             type="button"
-                            className="inline-flex justify-between items-center w-full sm:w-[240px] px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all h-[38px]"
+                            className="inline-flex justify-between items-center w-full sm:w-[260px] px-4 py-2 bg-white border-0 shadow-sm rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all h-[42px]"
                         >
-                            <div className="flex items-center gap-2 overflow-hidden">
-                                <span className="truncate">
-                                    {filterButtons.find(b => b.status === statusFilter)?.label || 'Filter Status'}
-                                </span>
-                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[11px] font-bold shrink-0">
-                                    {filterButtons.find(b => b.status === statusFilter)?.count ?? 0}
-                                </span>
-                            </div>
+                            <span className="truncate">
+                                {filterButtons.find(b => b.status === statusFilter)?.label || 'Filter Status'}
+                                {filterButtons.find(b => b.status === statusFilter)?.count !== undefined && ` (${filterButtons.find(b => b.status === statusFilter)?.count})`}
+                            </span>
                             <ChevronDown size={16} className="ml-2 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
                         </button>
 
                         {/* Dropdown menu */}
-                        <div className="absolute left-0 top-full mt-2 w-[240px] bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left overflow-hidden z-50">
+                        <div className="absolute left-0 top-full mt-2 w-[260px] bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left overflow-hidden z-50">
                             <div className="py-1.5">
                                 {filterButtons.map((btn) => (
                                     <button
@@ -300,8 +297,8 @@ const OrdersTab: React.FC = () => {
                                             }`}
                                     >
                                         <span>{btn.label}</span>
-                                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${statusFilter === btn.status ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
-                                            {btn.count !== undefined ? btn.count : '-'}
+                                        <span className={`text-[12px] font-bold ${statusFilter === btn.status ? 'text-blue-700' : 'text-slate-400'}`}>
+                                            ({btn.count !== undefined ? btn.count : '-'})
                                         </span>
                                     </button>
                                 ))}
@@ -310,17 +307,20 @@ const OrdersTab: React.FC = () => {
                     </div>
 
                     {/* Farm Filter */}
-                    <select
-                        className="h-[38px] px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 outline-none transition-all duration-200 w-full sm:w-[180px] cursor-pointer"
-                        value={farmFilter}
-                        onChange={(e) => handleFarmChange(e.target.value)}
-                        disabled={farmsLoading}
-                    >
-                        <option value="All Farms">All Farms</option>
-                        {farms.map(farm => (
-                            <option key={farm.id} value={farm.id}>{farm.location}</option>
-                        ))}
-                    </select>
+                    <div className="relative w-full sm:w-[200px]">
+                        <select
+                            className="h-[42px] pl-4 pr-10 text-sm border-0 shadow-sm rounded-xl bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 w-full appearance-none cursor-pointer font-semibold"
+                            value={farmFilter}
+                            onChange={(e) => handleFarmChange(e.target.value)}
+                            disabled={farmsLoading}
+                        >
+                            <option value="All Farms">All Farms</option>
+                            {farms.map(farm => (
+                                <option key={farm.id} value={farm.id}>{farm.location}</option>
+                            ))}
+                        </select>
+                        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
                 </div>
             </div>
 
@@ -330,22 +330,21 @@ const OrdersTab: React.FC = () => {
                 )
             }
 
-            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-                <table className="w-full border-collapse">
-                    <thead className="bg-slate-50 border-b border-slate-200">
+            <div className="overflow-x-auto">
+                <table className="w-full border-separate border-spacing-y-3">
+                    <thead>
                         <tr>
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">S.No</th>
-
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">User Details</th>
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Order Details</th>
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center text-nowrap">Delivery Location</th>
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Units</th>
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Status</th>
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-2 py-4 text-center" style={{ minWidth: '160px' }}>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">S.No</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">User Details</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">Order Details</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">Delivery Location</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Units</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Status</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-right" style={{ minWidth: '160px' }}>
                                 <select
                                     value={paymentTypeFilter}
                                     onChange={(e) => handlePaymentTypeChange(e.target.value)}
-                                    className="bg-white text-slate-700 border border-slate-300 rounded-md px-2 py-1 font-extrabold text-[12px] h-[35px] outline-none cursor-pointer w-full text-center hover:border-slate-400 transition-colors uppercase"
+                                    className="bg-transparent text-slate-500 border-none font-bold text-[11px] outline-none cursor-pointer hover:text-slate-700 transition-colors uppercase text-right w-full"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <option value="All Payments">Payment Type</option>
@@ -358,22 +357,28 @@ const OrdersTab: React.FC = () => {
                                 </select>
                             </th>
 
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Amount</th>
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Total Cost</th>
-                            <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Coins Redeemed</th>
-                            {showActions && <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Actions</th>}
-                            {statusFilter === 'REJECTED' && <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Rejected Reason</th>}
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Amount</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Total Cost</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Coins Redeemed</th>
+                            {showActions && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Actions</th>}
+                            {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Rejected Reason</th>}
                             {statusFilter === 'PAID' && (
-                                <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Approved Details</th>
+                                <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Approved Details</th>
                             )}
                         </tr>
                     </thead>
                     <tbody>
                         {ordersLoading ? (
-                            <TableSkeleton cols={currentCols + 2} rows={10} />
+                            Array.from({ length: 6 }).map((_, i) => (
+                                <tr key={i} className="bg-white shadow-sm rounded-xl">
+                                    <td colSpan={currentCols + 3} className="p-6">
+                                        <div className="h-10 bg-slate-100 rounded animate-pulse"></div>
+                                    </td>
+                                </tr>
+                            ))
                         ) : pendingUnits.length === 0 ? (
-                            <tr>
-                                <td colSpan={currentCols + 2} className="text-center text-slate-400 py-12 text-sm">
+                            <tr className="bg-white shadow-sm rounded-xl">
+                                <td colSpan={currentCols + 5} className="text-center text-slate-400 py-12 text-sm rounded-xl">
                                     No orders found matching filters.
                                 </td>
                             </tr>
@@ -394,111 +399,105 @@ const OrdersTab: React.FC = () => {
                                         <tr
                                             onClick={() => setSelectedOrderId(unit.id)}
                                             style={{ cursor: 'pointer' }}
-                                            className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
+                                            className="group hover:transform hover:scale-[1.002] transition-all duration-200 bg-white shadow-sm rounded-xl"
                                         >
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top text-center">{serialNumber}</td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-middle text-left">
+                                            <td className="px-6 py-5 text-[14px] font-medium text-slate-800 rounded-l-xl">
+                                                {serialNumber}
+                                            </td>
+                                            <td className="px-6 py-5">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                                                        <User size={14} className="text-slate-400" />
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 overflow-hidden">
+                                                        {inv.profile_image ? (
+                                                            <img src={inv.profile_image} alt={inv.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User size={18} className="text-slate-400" />
+                                                        )}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[13px] font-semibold text-slate-800 whitespace-nowrap">{inv.name}</span>
-                                                        <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                                                        <span className="text-[14px] font-bold text-slate-800 whitespace-nowrap">{inv.name || 'Unknown User'}</span>
+                                                        <span className="text-[12px] text-slate-500 font-medium whitespace-nowrap">
                                                             {inv.mobile ? `+91 ${String(inv.mobile)}` : '-'}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top text-left">
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (isExpandable) {
-                                                                handleToggleExpansion(unit.id);
-                                                            } else {
-                                                                setSelectedOrderId(unit.id);
-                                                            }
-                                                        }}
-                                                        className={`text-[13px] font-bold p-0 text-left bg-transparent border-none ${isExpandable ? 'text-blue-600 underline cursor-pointer' : 'text-slate-700 cursor-pointer'}`}
-                                                    >
-                                                        {unit.id}
-                                                    </button>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-[13px] font-bold text-slate-800">{unit.id}</span>
                                                     {unit.placedAt ? (
                                                         <span className="text-[11px] text-slate-500">
-                                                            {new Date(unit.placedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(unit.placedAt).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                                            {new Date(unit.placedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(unit.placedAt).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true })}
                                                         </span>
                                                     ) : <span className="text-[11px] text-slate-500">-</span>}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top text-center font-medium capitalize">
+                                            <td className="px-6 py-5 text-[14px] text-slate-800 font-medium capitalize">
                                                 {unit.location || '-'}
                                             </td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{unit.numUnits}</td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top align-middle">
+                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-center font-bold">
+                                                {unit.numUnits}
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
                                                 {(() => {
-                                                    let statusClasses = 'bg-slate-100 text-slate-600 border-slate-200';
+                                                    let statusClasses = 'bg-slate-100 text-slate-600';
                                                     let label = unit.paymentStatus || '-';
 
                                                     if (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION') {
-                                                        statusClasses = 'bg-amber-50 text-amber-700 border-amber-200';
+                                                        statusClasses = 'bg-orange-50 text-orange-600';
                                                         label = 'Pending Admin Approval';
                                                     } else if (unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION') {
-                                                        statusClasses = 'bg-purple-50 text-purple-700 border-purple-200';
+                                                        statusClasses = 'bg-purple-50 text-purple-600';
                                                         label = 'Super Admin Approval';
                                                     } else if (unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') {
-                                                        statusClasses = 'bg-orange-50 text-orange-700 border-orange-200';
+                                                        statusClasses = 'bg-orange-50 text-orange-600';
                                                         label = 'S.Admin Rejection';
                                                     } else if (unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved') {
-                                                        statusClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                                        statusClasses = 'bg-emerald-100 text-emerald-700';
                                                         label = 'Paid';
                                                     } else if (unit.paymentStatus === 'REJECTED') {
-                                                        statusClasses = 'bg-red-50 text-red-700 border-red-200';
+                                                        statusClasses = 'bg-red-50 text-red-600';
                                                         label = 'Rejected';
                                                     } else if (unit.paymentStatus === 'PENDING_PAYMENT') {
-                                                        statusClasses = 'bg-slate-100 text-slate-600 border-slate-200';
+                                                        statusClasses = 'bg-amber-50 text-amber-600';
                                                         label = 'Payment Due';
                                                     }
 
                                                     return (
-                                                        <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap border ${statusClasses}`}>
+                                                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap ${statusClasses}`}>
                                                             {label}
                                                         </span>
                                                     );
                                                 })()}
                                             </td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top relative">
+                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-right rounded-r-xl font-medium">
                                                 {tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' :
                                                     tx.paymentType === 'CHEQUE' ? 'Cheque' :
                                                         tx.paymentType === 'ONLINE' ? 'Online/UPI' :
                                                             tx.paymentType === 'CASH_PAYMENT' ? 'Cash Payment' :
                                                                 tx.paymentType === 'COINS_REDEEM' ? 'Coins Redeem' :
-                                                                    tx.paymentType?.replace('_', ' ') || '-'}
+                                                                    tx.paymentType === 'CASH' ? 'CASH' :
+                                                                        tx.paymentType?.replace('_', ' ') || '-'}
                                             </td>
 
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
-                                            <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
-                                            {showActions ? (
-                                                <td className="px-6 py-4 text-[13px] text-slate-700 align-top">
-                                                    <div className="flex gap-2 items-center">
+                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-center font-bold">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
+                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-center font-bold">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
+                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-center font-bold">{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
+
+                                            {showActions && (
+                                                <td className="px-6 py-5 text-center">
+                                                    <div className="flex gap-2 items-center justify-center">
                                                         {(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleApproveWrapper(unit.id); }}
-                                                                className={`px-4 py-2 rounded-lg text-sm font-bold text-white transition-all shadow-sm border-none cursor-pointer flex items-center justify-center min-w-[100px] 
+                                                                className={`px-4 py-2 rounded-lg text-sm font-bold text-white transition-all shadow-sm border-none cursor-pointer flex items-center justify-center min-w-[90px] 
                                                                     ${actionLoading ? 'opacity-50 cursor-not-allowed' : ''}
                                                                     ${(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin) || ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin)
                                                                         ? 'bg-slate-400 hover:bg-slate-400 cursor-not-allowed opacity-60'
-                                                                        : 'bg-blue-600 hover:bg-blue-700'}`}
+                                                                        : 'bg-indigo-600 hover:bg-indigo-700'}`}
                                                                 disabled={
                                                                     actionLoading ||
                                                                     (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin && !isSuperAdmin) ||
                                                                     ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin)
-                                                                }
-                                                                title={
-                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin && !isSuperAdmin) ? 'Only Admins can verify this stage' :
-                                                                        ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin) ? 'Only Super Admins can verify this stage' : ''
                                                                 }
                                                             >
                                                                 Verify
@@ -506,12 +505,12 @@ const OrdersTab: React.FC = () => {
                                                         )}
                                                     </div>
                                                 </td>
-                                            ) : null}
-                                            {statusFilter === 'REJECTED' && <td className="px-6 py-4 text-[13px] text-slate-700 align-top">
+                                            )}
+                                            {statusFilter === 'REJECTED' && <td className="px-6 py-5 text-[13px] text-slate-700">
                                                 {unit.rejectedReason || 'No reason provided'}
                                             </td>}
                                             {statusFilter === 'PAID' && (
-                                                <td className="px-6 py-4 text-[13px] text-slate-700 align-middle text-center">
+                                                <td className="px-6 py-5 text-[13px] text-slate-700 text-center">
                                                     {(unit.history && unit.history.some((h: any) => h.action === 'APPROVE')) ? (
                                                         <button
                                                             onClick={(e) => {
@@ -522,7 +521,7 @@ const OrdersTab: React.FC = () => {
                                                                     orderId: unit.id
                                                                 }));
                                                             }}
-                                                            className="px-4 py-1.5 rounded-lg text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all border border-blue-100 cursor-pointer shadow-sm active:scale-95"
+                                                            className="text-indigo-600 font-bold text-sm hover:underline"
                                                         >
                                                             View Details
                                                         </button>
@@ -534,13 +533,17 @@ const OrdersTab: React.FC = () => {
                                         </tr>
 
                                         {expandedOrderId === unit.id && (
-                                            <tr className="bg-slate-50">
-                                                <td colSpan={currentCols + 2} className="p-6">
-                                                    <TrackingTab
-                                                        orderId={unit.id}
-                                                        expandedTrackerKeys={expandedTrackerKeys}
-                                                        setExpandedTrackerKeys={setExpandedTrackerKeys}
-                                                    />
+                                            <tr>
+                                                <td colSpan={currentCols + 2} className="p-0 border-none">
+                                                    <div className="bg-slate-50 mx-4 mb-4 rounded-xl border border-slate-200 overflow-hidden shadow-inner">
+                                                        <div className="p-6">
+                                                            <TrackingTab
+                                                                orderId={unit.id}
+                                                                expandedTrackerKeys={expandedTrackerKeys}
+                                                                setExpandedTrackerKeys={setExpandedTrackerKeys}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )}
