@@ -320,6 +320,7 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/true-harvest',
     '/support',
     '/privacy-policy',
+    '/deactivate-user',
     '/unit-calculator',
     '/emi-calculator',
     '/acf-calculator'

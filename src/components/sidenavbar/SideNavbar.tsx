@@ -47,7 +47,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/role-requests')) activeTab = 'role-requests';
     else if (currentPath.includes('/farm-management')) activeTab = 'farm';
     else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
-    else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
+    else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy-policy';
     else if (currentPath.includes('/true-harvest-support')) activeTab = 'true-harvest-support';
     else if (currentPath.includes('/landify/legal')) activeTab = 'landify-legal';
     else if (currentPath.includes('/landify/support')) activeTab = 'landify-support';
@@ -321,6 +321,45 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     </ul>
                                 )}
                             </div>
+                        </li>
+
+                        <div className="my-1 border-t border-[var(--slate-800)]/50 mx-2"></div>
+
+                        {/* Privacy & Legal */}
+                        <li>
+                            <button
+                                className={navItemClass('privacy-policy')}
+                                onClick={() => navigate('/privacy-policy', { state: { fromDashboard: true } })}
+                            >
+                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                    <ShieldIcon size={20} className={activeTab === 'privacy-policy' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Privacy Policy</span>}
+                                </div>
+                            </button>
+                        </li>
+
+                        <li>
+                            <button
+                                className={navItemClass('deactivate-user')}
+                                onClick={() => navigate('/deactivate-user', { state: { fromDashboard: true } })}
+                            >
+                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                    <UserMinus size={20} className={activeTab === 'deactivate-user' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Deactivate User</span>}
+                                </div>
+                            </button>
+                        </li>
+
+                        <li>
+                            <button
+                                className={navItemClass('support')}
+                                onClick={() => navigate('/support', { state: { fromDashboard: true } })}
+                            >
+                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                    <LifeBuoy size={20} className={activeTab === 'support' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Support</span>}
+                                </div>
+                            </button>
                         </li>
 
                         <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div>
