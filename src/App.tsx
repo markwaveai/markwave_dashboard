@@ -33,7 +33,7 @@ import TrueHarvestDeleteUser from './components/sidenavbar/true-harvest/TrueHarv
 import TrueHarvestSupport from './components/sidenavbar/true-harvest/TrueHarvestSupport';
 import LandifyLegal from './components/sidenavbar/landify/LandifyLegal';
 import LandifySupport from './components/sidenavbar/landify/LandifySupport';
-import LandifyDeactivateUser from './components/sidenavbar/landify/LandifyDeactivateUser';
+import LandifyDeleteUser from './components/sidenavbar/landify/LandifyDeleteUser';
 import Support from './components/sidenavbar/public/Support';
 
 // Skeletons
@@ -145,9 +145,9 @@ function App() {
     const userRoles = newSession.role ? newSession.role.split(',').map(r => r.trim()) : [];
     const hasAdminAccess = userRoles.some(r => ['Admin', 'Animalkart admin', 'SuperAdmin'].includes(r));
 
-    let defaultPath = '/orders';
+    let defaultPath = '/dashboard';
     if (hasAdminAccess) {
-      defaultPath = '/orders';
+      defaultPath = '/dashboard';
     }
 
     // Navigate to origin or default
@@ -175,7 +175,7 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/login" element={
-          session ? <Navigate to="/orders" replace /> : <Login onLogin={handleLogin} />
+          session ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
         } />
 
         {/* Persistent Layout for all authenticated dashboard views */}
@@ -183,7 +183,7 @@ function App() {
 
           {/* Strictly Protected Routes */}
           <Route element={<RequireAuth session={session} isAdmin={isAdmin} handleLogout={handleLogout}><Outlet /></RequireAuth>}>
-            {/* <Route path="/dashboard" element={<DashboardHome />} /> */}
+            <Route path="/dashboard" element={<DashboardHome />} />
 
             <Route path="/orders" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
@@ -208,10 +208,10 @@ function App() {
             <Route path="/user-management/network" element={<NetworkTab />} />
             <Route path="/user-management/network/:mobile" element={<NetworkUserDetailsPage />} />
 
-            {/* <Route path="/acf" element={<ACFHome />} /> */}
-            {/* <Route path="/acf/details/:userId/:orderId" element={<ACFUserDetails />} /> */}
+            <Route path="/acf" element={<ACFHome />} />
+            <Route path="/acf/details/:userId/:orderId" element={<ACFUserDetails />} />
 
-            {/* <Route path="/support-tickets" element={<SupportTicketsTab />} /> */}
+            <Route path="/support-tickets" element={<SupportTicketsTab />} />
             <Route path="/farm-management" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
                 <FarmManagement />
@@ -220,11 +220,6 @@ function App() {
             <Route path="/offer-settings" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
                 <SelfBenefitsTab />
-              </React.Suspense>
-            } />
-            <Route path="/referral-benefits" element={
-              <React.Suspense fallback={<OrdersPageSkeleton />}>
-                <ReferralBenefitsTab />
               </React.Suspense>
             } />
             <Route path="/role-requests" element={
@@ -269,7 +264,7 @@ function App() {
           <Route path="/deactivate-user" element={<DeactivateUserPage />} />
 
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          {/* <Route path="/support" element={<Support />} /> */}
+          <Route path="/support" element={<Support />} />
 
           <Route path="/true-harvest-privacy-policy" element={<TrueHarvestPrivacyPolicy />} />
           <Route path="/true-harvest-delete-user" element={<TrueHarvestDeleteUser />} />
@@ -277,7 +272,7 @@ function App() {
 
           <Route path="/landify/legal" element={<LandifyLegal />} />
           <Route path="/landify/support" element={<LandifySupport />} />
-          <Route path="/landify/delete" element={<LandifyDeactivateUser />} />
+          <Route path="/landify/delete" element={<LandifyDeleteUser />} />
         </Route>
 
         {/* Backward Compatibility Redirects */}
@@ -311,17 +306,33 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/support-tickets',
     '/farm-management',
     '/offer-settings',
-    '/referral-benefits',
     '/role-requests'
   ];
 
   const isProtectedPath = protectedPrefixes.some(prefix => location.pathname.startsWith(prefix)) && !location.pathname.startsWith('/acf-calculator');
 
   // If the user navigates from the dashboard (via sidebar), state.fromDashboard will be true
-  const isFromDashboard = location.state?.fromDashboard;
+  const isFromDashboard = !!(location.state as any)?.fromDashboard;
 
-  // Standalone mode is for public/hybrid pages accessed directly via URL
-  const isStandalone = !isProtectedPath && !isFromDashboard;
+  // Hybrid paths are public pages that CAN show the dashboard layout if accessed from within
+  const hybridPrefixes = [
+    '/landify',
+    '/true-harvest',
+    '/support',
+    '/privacy-policy',
+    '/unit-calculator',
+    '/emi-calculator',
+    '/acf-calculator'
+  ];
+  const isHybridPath = hybridPrefixes.some(prefix => location.pathname.startsWith(prefix));
+
+  // We show the dashboard layout IF:
+  // 1. It's a core protected dashboard route
+  // 2. OR it's a hybrid route AND we are coming from the dashboard
+  const showDashboardLayout = isProtectedPath || (isHybridPath && isFromDashboard);
+
+  // Standalone mode is for public/hybrid pages accessed directly via URL or when no dashboard context is present
+  const isStandalone = !showDashboardLayout;
 
   if (isStandalone) {
     return (

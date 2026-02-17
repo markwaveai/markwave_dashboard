@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     ClipboardList, Users, ShoppingBag, LogOut, UserCheck,
     Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, Warehouse, Award,
-    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search, UserCog
+    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search, UserCog, Coins
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -27,11 +27,15 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
     // Sidebar Sub-menu States
     const [isUnitCalcOpen, setIsUnitCalcOpen] = useState(false);
+    const [isCalculatorsOpen, setIsCalculatorsOpen] = useState(false);
+    const [isLandifyOpen, setIsLandifyOpen] = useState(false);
+    const [isTrueHarvestOpen, setIsTrueHarvestOpen] = useState(false);
 
     // Determine active tab
     const currentPath = location.pathname;
     let activeTab = 'dashboard';
-    if (currentPath.includes('/orders')) activeTab = 'orders';
+    if (currentPath === '/dashboard') activeTab = 'dashboard';
+    else if (currentPath.includes('/orders')) activeTab = 'orders';
     else if (currentPath.includes('/user-management/network')) activeTab = 'network';
     else if (currentPath.includes('/buffalo-viz')) activeTab = 'buffaloViz';
     else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
@@ -40,7 +44,6 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/user-management') || currentPath.includes('/users/customers')) activeTab = 'user-management';
     else if (currentPath.includes('/products')) activeTab = 'products';
     else if (currentPath.includes('/offer-settings')) activeTab = 'offer-settings';
-    else if (currentPath.includes('/referral-benefits')) activeTab = 'referral-benefits';
     else if (currentPath.includes('/role-requests')) activeTab = 'role-requests';
     else if (currentPath.includes('/farm-management')) activeTab = 'farm';
     else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
@@ -54,332 +57,378 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
     else if (currentPath.includes('/true-harvest-delete-user')) activeTab = 'true-harvest-delete-user';
     else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
-    else if (currentPath.includes('/unit-calculator')) {
-        activeTab = 'unit-calculator';
-    }
+    else if (currentPath.includes('/unit-calculator')) activeTab = 'unit-calculator';
 
     useEffect(() => {
-        // Open Unit Calc dropdown if we are on a child route
         if (location.pathname.includes('/unit-calculator')) {
             setIsUnitCalcOpen(true);
         }
     }, [location.pathname]);
 
     const navItemClass = (tab: string) => `
-    flex items-center w-full px-3 py-2.5 rounded-xl
-    ${activeTab === tab ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 font-semibold' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}
-    text-[0.85rem] transition-all duration-200 text-left outline-none my-0.5 relative group
-  `;
+        flex items-center w-full px-3 py-2.5 rounded-xl transition-all duration-200 text-left outline-none my-0.5 relative group
+        ${activeTab === tab
+            ? 'bg-[var(--brand-600)] text-white shadow-lg shadow-indigo-900/40 font-semibold'
+            : 'text-[var(--slate-400)] hover:bg-[var(--slate-800)]/50 hover:text-[var(--slate-100)]'
+        }
+        text-[0.875rem]
+    `;
 
     return (
         <>
-            {/* Sidebar Overlay (Mobile) */}
             <div
                 className={`fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[99] md:hidden transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
                 onClick={() => dispatch(setSidebarOpen(false))}
             />
 
             <nav className={`
-          ${isSidebarOpen ? 'w-[240px]' : 'w-[70px]'} 
-          bg-[#0f172a] flex flex-col shrink-0 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] 
-          z-[100] text-white border-r border-slate-800 relative shadow-xl
-        `}>
-
-                {/* Desktop Toggle Button */}
-                <button
-                    onClick={() => dispatch(toggleSidebar())}
-                    className={`
-                        absolute -right-3 top-8 z-50
-                        flex items-center justify-center 
-                        w-6 h-6 rounded-full 
-                        bg-white border border-slate-200 shadow-md 
-                        text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:scale-110
-                        transition-all duration-300 cursor-pointer
-                    `}
-                >
-                    {isSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-                </button>
+                ${isSidebarOpen ? 'w-[var(--sidebar-width)]' : 'w-[var(--sidebar-collapsed-width)]'} 
+                bg-[var(--slate-950)] flex flex-col shrink-0 transition-[width] duration-[var(--transition-speed)] ease-[cubic-bezier(0.4,0,0.2,1)] 
+                z-[100] text-white border-r border-[var(--slate-800)] relative shadow-xl
+            `}>
+                {/* Branding Area */}
+                <div className={`flex items-center gap-3 h-[var(--navbar-height)] px-6 border-b border-[var(--slate-800)]/50 ${!isSidebarOpen && 'justify-center px-0'}`}>
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-transparent shrink-0 overflow-hidden">
+                        <img src={require('../../assets/logo.png')} alt="AnimalKart" className="w-full h-full object-contain" />
+                    </div>
+                    {isSidebarOpen && (
+                        <div className="flex flex-col animate-[fadeIn_0.3s_ease-out]">
+                            <span className="font-bold text-lg tracking-tight leading-none text-white">AnimalKart</span>
+                            <span className="text-[10px] uppercase tracking-widest font-black text-indigo-400 mt-1">DASHBOARD</span>
+                        </div>
+                    )}
+                </div>
 
                 {/* Inner Scrollable Container */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col">
-
-                    {/* Branding / Logo Area could go here if added back later */}
-                    <div className="h-4"></div>
-
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col">
                     <ul className="list-none flex flex-col gap-1 w-full">
                         {/* {hasSession && (
                             <li>
-                                <button className={navItemClass('dashboard')} onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); }}>
+                                <button className={navItemClass('dashboard')} onClick={() => navigate('/dashboard', { state: { fromDashboard: true } })}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <LayoutDashboard size={18} className={activeTab === 'dashboard' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Dashboard</span>}
+                                        <LayoutDashboard size={20} className={activeTab === 'dashboard' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Dashboard</span>}
                                     </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Dashboard</div>}
                                 </button>
                             </li>
                         )} */}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('orders')} onClick={(e) => { e.stopPropagation(); navigate('/orders'); }}>
+                                <button className={navItemClass('orders')} onClick={() => navigate('/orders', { state: { fromDashboard: true } })}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <ClipboardList size={18} className={activeTab === 'orders' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Orders</span>}
+                                        <ClipboardList size={20} className={activeTab === 'orders' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Orders</span>}
                                     </div>
-                                </button>
-                            </li>
-                        )}
-                        {/* <li>
-                            <button className={navItemClass('acf')} onClick={(e) => { e.stopPropagation(); navigate('/acf'); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <FileText size={18} className={activeTab === 'acf' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">ACF</span>}
-                                </div>
-                            </button>
-                        </li> */}
-                        {hasSession && (
-                            <li>
-                                <button className={navItemClass('user-management')} onClick={(e) => { e.stopPropagation(); navigate('/user-management'); }}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Users size={18} className={activeTab === 'user-management' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">User Management</span>}
-                                    </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Orders</div>}
                                 </button>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('network')} onClick={(e) => { e.stopPropagation(); navigate('/user-management/network'); }}>
+                                <button className={navItemClass('user-management')} onClick={() => navigate('/user-management', { state: { fromDashboard: true } })}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Users size={18} className={activeTab === 'network' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Network</span>}
+                                        <Users size={20} className={activeTab === 'user-management' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Users</span>}
                                     </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Users</div>}
                                 </button>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('products')} onClick={(e) => { e.stopPropagation(); navigate('/products'); }}>
+                                <button className={navItemClass('network')} onClick={() => navigate('/user-management/network', { state: { fromDashboard: true } })}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <ShoppingBag size={18} className={activeTab === 'products' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Products</span>}
+                                        <Users size={20} className={activeTab === 'network' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Network</span>}
                                     </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Network</div>}
                                 </button>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('offer-settings')} onClick={(e) => { e.stopPropagation(); navigate('/offer-settings'); }}>
+                                <button className={navItemClass('products')} onClick={() => navigate('/products', { state: { fromDashboard: true } })}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Award size={18} className={activeTab === 'offer-settings' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Offer Settings</span>}
+                                        <ShoppingBag size={20} className={activeTab === 'products' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Products</span>}
                                     </div>
-                                </button>
-                            </li>
-                        )}
-                        {hasSession && (
-                            <li>
-                                <button className={navItemClass('role-requests')} onClick={(e) => { e.stopPropagation(); navigate('/role-requests'); }}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <UserCog size={18} className={activeTab === 'role-requests' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Role Requests</span>}
-                                    </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Products</div>}
                                 </button>
                             </li>
                         )}
 
+                        <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div>
+
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('farm')} onClick={(e) => { e.stopPropagation(); navigate('/farm-management'); }}>
+                                <button className={navItemClass('offer-settings')} onClick={() => navigate('/offer-settings', { state: { fromDashboard: true } })}>
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Warehouse size={18} className={activeTab === 'farm' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Farm</span>}
+                                        <Award size={20} className={activeTab === 'offer-settings' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Offer Settings</span>}
                                     </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Offer Settings</div>}
                                 </button>
                             </li>
                         )}
-                        <li>
-                            <button className={navItemClass('buffaloViz')} onClick={(e) => { e.stopPropagation(); navigate('/buffalo-viz', { state: { fromDashboard: true } }); }}>
+                        {hasSession && (
+                            <li>
+                                <button className={navItemClass('role-requests')} onClick={() => navigate('/role-requests', { state: { fromDashboard: true } })}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <UserCog size={20} className={activeTab === 'role-requests' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Role Requests</span>}
+                                    </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Role Requests</div>}
+                                </button>
+                            </li>
+                        )}
+                        {hasSession && (
+                            <li>
+                                <button className={navItemClass('farm')} onClick={() => navigate('/farm-management', { state: { fromDashboard: true } })}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Warehouse size={20} className={activeTab === 'farm' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Farm Mgmt</span>}
+                                    </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Farm Management</div>}
+                                </button>
+                            </li>
+                        )}
+
+                        {/* <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div> */}
+
+                        {/* <li>
+                            <button className={navItemClass('buffaloViz')} onClick={() => navigate('/buffalo-viz', { state: { fromDashboard: true } })}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <MonitorPlay size={18} className={activeTab === 'buffaloViz' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Buffalo Vis</span>}
+                                    <MonitorPlay size={20} className={activeTab === 'buffaloViz' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Buffalo Viz</span>}
                                 </div>
+                                {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Buffalo Visualization</div>}
+                            </button>
+                        </li> */}
+                        {/* {hasSession && (
+                            <li>
+                                <button className={navItemClass('acf')} onClick={() => navigate('/acf', { state: { fromDashboard: true } })}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Coins size={20} className={activeTab === 'acf' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">ACF Tracking</span>}
+                                    </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">ACF Tracking</div>}
+                                </button>
+                            </li>
+                        )}
+                        {hasSession && (
+                            <li>
+                                <button className={navItemClass('support-tickets')} onClick={() => navigate('/support-tickets', { state: { fromDashboard: true } })}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <LifeBuoy size={20} className={activeTab === 'support-tickets' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Support Tickets</span>}
+                                    </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Support Tickets</div>}
+                                </button>
+                            </li>
+                        )}
+                        {hasSession && (
+                            <li>
+                                <button className={navItemClass('support')} onClick={() => navigate('/support', { state: { fromDashboard: true } })}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <LifeBuoy size={20} className={activeTab === 'support' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Support</span>}
+                                    </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Support</div>}
+                                </button>
+                            </li>
+                        )} */}
+
+                        <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div>
+
+                        {/* Calculators Group */}
+                        {/* EMI Calculator */}
+                        <li>
+                            <button
+                                className={navItemClass('emi')}
+                                onClick={() => navigate('/emi-calculator', { state: { fromDashboard: true } })}
+                            >
+                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                    <Calculator size={20} className={activeTab === 'emi' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">EMI Calculator</span>}
+                                </div>
+                                {!isSidebarOpen && (
+                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                                        EMI Calculator
+                                    </div>
+                                )}
                             </button>
                         </li>
+
+                        {/* ACF Calculator */}
+                        <li>
+                            <button
+                                className={navItemClass('acf-calculator')}
+                                onClick={() => navigate('/acf-calculator', { state: { fromDashboard: true } })}
+                            >
+                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                    <Calculator size={20} className={activeTab === 'acf-calculator' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">ACF Calculator</span>}
+                                </div>
+                                {!isSidebarOpen && (
+                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                                        ACF Calculator
+                                    </div>
+                                )}
+                            </button>
+                        </li>
+
                         <li>
                             <div className="flex flex-col">
                                 <button
                                     className={navItemClass('unit-calculator')}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
+                                    onClick={() => {
                                         if (!isSidebarOpen) dispatch(setSidebarOpen(true));
                                         setIsUnitCalcOpen(!isUnitCalcOpen);
                                     }}
                                 >
                                     <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Calculator size={18} className={activeTab === 'unit-calculator' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Unit Calculator</span>}
+                                        <Calculator size={20} className={activeTab === 'unit-calculator' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Unit Calculator</span>}
                                     </div>
-                                    {isSidebarOpen && (isUnitCalcOpen ? <ChevronDown size={14} className="opacity-70" /> : <ChevronRight size={14} className="opacity-70" />)}
+                                    {isSidebarOpen && (isUnitCalcOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
                                 </button>
 
                                 {isSidebarOpen && isUnitCalcOpen && (
-                                    <ul className="pl-4 mt-1 list-none flex flex-col gap-1 w-full border-l border-slate-700 ml-4">
+                                    <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
                                         <li>
-                                            <div
-                                                className={`
-                            flex items-center w-full px-3 py-2 rounded-lg text-sm transition-all cursor-pointer
-                            ${location.pathname.includes('/73d2a') ? 'text-blue-400 font-medium bg-blue-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'}
-                          `}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate('/unit-calculator/73d2a', { state: { fromDashboard: true } });
-                                                }}
+                                            <button
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${location.pathname.includes('/73d2a') ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
+                                                onClick={() => navigate('/unit-calculator/73d2a', { state: { fromDashboard: true } })}
                                             >
                                                 With Tree
-                                            </div>
+                                            </button>
                                         </li>
                                         <li>
-                                            <div
-                                                className={`
-                            flex items-center w-full px-3 py-2 rounded-lg text-sm transition-all cursor-pointer
-                            ${location.pathname.includes('/92f1b') ? 'text-blue-400 font-medium bg-blue-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'}
-                          `}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate('/unit-calculator/92f1b', { state: { fromDashboard: true } });
-                                                }}
+                                            <button
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${location.pathname.includes('/92f1b') ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
+                                                onClick={() => navigate('/unit-calculator/92f1b', { state: { fromDashboard: true } })}
                                             >
                                                 Without Tree
-                                            </div>
+                                            </button>
                                         </li>
                                     </ul>
                                 )}
                             </div>
                         </li>
+
+                        <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div>
+
+                        {/* Platform Groups */}
                         <li>
-                            <button className={navItemClass('emi')} onClick={(e) => { e.stopPropagation(); navigate('/emi-calculator', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <Calculator size={18} className={activeTab === 'emi' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">EMI Calculator</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('acf-calculator')} onClick={(e) => { e.stopPropagation(); navigate('/acf-calculator', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <Calculator size={18} className={activeTab === 'acf-calculator' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">ACF Calculator</span>}
-                                </div>
-                            </button>
+                            <div className="flex flex-col">
+                                <button
+                                    className={navItemClass('landify-group')}
+                                    onClick={() => {
+                                        if (!isSidebarOpen) dispatch(setSidebarOpen(true));
+                                        setIsLandifyOpen(!isLandifyOpen);
+                                    }}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <ShieldIcon size={20} className={activeTab.startsWith('landify') ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Landify Platform</span>}
+                                    </div>
+                                    {isSidebarOpen && (isLandifyOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
+                                </button>
+                                {isSidebarOpen && isLandifyOpen && (
+                                    <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
+                                        <li>
+                                            <button
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'landify-legal' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
+                                                onClick={() => navigate('/landify/legal', { state: { fromDashboard: true } })}
+                                            >
+                                                Legal
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'landify-support' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
+                                                onClick={() => navigate('/landify/support', { state: { fromDashboard: true } })}
+                                            >
+                                                Support
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'landify-delete' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
+                                                onClick={() => navigate('/landify/delete', { state: { fromDashboard: true } })}
+                                            >
+                                                Delete User
+                                            </button>
+                                        </li>
+                                    </ul>
+                                )}
+                            </div>
                         </li>
 
-
-
-
                         <li>
-                            <button className={navItemClass('privacy')} onClick={(e) => { e.stopPropagation(); navigate('/privacy-policy', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <ShieldIcon size={18} className={activeTab === 'privacy' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Privacy & Policy</span>}
-                                </div>
-                            </button>
+                            <div className="flex flex-col">
+                                <button
+                                    className={navItemClass('true-harvest-group')}
+                                    onClick={() => {
+                                        if (!isSidebarOpen) dispatch(setSidebarOpen(true));
+                                        setIsTrueHarvestOpen(!isTrueHarvestOpen);
+                                    }}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Warehouse size={20} className={activeTab.startsWith('true-harvest') ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">True Harvest</span>}
+                                    </div>
+                                    {isSidebarOpen && (isTrueHarvestOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
+                                </button>
+                                {isSidebarOpen && isTrueHarvestOpen && (
+                                    <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
+                                        <li>
+                                            <button
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'true-harvest-privacy' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
+                                                onClick={() => navigate('/true-harvest-privacy-policy', { state: { fromDashboard: true } })}
+                                            >
+                                                Privacy
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'true-harvest-support' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg(--slate-800)]/30'}`}
+                                                onClick={() => navigate('/true-harvest-support', { state: { fromDashboard: true } })}
+                                            >
+                                                Support
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'true-harvest-delete-user' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
+                                                onClick={() => navigate('/true-harvest-delete-user', { state: { fromDashboard: true } })}
+                                            >
+                                                Delete User
+                                            </button>
+                                        </li>
+                                    </ul>
+                                )}
+                            </div>
                         </li>
-                        <li>
-                            <button className={navItemClass('referral-landing')} onClick={(e) => { e.stopPropagation(); navigate('/referral-landing', { state: { fromDashboard: true, adminReferralCode } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <UserCheck size={18} className={activeTab === 'referral-landing' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Referral Page</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('deactivate-user')} onClick={(e) => { e.stopPropagation(); navigate('/deactivate-user', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <UserMinus size={18} className={activeTab === 'deactivate-user' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Deactivate User</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('true-harvest-privacy')} onClick={(e) => { e.stopPropagation(); navigate('/true-harvest-privacy-policy', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <ShieldIcon size={18} className={activeTab === 'true-harvest-privacy' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">True Harvest Privacy</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('true-harvest-delete-user')} onClick={(e) => { e.stopPropagation(); navigate('/true-harvest-delete-user', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <UserMinus size={18} className={activeTab === 'true-harvest-delete-user' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">True Harvest Delete</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('true-harvest-support')} onClick={(e) => { e.stopPropagation(); navigate('/true-harvest-support', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <LifeBuoy size={18} className={activeTab === 'true-harvest-support' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">True Harvest Support</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('landify-legal')} onClick={(e) => { e.stopPropagation(); navigate('/landify/legal', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <ShieldIcon size={18} className={activeTab === 'landify-legal' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Landify Legal</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('landify-support')} onClick={(e) => { e.stopPropagation(); navigate('/landify/support', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <LifeBuoy size={18} className={activeTab === 'landify-support' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Landify Support</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('landify-delete')} onClick={(e) => { e.stopPropagation(); navigate('/landify/delete', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <UserMinus size={18} className={activeTab === 'landify-delete' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Landify Delete</span>}
-                                </div>
-                            </button>
-                        </li>
-                        {/* <li>
-                            <button className={navItemClass('support')} onClick={(e) => { e.stopPropagation(); navigate('/support', { state: { fromDashboard: true } }); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <LifeBuoy size={18} className={activeTab === 'support' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Support</span>}
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button className={navItemClass('support-tickets')} onClick={(e) => { e.stopPropagation(); navigate('/support-tickets'); }}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <Mail size={18} className={activeTab === 'support-tickets' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Support Ticket</span>}
-                                </div>
-                            </button>
-                        </li> */}
                     </ul>
 
                     {hasSession && (
-                        <div className="mt-auto pt-4 border-t border-slate-800 flex-shrink-0 w-full mb-1">
+                        <div className="mt-auto pt-6 border-t border-[var(--slate-800)] w-full">
                             <button
-                                className="flex items-center w-full px-3 py-2.5 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 text-left outline-none group"
-                                onClick={(e) => { e.stopPropagation(); onLogoutTrigger(); }}
+                                className="flex items-center w-full px-3 py-3 rounded-xl text-[var(--slate-400)] hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 outline-none group"
+                                onClick={onLogoutTrigger}
                             >
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <LogOut size={18} className="group-hover:text-red-400 transition-colors" />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium text-[0.85rem]">Logout</span>}
+                                    <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
+                                    {isSidebarOpen && <span className="flex-1 font-bold text-[0.875rem]">Logout</span>}
                                 </div>
+                                {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Logout</div>}
                             </button>
                         </div>
                     )}
-                </div >
-            </nav >
+                </div>
+            </nav>
         </>
     );
 };

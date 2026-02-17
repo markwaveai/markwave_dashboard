@@ -1,4 +1,5 @@
 import React from 'react';
+import { Calendar, Clock, MoreHorizontal, Video, Users, MessageSquare } from 'lucide-react';
 
 interface ScheduleItem {
     id: string;
@@ -6,6 +7,7 @@ interface ScheduleItem {
     time: string;
     title: string;
     description: string;
+    type: 'meeting' | 'call' | 'standup';
 }
 
 const mockSchedule: ScheduleItem[] = [
@@ -14,54 +16,77 @@ const mockSchedule: ScheduleItem[] = [
         date: 'Wed, 11 Jan',
         time: '09:20 AM',
         title: 'Business Analytics Press',
-        description: 'Exploring the Future of Data-Driven +6 more'
+        description: 'Exploring the Future of Data-Driven +6 more',
+        type: 'meeting'
     },
     {
         id: '2',
         date: 'Fri, 15 Feb',
         time: '10:35 AM',
         title: 'Business Sprint',
-        description: 'Techniques from Business Sprint +2 more'
+        description: 'Techniques from Business Sprint +2 more',
+        type: 'call'
     },
     {
         id: '3',
         date: 'Thu, 18 Mar',
-        time: '1:15 AM',
+        time: '1:15 PM',
         title: 'Customer Review Meeting',
-        description: 'Insights from Customer Review Meeting +8 more'
+        description: 'Reviewing recent feedback and milestones',
+        type: 'standup'
     }
 ];
 
 const ScheduleCard: React.FC = () => {
     return (
-        <div className="bg-white rounded-[20px] p-6 shadow-sm border border-gray-100 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-900 m-0">Upcoming Schedule</h3>
-                <button className="text-gray-400 hover:text-gray-600">⋮</button>
+        <div className="bg-white rounded-[var(--radius-2xl)] p-8 shadow-[var(--shadow-sm)] border border-[var(--slate-200)] h-full flex flex-col group hover:shadow-[var(--shadow-md)] transition-all duration-300">
+            <div className="flex justify-between items-center mb-10">
+                <div>
+                    <h3 className="text-xl font-black text-[var(--slate-900)] tracking-tight">Upcoming Events</h3>
+                    <p className="text-sm text-[var(--slate-500)] font-semibold mt-1">Your schedule for the week</p>
+                </div>
+                <button className="p-2 text-[var(--slate-400)] hover:bg-[var(--slate-50)] rounded-xl transition-colors">
+                    <MoreHorizontal size={20} />
+                </button>
             </div>
 
-            <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1">
                 {mockSchedule.map((item) => (
-                    <div key={item.id} className="flex gap-4">
+                    <div key={item.id} className="group/item flex gap-5 p-4 rounded-2xl border border-transparent hover:border-[var(--slate-100)] hover:bg-[var(--slate-50)] transition-all duration-300">
                         <div className="flex-shrink-0">
-                            <div className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center bg-white shadow-sm">
-                                <div className="w-3 h-3 bg-gray-200 rounded-sm"></div>
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover/item:scale-110 ${item.type === 'meeting' ? 'bg-indigo-50 text-indigo-600' :
+                                    item.type === 'call' ? 'bg-emerald-50 text-emerald-600' :
+                                        'bg-amber-50 text-amber-600'
+                                }`}>
+                                {item.type === 'meeting' && <Video size={20} />}
+                                {item.type === 'call' && <Users size={20} />}
+                                {item.type === 'standup' && <MessageSquare size={20} />}
                             </div>
                         </div>
-                        <div className="flex-grow pt-1">
-                            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 mb-1">
-                                <span className="text-xs font-semibold text-gray-500">{item.date}</span>
-                                <span className="hidden sm:inline text-gray-300">•</span>
-                                <span className="text-xs text-gray-400">{item.time}</span>
+                        <div className="flex-grow">
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                                    <Calendar size={12} />
+                                    {item.date}
+                                </div>
+                                <span className="w-1 h-1 bg-[var(--slate-300)] rounded-full"></span>
+                                <div className="flex items-center gap-1.5 text-[10px] font-black text-[var(--slate-400)] uppercase tracking-widest">
+                                    <Clock size={12} />
+                                    {item.time}
+                                </div>
                             </div>
-                            <h4 className="text-sm font-bold text-gray-900 mb-1">{item.title}</h4>
-                            <p className="text-xs text-gray-500 leading-relaxed max-w-xs">
+                            <h4 className="text-sm font-black text-[var(--slate-900)] group-hover/item:text-indigo-600 transition-colors mb-1">{item.title}</h4>
+                            <p className="text-xs text-[var(--slate-500)] font-semibold line-clamp-1">
                                 {item.description}
                             </p>
                         </div>
                     </div>
                 ))}
             </div>
+
+            <button className="mt-8 w-full py-3 px-4 bg-[var(--slate-900)] text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-black transition-all hover:shadow-lg shadow-black/10">
+                View Full Calendar
+            </button>
         </div>
     );
 };

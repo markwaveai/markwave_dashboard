@@ -79,8 +79,8 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
             if (sId) {
                 if (item.timestamp) {
                     const dateObj = new Date(item.timestamp);
-                    const dateStr = dateObj.toLocaleDateString('en-GB').replace(/\//g, '-');
-                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false });
+                    const dateStr = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
                     history[sId] = { date: dateStr, time: timeStr, description: item.description };
                 } else if (item.description) {
                     history[sId] = { date: '-', time: '-', description: item.description };

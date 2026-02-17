@@ -4,6 +4,51 @@ import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
 import { setApprovalHistoryModal } from '../../../store/slices/uiSlice';
 
+const formatApprovalDate = (dateStr: string) => {
+    if (!dateStr || dateStr === '-') return '-';
+
+    try {
+        // 1. Handle common formats manually to avoid browser-specific MM/DD swapping
+        // Format: YYYY-MM-DD (with optional time)
+        const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
+        if (isoMatch) {
+            const [_, year, month, day, hours, minutes] = isoMatch.map(val => val ? Number(val) : 0);
+            const date = new Date(year, month - 1, day, hours, minutes);
+            if (!isNaN(date.getTime())) return format(date);
+        }
+
+        // Format: DD-MM-YYYY (with optional time)
+        const customMatch = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})(?: (\d{2}):(\d{2}))?/);
+        if (customMatch) {
+            const [_, day, month, year, hours, minutes] = customMatch.map(val => val ? Number(val) : 0);
+            const date = new Date(year, month - 1, day, hours, minutes);
+            if (!isNaN(date.getTime())) return format(date);
+        }
+
+        // 2. Fallback to standard JS parsing if manual checks fail
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+            return format(date);
+        }
+    } catch (e) {
+        console.error('Date parsing error:', e);
+    }
+
+    return dateStr;
+};
+
+// Helper to keep the formatting consistent
+const format = (date: Date) => {
+    return date.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+};
+
 const ApprovalHistoryModal: React.FC = () => {
     const dispatch = useAppDispatch();
     const { isOpen, history, orderId } = useAppSelector((state: RootState) => state.ui.modals.approvalHistory);
@@ -57,7 +102,9 @@ const ApprovalHistoryModal: React.FC = () => {
                                             </div>
                                             <div className="flex flex-col items-end">
                                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Approved At</span>
-                                                <span className="text-[11px] text-slate-600 font-semibold">{h.approvedAt || '-'}</span>
+                                                <span className="text-[11px] text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/50 shadow-sm">
+                                                    {formatApprovalDate(h.approvedAt)}
+                                                </span>
                                             </div>
                                         </div>
 

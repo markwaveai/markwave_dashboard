@@ -109,29 +109,31 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
 
     // Render
     return (
-        <div className="flex flex-col h-screen bg-gray-100 font-sans text-slate-700 overflow-hidden">
+        <div className="flex h-screen bg-[var(--slate-50)] font-sans text-[var(--slate-700)] overflow-hidden">
 
-            {hasSession && (
-                <TopNavbar
-                    adminMobile={adminMobile}
-                    adminName={adminName}
-                    adminRole={adminRole}
-                    lastLogin={lastLogin}
-                    presentLogin={presentLogin}
-                    adminReferralCode={adminReferralCode}
-                    onLogoutTrigger={() => setIsLogoutModalOpen(true)}
-                />
-            )}
+            <SideNavbar
+                hasSession={hasSession}
+                adminReferralCode={adminReferralCode}
+                onLogoutTrigger={() => setIsLogoutModalOpen(true)}
+            />
 
-            <div className="flex flex-row flex-1 overflow-hidden relative">
-                <SideNavbar
-                    hasSession={hasSession}
-                    adminReferralCode={adminReferralCode}
-                    onLogoutTrigger={() => setIsLogoutModalOpen(true)}
-                />
+            <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
+                {hasSession && (
+                    <TopNavbar
+                        adminMobile={adminMobile}
+                        adminName={adminName}
+                        adminRole={adminRole}
+                        lastLogin={lastLogin}
+                        presentLogin={presentLogin}
+                        adminReferralCode={adminReferralCode}
+                        onLogoutTrigger={() => setIsLogoutModalOpen(true)}
+                    />
+                )}
 
-                <main className="flex-1 overflow-y-auto p-0 bg-slate-100">
-                    {children}
+                <main className="flex-1 overflow-y-auto p-0 bg-[var(--slate-50)]">
+                    <div className="w-full h-full p-3 lg:p-4">
+                        {children}
+                    </div>
                 </main>
             </div>
 

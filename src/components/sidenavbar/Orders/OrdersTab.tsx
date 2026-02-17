@@ -246,7 +246,7 @@ const OrdersTab: React.FC = () => {
     }
 
     return (
-        <div className="p-6">
+        <div className="w-full h-full">
             {/* New Header: Order Management Left, Filters Right */}
             <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-6">
                 <h2 className="text-xl font-bold m-0 text-slate-800 shrink-0">Order Management</h2>
@@ -427,7 +427,7 @@ const OrdersTab: React.FC = () => {
                                                     </button>
                                                     {unit.placedAt ? (
                                                         <span className="text-[11px] text-slate-500">
-                                                            {new Date(unit.placedAt).toLocaleDateString('en-GB')} • {new Date(unit.placedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                            {new Date(unit.placedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(unit.placedAt).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
                                                         </span>
                                                     ) : <span className="text-[11px] text-slate-500">-</span>}
                                                 </div>

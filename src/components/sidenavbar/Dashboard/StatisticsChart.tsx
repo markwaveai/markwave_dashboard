@@ -12,6 +12,7 @@ import {
     ScriptableContext
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { TrendingUp, Calendar, ChevronDown } from 'lucide-react';
 
 ChartJS.register(
     CategoryScale,
@@ -26,38 +27,30 @@ ChartJS.register(
 
 const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const generateData = (fill: boolean) => ({
+const generateData = () => ({
     labels,
     datasets: [
         {
-            label: 'Avg. Yearly Profit',
+            label: 'Total Revenue',
             data: [180, 190, 170, 160, 170, 165, 175, 210, 230, 210, 240, 235],
-            borderColor: '#4f46e5', // Indigo 600
+            borderColor: '#6366f1', // Indigo 500
             backgroundColor: (context: ScriptableContext<'line'>) => {
                 const chart = context.chart;
                 const { ctx, chartArea } = chart;
-                if (!chartArea) return 'rgba(79, 70, 229, 0.1)';
+                if (!chartArea) return 'transparent';
                 const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                gradient.addColorStop(0, 'rgba(79, 70, 229, 0.25)');
-                gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+                gradient.addColorStop(0, 'rgba(99, 102, 241, 0.15)');
+                gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
                 return gradient;
             },
             fill: true,
             tension: 0.4,
-            borderWidth: 2,
+            borderWidth: 2.5,
             pointRadius: 0,
             pointHoverRadius: 6,
-        },
-        {
-            label: 'Avg. Yearly Profit (Secondary)',
-            data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-            borderColor: '#93c5fd', // Blue 300
-            backgroundColor: 'transparent',
-            fill: false,
-            tension: 0.4,
-            borderWidth: 2,
-            pointRadius: 0,
-            pointHoverRadius: 6,
+            pointBackgroundColor: '#6366f1',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
         }
     ],
 });
@@ -68,29 +61,42 @@ const options = {
     plugins: {
         legend: { display: false },
         tooltip: {
-            backgroundColor: '#fff',
-            titleColor: '#111827',
-            bodyColor: '#6b7280',
-            borderColor: '#e5e7eb',
+            backgroundColor: '#1e293b',
+            titleColor: '#cbd5e1',
+            bodyColor: '#f8fafc',
+            borderColor: '#334155',
             borderWidth: 1,
-            padding: 10,
-            boxPadding: 4,
+            padding: 12,
+            boxPadding: 6,
             usePointStyle: true,
-            displayColors: true,
+            displayColors: false,
+            titleFont: { size: 12, weight: 'bold' as const },
+            bodyFont: { size: 14, weight: 'bold' as const },
+            callbacks: {
+                label: (context: any) => `₹${context.raw}K`
+            }
         }
     },
     scales: {
         x: {
             grid: { display: false },
-            ticks: { color: '#9ca3af', font: { size: 11 } },
+            ticks: {
+                color: '#64748b',
+                font: { size: 10, weight: 'bold' as const },
+                padding: 10
+            },
             border: { display: false }
         },
         y: {
-            grid: { color: '#f3f4f6', borderDash: [2, 2] },
-            ticks: { color: '#9ca3af', font: { size: 11 }, stepSize: 50 },
+            grid: { color: '#f1f5f9', borderDash: [4, 4], drawTicks: false },
+            ticks: {
+                color: '#64748b',
+                font: { size: 10, weight: 'bold' as const },
+                padding: 10,
+                callback: (value: any) => `₹${value}k`
+            },
             border: { display: false },
             min: 0,
-            max: 250 // Align with image example
         }
     },
     interaction: {
@@ -105,54 +111,64 @@ interface StatisticsChartProps {
 }
 
 const StatisticsChart: React.FC<StatisticsChartProps> = ({
-    primaryValue = "$212,142.12",
-    secondaryValue = "$30,321.23"
+    primaryValue = "₹212,142",
+    secondaryValue = "₹30,321"
 }) => {
-    const [period, setPeriod] = useState<'Monthly' | 'Quarterly' | 'Annually'>('Monthly');
+    const [period, setPeriod] = useState<'Monthly' | 'Quarterly' | 'Yearly'>('Monthly');
 
     return (
-        <div className="bg-white rounded-[20px] p-6 shadow-sm border border-gray-100 h-full flex flex-col">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div className="bg-white rounded-[var(--radius-2xl)] p-8 shadow-[var(--shadow-sm)] border border-[var(--slate-200)] h-full flex flex-col group hover:shadow-[var(--shadow-md)] transition-all duration-300">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900 m-0">Statistics</h3>
-                    <p className="text-xs text-gray-500 mt-1">Target you've set for each month</p>
+                    <h3 className="text-xl font-black text-[var(--slate-900)] tracking-tight">Revenue Analytics</h3>
+                    <p className="text-sm text-[var(--slate-500)] font-semibold mt-1">Real-time performance metrics</p>
                 </div>
 
-                <div className="flex bg-gray-50 p-1 rounded-lg">
-                    {['Monthly', 'Quarterly', 'Annually'].map((p) => (
-                        <button
-                            key={p}
-                            onClick={() => setPeriod(p as any)}
-                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${period === p
-                                    ? 'bg-white text-gray-900 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
-                                }`}
-                        >
-                            {p}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-3">
+                    <div className="flex bg-[var(--slate-100)] p-1 rounded-xl">
+                        {['Monthly', 'Quarterly', 'Yearly'].map((p) => (
+                            <button
+                                key={p}
+                                onClick={() => setPeriod(p as any)}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${period === p
+                                    ? 'bg-white text-[var(--slate-900)] shadow-sm'
+                                    : 'text-[var(--slate-500)] hover:text-[var(--slate-700)]'
+                                    }`}
+                            >
+                                {p}
+                            </button>
+                        ))}
+                    </div>
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-[var(--slate-200)] rounded-xl text-xs font-bold text-[var(--slate-700)] hover:bg-[var(--slate-50)] transition-colors">
+                        <Calendar size={14} className="text-indigo-500" />
+                        <span>Filters</span>
+                        <ChevronDown size={14} />
+                    </button>
                 </div>
             </div>
 
-            <div className="flex items-center gap-8 mb-6">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-gray-900">{primaryValue}</span>
-                        <span className="bg-green-50 text-green-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">+23.2%</span>
+            <div className="flex flex-wrap items-center gap-12 mb-10">
+                <div className="group/stat">
+                    <p className="text-xs uppercase tracking-[0.1em] text-[var(--slate-400)] font-black mb-2">Primary Revenue</p>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-[var(--slate-900)] tracking-tighter group-hover/stat:text-indigo-600 transition-colors">{primaryValue}</span>
+                        <span className="flex items-center gap-0.5 text-green-600 text-[11px] font-black bg-green-50 px-2 py-0.5 rounded-lg">
+                            <TrendingUp size={10} />
+                            +23.2%
+                        </span>
                     </div>
-                    <span className="text-xs text-gray-400 font-medium">Avg. Yearly Profit</span>
                 </div>
-                <div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-gray-900">{secondaryValue}</span>
-                        <span className="bg-red-50 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">-12.5%</span>
+                <div className="group/stat">
+                    <p className="text-xs uppercase tracking-[0.1em] text-[var(--slate-400)] font-black mb-2">Secondary Goal</p>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-[var(--slate-900)] tracking-tighter group-hover/stat:text-indigo-600 transition-colors">{secondaryValue}</span>
+                        <span className="text-red-500 text-[11px] font-black bg-red-50 px-2 py-0.5 rounded-lg">-12.5%</span>
                     </div>
-                    <span className="text-xs text-gray-400 font-medium">Avg. Yearly Profit</span>
                 </div>
             </div>
 
             <div className="flex-1 min-h-[250px] relative w-full">
-                <Line data={generateData(true)} options={options} />
+                <Line data={generateData()} options={options} />
             </div>
         </div>
     );
