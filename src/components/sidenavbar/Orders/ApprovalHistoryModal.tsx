@@ -69,7 +69,7 @@ const ApprovalHistoryModal: React.FC = () => {
                 <div className="px-5 py-3 flex items-center justify-between border-b border-slate-100 bg-slate-50/30">
                     <div className="flex items-center gap-2">
                         <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
-                        <h3 className="m-0 text-[15px] font-bold text-slate-800 tracking-tight">Approval History - {orderId}</h3>
+                        <h3 className="m-0 text-[15px] font-bold text-slate-800 tracking-tight">Order History - {orderId}</h3>
                     </div>
                     <button
                         onClick={onClose}
@@ -84,26 +84,46 @@ const ApprovalHistoryModal: React.FC = () => {
                         <div className="space-y-4">
                             {history.map((h: any, i: number) => {
                                 const isSuper = h.role?.toLowerCase().includes('super');
+                                const isRejection = h.action === 'REJECT';
+                                const isApproval = h.action === 'APPROVE';
+
+                                let bgClass = 'bg-slate-50/50 border-slate-100 shadow-sm shadow-slate-50';
+                                let iconClass = 'bg-slate-100 border-slate-200 text-slate-600';
+                                let roleTextClass = 'text-slate-700';
+                                let nameTextClass = 'text-slate-800';
+
+                                if (isRejection) {
+                                    bgClass = 'bg-red-50/30 border-red-100 shadow-sm shadow-red-50';
+                                    iconClass = 'bg-red-100 border-red-200 text-red-600';
+                                    roleTextClass = 'text-red-700';
+                                    nameTextClass = 'text-red-900';
+                                } else if (isSuper) {
+                                    bgClass = 'bg-purple-50/30 border-purple-100 shadow-sm shadow-purple-50';
+                                    iconClass = 'bg-purple-100 border-purple-200 text-purple-600';
+                                    roleTextClass = 'text-purple-700';
+                                    nameTextClass = 'text-purple-900';
+                                }
+
                                 return (
-                                    <div key={i} className={`rounded-xl border p-4 transition-all ${isSuper ? 'bg-purple-50/30 border-purple-100 shadow-sm shadow-purple-50' : 'bg-slate-50/50 border-slate-100 shadow-sm shadow-slate-50'}`}>
+                                    <div key={i} className={`rounded-xl border p-4 transition-all ${bgClass}`}>
                                         <div className="flex justify-between items-start mb-3 pb-2 border-b border-slate-100/50">
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${isSuper ? 'bg-purple-100 border-purple-200 text-purple-600' : 'bg-slate-100 border-slate-200 text-slate-600'}`}>
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${iconClass}`}>
                                                     <User size={14} />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className={`text-[12px] font-extrabold uppercase tracking-wider ${isSuper ? 'text-purple-700' : 'text-slate-700'}`}>
-                                                        {isSuper ? 'Super Admin' : (h.role || 'Admin')}
+                                                    <span className={`text-[12px] font-extrabold uppercase tracking-wider ${roleTextClass}`}>
+                                                        {isSuper ? 'Super Admin' : (h.role || 'Admin')} {isRejection && '(Rejected)'}
                                                     </span>
-                                                    <span className={`text-[13px] font-bold ${isSuper ? 'text-purple-900' : 'text-slate-800'}`}>
-                                                        {h.approvedByName || h.name || 'Staff User'}
+                                                    <span className={`text-[13px] font-bold ${nameTextClass}`}>
+                                                        {h.approvedByName || h.rejectedByName || h.name || 'Staff User'}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Approved At</span>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Time</span>
                                                 <span className="text-[11px] text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/50 shadow-sm">
-                                                    {formatApprovalDate(h.approvedAt)}
+                                                    {formatApprovalDate(h.approvedAt || h.rejectedAt || h.createdAt || h.timestamp)}
                                                 </span>
                                             </div>
                                         </div>

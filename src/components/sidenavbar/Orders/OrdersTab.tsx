@@ -361,7 +361,7 @@ const OrdersTab: React.FC = () => {
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Total Cost</th>
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Coins Redeemed</th>
                             {showActions && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Actions</th>}
-                            {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Rejected Reason</th>}
+                            {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Rejected Details</th>}
                             {statusFilter === 'PAID' && (
                                 <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Approved Details</th>
                             )}
@@ -506,9 +506,28 @@ const OrdersTab: React.FC = () => {
                                                     </div>
                                                 </td>
                                             )}
-                                            {statusFilter === 'REJECTED' && <td className="px-6 py-5 text-[13px] text-slate-700">
-                                                {unit.rejectedReason || 'No reason provided'}
-                                            </td>}
+                                            {statusFilter === 'REJECTED' && (
+                                                <td className="px-6 py-5 text-[13px] text-slate-700">
+                                                    <div className="flex flex-col gap-2">
+                                                       
+                                                        {(unit.history && unit.history.length > 0) && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    dispatch(setApprovalHistoryModal({
+                                                                        isOpen: true,
+                                                                        history: unit.history,
+                                                                        orderId: unit.id
+                                                                    }));
+                                                                }}
+                                                                className="text-red-600 font-bold text-xs hover:underline flex items-center gap-1 w-fit"
+                                                            >
+                                                                View Timeline
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                             {statusFilter === 'PAID' && (
                                                 <td className="px-6 py-5 text-[13px] text-slate-700 text-center">
                                                     {(unit.history && unit.history.some((h: any) => h.action === 'APPROVE')) ? (
