@@ -48,7 +48,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/true-harvest-support')) activeTab = 'true-harvest-support';
     else if (currentPath.includes('/landify/legal')) activeTab = 'landify-legal';
     else if (currentPath.includes('/landify/support')) activeTab = 'landify-support';
-    else if (currentPath.includes('/landify/deactivate')) activeTab = 'landify-deactivate';
+    else if (currentPath.includes('/landify/delete')) activeTab = 'landify-delete';
     else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
     else if (currentPath.includes('/support')) activeTab = 'support';
     else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
@@ -323,7 +323,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 </div>
                             </button>
                         </li>
-                        {/* <li>
+                        <li>
                             <button className={navItemClass('landify-legal')} onClick={(e) => { e.stopPropagation(); navigate('/landify/legal', { state: { fromDashboard: true } }); }}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                     <ShieldIcon size={18} className={activeTab === 'landify-legal' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
@@ -340,13 +340,13 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </button>
                         </li>
                         <li>
-                            <button className={navItemClass('landify-deactivate')} onClick={(e) => { e.stopPropagation(); navigate('/landify/deactivate', { state: { fromDashboard: true } }); }}>
+                            <button className={navItemClass('landify-delete')} onClick={(e) => { e.stopPropagation(); navigate('/landify/delete', { state: { fromDashboard: true } }); }}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <UserMinus size={18} className={activeTab === 'landify-deactivate' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Landify Deactivate</span>}
+                                    <UserMinus size={18} className={activeTab === 'landify-delete' ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'} />
+                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Landify Delete</span>}
                                 </div>
                             </button>
-                        </li> */}
+                        </li>
                         {/* <li>
                             <button className={navItemClass('support')} onClick={(e) => { e.stopPropagation(); navigate('/support', { state: { fromDashboard: true } }); }}>
                                 <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>

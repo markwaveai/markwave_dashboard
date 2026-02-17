@@ -22,6 +22,11 @@ export interface UIState {
             installmentNumber: number | null;
         };
         creationRole: 'Investor' | 'Employee' | null;
+        approvalHistory: {
+            isOpen: boolean;
+            history: any[] | null;
+            orderId: string | null;
+        };
     };
     snackbar: {
         message: string | null;
@@ -69,6 +74,11 @@ const initialState: UIState = {
             installmentNumber: null,
         },
         creationRole: null,
+        approvalHistory: {
+            isOpen: false,
+            history: null,
+            orderId: null,
+        },
     },
     snackbar: {
         message: null,
@@ -127,6 +137,15 @@ const uiSlice = createSlice({
         setCreationRole: (state, action: PayloadAction<'Investor' | 'Employee' | null>) => {
             state.modals.creationRole = action.payload;
         },
+        setApprovalHistoryModal: (state, action: PayloadAction<{ isOpen: boolean; history?: any[] | null; orderId?: string | null }>) => {
+            state.modals.approvalHistory.isOpen = action.payload.isOpen;
+            if (action.payload.history !== undefined) {
+                state.modals.approvalHistory.history = action.payload.history;
+            }
+            if (action.payload.orderId !== undefined) {
+                state.modals.approvalHistory.orderId = action.payload.orderId;
+            }
+        },
         setSnackbar: (state, action: PayloadAction<{ message: string | null; type: 'success' | 'error' | null }>) => {
             state.snackbar = action.payload;
         },
@@ -145,6 +164,7 @@ export const {
     setRejectionModal,
     setApprovalModal,
     setCreationRole,
+    setApprovalHistoryModal,
     setSnackbar,
 } = uiSlice.actions;
 

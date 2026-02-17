@@ -19,10 +19,18 @@ import {
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { fetchPendingUnits } from '../../../store/slices/ordersSlice';
 import { RootState } from '../../../store';
+import { setProofModal } from '../../../store/slices/uiSlice';
+import ImageNamesModal from '../../common/ImageNamesModal';
 
 
-const OrderDetailsPage: React.FC = () => {
-    const { orderId } = useParams<{ orderId: string }>();
+interface OrderDetailsPageProps {
+    orderId?: string;
+    onBack?: () => void;
+}
+
+const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderId, onBack }) => {
+    const { orderId: paramOrderId } = useParams<{ orderId: string }>();
+    const orderId = propOrderId || paramOrderId;
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
@@ -69,7 +77,7 @@ const OrderDetailsPage: React.FC = () => {
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center bg-gray-50">
                 <div className="text-gray-800 font-bold text-lg mb-2">Order Not Found</div>
                 <button
-                    onClick={() => navigate('/orders')}
+                    onClick={() => onBack ? onBack() : navigate('/orders')}
                     className="text-blue-600 hover:underline"
                 >
                     Back to Orders
@@ -79,9 +87,8 @@ const OrderDetailsPage: React.FC = () => {
     }
 
     // Helper to get transaction object - API structure might vary
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const txData: any = transaction?.transaction || transaction || {};
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawTx = transaction || {};
+    const txData: any = { ...rawTx, ...(rawTx.transaction || {}) };
     const orderObj: any = order || {};
 
     const getStatusColor = (status: string) => {
@@ -130,6 +137,12 @@ const OrderDetailsPage: React.FC = () => {
         );
         return foundKey ? obj[foundKey] : '-';
     };
+    const handleImageClick = (url: string, name: string) => {
+        dispatch(setProofModal({
+            isOpen: true,
+            data: { directUrl: url, name: name }
+        }));
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 pb-12 font-sans">
@@ -139,7 +152,7 @@ const OrderDetailsPage: React.FC = () => {
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center">
                             <button
-                                onClick={() => navigate('/orders')}
+                                onClick={() => onBack ? onBack() : navigate('/orders')}
                                 className="mr-4 p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
                             >
                                 <ArrowLeft size={20} />
@@ -194,19 +207,17 @@ const OrderDetailsPage: React.FC = () => {
                             {investor?.panCardUrl && (
                                 <div className="px-6 pb-6 pt-2">
                                     <p className="text-sm font-medium text-gray-700 mb-3 block">Documents</p>
-                                    <div className="inline-block relative group">
+                                    <div className="inline-block relative group cursor-pointer" onClick={() => handleImageClick(investor.panCardUrl, 'PAN Card')}>
                                         <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
                                             <img src={investor.panCardUrl} alt="PAN Card" className="h-32 w-auto object-cover rounded shadow-sm" />
                                         </div>
-                                        <a
-                                            href={investor.panCardUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow hover:bg-gray-50 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+                                        <div
+                                            className="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow hover:bg-gray-50 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
                                             title="View Full Size"
                                         >
-                                            <Download size={16} />
-                                        </a>
+                                            <FileText size={16} />
+                                        </div>
                                     </div>
                                     <p className="text-xs text-gray-400 mt-1">PAN Card Image</p>
                                 </div>
@@ -244,16 +255,12 @@ const OrderDetailsPage: React.FC = () => {
                                     {txData?.paymentType === 'CASH' && txData?.cashier_phone && (
                                         <InfoItem label="Cashier Phone" value={txData.cashier_phone} />
                                     )}
-                                    <InfoItem
-                                        label="Account Number"
-                                        value={findVal(txData, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no'])}
-                                    />
                                 </div>
 
                                 {(() => {
                                     const frontImg = txData?.chequeFrontImage || txData?.frontImageUrl || txData?.front_image_url || txData?.frontImage || txData?.cheque_front_image_url;
                                     const backImg = txData?.chequeBackImage || txData?.backImageUrl || txData?.back_image_url || txData?.backImage || txData?.cheque_back_image_url;
-                                    const proofImg = txData?.voucher_image_url || txData?.paymentScreenshotUrl || txData?.screenshot || txData?.paymentProof || txData?.payment_proof_Url;
+                                    const proofImg = txData?.voucher_image_url || txData?.paymentScreenshotUrl || txData?.screenshot || txData?.paymentProof || txData?.payment_proof_Url || txData?.proofImage;
 
                                     if (!frontImg && !backImg && !proofImg) return null;
 
@@ -262,30 +269,30 @@ const OrderDetailsPage: React.FC = () => {
                                             <p className="text-sm font-medium text-gray-700 mb-3">Payment Proof</p>
                                             <div className="flex flex-wrap gap-4">
                                                 {frontImg && (
-                                                    <div className="flex flex-col gap-1">
-                                                        <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48">
-                                                            <a href={frontImg} target="_blank" rel="noreferrer">
-                                                                <img src={frontImg} alt="Cheque Front" className="w-full h-32 object-contain" />
-                                                            </a>
+                                                    <div className="flex flex-col gap-1 cursor-pointer group" onClick={() => handleImageClick(frontImg, 'Cheque Front')}>
+                                                        <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48 relative">
+                                                            <img src={frontImg} alt="Cheque Front" className="w-full h-32 object-contain" />
+                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
                                                         </div>
-                                                        <span className="text-[10px] text-gray-500 font-bold text-center">Front View</span>
+                                                        <span className="text-[10px] text-gray-500 font-bold text-center group-hover:text-blue-600 transition-colors">Front View</span>
                                                     </div>
                                                 )}
                                                 {backImg && (
-                                                    <div className="flex flex-col gap-1">
-                                                        <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48">
-                                                            <a href={backImg} target="_blank" rel="noreferrer">
-                                                                <img src={backImg} alt="Cheque Back" className="w-full h-32 object-contain" />
-                                                            </a>
+                                                    <div className="flex flex-col gap-1 cursor-pointer group" onClick={() => handleImageClick(backImg, 'Cheque Back')}>
+                                                        <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48 relative">
+                                                            <img src={backImg} alt="Cheque Back" className="w-full h-32 object-contain" />
+                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
                                                         </div>
-                                                        <span className="text-[10px] text-gray-500 font-bold text-center">Back View</span>
+                                                        <span className="text-[10px] text-gray-500 font-bold text-center group-hover:text-blue-600 transition-colors">Back View</span>
                                                     </div>
                                                 )}
-                                                {proofImg && !frontImg && (
-                                                    <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 max-w-md">
-                                                        <a href={proofImg} target="_blank" rel="noreferrer">
-                                                            <img src={proofImg} alt="Payment Screenshot" className="w-full h-auto object-contain max-h-[400px]" />
-                                                        </a>
+                                                {proofImg && (
+                                                    <div className="flex flex-col gap-1 cursor-pointer group" onClick={() => handleImageClick(proofImg, 'Payment Proof')}>
+                                                        <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48 relative">
+                                                            <img src={proofImg} alt="Payment Screenshot" className="w-full h-32 object-contain" />
+                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-500 font-bold text-center group-hover:text-blue-600 transition-colors">Payment View</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -329,6 +336,7 @@ const OrderDetailsPage: React.FC = () => {
 
                 </div>
             </div>
+            <ImageNamesModal />
         </div>
     );
 };

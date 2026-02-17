@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
 import { Check, Copy, User, X, AlertCircle, ChevronDown } from 'lucide-react';
@@ -17,13 +17,15 @@ import {
     rejectOrder,
     setFarmFilter,
 } from '../../../store/slices/ordersSlice';
-import { setProofModal, setApprovalModal, setSnackbar } from '../../../store/slices/uiSlice';
+import { setProofModal, setApprovalModal, setSnackbar, setApprovalHistoryModal } from '../../../store/slices/uiSlice';
 import Pagination from '../../common/Pagination';
 import { farmService } from '../../../services/api';
 import type { Farm } from '../../../types';
 
 import TableSkeleton from '../../common/TableSkeleton';
 import TrackingTab from './TrackingTab';
+import ApprovalHistoryModal from './ApprovalHistoryModal';
+import OrderDetailsPage from './OrderDetailsPage';
 
 const UTRCopyButton: React.FC<{ value: string }> = ({ value }) => {
     const [isCopied, setIsCopied] = useState(false);
@@ -110,7 +112,6 @@ const OrdersTab: React.FC = () => {
     const userRoles = effectiveRole ? effectiveRole.split(',').map((r: string) => r.trim()) : [];
     const isSuperAdmin = userRoles.includes('SuperAdmin');
     const isAdmin = userRoles.some((r: string) => r === 'Admin' || r === 'Animalkart admin');
-    const [searchParams, setSearchParams] = useSearchParams();
 
     // Farm State
     const [farms, setFarms] = useState<Farm[]>([]);
@@ -131,72 +132,15 @@ const OrdersTab: React.FC = () => {
         fetchFarms();
     }, []);
 
-    // Tooltip State
-    const [tooltipInfo, setTooltipInfo] = useState<{ tx: any; top: number; left: number; flipped: boolean } | null>(null);
-    const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    const showTooltip = (tx: any, top: number, left: number) => {
-        if (closeTimeoutRef.current) {
-            clearTimeout(closeTimeoutRef.current);
-            closeTimeoutRef.current = null;
-        }
-
-        const viewportWidth = window.innerWidth;
-        const tooltipWidth = 280; // Hardcoded width for calculation
-        let isFlipped = false;
-
-        // If tooltip would go off the right edge, flip it to the left of the trigger
-        if (left + tooltipWidth > viewportWidth - 20) {
-            isFlipped = true;
-            left = left - tooltipWidth - 20; // 20 is approx the trigger width + gap
-        }
-
-        setTooltipInfo({ tx, top, left, flipped: isFlipped });
-    };
-
-    const hideTooltip = () => {
-        closeTimeoutRef.current = setTimeout(() => {
-            setTooltipInfo(null);
-        }, 200);
-    };
 
 
 
-    // Robust scroll-to-hide listener
-    useEffect(() => {
-        const handleGlobalScroll = () => {
-            setTooltipInfo(null);
-        };
-        window.addEventListener('scroll', handleGlobalScroll, true); // true for capturing to catch table scroll
-        return () => window.removeEventListener('scroll', handleGlobalScroll, true);
-    }, []);
 
 
-    // Sync URL Filters to Redux State
-    useEffect(() => {
-        const pageParam = searchParams.get('page');
-        const statusParam = searchParams.get('status');
-        const paymentParam = searchParams.get('payment');
-        const modeParam = searchParams.get('mode');
-        const farmParam = searchParams.get('farm');
-
-        const pageNum = pageParam ? parseInt(pageParam, 10) : 1;
-
-        const updates: any = {};
-        if (!isNaN(pageNum) && pageNum !== page) updates.page = pageNum;
-        if (statusParam && statusParam !== statusFilter) updates.statusFilter = statusParam;
-        if (paymentParam && paymentParam !== paymentTypeFilter) updates.paymentFilter = paymentParam;
-        if (modeParam && modeParam !== transferModeFilter) updates.transferModeFilter = modeParam;
-        if (farmParam && farmParam !== farmFilter) updates.farmFilter = farmParam;
-
-        if (Object.keys(updates).length > 0) {
-            dispatch(setAllFilters(updates));
-        }
-
-    }, [searchParams, dispatch]); // Sync URL -> Redux only when URL actually changes
 
     // Debounce Search
     const [localSearch, setLocalSearch] = useState(searchQuery);
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(() => localStorage.getItem('selectedOrderId'));
     const [expandedTrackerKeys, setExpandedTrackerKeys] = useState<Record<string, boolean>>({});
 
     const handleApproveWrapper = (id: string) => {
@@ -222,13 +166,6 @@ const OrdersTab: React.FC = () => {
 
             if (localSearch !== searchQuery) {
                 dispatch(setSearchQuery(localSearch));
-                setSearchParams(prev => {
-                    const newParams = new URLSearchParams(prev);
-                    if (localSearch) newParams.set('search', localSearch);
-                    else newParams.delete('search');
-                    newParams.set('page', '1');
-                    return newParams;
-                });
             }
         };
 
@@ -249,41 +186,26 @@ const OrdersTab: React.FC = () => {
         localStorage.setItem('orders_transferModeFilter', transferModeFilter);
         localStorage.setItem('orders_farmFilter', farmFilter);
         localStorage.setItem('orders_page', String(page));
-    }, [searchQuery, paymentTypeFilter, statusFilter, transferModeFilter, page, farmFilter]);
+        if (selectedOrderId) {
+            localStorage.setItem('selectedOrderId', selectedOrderId);
+        } else {
+            localStorage.removeItem('selectedOrderId');
+        }
+    }, [searchQuery, paymentTypeFilter, statusFilter, transferModeFilter, page, farmFilter, selectedOrderId]);
 
     const handleStatusFilterChange = (status: string) => {
         dispatch(setStatusFilter(status));
         dispatch(setPage(1));
-        setSearchParams(prev => {
-            const newParams = new URLSearchParams(prev);
-            newParams.set('status', status);
-            newParams.set('page', '1');
-            return newParams;
-        });
     };
 
     const handlePaymentTypeChange = (type: string) => {
         dispatch(setPaymentFilter(type));
         dispatch(setPage(1));
-        setSearchParams(prev => {
-            const newParams = new URLSearchParams(prev);
-            if (type === 'All Payments') newParams.delete('payment');
-            else newParams.set('payment', type);
-            newParams.set('page', '1');
-            return newParams;
-        });
     };
 
     const handleFarmChange = (farmId: string) => {
         dispatch(setFarmFilter(farmId));
         dispatch(setPage(1));
-        setSearchParams(prev => {
-            const newParams = new URLSearchParams(prev);
-            if (farmId === 'All Farms') newParams.delete('farm');
-            else newParams.set('farm', farmId);
-            newParams.set('page', '1');
-            return newParams;
-        });
     };
 
 
@@ -306,7 +228,7 @@ const OrdersTab: React.FC = () => {
 
     // Pagination
     const totalPages = Math.ceil((totalCount || 0) / pageSize);
-    const currentCols = (showActions || statusFilter === 'REJECTED' || statusFilter === 'PAID') ? 10 : 8; // Increased by 1 for Delivery Location + 1 for Approved Details/Actions
+    const currentCols = (showActions || statusFilter === 'REJECTED') ? 10 : (statusFilter === 'PAID' ? 10 : 8); // Consolidated approval details in PAID tab
 
     // Filter Buttons Config
     const filterButtons = [
@@ -318,6 +240,10 @@ const OrdersTab: React.FC = () => {
         { label: 'Rejected', status: 'REJECTED', count: rejectedCount },
         { label: 'Payment Due', status: 'PENDING_PAYMENT', count: paymentDueCount },
     ];
+
+    if (selectedOrderId) {
+        return <OrderDetailsPage orderId={selectedOrderId} onBack={() => setSelectedOrderId(null)} />;
+    }
 
     return (
         <div className="p-6">
@@ -437,7 +363,9 @@ const OrdersTab: React.FC = () => {
                             <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Coins Redeemed</th>
                             {showActions && <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Actions</th>}
                             {statusFilter === 'REJECTED' && <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Rejected Reason</th>}
-                            {statusFilter === 'PAID' && <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Approved Details</th>}
+                            {statusFilter === 'PAID' && (
+                                <th className="uppercase text-[12px] font-extrabold text-slate-700 tracking-wider px-6 py-4 text-center">Approved Details</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -464,7 +392,7 @@ const OrdersTab: React.FC = () => {
                                 return (
                                     <React.Fragment key={`${unit.id || 'order'}-${index}`}>
                                         <tr
-                                            onClick={() => navigate(`/orders/${encodeURIComponent(unit.id)}`)}
+                                            onClick={() => setSelectedOrderId(unit.id)}
                                             style={{ cursor: 'pointer' }}
                                             className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
                                         >
@@ -490,7 +418,7 @@ const OrdersTab: React.FC = () => {
                                                             if (isExpandable) {
                                                                 handleToggleExpansion(unit.id);
                                                             } else {
-                                                                navigate(`/orders/${encodeURIComponent(unit.id)}`);
+                                                                setSelectedOrderId(unit.id);
                                                             }
                                                         }}
                                                         className={`text-[13px] font-bold p-0 text-left bg-transparent border-none ${isExpandable ? 'text-blue-600 underline cursor-pointer' : 'text-slate-700 cursor-pointer'}`}
@@ -541,31 +469,12 @@ const OrdersTab: React.FC = () => {
                                                 })()}
                                             </td>
                                             <td className="px-6 py-4 text-[13px] text-slate-700 align-top relative">
-                                                {tx.paymentType === 'BANK_TRANSFER' || tx.paymentType === 'CHEQUE' ? (
-                                                    <div
-                                                        className="cursor-pointer text-blue-600 font-semibold relative inline-block"
-                                                        onMouseEnter={(e) => {
-                                                            const rect = e.currentTarget.getBoundingClientRect();
-                                                            const viewportHeight = window.innerHeight;
-                                                            let top = rect.top + (rect.height / 2);
-                                                            if (top + 125 > viewportHeight) top = viewportHeight - 140;
-                                                            if (top - 125 < 0) top = 140;
-
-                                                            showTooltip(tx, top, rect.right + 4);
-                                                        }}
-                                                        onMouseLeave={hideTooltip}
-                                                    >
-                                                        <span>{tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cheque'}</span>
-                                                    </div>
-                                                ) : tx.paymentType === 'ONLINE' ? (
-                                                    'Online/UPI'
-                                                ) : tx.paymentType === 'CASH_PAYMENT' ? (
-                                                    'Cash Payment'
-                                                ) : tx.paymentType === 'COINS_REDEEM' ? (
-                                                    'Coins Redeem'
-                                                ) : (
-                                                    tx.paymentType?.replace('_', ' ') || '-'
-                                                )}
+                                                {tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' :
+                                                    tx.paymentType === 'CHEQUE' ? 'Cheque' :
+                                                        tx.paymentType === 'ONLINE' ? 'Online/UPI' :
+                                                            tx.paymentType === 'CASH_PAYMENT' ? 'Cash Payment' :
+                                                                tx.paymentType === 'COINS_REDEEM' ? 'Coins Redeem' :
+                                                                    tx.paymentType?.replace('_', ' ') || '-'}
                                             </td>
 
                                             <td className="px-6 py-4 text-[13px] text-slate-700 align-top">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
@@ -584,11 +493,11 @@ const OrdersTab: React.FC = () => {
                                                                         : 'bg-blue-600 hover:bg-blue-700'}`}
                                                                 disabled={
                                                                     actionLoading ||
-                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin) ||
+                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin && !isSuperAdmin) ||
                                                                     ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin)
                                                                 }
                                                                 title={
-                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin) ? 'Only Admins can verify this stage' :
+                                                                    (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin && !isSuperAdmin) ? 'Only Admins can verify this stage' :
                                                                         ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin) ? 'Only Super Admins can verify this stage' : ''
                                                                 }
                                                             >
@@ -602,55 +511,24 @@ const OrdersTab: React.FC = () => {
                                                 {unit.rejectedReason || 'No reason provided'}
                                             </td>}
                                             {statusFilter === 'PAID' && (
-                                                <td className="px-6 py-4 text-[13px] text-slate-700 align-top">
-                                                    <div className="flex flex-col gap-2 min-w-[200px]">
-                                                        {unit.history && unit.history.length > 0 ? (
-                                                            unit.history.map((h: any, i: number) => {
-                                                                if (h.action !== 'APPROVE') return null;
-                                                                const roleLabel = h.role === 'SuperAdmin' ? 'S.Admin' : h.role;
-                                                                return (
-                                                                    <div key={i} className="bg-slate-50/50 rounded-lg p-2 border border-slate-100">
-                                                                        <div className="flex justify-between items-start gap-2 mb-1">
-                                                                            <span className="font-bold text-slate-700 text-[11px] whitespace-nowrap">{roleLabel}</span>
-                                                                            <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap">{h.approvedAt || '-'}</span>
-                                                                        </div>
-                                                                        <div className="text-[11px] text-slate-600 font-semibold truncate" title={h.approvedByName || 'Admin'}>
-                                                                            {h.approvedByName || 'Admin'}
-                                                                        </div>
-                                                                        {h.checks && (
-                                                                            <div className="flex flex-wrap gap-1.5 mt-2 pt-1.5 border-t border-slate-100">
-                                                                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${h.checks.unitsChecked ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                                                                                    <div className={`w-1 h-1 rounded-full ${h.checks.unitsChecked ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                                                                    <span className="text-[8px] font-bold uppercase">Units</span>
-                                                                                </div>
-                                                                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${h.checks.paymentProof ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                                                                                    <div className={`w-1 h-1 rounded-full ${h.checks.paymentProof ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                                                                    <span className="text-[8px] font-bold uppercase">Proof</span>
-                                                                                </div>
-                                                                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${h.checks.paymentReceived ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                                                                                    <div className={`w-1 h-1 rounded-full ${h.checks.paymentReceived ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                                                                    <span className="text-[8px] font-bold uppercase">Payment</span>
-                                                                                </div>
-                                                                                {h.checks.coinsChecked !== undefined && (
-                                                                                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${h.checks.coinsChecked ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                                                                                        <div className={`w-1 h-1 rounded-full ${h.checks.coinsChecked ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                                                                        <span className="text-[8px] font-bold uppercase">Coins</span>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        )}
-                                                                        {h.comments && (
-                                                                            <div className="mt-1.5 text-[10px] text-slate-500 italic border-t border-slate-100 pt-1.5">
-                                                                                "{h.comments}"
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })
-                                                        ) : (
-                                                            <span className="text-slate-400 italic">No details</span>
-                                                        )}
-                                                    </div>
+                                                <td className="px-6 py-4 text-[13px] text-slate-700 align-middle text-center">
+                                                    {(unit.history && unit.history.some((h: any) => h.action === 'APPROVE')) ? (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                dispatch(setApprovalHistoryModal({
+                                                                    isOpen: true,
+                                                                    history: unit.history,
+                                                                    orderId: unit.id
+                                                                }));
+                                                            }}
+                                                            className="px-4 py-1.5 rounded-lg text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all border border-blue-100 cursor-pointer shadow-sm active:scale-95"
+                                                        >
+                                                            View Details
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-slate-400 italic text-xs">No details</span>
+                                                    )}
                                                 </td>
                                             )}
                                         </tr>
@@ -679,94 +557,11 @@ const OrdersTab: React.FC = () => {
                 totalPages={totalPages || 1}
                 onPageChange={(p) => {
                     dispatch(setPage(p));
-                    setSearchParams(prevParams => {
-                        const newParams = new URLSearchParams(prevParams);
-                        newParams.set('page', String(p));
-                        return newParams;
-                    });
                 }}
             />
 
-            {/* Floating Tooltip */}
-            {
-                tooltipInfo && (() => {
-                    const { tx, top, left, flipped } = tooltipInfo;
-                    const isCheque = tx.paymentType === 'CHEQUE';
-                    return (
-                        <div
-                            className="fixed z-[9999] bg-slate-900 border border-slate-800 rounded-xl p-4 w-[280px] shadow-2xl transition-all duration-200 ease-out animate-in fade-in zoom-in-95"
-                            style={{
-                                top: top,
-                                left: left,
-                                transform: 'translateY(-50%)',
-                            }}
-                            onMouseEnter={() => {
-                                if (closeTimeoutRef.current) {
-                                    clearTimeout(closeTimeoutRef.current);
-                                    closeTimeoutRef.current = null;
-                                }
-                            }}
-                            onMouseLeave={hideTooltip}
-                        >
-                            {/* Hover Bridge: Filled gap between trigger and tooltip */}
-                            <div className={`absolute top-0 bottom-0 w-4 bg-transparent ${flipped ? '-right-4' : '-left-4'}`}></div>
+            <ApprovalHistoryModal />
 
-                            {/* Arrow */}
-                            <div className={`absolute top-1/2 -mt-2 border-8 border-transparent ${flipped
-                                ? 'left-full border-l-slate-900'
-                                : 'right-full border-r-slate-900'
-                                }`}></div>
-
-                            <div className="text-[13px] font-bold text-slate-50 mb-3 pb-2 border-b border-slate-700">Payment Details</div>
-
-                            {/* Account Number - Only show if available */}
-                            {(() => {
-                                const accNo = isCheque
-                                    ? findVal(tx, ['cheque_no', 'cheque_number', 'chequeNo', 'utrNumber'], ['cheque', 'utr'])
-                                    : findVal(tx, ['account_number', 'account_no', 'acc_no', 'ac_no', 'accountNumber'], ['account', 'acc_no', 'ac_no']);
-
-                                if (accNo && accNo !== '-') {
-                                    return (
-                                        <div className="flex justify-between gap-3 mb-1.5">
-                                            <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">{isCheque ? 'Cheque No:' : 'A/C Number:'}</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                                <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
-                                                    {accNo}
-                                                </span>
-                                                {isCheque && (
-                                                    <UTRCopyButton value={accNo} />
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            })()}
-
-                            <div className="flex justify-between gap-3 mb-1.5">
-                                <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">{isCheque ? 'Cheque Date:' : 'UTR:'}</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                    <span className="text-[11px] font-semibold text-slate-100 text-right break-all">
-                                        {isCheque
-                                            ? findVal(tx, ['cheque_date', 'chequeDate', 'date'], ['date'])
-                                            : findVal(tx, ['cash_payment_date', 'transactionDate', 'paymentDate', 'utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid', 'date'])
-                                        }
-                                    </span>
-                                    {!isCheque && (
-                                        <UTRCopyButton value={findVal(tx, ['utrNumber', 'utr', 'utr_no', 'utr_number', 'transaction_id'], ['utr', 'txid'])} />
-                                    )}
-                                </div>
-                            </div>
-                            {tx.transferMode && (
-                                <div className="flex justify-between gap-3 mb-0">
-                                    <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">Mode:</span>
-                                    <span className="text-[11px] font-semibold text-slate-100 text-right break-all">{tx.transferMode}</span>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })()
-            }
             {/* Render Inlined Modals */}
             <OrderVerificationModal />
         </div >
@@ -813,7 +608,7 @@ const OrderVerificationModal: React.FC = () => {
     // Helper to find image URLs across possible key variations
     const frontImg = tx.chequeFrontImage || tx.frontImageUrl || tx.front_image_url || tx.frontImage || tx.cheque_front_image_url || null;
     const backImg = tx.chequeBackImage || tx.backImageUrl || tx.back_image_url || tx.backImage || tx.cheque_back_image_url || null;
-    const proofImg = tx.voucher_image_url || tx.paymentScreenshotUrl || tx.payment_proof_Url || tx.proofImage || tx.paymentProof || null;
+    const proofImg = tx.voucher_image_url || tx.paymentScreenshotUrl || tx.payment_proof_Url || tx.proofImage || tx.paymentProof || tx.screenshot || null;
 
     // Reset when modal opens
     useEffect(() => {
@@ -934,7 +729,7 @@ const OrderVerificationModal: React.FC = () => {
 
             await dispatch(rejectOrder(payload)).unwrap();
 
-            dispatch(setSnackbar({ message: 'Order rejected successfully!', type: 'error' }));
+            dispatch(setSnackbar({ message: 'Order rejected successfully!', type: 'success' }));
             onClose();
         } catch (error) {
             console.error('Error rejecting order:', error);
@@ -975,28 +770,40 @@ const OrderVerificationModal: React.FC = () => {
                                 Summary
                             </div>
                             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                                <div className={`grid ${isSuperAdmin ? 'grid-cols-5' : 'grid-cols-4'} divide-x divide-slate-100`}>
+                                <div className={`grid ${isSuperAdmin ? 'grid-cols-[1.4fr_0.9fr_0.7fr_1fr_1fr]' : 'grid-cols-4'} divide-x divide-slate-100`}>
                                     <div className="p-2 bg-slate-50/30">
                                         <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Order ID</div>
-                                        <div className="text-[10px] font-bold text-slate-700 truncate">{orderId}</div>
+                                        <div className="flex items-center gap-1">
+                                            <div className="text-[9px] font-bold text-slate-700 whitespace-nowrap">{orderId}</div>
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(orderId);
+                                                    dispatch(setSnackbar({ message: 'Order ID copied!', type: 'success' }));
+                                                }}
+                                                className="p-0.5 hover:bg-slate-200 rounded transition-colors text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
+                                                title="Copy ID"
+                                            >
+                                                <Copy size={8} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="p-2">
                                         <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Date</div>
-                                        <div className="text-[10px] font-bold text-slate-700">{formattedDate}</div>
+                                        <div className="text-[9px] font-bold text-slate-700 whitespace-nowrap">{formattedDate}</div>
                                     </div>
                                     {isSuperAdmin && (
                                         <div className="p-2 bg-slate-50/30">
                                             <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Units</div>
-                                            <div className="text-[10px] font-bold text-emerald-600">{entry?.order?.numUnits || '0'}</div>
+                                            <div className="text-[9px] font-bold text-emerald-600">{entry?.order?.numUnits || '0'}</div>
                                         </div>
                                     )}
                                     <div className={`p-2 ${!isSuperAdmin ? 'bg-slate-50/30' : ''}`}>
                                         <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Amount</div>
-                                        <div className="text-[10px] font-bold text-blue-600">₹{tx.amount?.toLocaleString('en-IN') || '0.00'}</div>
+                                        <div className="text-[9px] font-bold text-blue-600 whitespace-nowrap">₹{tx.amount?.toLocaleString('en-IN') || '0.00'}</div>
                                     </div>
                                     <div className={`p-2 ${isSuperAdmin ? 'bg-slate-50/30' : ''}`}>
                                         <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Type</div>
-                                        <div className="text-[10px] font-bold text-slate-700 truncate">{tx.paymentType?.replace('_', ' ') || 'N/A'}</div>
+                                        <div className="text-[9px] font-bold text-slate-700 truncate capitalize">{tx.paymentType?.replace('_', ' ').toLowerCase() || 'N/A'}</div>
                                     </div>
                                 </div>
                             </div>
@@ -1025,30 +832,38 @@ const OrderVerificationModal: React.FC = () => {
                                                 </div>
                                                 {h.checks && (
                                                     <div className="grid grid-cols-2 gap-2 mb-2 bg-white/50 p-2 rounded-lg border border-slate-100">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className={`w-3 h-3 rounded-full flex items-center justify-center ${h.checks.unitsChecked ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-                                                                {h.checks.unitsChecked ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+                                                        {h.checks.unitsChecked !== undefined && (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <div className={`w-3 h-3 rounded-full flex items-center justify-center ${h.checks.unitsChecked ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                                                    {h.checks.unitsChecked ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+                                                                </div>
+                                                                <span className="text-[10px] font-medium text-slate-600">Units Verified</span>
                                                             </div>
-                                                            <span className="text-[10px] font-medium text-slate-600">Units Verified</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className={`w-3 h-3 rounded-full flex items-center justify-center ${h.checks.paymentProof ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-                                                                {h.checks.paymentProof ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+                                                        )}
+                                                        {h.checks.paymentProof !== undefined && (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <div className={`w-3 h-3 rounded-full flex items-center justify-center ${h.checks.paymentProof ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                                                    {h.checks.paymentProof ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+                                                                </div>
+                                                                <span className="text-[10px] font-medium text-slate-600">Proof Verified</span>
                                                             </div>
-                                                            <span className="text-[10px] font-medium text-slate-600">Proof Verified</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className={`w-3 h-3 rounded-full flex items-center justify-center ${h.checks.paymentReceived ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-                                                                {h.checks.paymentReceived ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+                                                        )}
+                                                        {h.checks.paymentReceived !== undefined && (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <div className={`w-3 h-3 rounded-full flex items-center justify-center ${h.checks.paymentReceived ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                                                    {h.checks.paymentReceived ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+                                                                </div>
+                                                                <span className="text-[10px] font-medium text-slate-600">Payment Verified</span>
                                                             </div>
-                                                            <span className="text-[10px] font-medium text-slate-600">Payment Verified</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className={`w-3 h-3 rounded-full flex items-center justify-center ${h.checks.coinsChecked ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-                                                                {h.checks.coinsChecked ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+                                                        )}
+                                                        {h.checks.coinsChecked !== undefined && (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <div className={`w-3 h-3 rounded-full flex items-center justify-center ${h.checks.coinsChecked ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                                                    {h.checks.coinsChecked ? <Check size={8} strokeWidth={4} /> : <X size={8} strokeWidth={4} />}
+                                                                </div>
+                                                                <span className="text-[10px] font-medium text-slate-600">Coins Verified</span>
                                                             </div>
-                                                            <span className="text-[10px] font-medium text-slate-600">Coins Verified</span>
-                                                        </div>
+                                                        )}
                                                     </div>
                                                 )}
                                                 {h.comments && <div className="mt-0.5 italic text-slate-500"><span className="font-bold not-italic text-slate-600 mr-1">Remarks:</span>"{h.comments}"</div>}
@@ -1339,14 +1154,14 @@ const OrderVerificationModal: React.FC = () => {
                                 <>
                                     <button
                                         onClick={handleReject}
-                                        disabled={isSubmitting || (!isSuperAdmin && !rejectionNotes.trim())}
+                                        disabled={isSubmitting || !isAnyNotOk || !rejectionNotes.trim()}
                                         className="px-5 py-2 rounded-xl text-[10px] font-bold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-30 disabled:grayscale border-none cursor-pointer shadow-lg shadow-red-100 active:scale-[0.98]"
                                     >
                                         {isSubmitting ? 'PROCESSING...' : 'REJECT ORDER'}
                                     </button>
                                     <button
                                         onClick={handleApprove}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || !isAllOk}
                                         className="px-6 py-2 rounded-xl text-[10px] font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 transition-all disabled:opacity-30 border-none cursor-pointer shadow-lg shadow-emerald-100 active:scale-[0.98]"
                                     >
                                         {isSubmitting ? 'APPROVING...' : 'APPROVE ORDER'}

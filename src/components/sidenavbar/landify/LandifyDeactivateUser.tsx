@@ -35,15 +35,15 @@ const LandifyDeactivateUser: React.FC = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'Failed to deactivate user');
+                throw new Error(data.message || 'Failed to delete user');
             }
 
             setShowConfirm(false);
-            showSnackbar('User deactivated successfully', 'success');
+            showSnackbar('User deleted successfully', 'success');
             setFormData({ mobile: '' });
 
         } catch (err: any) {
-            showSnackbar(err.message || 'Error deactivating user', 'error');
+            showSnackbar(err.message || 'Error deleting user', 'error');
             setShowConfirm(false);
         } finally {
             setLoading(false);
@@ -80,9 +80,9 @@ const LandifyDeactivateUser: React.FC = () => {
                                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
                                     <AlertCircle className="w-10 h-10 text-red-500" />
                                 </div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-3">Confirm Deactivation</h3>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-3">Confirm Deletion</h3>
                                 <p className="text-gray-500 leading-relaxed mb-8">
-                                    Are you sure you want to deactivate your Landify account? This action will restrict access to your data.
+                                    Are you sure you want to delete your Landify account? This action will permanently remove your data.
                                 </p>
 
                                 <div className="flex flex-col w-full gap-3">
@@ -91,7 +91,7 @@ const LandifyDeactivateUser: React.FC = () => {
                                         disabled={loading}
                                         className="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-bold rounded-2xl shadow-lg shadow-red-500/20 transition-all active:scale-[0.98] flex items-center justify-center"
                                     >
-                                        {loading ? 'Deactivating...' : 'Yes, Deactivate'}
+                                        {loading ? 'Deleting...' : 'Yes, Delete'}
                                     </button>
                                     <button
                                         onClick={() => setShowConfirm(false)}
@@ -106,14 +106,14 @@ const LandifyDeactivateUser: React.FC = () => {
                     </div>
                 )}
 
-                <p className="text-[#1a1f3c] text-sm font-medium mb-8">Deactivate your Landify account securely</p>
+                <p className="text-[#1a1f3c] text-sm font-medium mb-8">Delete your Landify account securely</p>
 
                 <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row max-w-5xl w-full transition-all duration-500">
                     {/* Left Side: Image */}
                     <div className="lg:w-3/5 w-full h-[300px] lg:h-auto overflow-hidden p-6">
                         <img
                             src="/landify_logo.jpeg"
-                            alt="Landify Deactivation Banner"
+                            alt="Landify Deletion Banner"
                             className="w-full h-full object-cover rounded-2xl"
                             onError={(e) => {
                                 (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=2070&auto=format&fit=crop';
@@ -124,7 +124,7 @@ const LandifyDeactivateUser: React.FC = () => {
                     {/* Right Side: Form */}
                     <div className="lg:w-2/5 w-full p-10 flex flex-col justify-center bg-white min-h-[500px]">
                         <div className="text-center mb-10">
-                            <h2 className="text-3xl font-bold text-[#1a1f3c] mb-2">Deactivate Account</h2>
+                            <h2 className="text-3xl font-bold text-[#1a1f3c] mb-2">Delete Account</h2>
                             <p className="text-gray-500 font-medium">We're sorry to see you go.</p>
                         </div>
 
@@ -147,7 +147,7 @@ const LandifyDeactivateUser: React.FC = () => {
                                 type="submit"
                                 className="w-full py-4 bg-[#2a9d8f] hover:bg-[#21867a] text-white font-bold text-lg rounded-2xl shadow-lg shadow-[#2a9d8f]/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                             >
-                                DEACTIVATE
+                                DELETE
                             </button>
                         </form>
 

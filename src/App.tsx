@@ -190,7 +190,6 @@ function App() {
                 <OrdersTab />
               </React.Suspense>
             } />
-            <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
 
             <Route path="/user-management" element={
               <React.Suspense fallback={<UsersPageSkeleton />}>
@@ -276,9 +275,9 @@ function App() {
           <Route path="/true-harvest-delete-user" element={<TrueHarvestDeleteUser />} />
           <Route path="/true-harvest-support" element={<TrueHarvestSupport />} />
 
-          {/* <Route path="/landify/legal" element={<LandifyLegal />} />
+          <Route path="/landify/legal" element={<LandifyLegal />} />
           <Route path="/landify/support" element={<LandifySupport />} />
-          <Route path="/landify/deactivate" element={<LandifyDeactivateUser />} /> */}
+          <Route path="/landify/delete" element={<LandifyDeactivateUser />} />
         </Route>
 
         {/* Backward Compatibility Redirects */}
