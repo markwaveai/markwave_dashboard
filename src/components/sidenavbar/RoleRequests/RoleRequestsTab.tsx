@@ -44,16 +44,17 @@ const RoleRequestsTab: React.FC = () => {
     const { adminMobile } = useAppSelector(state => state.auth);
     const [requests, setRequests] = useState<RoleChangeRequest[]>([]);
     const [loading, setLoading] = useState(true);
+    const [processingId, setProcessingId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>(() => {
         const saved = localStorage.getItem('role_requests_filter');
         return (saved as any) || 'PENDING';
     });
 
-    const fetchRequests = async () => {
+    const fetchRequests = async (silent = false) => {
         if (!adminMobile) return;
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             setError(null);
             const data = await roleRequestService.getRoleChangeRequests(statusFilter, adminMobile);
             setRequests(data);
@@ -61,7 +62,7 @@ const RoleRequestsTab: React.FC = () => {
             console.error('Error loading role requests:', err);
             setError('Failed to load role requests. Please try again.');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -72,9 +73,10 @@ const RoleRequestsTab: React.FC = () => {
 
     const handleAction = async (request: RoleChangeRequest, action: 'APPROVE' | 'REJECT') => {
         if (!adminMobile) return;
-        try {
-            const requestId = getBestRequestId(request);
+        const requestId = getBestRequestId(request);
+        setProcessingId(requestId);
 
+        try {
             console.log(`[RoleRequests] Action: ${action} for Request:`, {
                 originalRequest: request,
                 extractedId: requestId
@@ -88,11 +90,13 @@ const RoleRequestsTab: React.FC = () => {
                 return;
             }
 
-            // Refresh the list after successful action
-            fetchRequests();
+            // Refresh the list silently after successful action
+            await fetchRequests(true);
         } catch (err) {
             console.error(`Error ${action}ing request:`, err);
             alert(`Failed to ${action.toLowerCase()} request`);
+        } finally {
+            setProcessingId(null);
         }
     };
 
@@ -252,16 +256,22 @@ const RoleRequestsTab: React.FC = () => {
                                             <div className="flex gap-2.5 shrink-0">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleAction(req, 'REJECT'); }}
-                                                    className="flex-1 py-1.5 px-3 bg-white border border-rose-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-tighter hover:bg-rose-50 hover:border-rose-200 transition-all duration-200 flex items-center justify-center gap-2 group/btn"
+                                                    disabled={!!processingId}
+                                                    className={`flex-1 py-1.5 px-3 bg-white border border-rose-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-tighter hover:bg-rose-50 hover:border-rose-200 transition-all duration-200 flex items-center justify-center gap-2 group/btn ${processingId ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
-                                                    <XCircle size={15} className="group-hover/btn:scale-110 transition-transform" strokeWidth={2.5} />
+                                                    {processingId === getBestRequestId(req) && (
+                                                        <Loader2 size={12} className="animate-spin" />
+                                                    )}
                                                     REJECT
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleAction(req, 'APPROVE'); }}
-                                                    className="flex-1 py-1.5 px-3 bg-emerald-600 border border-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-tighter hover:bg-emerald-700 shadow-sm shadow-emerald-100 transition-all duration-200 flex items-center justify-center gap-2 group/btn"
+                                                    disabled={!!processingId}
+                                                    className={`flex-1 py-1.5 px-3 bg-emerald-600 border border-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-tighter hover:bg-emerald-700 shadow-sm shadow-emerald-100 transition-all duration-200 flex items-center justify-center gap-2 group/btn ${processingId ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
-                                                    <CheckCircle2 size={15} className="group-hover/btn:scale-110 transition-transform" strokeWidth={2.5} />
+                                                    {processingId === getBestRequestId(req) && (
+                                                        <Loader2 size={12} className="animate-spin" />
+                                                    )}
                                                     APPROVE
                                                 </button>
                                             </div>
