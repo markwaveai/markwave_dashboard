@@ -151,78 +151,80 @@ const NetworkTab: React.FC = () => {
                 </div>
 
                 {/* Table Container */}
-                <div className="bg-white rounded-[2rem] shadow-sm border border-[#F1F5F9] overflow-hidden">
-                    <table className="w-full text-sm text-left border-collapse">
-                        <thead>
-                            <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
-                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">S.No</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Name</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Mobile</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Role</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Referrals</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Units</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Coins Earned</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-widest text-center">Joined Date</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#F1F5F9]">
-                            {loading ? (
-                                <TableSkeleton cols={8} rows={10} />
-                            ) : users.length === 0 ? (
-                                <tr>
-                                    <td colSpan={8} className="px-6 py-20 text-center text-[#94A3B8]">No users found</td>
+                <div className="bg-white rounded-[1.5rem] shadow-sm border border-[var(--color-gray-200)] overflow-hidden">
+                    <div className="overflow-x-auto [scrollbar-width:thin]">
+                        <table className="w-full text-xs text-left border-collapse">
+                            <thead>
+                                <tr className="bg-[var(--color-gray-50)] border-b border-[var(--color-gray-200)]">
+                                    <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest text-center">S.No</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest">Name</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest">Mobile</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest">Role</th>
+                                    <th className="px-6 py-4 text-[10px) font-bold text-[var(--color-gray-500)] uppercase tracking-widest text-center">Referrals</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest text-center">Units</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest text-center">Coins Earned</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest text-center">Joined Date</th>
                                 </tr>
-                            ) : (
-                                users.map((user: any, index: number) => (
-                                    <tr
-                                        key={user.mobile || index}
-                                        className="hover:bg-[#F8FAFC] transition-colors cursor-pointer"
-                                        onClick={() => navigate(`/user-management/network/${user.mobile}`)}
-                                    >
-                                        <td className="px-6 py-4 text-center text-[#64748B]">
-                                            {(currentPage - 1) * itemsPerPage + index + 1}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-[#F1F5F9] flex items-center justify-center overflow-hidden border border-[#E2E8F0]">
-                                                    <Users size={16} className="text-[#94A3B8]" />
-                                                </div>
-                                                <span className="font-semibold text-[#1E293B]">
-                                                    {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || '-'}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-[#475569] font-medium">
-                                            {user.mobile}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${user.role === 'Investor' ? 'bg-[#FFF8E6] text-[#D97706]' :
-                                                user.role === 'Employee' ? 'bg-[#EBF2FF] text-[#2563EB]' :
-                                                    user.role === 'SpecialCategory' ? 'bg-[#F3E8FF] text-[#9333EA]' :
-                                                        'bg-[#F1F5F9] text-[#475569]'
-                                                }`}>
-                                                {user.role}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center font-semibold text-[#1E293B]">
-                                            {user.referral_count}
-                                        </td>
-                                        <td className="px-6 py-4 text-center text-[#475569]">
-                                            {user.units_purchased || 0}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="font-bold text-[#D97706]">
-                                                {user.total_coins?.toLocaleString('en-IN')}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center text-[#64748B]">
-                                            {user.created_date ? new Date(user.created_date).toLocaleDateString() : '-'}
-                                        </td>
+                            </thead>
+                            <tbody className="divide-y divide-[#F1F5F9]">
+                                {loading ? (
+                                    <TableSkeleton cols={8} rows={10} />
+                                ) : users.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} className="px-6 py-20 text-center text-[#94A3B8]">No users found</td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    users.map((user: any, index: number) => (
+                                        <tr
+                                            key={user.mobile || index}
+                                            className="hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+                                            onClick={() => navigate(`/user-management/network/${user.mobile}`)}
+                                        >
+                                            <td className="px-6 py-4 text-center text-[#64748B]">
+                                                {(currentPage - 1) * itemsPerPage + index + 1}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-[#F1F5F9] flex items-center justify-center overflow-hidden border border-[#E2E8F0]">
+                                                        <Users size={16} className="text-[#94A3B8]" />
+                                                    </div>
+                                                    <span className="font-semibold text-[#1E293B] text-[0.8125rem]">
+                                                        {`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || '-'}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-[#475569] font-medium text-[0.8125rem]">
+                                                {user.mobile}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${user.role === 'Investor' ? 'bg-[#FFF8E6] text-[#D97706]' :
+                                                    user.role === 'Employee' ? 'bg-[#EBF2FF] text-[#2563EB]' :
+                                                        user.role === 'SpecialCategory' ? 'bg-[#F3E8FF] text-[#9333EA]' :
+                                                            'bg-[#F1F5F9] text-[#475569]'
+                                                    }`}>
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center font-semibold text-[#1E293B]">
+                                                {user.referral_count}
+                                            </td>
+                                            <td className="px-6 py-4 text-center text-[#475569]">
+                                                {user.units_purchased || 0}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="font-bold text-[#D97706]">
+                                                    {user.total_coins?.toLocaleString('en-IN')}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center text-[#64748B]">
+                                                {user.created_date ? new Date(user.created_date).toLocaleDateString() : '-'}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {/* Pagination */}

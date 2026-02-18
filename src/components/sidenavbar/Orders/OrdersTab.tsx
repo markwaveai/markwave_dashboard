@@ -357,9 +357,9 @@ const OrdersTab: React.FC = () => {
                                 </select>
                             </th>
 
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Amount</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Total Cost</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Coins Redeemed</th>
+                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-6 py-2 text-center">Amount</th>
+                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-6 py-2 text-center">Total Cost</th>
+                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-6 py-2 text-center">Coins Redeemed</th>
                             {showActions && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Actions</th>}
                             {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Rejected Details</th>}
                             {statusFilter === 'PAID' && (
@@ -401,7 +401,7 @@ const OrdersTab: React.FC = () => {
                                             style={{ cursor: 'pointer' }}
                                             className="group hover:transform hover:scale-[1.002] transition-all duration-200 bg-white shadow-sm rounded-xl"
                                         >
-                                            <td className="px-6 py-5 text-[14px] font-medium text-slate-800 rounded-l-xl">
+                                            <td className="px-6 py-5 text-[13px] font-medium text-slate-800 rounded-l-xl">
                                                 {serialNumber}
                                             </td>
                                             <td className="px-6 py-5">
@@ -414,8 +414,8 @@ const OrdersTab: React.FC = () => {
                                                         )}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[14px] font-bold text-slate-800 whitespace-nowrap">{inv.name || 'Unknown User'}</span>
-                                                        <span className="text-[12px] text-slate-500 font-medium whitespace-nowrap">
+                                                        <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">{inv.name || 'Unknown User'}</span>
+                                                        <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
                                                             {inv.mobile ? `+91 ${String(inv.mobile)}` : '-'}
                                                         </span>
                                                     </div>
@@ -469,7 +469,7 @@ const OrdersTab: React.FC = () => {
                                                     );
                                                 })()}
                                             </td>
-                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-right rounded-r-xl font-medium">
+                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-right rounded-r-xl font-medium">
                                                 {tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' :
                                                     tx.paymentType === 'CHEQUE' ? 'Cheque' :
                                                         tx.paymentType === 'ONLINE' ? 'Online/UPI' :
@@ -479,9 +479,9 @@ const OrdersTab: React.FC = () => {
                                                                         tx.paymentType?.replace('_', ' ') || '-'}
                                             </td>
 
-                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-center font-bold">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
-                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-center font-bold">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
-                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-center font-bold">{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
+                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
+                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
+                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
 
                                             {showActions && (
                                                 <td className="px-6 py-5 text-center">
@@ -509,7 +509,7 @@ const OrdersTab: React.FC = () => {
                                             {statusFilter === 'REJECTED' && (
                                                 <td className="px-6 py-5 text-[13px] text-slate-700">
                                                     <div className="flex flex-col gap-2">
-                                                       
+
                                                         {(unit.history && unit.history.length > 0) && (
                                                             <button
                                                                 onClick={(e) => {

@@ -1,13 +1,14 @@
 @import "./styles/design_tokens.css";
 @import "./components/sidenavbar/BuffaloViz/index.css";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --font-primary: 'Inter', sans-serif;
+  --font-primary: var(--font-outfit);
+  font-size: 14px;
 }
 
 body {
@@ -15,9 +16,8 @@ body {
   font-family: var(--font-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
-  /* Slightly cooler & lighter gray */
-  color: #0f172a;
+  background-color: var(--color-gray-50);
+  color: var(--color-gray-900);
 }
 
 * {

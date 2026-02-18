@@ -145,9 +145,9 @@ function App() {
     const userRoles = newSession.role ? newSession.role.split(',').map(r => r.trim()) : [];
     const hasAdminAccess = userRoles.some(r => ['Admin', 'Animalkart admin', 'SuperAdmin'].includes(r));
 
-    let defaultPath = '/dashboard';
+    let defaultPath = '/orders';
     if (hasAdminAccess) {
-      defaultPath = '/dashboard';
+      defaultPath = '/orders';
     }
 
     // Navigate to origin or default
@@ -175,7 +175,7 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/login" element={
-          session ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
+          session ? <Navigate to="/orders" replace /> : <Login onLogin={handleLogin} />
         } />
 
         {/* Persistent Layout for all authenticated dashboard views */}
@@ -183,7 +183,7 @@ function App() {
 
           {/* Strictly Protected Routes */}
           <Route element={<RequireAuth session={session} isAdmin={isAdmin} handleLogout={handleLogout}><Outlet /></RequireAuth>}>
-            <Route path="/dashboard" element={<DashboardHome />} />
+            {/* <Route path="/dashboard" element={<DashboardHome />} /> */}
 
             <Route path="/orders" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
@@ -285,8 +285,8 @@ function App() {
         <Route path="/dashboard/*" element={<Navigate to="/orders" replace />} />
 
         {/* Default redirect */}
-        <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
-        <Route path="*" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
+        <Route path="/" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
+        <Route path="*" element={<Navigate to={session ? "/orders" : "/login"} replace />} />
       </Routes>
     </div>
   );
@@ -297,7 +297,6 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
 
   // Define routes that should ALWAYS show the sidebar (protected dashboard content)
   const protectedPrefixes = [
-    '/dashboard',
     '/orders',
     '/user-management',
     '/users/customers',

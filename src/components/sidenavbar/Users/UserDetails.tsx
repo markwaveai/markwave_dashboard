@@ -167,18 +167,18 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
 
             {/* Table Section */}
             <div className="px-6">
-                <div className="bg-white rounded-[2rem] shadow-sm border border-slate-50 overflow-hidden">
+                <div className="bg-white rounded-[1.5rem] shadow-sm border border-[var(--color-gray-200)] overflow-hidden">
                     <div className="overflow-x-auto [scrollbar-width:thin]">
                         <table className="w-full text-left">
-                            <thead className="bg-[#fcfdfe] border-b border-slate-100">
+                            <thead className="bg-[var(--color-gray-50)] border-b border-[var(--color-gray-200)]">
                                 <tr>
-                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight">User Name</th>
-                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight">Mobile</th>
-                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-center">Role</th>
-                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-center">Referred By</th>
-                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-center">Verified</th>
-                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-center">Created Date</th>
-                                    <th className="px-6 py-5 text-[0.8rem] font-bold text-slate-500 uppercase tracking-tight text-right">Actions</th>
+                                    <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight">User Name</th>
+                                    <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight">Mobile</th>
+                                    <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight text-center">Role</th>
+                                    <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight text-center">Referred By</th>
+                                    <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight text-center">Verified</th>
+                                    <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight text-center">Created Date</th>
+                                    <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -213,7 +213,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                                             {/* Mobile */}
                                             <td className="px-6 py-5">
                                                 <span
-                                                    className="text-slate-600 font-bold text-[0.9rem] hover:text-blue-600 cursor-pointer transition-colors"
+                                                    className="text-slate-600 font-bold text-[13px] hover:text-blue-600 cursor-pointer transition-colors"
                                                     onClick={() => handleMobileClick(user.mobile)}
                                                 >
                                                     {user.mobile || '9999999999'}
@@ -234,11 +234,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
 
 
                                             {/* Referred By */}
-                                            <td className="px-6 py-5 text-center text-[0.85rem]">
+                                            <td className="px-6 py-5 text-center text-[12px]">
                                                 <div className="flex flex-col items-center">
                                                     <span className="font-semibold text-slate-700">{user.refered_by_name || '-'}</span>
                                                     {user.refered_by_mobile && (
-                                                        <span className="text-[0.75rem] text-slate-400 font-medium">{user.refered_by_mobile}</span>
+                                                        <span className="text-[11px] text-slate-400 font-medium">{user.refered_by_mobile}</span>
                                                     )}
                                                 </div>
                                             </td>
@@ -256,7 +256,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                                             </td>
 
                                             {/* Created Date */}
-                                            <td className="px-6 py-5 text-center font-medium text-slate-500 text-[0.85rem]">
+                                            <td className="px-6 py-5 text-center font-medium text-slate-500 text-[12px]">
                                                 {user.user_created_date ? new Date(user.user_created_date).toLocaleDateString() : '-'}
                                             </td>
 

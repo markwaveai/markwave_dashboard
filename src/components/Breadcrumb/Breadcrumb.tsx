@@ -109,7 +109,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
 
     // Render
     return (
-        <div className="flex h-screen bg-[var(--slate-50)] font-sans text-[var(--slate-700)] overflow-hidden">
+        <div className="flex h-screen bg-[var(--color-gray-50)] font-sans text-[var(--color-gray-700)] overflow-hidden">
 
             <SideNavbar
                 hasSession={hasSession}
@@ -130,8 +130,8 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                     />
                 )}
 
-                <main className="flex-1 overflow-y-auto p-0 bg-[var(--slate-50)]">
-                    <div className="w-full h-full p-3 lg:p-4">
+                <main className="flex-1 overflow-y-auto p-0 bg-[var(--color-gray-50)]">
+                    <div className="w-full p-3 lg:p-4">
                         {children}
                     </div>
                 </main>

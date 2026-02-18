@@ -66,12 +66,12 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     }, [location.pathname]);
 
     const navItemClass = (tab: string) => `
-        flex items-center w-full px-3 py-2.5 rounded-xl transition-all duration-200 text-left outline-none my-0.5 relative group
+        flex items-center w-full px-3 py-2 rounded-xl transition-all duration-200 text-left outline-none my-0.5 relative group
         ${activeTab === tab
-            ? 'bg-[var(--brand-600)] text-white shadow-lg shadow-indigo-900/40 font-semibold'
-            : 'text-[var(--slate-400)] hover:bg-[var(--slate-800)]/50 hover:text-[var(--slate-100)]'
+            ? 'bg-[var(--color-brand-600)] text-white shadow-lg shadow-indigo-900/40 font-semibold'
+            : 'text-[var(--color-gray-500)] hover:bg-[var(--color-gray-800)]/50 hover:text-[var(--color-gray-100)]'
         }
-        text-[0.875rem]
+        text-[0.8125rem]
     `;
 
     return (
@@ -83,17 +83,17 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
             <nav className={`
                 ${isSidebarOpen ? 'w-[var(--sidebar-width)]' : 'w-[var(--sidebar-collapsed-width)]'} 
-                bg-[var(--slate-950)] flex flex-col shrink-0 transition-[width] duration-[var(--transition-speed)] ease-[cubic-bezier(0.4,0,0.2,1)] 
-                z-[100] text-white border-r border-[var(--slate-800)] relative shadow-xl
+                bg-[var(--color-gray-950)] flex flex-col shrink-0 transition-[width] duration-[var(--transition-speed)] ease-[var(--ease-in-out)] 
+                z-[100] text-white border-r border-[var(--color-gray-800)] relative shadow-xl
             `}>
                 {/* Branding Area */}
-                <div className={`flex items-center gap-3 h-[var(--navbar-height)] px-6 border-b border-[var(--slate-800)]/50 ${!isSidebarOpen && 'justify-center px-0'}`}>
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-transparent shrink-0 overflow-hidden">
+                <div className={`flex items-center gap-3 h-[var(--navbar-height)] px-4 border-b border-[var(--color-gray-800)]/50 ${!isSidebarOpen && 'justify-center px-0'}`}>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-transparent shrink-0 overflow-hidden">
                         <img src={require('../../assets/logo.png')} alt="AnimalKart" className="w-full h-full object-contain" />
                     </div>
                     {isSidebarOpen && (
                         <div className="flex flex-col animate-[fadeIn_0.3s_ease-out]">
-                            <span className="font-bold text-3xl tracking-tight leading-none text-white">AnimalKart</span>
+                            <span className="font-bold text-xl tracking-tight leading-none text-white">AnimalKart</span>
                         </div>
                     )}
                 </div>
