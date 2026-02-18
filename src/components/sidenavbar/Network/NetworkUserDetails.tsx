@@ -42,18 +42,76 @@ const NetworkUserDetailsPage: React.FC = () => {
 
     const { user, stats, network_tree } = data;
     // Helper to get reward icon
-    const getRewardIcon = (reward: string) => {
+    const getRewardStyles = (reward: string, idx: number) => {
         const r = reward.toLowerCase();
-        if (r.includes('thailand') || r.includes('trip') || r.includes('plane')) return <Plane size={22} strokeWidth={2.5} />;
-        if (r.includes('iphone') || r.includes('phone') || r.includes('mobile')) return <PhoneIcon size={22} strokeWidth={2.5} />;
-        if (r.includes('bike') || r.includes('ather') || r.includes('scooter')) return <Bike size={24} strokeWidth={2.5} />;
-        if (r.includes('gift') || r.includes('voucher')) return <Gift size={22} strokeWidth={2.5} />;
-        return <Award size={22} strokeWidth={2.5} />;
+        if (r.includes('thailand') || r.includes('trip') || r.includes('plane')) {
+            return {
+                icon: <Plane size={22} strokeWidth={2.5} />,
+                bgClass: 'bg-blue-600',
+                textClass: 'text-blue-600',
+                borderClass: 'border-blue-500',
+                shadowClass: 'shadow-blue-200'
+            };
+        }
+        if (r.includes('iphone') || r.includes('phone') || r.includes('mobile')) {
+            return {
+                icon: <PhoneIcon size={22} strokeWidth={2.5} />,
+                bgClass: 'bg-purple-600',
+                textClass: 'text-purple-600',
+                borderClass: 'border-purple-500',
+                shadowClass: 'shadow-purple-200'
+            };
+        }
+        if (r.includes('bike') || r.includes('ather') || r.includes('scooter')) {
+            return {
+                icon: <Bike size={24} strokeWidth={2.5} />,
+                bgClass: 'bg-emerald-600',
+                textClass: 'text-emerald-600',
+                borderClass: 'border-emerald-500',
+                shadowClass: 'shadow-emerald-200'
+            };
+        }
+        if (r.includes('gift') || r.includes('voucher')) {
+            return {
+                icon: <Gift size={22} strokeWidth={2.5} />,
+                bgClass: 'bg-amber-600',
+                textClass: 'text-amber-600',
+                borderClass: 'border-amber-500',
+                shadowClass: 'shadow-amber-200'
+            };
+        }
+
+        const colors = [
+            { bg: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-500', shadow: 'shadow-blue-200' },
+            { bg: 'bg-purple-600', text: 'text-purple-600', border: 'border-purple-500', shadow: 'shadow-purple-200' },
+            { bg: 'bg-emerald-600', text: 'text-emerald-600', border: 'border-emerald-500', shadow: 'shadow-emerald-200' },
+            { bg: 'bg-indigo-600', text: 'text-indigo-600', border: 'border-indigo-500', shadow: 'shadow-indigo-200' },
+            { bg: 'bg-amber-600', text: 'text-amber-600', border: 'border-amber-500', shadow: 'shadow-amber-200' }
+        ];
+        const color = colors[idx % colors.length];
+        return {
+            icon: <Award size={22} strokeWidth={2.5} />,
+            bgClass: color.bg,
+            textClass: color.text,
+            borderClass: color.border,
+            shadowClass: color.shadow
+        };
     };
 
     // Milestones from backend
     const milestones = stats?.achieved_rewards_list || [];
-    const maxMilestone = milestones.length > 0 ? Math.max(...milestones.map((m: any) => m.threshold)) : 100;
+    const nextMilestone = stats?.next_milestone;
+
+    // Combine achieved and next milestone for visual representation
+    const displayMilestones = [...milestones];
+    if (nextMilestone && !displayMilestones.some(m => m.threshold === nextMilestone.threshold)) {
+        displayMilestones.push(nextMilestone);
+    }
+    displayMilestones.sort((a, b) => a.threshold - b.threshold);
+
+    const maxMilestone = displayMilestones.length > 0
+        ? Math.max(...displayMilestones.map((m: any) => m.threshold))
+        : 100;
     const currentUnits = stats?.direct_referrals_units || 0;
 
     return (
@@ -202,27 +260,29 @@ const NetworkUserDetailsPage: React.FC = () => {
                                         </div>
 
                                         {/* Dynamic Milestones */}
-                                        {milestones.map((m: any, idx: number) => {
+                                        {/* Dynamic Milestones */}
+                                        {displayMilestones.map((m: any, idx: number) => {
                                             const threshold = m.threshold;
                                             const label = m.reward;
+                                            const { icon, bgClass, textClass, borderClass, shadowClass } = getRewardStyles(label, idx);
                                             const position = (threshold / maxMilestone) * 100;
                                             const achieved = currentUnits >= threshold;
-                                            const colorClass = idx === 0 ? 'blue' : idx === 1 ? 'purple' : 'indigo';
+                                            const isNext = nextMilestone && threshold === nextMilestone.threshold;
 
                                             return (
                                                 <div key={idx} className="absolute -translate-x-1/2 flex flex-col items-center" style={{ left: `${position}%` }}>
                                                     {/* Label & Icon */}
                                                     <div className="absolute -top-[100px] flex flex-col items-center group">
-                                                        <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${achieved ? `bg-${colorClass}-600 text-white scale-100 opacity-100` : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
-                                                            {label}
+                                                        <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${(achieved || isNext) ? `${bgClass} text-white scale-100 opacity-100` : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
+                                                            {isNext && !achieved ? `Next: ${label}` : label}
                                                         </div>
-                                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${achieved ? `bg-${colorClass}-600 text-white shadow-${colorClass}-200 scale-110` : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
-                                                            {getRewardIcon(label)}
+                                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${achieved ? `${bgClass} text-white shadow-lg ${shadowClass} scale-110` : isNext ? `bg-white border-2 ${borderClass} ${textClass}` : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
+                                                            {icon}
                                                         </div>
                                                     </div>
                                                     {/* Dot on line */}
-                                                    <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${achieved ? `bg-${colorClass}-600 border-white` : 'bg-white border-blue-100'}`}></div>
-                                                    <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${achieved ? `text-${colorClass}-600` : 'text-slate-400'}`}>{threshold}</div>
+                                                    <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${achieved ? `${bgClass} border-white` : isNext ? `bg-white ${borderClass}` : 'bg-white border-blue-100'}`}></div>
+                                                    <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${achieved ? textClass : isNext ? textClass : 'text-slate-400'}`}>{threshold}</div>
                                                 </div>
                                             );
                                         })}

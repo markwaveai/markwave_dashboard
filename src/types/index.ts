@@ -164,6 +164,8 @@ export interface NetworkUserStats {
   indirect_referrals_units?: number;
   current_reward?: string;
   achieved_rewards?: string[];
+  achieved_rewards_list?: { threshold: number; reward: string }[];
+  next_milestone?: { threshold: number; reward: string } | null;
 }
 
 export interface NetworkTreeItem {

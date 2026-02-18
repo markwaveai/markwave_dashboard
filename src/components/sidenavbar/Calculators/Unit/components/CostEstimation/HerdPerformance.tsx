@@ -66,7 +66,7 @@ const HerdPerformance = ({
 
         return safeYearlyData.map((data: any) => ({
             name: data.year,
-            Revenue: data.revenue,
+            Revenue: data.revenueWithCPF,
             "Asset Value": assetMap[data.year] || 0
         }));
     };
