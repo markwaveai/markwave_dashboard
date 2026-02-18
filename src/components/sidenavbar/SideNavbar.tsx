@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     ClipboardList, Users, ShoppingBag, LogOut, UserCheck,
-    Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, Warehouse, Award,
+    Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, Warehouse, Award, Trophy,
     UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search, UserCog, Coins
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
@@ -44,6 +44,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/user-management') || currentPath.includes('/users/customers')) activeTab = 'user-management';
     else if (currentPath.includes('/products')) activeTab = 'products';
     else if (currentPath.includes('/offer-settings')) activeTab = 'offer-settings';
+    else if (currentPath.includes('/offers-achieved')) activeTab = 'offers-achieved';
     else if (currentPath.includes('/role-requests')) activeTab = 'role-requests';
     else if (currentPath.includes('/farm-management')) activeTab = 'farm';
     else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
@@ -174,6 +175,17 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                         {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Offer Settings</span>}
                                     </div>
                                     {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Offer Settings</div>}
+                                </button>
+                            </li>
+                        )}
+                        {hasSession && (
+                            <li>
+                                <button className={navItemClass('offers-achieved')} onClick={() => navigate('/offers-achieved', { state: { fromDashboard: true } })}>
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Trophy size={20} className={activeTab === 'offers-achieved' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Offers Achieved</span>}
+                                    </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Offers Achieved</div>}
                                 </button>
                             </li>
                         )}

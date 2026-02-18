@@ -22,9 +22,7 @@ const AnnualHerdRevenue = ({
                             <Wallet className="text-indigo-600" size={20} />
                             Annual Revenue Analysis
                         </h2>
-                        <p className="text-sm text-slate-500 mt-1">
-                            Projected net revenue after CPF deductions
-                        </p>
+                       
                     </div>
                 </div>
 

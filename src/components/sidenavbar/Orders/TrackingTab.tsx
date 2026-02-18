@@ -183,7 +183,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
                                 const tracker = processPhaseStages(phase);
                                 const TRACKING_WINDOW_DAYS = 15;
 
-                                // Tracking enablement logic based on scheduledDate
+                                // Tracking enablement logic
                                 let isTrackingEnabled = true;
                                 let daysRemaining = 0;
                                 const targetDate = phase.scheduledDate || phase.scheduled_date;
@@ -196,8 +196,9 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
                                     const diffTime = scheduledDate.getTime() - today.getTime();
                                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                                     daysRemaining = diffDays;
-                                    // Enable only if within window (or date passed)
-                                    if (diffDays > TRACKING_WINDOW_DAYS) {
+
+                                    // Cycle 2 restriction: Only enable if scheduled date has arrived
+                                    if (cycleNum === 2 && diffDays > 0) {
                                         isTrackingEnabled = false;
                                     }
                                 }

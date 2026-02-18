@@ -55,6 +55,7 @@ const FarmManagement = React.lazy(() => import('./components/sidenavbar/Farm/Far
 const SelfBenefitsTab = React.lazy(() => import('./components/sidenavbar/SelfBenefits/SelfBenefitsTab'));
 const ReferralBenefitsTab = React.lazy(() => import('./components/sidenavbar/ReferralBenefits/ReferralBenefitsTab'));
 const RoleRequestsTab = React.lazy(() => import('./components/sidenavbar/RoleRequests/RoleRequestsTab'));
+const OffersAchievedTab = React.lazy(() => import('./components/sidenavbar/OffersAchieved/OffersAchievedTab'));
 
 interface Session {
   mobile: string;
@@ -222,6 +223,11 @@ function App() {
                 <SelfBenefitsTab />
               </React.Suspense>
             } />
+            <Route path="/offers-achieved" element={
+              <React.Suspense fallback={<OrdersPageSkeleton />}>
+                <OffersAchievedTab />
+              </React.Suspense>
+            } />
             <Route path="/role-requests" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
                 <RoleRequestsTab />
@@ -305,7 +311,8 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/support-tickets',
     '/farm-management',
     '/offer-settings',
-    '/role-requests'
+    '/role-requests',
+    '/offers-achieved'
   ];
 
   const isProtectedPath = protectedPrefixes.some(prefix => location.pathname.startsWith(prefix)) && !location.pathname.startsWith('/acf-calculator');

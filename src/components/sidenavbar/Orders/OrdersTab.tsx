@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
 import { Check, Copy, User, X, AlertCircle, ChevronDown, Search } from 'lucide-react';
+import { formatRawDateTime } from '../../../utils/format';
 import {
     setSearchQuery,
     setPaymentFilter,
@@ -337,7 +338,7 @@ const OrdersTab: React.FC = () => {
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">S.No</th>
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">User Details</th>
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">Order Details</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">Delivery Location</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">Farm Location</th>
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Units</th>
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Status</th>
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-right" style={{ minWidth: '160px' }}>
@@ -395,7 +396,7 @@ const OrdersTab: React.FC = () => {
                                 const isExpandable = (unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved') && statusFilter === 'PAID';
 
                                 return (
-                                    <React.Fragment key={`${unit.id || 'order'}-${index}`}>
+                                    <React.Fragment key={`${unit.id || 'order'} -${index} `}>
                                         <tr
                                             onClick={() => setSelectedOrderId(unit.id)}
                                             style={{ cursor: 'pointer' }}
@@ -416,17 +417,27 @@ const OrdersTab: React.FC = () => {
                                                     <div className="flex flex-col">
                                                         <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">{inv.name || 'Unknown User'}</span>
                                                         <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
-                                                            {inv.mobile ? `+91 ${String(inv.mobile)}` : '-'}
+                                                            {inv.mobile ? `+ 91 ${String(inv.mobile)} ` : '-'}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-5">
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className="text-[13px] font-bold text-slate-800">{unit.id}</span>
+                                                    <span
+                                                        onClick={(e) => {
+                                                            if (isExpandable) {
+                                                                e.stopPropagation();
+                                                                handleToggleExpansion(unit.id);
+                                                            }
+                                                        }}
+                                                        className={`text-[13px] font-bold transition-colors ${isExpandable ? 'text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300 underline-offset-2' : 'text-slate-800'}`}
+                                                    >
+                                                        {unit.id}
+                                                    </span>
                                                     {unit.placedAt ? (
                                                         <span className="text-[11px] text-slate-500">
-                                                            {new Date(unit.placedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(unit.placedAt).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                            {formatRawDateTime(unit.placedAt)}
                                                         </span>
                                                     ) : <span className="text-[11px] text-slate-500">-</span>}
                                                 </div>
@@ -479,8 +490,8 @@ const OrdersTab: React.FC = () => {
                                                                         tx.paymentType?.replace('_', ' ') || '-'}
                                             </td>
 
-                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')}` : '-'}</td>
-                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')}` : '-'}</td>
+                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')} ` : '-'}</td>
+                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')} ` : '-'}</td>
                                             <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
 
                                             {showActions && (
@@ -493,7 +504,8 @@ const OrdersTab: React.FC = () => {
                                                                     ${actionLoading ? 'opacity-50 cursor-not-allowed' : ''}
                                                                     ${(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin) || ((unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && !isSuperAdmin)
                                                                         ? 'bg-slate-400 hover:bg-slate-400 cursor-not-allowed opacity-60'
-                                                                        : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                                                                        : 'bg-indigo-600 hover:bg-indigo-700'
+                                                                    }`}
                                                                 disabled={
                                                                     actionLoading ||
                                                                     (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && !isAdmin && !isSuperAdmin) ||
@@ -651,18 +663,15 @@ const OrderVerificationModal: React.FC = () => {
     // Super Admin can approve without toggling checks (review mode)
     const isReadyToApprove = isSuperAdmin || isAllOk;
 
-    // Formatting date
-    const formattedDate = useMemo(() => {
-        if (!tx.createdAt) return 'N/A';
-        return new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }, [tx.createdAt]);
+    // Raw date from backend
+    const rawCreatedAt = tx.createdAt || 'N/A';
 
     // Derived Name Logic
     const realName = React.useMemo(() => {
         if (adminProfile) {
             const { first_name, last_name, name } = adminProfile;
             if (first_name || last_name) {
-                return `${first_name || ''} ${last_name || ''}`.trim();
+                return `${first_name || ''} ${last_name || ''} `.trim();
             }
             if (name) return name;
         }
@@ -811,7 +820,7 @@ const OrderVerificationModal: React.FC = () => {
                                     </div>
                                     <div className="p-2">
                                         <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Date</div>
-                                        <div className="text-[9px] font-bold text-slate-700 whitespace-nowrap">{formattedDate}</div>
+                                        <div className="text-[9px] font-bold text-slate-700 whitespace-nowrap">{formatRawDateTime(rawCreatedAt)}</div>
                                     </div>
                                     {isSuperAdmin && (
                                         <div className="p-2 bg-slate-50/30">

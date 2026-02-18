@@ -41,35 +41,20 @@ const NetworkUserDetailsPage: React.FC = () => {
     }
 
     const { user, stats, network_tree } = data;
-    // Parse achieved_rewards: It might be an array (old) or object (new)
-    // We want a list of keys effectively: ["30", "50", "100"] if they exist
-    // Parse achieved_rewards: It might be an array (old) or object (new)
-    const achievedRewardsData = stats?.achieved_rewards || {};
-
-    // We want a list of keys effectively: ["30", "50", "100"] if they exist
-    const achievedRewardsKeys = Array.isArray(achievedRewardsData)
-        ? achievedRewardsData
-        : (typeof achievedRewardsData === 'object' ? Object.keys(achievedRewardsData) : []);
-
-    // Helper to get reward label
-    const getRewardLabel = (milestone: number, defaultLabel: string) => {
-        const mStr = milestone.toString();
-        if (Array.isArray(achievedRewardsData)) {
-            // If it's an array, we don't have custom labels, return default
-            return defaultLabel;
-        }
-        // If it's an object, check if there is a value for this key
-        // Need to cast to any or check type because typescript might complain about index signature if not defined in stats type
-        const val = (achievedRewardsData as any)[mStr];
-        return val && typeof val === 'string' ? val : defaultLabel;
+    // Helper to get reward icon
+    const getRewardIcon = (reward: string) => {
+        const r = reward.toLowerCase();
+        if (r.includes('thailand') || r.includes('trip') || r.includes('plane')) return <Plane size={22} strokeWidth={2.5} />;
+        if (r.includes('iphone') || r.includes('phone') || r.includes('mobile')) return <PhoneIcon size={22} strokeWidth={2.5} />;
+        if (r.includes('bike') || r.includes('ather') || r.includes('scooter')) return <Bike size={24} strokeWidth={2.5} />;
+        if (r.includes('gift') || r.includes('voucher')) return <Gift size={22} strokeWidth={2.5} />;
+        return <Award size={22} strokeWidth={2.5} />;
     };
 
-    // Helper to check if a milestone is achieved
-    const isAchieved = (milestone: string | number, currentUnits: number) => {
-        const mStr = milestone.toString();
-        // Check if key exists in achieved_rewards OR if units metric suffices (backup)
-        return achievedRewardsKeys.includes(mStr) || currentUnits >= Number(milestone);
-    };
+    // Milestones from backend
+    const milestones = stats?.achieved_rewards_list || [];
+    const maxMilestone = milestones.length > 0 ? Math.max(...milestones.map((m: any) => m.threshold)) : 100;
+    const currentUnits = stats?.direct_referrals_units || 0;
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
@@ -191,8 +176,8 @@ const NetworkUserDetailsPage: React.FC = () => {
                                 <div className="text-right">
                                     <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">UNITS MILESTONE</div>
                                     <div className="text-3xl font-black text-blue-600 leading-none">
-                                        {stats?.direct_referrals_units || 0}
-                                        <span className="text-gray-200 text-xl font-medium ml-2">/ 100</span>
+                                        {currentUnits}
+                                        <span className="text-gray-200 text-xl font-medium ml-2">/ {maxMilestone}</span>
                                     </div>
                                 </div>
                             </div>
@@ -205,7 +190,7 @@ const NetworkUserDetailsPage: React.FC = () => {
                                     {/* Active Progress */}
                                     <div
                                         className="absolute inset-y-0 left-0 bg-blue-500 rounded-full transition-all duration-1000 ease-out"
-                                        style={{ width: `${Math.min(((stats?.direct_referrals_units || 0) / 100) * 100, 100)}%` }}
+                                        style={{ width: `${Math.min((currentUnits / maxMilestone) * 100, 100)}%` }}
                                     ></div>
 
                                     {/* Milestones Container */}
@@ -216,49 +201,31 @@ const NetworkUserDetailsPage: React.FC = () => {
                                             <div className="absolute -bottom-8 text-xs font-bold text-slate-400">0</div>
                                         </div>
 
-                                        {/* Milestone 30 - Thailand Trip */}
-                                        <div className="absolute left-[30%] -translate-x-1/2 flex flex-col items-center">
-                                            {/* Label & Icon */}
-                                            <div className="absolute -top-[100px] flex flex-col items-center group">
-                                                <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${isAchieved(30, stats?.direct_referrals_units || 0) ? 'bg-blue-600 text-white scale-100 opacity-100' : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
-                                                    {getRewardLabel(30, "Eligible to Thailand Trip")}
-                                                </div>
-                                                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isAchieved(30, stats?.direct_referrals_units || 0) ? 'bg-blue-600 text-white shadow-blue-200 scale-110' : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
-                                                    <Plane size={22} strokeWidth={2.5} />
-                                                </div>
-                                            </div>
-                                            {/* Dot on line */}
-                                            <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${isAchieved(30, stats?.direct_referrals_units || 0) ? 'bg-blue-600 border-white' : 'bg-white border-blue-100'}`}></div>
-                                            <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${isAchieved(30, stats?.direct_referrals_units || 0) ? 'text-blue-600' : 'text-slate-400'}`}>30</div>
-                                        </div>
+                                        {/* Dynamic Milestones */}
+                                        {milestones.map((m: any, idx: number) => {
+                                            const threshold = m.threshold;
+                                            const label = m.reward;
+                                            const position = (threshold / maxMilestone) * 100;
+                                            const achieved = currentUnits >= threshold;
+                                            const colorClass = idx === 0 ? 'blue' : idx === 1 ? 'purple' : 'indigo';
 
-                                        {/* Milestone 50 - iPhone */}
-                                        <div className="absolute left-[50%] -translate-x-1/2 flex flex-col items-center">
-                                            <div className="absolute -top-[100px] flex flex-col items-center group">
-                                                <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${isAchieved(50, stats?.direct_referrals_units || 0) ? 'bg-purple-600 text-white scale-100 opacity-100' : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
-                                                    {getRewardLabel(50, "Eligible to iPhone")}
+                                            return (
+                                                <div key={idx} className="absolute -translate-x-1/2 flex flex-col items-center" style={{ left: `${position}%` }}>
+                                                    {/* Label & Icon */}
+                                                    <div className="absolute -top-[100px] flex flex-col items-center group">
+                                                        <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${achieved ? `bg-${colorClass}-600 text-white scale-100 opacity-100` : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
+                                                            {label}
+                                                        </div>
+                                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${achieved ? `bg-${colorClass}-600 text-white shadow-${colorClass}-200 scale-110` : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
+                                                            {getRewardIcon(label)}
+                                                        </div>
+                                                    </div>
+                                                    {/* Dot on line */}
+                                                    <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${achieved ? `bg-${colorClass}-600 border-white` : 'bg-white border-blue-100'}`}></div>
+                                                    <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${achieved ? `text-${colorClass}-600` : 'text-slate-400'}`}>{threshold}</div>
                                                 </div>
-                                                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isAchieved(50, stats?.direct_referrals_units || 0) ? 'bg-purple-600 text-white shadow-purple-200 scale-110' : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
-                                                    <PhoneIcon size={22} strokeWidth={2.5} />
-                                                </div>
-                                            </div>
-                                            <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${isAchieved(50, stats?.direct_referrals_units || 0) ? 'bg-purple-600 border-white' : 'bg-white border-blue-100'}`}></div>
-                                            <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${isAchieved(50, stats?.direct_referrals_units || 0) ? 'text-purple-600' : 'text-slate-400'}`}>50</div>
-                                        </div>
-
-                                        {/* Milestone 100 - Ather E Bike */}
-                                        <div className="absolute left-[100%] -translate-x-1/2 flex flex-col items-center">
-                                            <div className="absolute -top-[100px] flex flex-col items-center group">
-                                                <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${isAchieved(100, stats?.direct_referrals_units || 0) ? 'bg-indigo-600 text-white scale-100 opacity-100' : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
-                                                    {getRewardLabel(100, "Eligible to Ather E Bike")}
-                                                </div>
-                                                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isAchieved(100, stats?.direct_referrals_units || 0) ? 'bg-indigo-600 text-white shadow-indigo-200 scale-110' : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
-                                                    <Bike size={24} strokeWidth={2.5} />
-                                                </div>
-                                            </div>
-                                            <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${isAchieved(100, stats?.direct_referrals_units || 0) ? 'bg-indigo-600 border-white' : 'bg-white border-blue-100'}`}></div>
-                                            <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${isAchieved(100, stats?.direct_referrals_units || 0) ? 'text-indigo-600' : 'text-slate-400'}`}>100</div>
-                                        </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>

@@ -251,6 +251,19 @@ export const referralBenefitService = {
       console.error('Error updating referral milestone:', error);
       throw error;
     }
+  },
+  getAchievedReferralMilestones: async (adminMobile: string): Promise<any> => {
+    try {
+      const response = await api.get(API_ENDPOINTS.getAchievedReferralMilestones!(), {
+        headers: {
+          'x-admin-mobile': adminMobile
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching achieved referral milestones:', error);
+      throw error;
+    }
   }
 };
 
@@ -306,6 +319,22 @@ export const roleRequestService = {
       console.error(`Error ${approved ? 'approving' : 'rejecting'} role request:`, error);
       const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || `Failed to ${approved ? 'approve' : 'reject'} request`;
       return { error: errorMessage };
+    }
+  }
+};
+
+export const achievedBenefitService = {
+  getAchievedBenefits: async (adminMobile: string): Promise<any> => {
+    try {
+      const response = await api.get(API_ENDPOINTS.getAchievedBenefits(), {
+        headers: {
+          'x-admin-mobile': adminMobile
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching achieved benefits:', error);
+      throw error;
     }
   }
 };

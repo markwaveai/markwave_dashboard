@@ -74,7 +74,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
 
     if (!foundEntry && !loading && !isFetchingInfo) {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center bg-gray-50">
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
                 <div className="text-gray-800 font-bold text-lg mb-2">Order Not Found</div>
                 <button
                     onClick={() => onBack ? onBack() : navigate('/orders')}
@@ -166,13 +166,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                     </span>
                                 </h1>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                    Placed on {order?.placedAt ? new Date(order.placedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
+                                    Placed on {order?.placedAt || '-'}
                                 </p>
                             </div>
                         </div>
-                        <div>
-                            {/* Actions or Branding */}
-                            <span className="text-sm font-medium text-gray-400">Order Details View</span>
+                        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                            <span className="text-gray-400">Farm Location:</span>
+                            <span className="font-medium text-gray-700">{order?.location || '-'}</span>
                         </div>
                     </div>
                 </div>
@@ -201,7 +201,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                 <InfoItem icon={<Mail size={16} />} label="Email Address" value={investor?.email} />
                                 <InfoItem icon={<MapPin size={16} />} label="Location" value={`${investor?.city || ''}, ${investor?.state || ''}`} />
                                 <InfoItem icon={<FileText size={16} />} label="Role" value={investor?.role} />
-                                <InfoItem icon={<Calendar size={16} />} label="Joined Date" value={investor?.user_created_date ? new Date(investor.user_created_date).toLocaleDateString() : '-'} />
+                                <InfoItem icon={<Calendar size={16} />} label="Joined Date" value={investor?.user_created_date || '-'} />
                             </div>
 
                             {investor?.panCardUrl && (
@@ -329,15 +329,16 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                     <SummaryRow label="Calf Count" value={order?.calfCount} />
                                     <SummaryRow label="Cost per Unit" value={`₹ ${order?.unitCost?.toLocaleString()}`} />
                                     <SummaryRow label="CPF Included" value={order?.withCpf ? 'Yes' : 'No'} />
+                                    <SummaryRow label="Farm Location" value={order?.location} />
                                 </div>
                             </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
+                <ImageNamesModal />
             </div>
-            <ImageNamesModal />
-        </div>
+        </div >
     );
 };
 
@@ -360,6 +361,5 @@ const SummaryRow = ({ label, value }: any) => (
         <span className="font-semibold text-gray-900">{value || '-'}</span>
     </div>
 );
-
 
 export default OrderDetailsPage;
