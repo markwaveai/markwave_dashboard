@@ -57,7 +57,7 @@ const AcfStatsGrid = () => {
                 prefix="₹"
                 icon={PiggyBank}
                 color="green"
-                secondaryText={`Interest + Free CPF`}
+                secondaryText={`Discount + Free CPF`}
                 formatCurrency={formatCurrency}
             />
 
