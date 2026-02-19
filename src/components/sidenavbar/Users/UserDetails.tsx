@@ -172,6 +172,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                         <table className="w-full text-left">
                             <thead className="bg-[var(--color-gray-50)] border-b border-[var(--color-gray-200)]">
                                 <tr>
+                                    <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight text-center">S.No</th>
                                     <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight">User Name</th>
                                     <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight">Mobile</th>
                                     <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight text-center">Role</th>
@@ -183,10 +184,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {managedLoading ? (
-                                    <TableSkeleton cols={7} rows={10} />
+                                    <TableSkeleton cols={8} rows={10} />
                                 ) : managedUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-20 text-center">
+                                        <td colSpan={8} className="px-6 py-20 text-center">
                                             <div className="flex flex-col items-center gap-2">
                                                 <User size={32} className="text-slate-300" />
                                                 <p className="text-slate-400 font-medium">No users found matching your filters</p>
@@ -196,6 +197,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                                 ) : (
                                     managedUsers.map((user: any, index: number) => (
                                         <tr key={user.mobile || index} className="hover:bg-slate-50/50 transition-colors group">
+                                            {/* S.No */}
+                                            <td className="px-6 py-5 text-center font-bold text-slate-500 text-[12px]">
+                                                {(currentPage - 1) * itemsPerPage + index + 1}
+                                            </td>
+
                                             {/* User Name */}
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-3">

@@ -165,7 +165,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </li>
                         )}
 
-                        <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div>
+
 
                         {hasSession && (
                             <li>
@@ -257,7 +257,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </li>
                         )} */}
 
-                        <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div>
+
 
                         {/* Calculators Group */}
                         {/* EMI Calculator */}
@@ -335,7 +335,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </div>
                         </li>
 
-                        <div className="my-1 border-t border-[var(--slate-800)]/50 mx-2"></div>
+
 
                         {/* Privacy & Legal */}
                         <li>
@@ -374,7 +374,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </button>
                         </li>
 
-                        <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div>
+
 
                         {/* Platform Groups */}
                         <li>

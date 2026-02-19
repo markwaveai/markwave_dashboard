@@ -225,71 +225,72 @@ const NetworkUserDetailsPage: React.FC = () => {
                         </div>
 
                         {/* Direct Rewards Status */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 xl:p-10">
-                            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-32 gap-4">
-                                <div>
-                                    <h4 className="text-lg font-bold text-gray-800">Direct Rewards Status</h4>
-                                    <p className="text-sm text-gray-500 mt-1">Unlock exclusive benefits through direct referrals</p>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">UNITS MILESTONE</div>
-                                    <div className="text-3xl font-black text-blue-600 leading-none">
-                                        {currentUnits}
-                                        <span className="text-gray-200 text-xl font-medium ml-2">/ {maxMilestone}</span>
+                        {displayMilestones.length > 0 && (
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 xl:p-10">
+                                <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-32 gap-4">
+                                    <div>
+                                        <h4 className="text-lg font-bold text-gray-800">Direct Rewards Status</h4>
+                                        <p className="text-sm text-gray-500 mt-1">Unlock exclusive benefits through direct referrals</p>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div className="relative px-4 sm:px-8 pb-8">
-                                <div className="relative h-3 mx-0 sm:mx-4">
-                                    {/* Background Track */}
-                                    <div className="absolute inset-0 bg-blue-50 rounded-full"></div>
-
-                                    {/* Active Progress */}
-                                    <div
-                                        className="absolute inset-y-0 left-0 bg-blue-500 rounded-full transition-all duration-1000 ease-out"
-                                        style={{ width: `${Math.min((currentUnits / maxMilestone) * 100, 100)}%` }}
-                                    ></div>
-
-                                    {/* Milestones Container */}
-                                    <div className="absolute inset-0 h-3">
-                                        {/* Start Point (0) */}
-                                        <div className="absolute left-0 -translate-x-1/2 flex flex-col items-center">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500 border-[3px] border-white shadow-sm z-10"></div>
-                                            <div className="absolute -bottom-8 text-xs font-bold text-slate-400">0</div>
+                                    <div className="text-right">
+                                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">UNITS MILESTONE</div>
+                                        <div className="text-3xl font-black text-blue-600 leading-none">
+                                            {currentUnits}
                                         </div>
+                                    </div>
+                                </div>
 
-                                        {/* Dynamic Milestones */}
-                                        {/* Dynamic Milestones */}
-                                        {displayMilestones.map((m: any, idx: number) => {
-                                            const threshold = m.threshold;
-                                            const label = m.reward;
-                                            const { icon, bgClass, textClass, borderClass, shadowClass } = getRewardStyles(label, idx);
-                                            const position = (threshold / maxMilestone) * 100;
-                                            const achieved = currentUnits >= threshold;
-                                            const isNext = nextMilestone && threshold === nextMilestone.threshold;
+                                <div className="relative px-4 sm:px-8 pb-8">
+                                    <div className="relative h-3 mx-0 sm:mx-4">
+                                        {/* Background Track */}
+                                        <div className="absolute inset-0 bg-blue-50 rounded-full"></div>
 
-                                            return (
-                                                <div key={idx} className="absolute -translate-x-1/2 flex flex-col items-center" style={{ left: `${position}%` }}>
-                                                    {/* Label & Icon */}
-                                                    <div className="absolute -top-[100px] flex flex-col items-center group">
-                                                        <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${(achieved || isNext) ? `${bgClass} text-white scale-100 opacity-100` : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
-                                                            {isNext && !achieved ? `Next: ${label}` : label}
+                                        {/* Active Progress */}
+                                        <div
+                                            className="absolute inset-y-0 left-0 bg-blue-500 rounded-full transition-all duration-1000 ease-out"
+                                            style={{ width: `${Math.min((currentUnits / maxMilestone) * 100, 100)}%` }}
+                                        ></div>
+
+                                        {/* Milestones Container */}
+                                        <div className="absolute inset-0 h-3">
+                                            {/* Start Point (0) */}
+                                            <div className="absolute left-0 -translate-x-1/2 flex flex-col items-center">
+                                                <div className="w-5 h-5 rounded-full bg-blue-500 border-[3px] border-white shadow-sm z-10"></div>
+                                                <div className="absolute -bottom-8 text-xs font-bold text-slate-400">0</div>
+                                            </div>
+
+                                            {/* Dynamic Milestones */}
+                                            {/* Dynamic Milestones */}
+                                            {displayMilestones.map((m: any, idx: number) => {
+                                                const threshold = m.threshold;
+                                                const label = m.reward;
+                                                const { icon, bgClass, textClass, borderClass, shadowClass } = getRewardStyles(label, idx);
+                                                const position = (threshold / maxMilestone) * 100;
+                                                const achieved = currentUnits >= threshold;
+                                                const isNext = nextMilestone && threshold === nextMilestone.threshold;
+
+                                                return (
+                                                    <div key={idx} className="absolute -translate-x-1/2 flex flex-col items-center" style={{ left: `${position}%` }}>
+                                                        {/* Label & Icon */}
+                                                        <div className="absolute -top-[100px] flex flex-col items-center group">
+                                                            <div className={`text-[9px] font-extrabold uppercase tracking-wide px-3 py-1 rounded-full mb-3 shadow-sm whitespace-nowrap transition-all duration-300 ${(achieved || isNext) ? `${bgClass} text-white scale-100 opacity-100` : 'bg-slate-100 text-slate-400 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100'}`}>
+                                                                {isNext && !achieved ? `Next: ${label}` : label}
+                                                            </div>
+                                                            <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${achieved ? `${bgClass} text-white shadow-lg ${shadowClass} scale-110` : isNext ? `bg-white border-2 ${borderClass} ${textClass}` : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
+                                                                {icon}
+                                                            </div>
                                                         </div>
-                                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${achieved ? `${bgClass} text-white shadow-lg ${shadowClass} scale-110` : isNext ? `bg-white border-2 ${borderClass} ${textClass}` : 'bg-white border-2 border-slate-100 text-slate-300'}`}>
-                                                            {icon}
-                                                        </div>
+                                                        {/* Dot on line */}
+                                                        <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${achieved ? `${bgClass} border-white` : isNext ? `bg-white ${borderClass}` : 'bg-white border-blue-100'}`}></div>
+                                                        <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${achieved ? textClass : isNext ? textClass : 'text-slate-400'}`}>{threshold}</div>
                                                     </div>
-                                                    {/* Dot on line */}
-                                                    <div className={`w-5 h-5 rounded-full border-[3px] z-10 transition-all duration-500 ${achieved ? `${bgClass} border-white` : isNext ? `bg-white ${borderClass}` : 'bg-white border-blue-100'}`}></div>
-                                                    <div className={`absolute -bottom-8 text-xs font-bold transition-colors ${achieved ? textClass : isNext ? textClass : 'text-slate-400'}`}>{threshold}</div>
-                                                </div>
-                                            );
-                                        })}
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Indirect Referrals */}
