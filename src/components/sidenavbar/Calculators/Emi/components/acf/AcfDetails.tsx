@@ -22,12 +22,9 @@ const AcfDetails = () => {
 
     // Asset Value derived from actual simulation logic
     const projectedAssetValue = useMemo(() => {
-        if (acfTenureMonths === 11) {
-            return 350000 * acfUnits;
-        }
-        const herdAges = simulateHerd(acfTenureMonths, acfUnits);
-        return calculateAssetValueFromSimulation(herdAges, acfUnits);
-    }, [acfTenureMonths, acfUnits, simulateHerd, calculateAssetValueFromSimulation]);
+        // User requested: 3,50,000 fixed for 11 months and 30 months (no change for 30 months)
+        return 350000 * acfUnits;
+    }, [acfUnits]);
 
     const cpfRate = 15000;
     const cpfTotalValue = acfCpfBenefit;
@@ -85,9 +82,11 @@ const AcfDetails = () => {
                                     <p className="font-semibold text-sm sm:text-base text-gray-900">CPF</p>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-gray-500 text-xs sm:text-sm">
-                                            {acfUnits} x {formatCurrency(cpfRate)} = {formatCurrency(acfUnits * cpfRate)} (x{acfTenureMonths === 30 ? '2' : '1'} terms)
+                                            {acfTenureMonths === 11
+                                                ? `1 buffalo cpf free 15,000 (pay for one buffalo 15,000)`
+                                                : `2 buffaloes cpf free 30,000`
+                                            }
                                         </span>
-                                        <span className="text-green-600 font-bold text-base sm:text-lg">₹0*</span>
                                     </div>
                                 </div>
                                 <BonusBadge />

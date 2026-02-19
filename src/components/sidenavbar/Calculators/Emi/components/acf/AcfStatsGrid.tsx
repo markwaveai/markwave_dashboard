@@ -25,7 +25,7 @@ const AcfStatsGrid = () => {
         calculateProjection ? calculateProjection(acfProjectionYear, acfUnits) : { totalAssetValue: 0, totalBuffaloes: 0 };
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             <HoverGradientStatCard
                 label="Total Investment"
                 value={acfTotalInvestment}

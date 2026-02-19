@@ -338,3 +338,20 @@ export const achievedBenefitService = {
     }
   }
 };
+
+export const orderService = {
+  getInvoiceDetails: async (invoiceNumber: string, mobileNumber: string): Promise<any> => {
+    try {
+      const response = await api.get<any>(API_ENDPOINTS.getInvoice(), {
+        params: {
+          invoice_number: invoiceNumber,
+          mobile_number: mobileNumber
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching invoice details:', error);
+      throw error;
+    }
+  }
+};

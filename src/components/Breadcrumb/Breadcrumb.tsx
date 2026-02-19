@@ -109,7 +109,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
 
     // Render
     return (
-        <div className="flex h-screen bg-[var(--color-gray-50)] font-sans text-[var(--color-gray-700)] overflow-hidden">
+        <div className="flex min-h-screen bg-[var(--color-gray-50)] font-sans text-[var(--color-gray-700)]">
 
             <SideNavbar
                 hasSession={hasSession}
@@ -117,7 +117,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 onLogoutTrigger={() => setIsLogoutModalOpen(true)}
             />
 
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
+            <div className="flex flex-col flex-1 min-w-0 relative">
                 {hasSession && (
                     <TopNavbar
                         adminMobile={adminMobile}
@@ -130,7 +130,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                     />
                 )}
 
-                <main className="flex-1 overflow-y-auto p-0 bg-[var(--color-gray-50)]">
+                <main className="flex-1 p-0 bg-[var(--color-gray-50)]">
                     <div className="w-full p-3 lg:p-4">
                         {children}
                     </div>

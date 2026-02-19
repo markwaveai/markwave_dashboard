@@ -52,43 +52,38 @@ const RevenueProjectionCard: React.FC<RevenueProjectionCardProps> = ({
     };
 
     return (
-        <div className="relative rounded-3xl p-6 h-full flex flex-col justify-between min-h-[180px] bg-[#f3e5f5] transition-transform hover:-translate-y-1 duration-300">
-            <div className="flex justify-between items-start">
-                <div className="w-12 h-12 rounded-xl bg-[#e1bee7] flex items-center justify-center text-[#7b1fa2]">
-                    <IndianRupee size={24} strokeWidth={2} />
-                </div>
-
+        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center transition-transform hover:-translate-y-0.5 duration-300">
+            <div className="w-full flex justify-end mb-1">
                 {/* Pill Date Selector */}
-                <div className="flex items-center bg-[#e1bee7]/50 rounded-lg p-1">
+                <div className="flex items-center bg-slate-100 rounded p-0.5">
                     <button
                         onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-                        className={`p-1 rounded-md transition-colors ${validYearIndex <= 1 ? 'opacity-30 cursor-not-allowed' : 'text-[#7b1fa2] hover:bg-white/50'}`}
+                        className={`p-0.5 rounded transition-colors ${validYearIndex <= 1 ? 'opacity-30 cursor-not-allowed' : 'text-slate-600 hover:bg-white'}`}
                         disabled={validYearIndex <= 1}
                     >
-                        <ChevronLeft size={16} />
+                        <ChevronLeft size={12} />
                     </button>
-                    <span className="mx-2 text-xs font-bold text-[#4a148c] min-w-[60px] text-center">
-                        Jan, {displayYear}
+                    <span className="mx-1 text-[10px] font-bold text-slate-700 min-w-[30px] text-center">
+                        {displayYear}
                     </span>
                     <button
                         onClick={(e) => { e.stopPropagation(); handleNext(); }}
-                        className={`p-1 rounded-md transition-colors ${validYearIndex >= 10 ? 'opacity-30 cursor-not-allowed' : 'text-[#7b1fa2] hover:bg-white/50'}`}
+                        className={`p-0.5 rounded transition-colors ${validYearIndex >= 10 ? 'opacity-30 cursor-not-allowed' : 'text-slate-600 hover:bg-white'}`}
                         disabled={validYearIndex >= 10}
                     >
-                        <ChevronRight size={16} />
+                        <ChevronRight size={12} />
                     </button>
                 </div>
             </div>
 
-            <div className="mt-4">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+            <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
                     Projected Revenue
                 </p>
-                <div className="text-3xl font-extrabold tracking-tight text-[#6a1b9a]">
+                <h3 className="text-base font-bold text-slate-900 mt-0.5">
                     ₹{formatCurrency(totalRevenue)}
-                </div>
-
-                <div className="mt-2 inline-flex items-center bg-[#e1bee7] px-2 py-1 rounded text-[10px] font-bold text-[#4a148c]">
+                </h3>
+                <div className="text-[10px] text-slate-500 mt-0.5">
                     CPF: ₹{formatCurrency(totalCpf)}
                 </div>
             </div>

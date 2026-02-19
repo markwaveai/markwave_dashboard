@@ -56,27 +56,17 @@ const HoverGradientStatCard: React.FC<HoverGradientStatCardProps> = ({
     const theme = themes[color] || themes.blue;
 
     return (
-        <div className={clsx("relative rounded-3xl p-6 h-full flex flex-col justify-between min-h-[180px] transition-transform hover:-translate-y-1 duration-300", theme.bg)}>
-            <div className="flex justify-between items-start">
-                <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center mb-4", theme.iconBg, theme.iconColor)}>
-                    {typeof Icon === 'string' ? (
-                        <img src={Icon} alt={label} className="w-6 h-6 object-contain" />
-                    ) : (
-                        Icon && <Icon size={24} strokeWidth={2} />
-                    )}
-                </div>
-            </div>
-
-            <div className="mt-auto">
-                <p className={clsx("text-[11px] font-bold uppercase tracking-wider mb-1", theme.labelColor)}>
+        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center transition-transform hover:-translate-y-0.5 duration-300">
+            <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
                     {label}
                 </p>
-                <div className={clsx("text-3xl font-extrabold tracking-tight", theme.valueColor)}>
+                <h3 className="text-base font-bold text-slate-900 mt-0.5">
                     {prefix}{formattedValue}
-                </div>
+                </h3>
                 {secondaryText && (
-                    <p className={clsx("text-xs font-bold mt-1", theme.secondaryColor)}>
-                        ~ {secondaryText}
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                        {secondaryText}
                     </p>
                 )}
             </div>

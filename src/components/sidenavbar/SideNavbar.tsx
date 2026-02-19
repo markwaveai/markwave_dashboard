@@ -85,7 +85,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
             <nav className={`
                 ${isSidebarOpen ? 'w-[var(--sidebar-width)]' : 'w-[var(--sidebar-collapsed-width)]'} 
                 bg-[var(--color-gray-950)] flex flex-col shrink-0 transition-[width] duration-[var(--transition-speed)] ease-[var(--ease-in-out)] 
-                z-[100] text-white border-r border-[var(--color-gray-800)] relative shadow-xl
+                z-[100] text-white border-r border-[var(--color-gray-800)] sticky top-0 h-screen shadow-xl
             `}>
                 {/* Branding Area */}
                 <div className={`flex items-center gap-3 h-[var(--navbar-height)] px-4 border-b border-[var(--color-gray-800)]/50 ${!isSidebarOpen && 'justify-center px-0'}`}>

@@ -13,7 +13,8 @@ import {
     CheckCircle,
     Clock,
     AlertCircle,
-    Download
+    Download,
+    Printer
 } from 'lucide-react';
 
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
@@ -21,6 +22,15 @@ import { fetchPendingUnits } from '../../../store/slices/ordersSlice';
 import { RootState } from '../../../store';
 import { setProofModal } from '../../../store/slices/uiSlice';
 import ImageNamesModal from '../../common/ImageNamesModal';
+import InvoiceModal from './components/InvoiceModal';
+import InvoiceTemplate from './components/InvoiceTemplate';
+import { orderService } from '../../../services/api';
+// @ts-ignore
+import { useReactToPrint } from 'react-to-print';
+// @ts-ignore
+import html2canvas from 'html2canvas';
+// @ts-ignore
+import jsPDF from 'jspdf';
 
 
 interface OrderDetailsPageProps {
@@ -39,6 +49,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
 
     // Local state to handle "single order fetch" status if not in list
     const [isFetchingInfo, setIsFetchingInfo] = useState(false);
+
+    // Invoice State
+    const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+    const [invoiceData, setInvoiceData] = useState<any>(null);
+    const [isFetchingInvoice, setIsFetchingInvoice] = useState(false);
+    const invoiceComponentRef = React.useRef<HTMLDivElement>(null);
 
     // Find order in current list
     const foundEntry = useMemo(() => {
@@ -62,29 +78,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
     }, [orderId, adminMobile, dispatch, foundEntry]);
 
     const { order, transaction, investor } = foundEntry || {};
-
-    // Fallback while loading
-    if ((loading || isFetchingInfo) && !foundEntry) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-gray-500 font-medium">Loading Order Details...</div>
-            </div>
-        );
-    }
-
-    if (!foundEntry && !loading && !isFetchingInfo) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-                <div className="text-gray-800 font-bold text-lg mb-2">Order Not Found</div>
-                <button
-                    onClick={() => onBack ? onBack() : navigate('/orders')}
-                    className="text-blue-600 hover:underline"
-                >
-                    Back to Orders
-                </button>
-            </div>
-        );
-    }
 
     // Helper to get transaction object - API structure might vary
     const rawTx = transaction || {};
@@ -137,6 +130,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
         );
         return foundKey ? obj[foundKey] : '-';
     };
+
     const handleImageClick = (url: string, name: string) => {
         dispatch(setProofModal({
             isOpen: true,
@@ -144,10 +138,96 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
         }));
     };
 
+    // Memoized fetch function to avoid re-fetching if data exists
+    const fetchInvoiceData = async () => {
+        if (!order?.id || !investor?.mobile || invoiceData || isFetchingInvoice) return;
+        setIsFetchingInvoice(true);
+        try {
+            const response = await orderService.getInvoiceDetails(order.id, investor.mobile);
+            if (response?.status === 'success' && response.invoice) {
+                setInvoiceData(response.invoice);
+            }
+        } catch (error) {
+            console.error('Error fetching invoice:', error);
+        } finally {
+            setIsFetchingInvoice(false);
+        }
+    };
+
+    useEffect(() => {
+        if (order?.paymentStatus === 'PAID') {
+            fetchInvoiceData();
+        }
+    }, [order?.paymentStatus, order?.id, investor?.mobile]);
+
+    const handlePrintInvoice = useReactToPrint({
+        contentRef: invoiceComponentRef,
+        documentTitle: `Invoice_${invoiceData?.invoice_number}`,
+    });
+
+    const handleDownloadInvoice = async () => {
+        if (!invoiceComponentRef.current) return;
+
+        // High quality capture
+        const canvas = await html2canvas(invoiceComponentRef.current, {
+            scale: 3, // Increased scale for crisp PDF 
+            useCORS: true,
+            logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`Invoice_${invoiceData?.invoice_number}.pdf`);
+    };
+
+    const handleOpenInNewTab = () => {
+        if (!invoiceData) return;
+        // In a real app, this would be a link to a dedicated PDF route or blob URL
+        // For now, we'll use the modal as the "full view" since it's most robust
+        setIsInvoiceOpen(true);
+    };
+
+    const handleViewInvoice = () => {
+        if (invoiceData) {
+            setIsInvoiceOpen(true);
+        } else {
+            fetchInvoiceData().then(() => {
+                if (invoiceData) setIsInvoiceOpen(true);
+            });
+        }
+    };
+
+    // Fallback while loading
+    if ((loading || isFetchingInfo) && !foundEntry) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-500 font-medium">Loading Order Details...</div>
+            </div>
+        );
+    }
+
+    if (!foundEntry && !loading && !isFetchingInfo) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <div className="text-gray-800 font-bold text-lg mb-2">Order Not Found</div>
+                <button
+                    onClick={() => onBack ? onBack() : navigate('/orders')}
+                    className="text-blue-600 hover:underline"
+                >
+                    Back to Orders
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 pb-12 font-sans">
             {/* Header / Navbar style area */}
-            <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+            <div className="bg-white border-b border-gray-200 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center">
@@ -305,8 +385,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                     </div>
 
                     {/* Right Column: Order Summary (1/3 width) */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-24">
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                             <div className="bg-blue-600 px-6 py-6 text-white">
                                 <h2 className="text-xl font-bold flex items-center gap-2 mb-1">
                                     <Package size={24} className="text-blue-200" />
@@ -323,7 +403,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                     <span className="text-2xl font-bold text-gray-900">₹ {order?.totalCost?.toLocaleString()}</span>
                                 </div>
 
-                                <div className="space-y-3">
+                                <div className="space-y-3 pt-4">
                                     <SummaryRow label="Items / Units" value={order?.numUnits} />
                                     <SummaryRow label="Buffalo Count" value={order?.buffaloCount} />
                                     <SummaryRow label="Calf Count" value={order?.calfCount} />
@@ -334,9 +414,111 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                             </div>
                         </div>
 
+                        {/* Invoice & Documents Card - PDF Design */}
+                        {order?.paymentStatus === 'PAID' && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-50 bg-slate-50 flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2 uppercase tracking-wider">
+                                        <FileText className="text-blue-600" size={18} />
+                                        Invoice & Documents
+                                    </h3>
+                                    <div className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                        Verified
+                                    </div>
+                                </div>
+                                <div className="p-5">
+                                    {/* PDF-Style Document Card */}
+                                    <div
+                                        onClick={handleOpenInNewTab}
+                                        className="group relative cursor-pointer rounded-xl border border-gray-200 overflow-hidden transition-all hover:border-blue-300 hover:shadow-md active:scale-[0.98]"
+                                    >
+                                        {/* Clipped Preview Area */}
+                                        <div className="h-[180px] bg-gray-50 overflow-hidden relative shadow-inner">
+                                            {isFetchingInvoice ? (
+                                                <div className="absolute inset-0 h-full flex flex-col items-center justify-center gap-2">
+                                                    <div className="w-6 h-6 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading...</span>
+                                                </div>
+                                            ) : invoiceData ? (
+                                                <div className="bg-white scale-[0.45] origin-top transform-gpu">
+                                                    <InvoiceTemplate data={invoiceData} />
+                                                </div>
+                                            ) : (
+                                                <div className="absolute inset-0 h-full flex flex-col items-center justify-center gap-2 text-gray-300">
+                                                    <FileText size={32} strokeWidth={1} />
+                                                    <span className="text-[10px] font-bold uppercase">No Preview</span>
+                                                </div>
+                                            )}
+                                            {/* Gradient Fade Overlay */}
+                                            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-gray-50/100 to-transparent"></div>
+                                        </div>
+
+                                        {/* Dark PDF Info Footer (WhatsApp style) */}
+                                        <div className="bg-[#1f2937] px-4 py-3 flex items-center justify-between group-hover:bg-[#111827] transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                {/* Red PDF Icon */}
+                                                <div className="w-10 h-10 bg-red-600 rounded-lg flex flex-col items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                                                    <FileText size={16} className="text-white" />
+                                                    <span className="text-[8px] font-black text-white -mt-0.5">PDF</span>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-white tracking-tight">invoice.pdf</span>
+                                                    <span className="text-[10px] text-gray-400 font-medium">
+                                                        1 page • PDF • 68 kB
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div
+                                                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 group-hover:text-white group-hover:bg-white/20 transition-all border border-white/5"
+                                            >
+                                                <ArrowLeft size={16} className="rotate-180" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="grid grid-cols-2 gap-3 mt-4">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handlePrintInvoice(); }}
+                                            disabled={!invoiceData || isFetchingInvoice}
+                                            className={`flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-200 rounded-xl text-xs font-bold transition-all shadow-sm ${!invoiceData || isFetchingInvoice ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:border-blue-500 hover:text-blue-600 hover:shadow'}`}
+                                        >
+                                            <Printer size={16} />
+                                            Print
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDownloadInvoice(); }}
+                                            disabled={!invoiceData || isFetchingInvoice}
+                                            className={`flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-200 rounded-xl text-xs font-bold transition-all shadow-sm ${!invoiceData || isFetchingInvoice ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:border-purple-500 hover:text-purple-600 hover:shadow'}`}
+                                        >
+                                            <Download size={16} />
+                                            Download
+                                        </button>
+                                    </div>
+
+                                    {isFetchingInvoice && (
+                                        <div className="mt-4 text-[10px] text-center text-blue-500 font-black uppercase animate-pulse">
+                                            Generating Document...
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <ImageNamesModal />
+                <InvoiceModal
+                    isOpen={isInvoiceOpen}
+                    onClose={() => setIsInvoiceOpen(false)}
+                    data={invoiceData}
+                />
+
+                {/* Hidden Printable Invoice Section */}
+                {invoiceData && (
+                    <div style={{ position: 'absolute', left: '-9999px', top: '0', width: '210mm' }}>
+                        <InvoiceTemplate ref={invoiceComponentRef} data={invoiceData} />
+                    </div>
+                )}
             </div>
         </div >
     );
