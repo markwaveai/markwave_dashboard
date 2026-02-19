@@ -73,6 +73,11 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
+        // Mobile Validation: Only allow digits
+        if (name === 'mobile' && !/^\d*$/.test(value)) {
+            return;
+        }
+
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({ ...prev, [name]: checked }));
@@ -92,9 +97,34 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
 
     const validate = () => {
         const errors: Record<string, string> = {};
-        if (!formData.mobile || formData.mobile.length < 10) errors.mobile = 'Valid mobile number is required';
-        if (!formData.first_name) errors.first_name = 'First name is required';
-        if (!formData.last_name) errors.last_name = 'Last name is required';
+
+        // Mobile Validation
+        if (!formData.mobile) {
+            errors.mobile = 'Mobile number is required';
+        } else if (!/^\d{10}$/.test(formData.mobile)) {
+            errors.mobile = 'Mobile number must be exactly 10 digits';
+        }
+
+        // Name Validation
+        if (!formData.first_name || formData.first_name.trim().length < 2) {
+            errors.first_name = 'First name must be at least 2 characters';
+        }
+        if (!formData.last_name || formData.last_name.trim().length < 1) {
+            errors.last_name = 'Last name is required';
+        }
+
+        // Email Validation (Required)
+        if (!formData.email) {
+            errors.email = 'Email address is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            errors.email = 'Please enter a valid email address';
+        }
+
+        // Referral Code Validation (Required for new users if not in edit mode)
+        if (!isEditMode && !formData.referral_code) {
+            errors.referral_code = 'Referral code is required';
+        }
+
         return errors;
     };
 
@@ -226,6 +256,7 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
                                         onChange={handleChange}
                                         placeholder="Enter mobile number"
                                         disabled={isEditMode}
+                                        maxLength={10}
                                         className={`w-full px-3 py-1.5 rounded-lg border focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:text-gray-400 text-sm text-gray-900 ${validationErrors.mobile ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'} ${isEditMode ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
                                     />
                                     {validationErrors.mobile && <p className="text-[10px] text-red-600 font-medium">{validationErrors.mobile}</p>}
@@ -262,15 +293,16 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
 
                             {/* Email */}
                             <div className="space-y-1">
-                                <label className="block text-xs font-medium text-gray-700">Email <span className="text-gray-400 font-normal">(Optional)</span></label>
+                                <label className="block text-xs font-medium text-gray-700">Email</label>
                                 <input
                                     type="email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
                                     placeholder="Enter email address"
-                                    className="w-full px-3 py-1.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 text-sm text-gray-900"
+                                    className={`w-full px-3 py-1.5 rounded-lg border focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 text-sm text-gray-900 ${validationErrors.email ? 'border-red-300 focus:border-red-500' : 'border-gray-200'}`}
                                 />
+                                {validationErrors.email && <p className="text-[10px] text-red-600 font-medium">{validationErrors.email}</p>}
                             </div>
 
                             {/* Referrer Details */}
@@ -284,9 +316,9 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
                                                 type="text"
                                                 name="referral_code"
                                                 value={formData.referral_code}
-                                                onChange={handleChange}
-                                                placeholder={adminReferralCode || "Enter Referral Code"}
-                                                className="w-full px-3 py-1.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm text-gray-900"
+                                                readOnly
+                                                disabled
+                                                className={`w-full px-3 py-1.5 rounded-lg border focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-sm text-gray-500 bg-gray-100 cursor-not-allowed border-gray-200`}
                                             />
                                         </div>
                                     ) : (

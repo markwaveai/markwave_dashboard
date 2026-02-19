@@ -28,22 +28,35 @@ interface MilestoneSummary {
     members_achieved: number;
 }
 
+interface ReferralReward {
+    milestone_id: string;
+    threshold: number;
+    reward: string;
+    achieved_date: string | null;
+}
+
+interface RawReferralUser {
+    mobile: string;
+    username: string;
+    role: string;
+    total_referral_units: number;
+    rewards: ReferralReward[];
+}
+
 interface ReferralAchievement {
     mobile: string;
     username: string;
     role: string;
     total_referral_units: number;
-    milestone_id: string;
-    threshold: number;
-    reward: string;
-    is_active: boolean;
-    achieved_date: string | null;
+    rewards: (ReferralReward & { is_active: boolean })[];
 }
 
 type TabType = 'self' | 'referral';
 
 const OffersAchievedTab: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<TabType>('self');
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        return (localStorage.getItem('offersActiveTab') as TabType) || 'self';
+    });
     const [benefits, setBenefits] = useState<AchievedBenefit[]>([]);
     const [referralAchievements, setReferralAchievements] = useState<ReferralAchievement[]>([]);
     const [milestoneSummaries, setMilestoneSummaries] = useState<MilestoneSummary[]>([]);
@@ -77,8 +90,25 @@ const OffersAchievedTab: React.FC = () => {
                     setTotalCount(data.total_benefits || 0);
                 } else {
                     const data = await referralBenefitService.getAchievedReferralMilestones(adminMobile);
-                    setReferralAchievements(data.achieved_list || []);
-                    setMilestoneSummaries(data.milestones_summary || []);
+                    const summaries: MilestoneSummary[] = data.milestones_summary || [];
+                    const rawList: RawReferralUser[] = data.achieved_list || [];
+
+                    const mapped: ReferralAchievement[] = rawList.map(user => ({
+                        mobile: user.mobile,
+                        username: user.username,
+                        role: user.role,
+                        total_referral_units: user.total_referral_units,
+                        rewards: user.rewards.map(reward => {
+                            const summary = summaries.find(s => s.threshold === reward.threshold);
+                            return {
+                                ...reward,
+                                is_active: summary ? summary.is_active : true
+                            };
+                        })
+                    }));
+
+                    setReferralAchievements(mapped);
+                    setMilestoneSummaries(summaries);
                     setTotalCount(data.total_records || 0);
                 }
             } catch (err: any) {
@@ -96,6 +126,20 @@ const OffersAchievedTab: React.FC = () => {
         if (title.includes('Silver')) return { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700', badge: 'bg-slate-100 text-slate-800', icon: '🥈' };
         if (title.includes('2 Persons')) return { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-800', icon: '✈️' };
         return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-800', icon: '🏝️' };
+    };
+
+    const formatDate = (dateStr: string | null) => {
+        if (!dateStr) return null;
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return dateStr;
+        }
     };
 
     const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
@@ -116,7 +160,10 @@ const OffersAchievedTab: React.FC = () => {
                     {tabs.map((tab) => (
                         <button
                             key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
+                            onClick={() => {
+                                setActiveTab(tab.key);
+                                localStorage.setItem('offersActiveTab', tab.key);
+                            }}
                             className={`
                                 flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 border-b-2
                                 ${activeTab === tab.key
@@ -161,9 +208,9 @@ const OffersAchievedTab: React.FC = () => {
                         {activeTab === 'referral' && milestoneSummaries.length > 0 && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                                 {milestoneSummaries.map((summary, idx) => (
-                                    <div key={idx} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-2">
+                                    <div key={idx} className={`bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-2 transition-all ${summary.is_active ? 'border-gray-100' : 'border-gray-200 opacity-75'}`}>
                                         <div className="flex items-center justify-between">
-                                            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                                            <div className={`p-2 rounded-lg ${summary.is_active ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
                                                 <Target size={18} />
                                             </div>
                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${summary.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
@@ -172,11 +219,11 @@ const OffersAchievedTab: React.FC = () => {
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{summary.threshold} Units Milestone</p>
-                                            <p className="font-bold text-gray-900 text-sm truncate">{summary.reward}</p>
+                                            <p className={`font-bold text-sm truncate ${summary.is_active ? 'text-gray-900' : 'text-gray-500'}`}>{summary.reward}</p>
                                         </div>
                                         <div className="mt-1 pt-2 border-t border-gray-50 flex items-center justify-between">
                                             <span className="text-xs text-gray-500">Achievers</span>
-                                            <span className="text-sm font-bold text-indigo-600">{summary.members_achieved} Members</span>
+                                            <span className={`text-sm font-bold ${summary.is_active ? 'text-indigo-600' : 'text-gray-400'}`}>{summary.members_achieved} Members</span>
                                         </div>
                                     </div>
                                 ))}
@@ -188,19 +235,14 @@ const OffersAchievedTab: React.FC = () => {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="bg-gray-50/80 border-b border-gray-100">
+                                        <th className="text-center px-4 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider w-12">S.No</th>
                                         <th className="text-left px-5 pr-2 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">User Details</th>
                                         <th className="text-center pl-2 pr-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
                                         <th className="text-center px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                            {activeTab === 'self' ? 'Offer' : 'Milestone Reward'}
-                                        </th>
-                                        <th className="text-center px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                             {activeTab === 'self' ? 'Units' : 'Referral Units'}
                                         </th>
-                                        <th className="text-center px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                            {activeTab === 'self' ? 'Order ID' : 'Threshold'}
-                                        </th>
-                                        <th className="text-center px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                            {activeTab === 'self' ? 'Awarded At' : 'Achieved Date'}
+                                        <th className="text-left px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider" colSpan={2}>
+                                            {activeTab === 'self' ? 'Award Details' : 'Milestone Achievements'}
                                         </th>
                                     </tr>
                                 </thead>
@@ -208,6 +250,7 @@ const OffersAchievedTab: React.FC = () => {
                                     {activeTab === 'self' ? (
                                         benefits.map((benefit, index) => (
                                             <tr key={`${benefit.order_id}-${index}`} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-4 py-4 text-center font-medium text-gray-400 w-12">{index + 1}</td>
                                                 <td className="px-5 pr-2 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
@@ -223,35 +266,42 @@ const OffersAchievedTab: React.FC = () => {
                                                     <span className="text-[11px] font-medium px-2 py-1 rounded bg-gray-100 text-gray-600">{benefit.role}</span>
                                                 </td>
                                                 <td className="px-5 py-4 text-center">
-                                                    <div>
-                                                        <p className="font-semibold text-[0.8125rem] text-gray-900">{benefit.title}</p>
-                                                        <p className="text-xs text-gray-400 mt-0.5 truncate">{benefit.description}</p>
-                                                    </div>
-                                                </td>
-                                                <td className="px-5 py-4 text-center">
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-indigo-100 text-indigo-800">
                                                         {benefit.purchased_units} purchased
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-4 text-center">
-                                                    <span
-                                                        className="text-xs font-mono bg-gray-50 px-2 py-1 rounded text-indigo-600 border border-gray-100 cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
-                                                        onClick={() => setSelectedOrderId(benefit.order_id)}
-                                                    >
-                                                        {benefit.order_id}
-                                                    </span>
-                                                </td>
-                                                <td className="px-5 py-4 text-center">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <Calendar size={13} className="text-gray-400" />
-                                                        <span className="text-xs text-gray-600 font-medium">{benefit.awarded_at || '-'}</span>
+                                                <td className="px-5 py-4" colSpan={2}>
+                                                    <div className="flex flex-col gap-2 border-l-2 border-indigo-50 pl-4 py-0.5">
+                                                        <div>
+                                                            <p className="font-bold text-[0.875rem] text-gray-900 leading-tight">{benefit.title}</p>
+                                                            <p className="text-[10px] text-gray-400 truncate max-w-[250px] mt-0.5">{benefit.description}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-10">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider leading-none mb-1">Order ID</span>
+                                                                <span
+                                                                    className="text-[10px] font-mono font-bold text-indigo-500 cursor-pointer hover:underline"
+                                                                    onClick={() => setSelectedOrderId(benefit.order_id)}
+                                                                >
+                                                                    {benefit.order_id}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider leading-none mb-1">Awarded At</span>
+                                                                <div className="flex items-center gap-1.5 font-bold text-gray-800 text-[0.8125rem]">
+                                                                    <Calendar size={11} className="text-gray-400" />
+                                                                    <span>{formatDate(benefit.awarded_at) || '-'}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         referralAchievements.map((ach, index) => (
-                                            <tr key={`${ach.mobile}-${index}`} className="hover:bg-gray-50/50 transition-colors">
+                                            <tr key={`${ach.mobile}-${index}`} className="hover:bg-gray-50/50 transition-colors align-top">
+                                                <td className="px-4 py-4 text-center font-medium text-gray-400 w-12">{index + 1}</td>
                                                 <td className="px-5 pr-2 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
@@ -267,33 +317,48 @@ const OffersAchievedTab: React.FC = () => {
                                                     <span className="text-[11px] font-medium px-2 py-1 rounded bg-gray-100 text-gray-600">{ach.role}</span>
                                                 </td>
                                                 <td className="px-5 py-4 text-center">
-                                                    <div>
-                                                        <p className="font-semibold text-[0.8125rem] text-gray-900">{ach.reward}</p>
-                                                        {!ach.is_active && <span className="text-[10px] text-red-400 font-bold">INACTIVE OFFER</span>}
-                                                    </div>
-                                                </td>
-                                                <td className="px-5 py-4 text-center">
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800">
                                                         {ach.total_referral_units} units
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-4 text-center">
-                                                    <span className="text-xs font-bold bg-gray-50 px-2 py-1 rounded text-gray-600 border border-gray-100">
-                                                        {ach.threshold} units
-                                                    </span>
-                                                </td>
-                                                <td className="px-5 py-4 text-center">
-                                                    {ach.achieved_date ? (
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <Calendar size={13} className="text-gray-400" />
-                                                            <span className="text-xs text-gray-600 font-medium">{ach.achieved_date}</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center justify-center gap-1.5 text-gray-400">
-                                                            <Info size={13} />
-                                                            <span className="text-[10px] uppercase font-bold tracking-tight">Pending</span>
-                                                        </div>
-                                                    )}
+                                                <td className="px-5 py-4" colSpan={2}>
+                                                    <div className="flex flex-col gap-4">
+                                                        {ach.rewards.map((reward, rIdx) => (
+                                                            <div key={rIdx} className="flex flex-col gap-2 border-l-2 border-indigo-50/60 pl-4 py-0.5 group transition-all duration-200">
+                                                                {/* First Row: Reward Title */}
+                                                                <div className="flex items-center gap-3">
+                                                                    <p className={`font-bold text-[0.875rem] ${reward.is_active ? 'text-gray-900 group-hover:text-indigo-600' : 'text-gray-400 italic'}`}>
+                                                                        {reward.reward}
+                                                                    </p>
+                                                                    {!reward.is_active && (
+                                                                        <span className="text-[8px] text-red-500 font-black bg-red-50 px-1.5 py-0.5 rounded border border-red-100 tracking-tighter uppercase">
+                                                                            INACTIVE
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Second Row: Metadata (Units and Time) */}
+                                                                <div className="flex items-center gap-10">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider leading-none mb-1">Threshold</span>
+                                                                        <span className="font-bold text-gray-800 text-[0.8125rem]">{reward.threshold} units</span>
+                                                                    </div>
+
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider leading-none mb-1">Achieved</span>
+                                                                        {reward.achieved_date ? (
+                                                                            <div className="flex items-center gap-1.5 font-bold text-gray-800 text-[0.8125rem]">
+                                                                                <Calendar size={11} className="text-gray-400" />
+                                                                                <span>{formatDate(reward.achieved_date)}</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="text-gray-300 font-bold ml-1">-</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -302,12 +367,7 @@ const OffersAchievedTab: React.FC = () => {
                             </table>
                         </div>
 
-                        {/* Footer */}
-                        <div className="mt-4 text-center">
-                            <p className="text-xs text-gray-400">
-                                Showing {activeTab === 'self' ? benefits.length : referralAchievements.length} of {totalCount} records
-                            </p>
-                        </div>
+
                     </>
                 )}
             </div>
