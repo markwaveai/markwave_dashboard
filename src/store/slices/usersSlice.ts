@@ -339,8 +339,25 @@ const UsersSlice = createSlice({
         });
         builder.addCase(fetchNetwork.fulfilled, (state, action) => {
             state.network.loading = false;
-            state.network.stats = action.payload.stats;
-            state.network.users = action.payload.users;
+
+            // Robust handling: If stats is missing, try to construct it from other fields
+            let stats = action.payload.stats;
+            const users = action.payload.users || [];
+
+            if (!stats) {
+                // Try to find a total count in the payload
+                const totalCount = action.payload.total ?? action.payload.count ?? action.payload.total_count ?? users.length;
+                stats = {
+                    user_count: totalCount,
+                    limit: 10, // Default limit if not provided
+                    // Add other stats fields if necessary (with 0/null defaults) to prevent crashes
+                    total_distributed_coins: 0,
+                    total_purchased_units: 0
+                };
+            }
+
+            state.network.stats = stats;
+            state.network.users = users;
         });
         builder.addCase(fetchNetwork.rejected, (state, action) => {
             state.network.loading = false;

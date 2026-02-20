@@ -78,6 +78,16 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
             return;
         }
 
+        // Name Validation: Only allow alphabets and spaces
+        if ((name === 'first_name' || name === 'last_name') && !/^[a-zA-Z\s]*$/.test(value)) {
+            return;
+        }
+
+        // Email Validation: Prevent spaces
+        if (name === 'email' && /\s/.test(value)) {
+            return;
+        }
+
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({ ...prev, [name]: checked }));
@@ -127,6 +137,16 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
 
         return errors;
     };
+
+    // Check if form is valid for enabling button
+    const isFormValid = (() => {
+        if (!formData.mobile || formData.mobile.length !== 10) return false;
+        if (!formData.first_name || formData.first_name.trim().length < 2) return false;
+        if (!formData.last_name || formData.last_name.trim().length < 1) return false;
+        if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return false;
+        if (!isEditMode && !formData.referral_code) return false;
+        return true;
+    })();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -376,8 +396,8 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={loading}
-                                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:transform active:scale-[0.98] transition-all font-semibold text-xs shadow-sm hover:shadow disabled:opacity-50"
+                                    disabled={loading || !isFormValid}
+                                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:transform active:scale-[0.98] transition-all font-semibold text-xs shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loading ? 'Processing...' : submitText}
                                 </button>

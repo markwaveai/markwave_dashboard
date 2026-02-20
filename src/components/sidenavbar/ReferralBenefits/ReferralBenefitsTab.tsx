@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, Award, Clock, AlertCircle, ShoppingBag, RotateCcw, Plus, Minus, Edit2, MoreVertical, XCircle, CheckCircle2, X, Star, MonitorPlay, Plane, Smartphone, Bike, Car, Check } from 'lucide-react';
-import { referralBenefitService, referralConfigService } from '../../../services/api';
+import { Gift, Award, Clock, AlertCircle, ShoppingBag, RotateCcw, Plus, Minus, Edit2, MoreVertical, XCircle, CheckCircle2, X, Star, MonitorPlay, Plane, Smartphone, Bike, Car, Check, ShieldCheck } from 'lucide-react';
+import { referralBenefitService, referralConfigService, otpService } from '../../../services/api';
 import { ReferralMilestone, ReferralConfig } from '../../../types';
 import CreateReferralMilestoneModal from './CreateReferralMilestoneModal';
+import Snackbar from '../../common/Snackbar';
+import OtpVerificationModal from '../../common/OtpVerificationModal';
 
 interface ReferralBenefitsTabProps {
     isEmbedded?: boolean;
@@ -35,11 +37,19 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
     const [stage1Loading, setStage1Loading] = useState(false);
     const [stage2Loading, setStage2Loading] = useState(false);
 
+    // Per-Action OTP State
+    const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+    const [otpActionType, setOtpActionType] = useState<'config' | 'milestone' | 'global_toggle'>('config');
+    const [pendingUpdates, setPendingUpdates] = useState<any>(null);
+    const [pendingMilestone, setPendingMilestone] = useState<ReferralMilestone | null>(null);
+    const [snackbar, setSnackbar] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
     useEffect(() => {
         if (!preloadedMilestones && farmId) {
             fetchAllData();
         }
     }, [farmId, preloadedMilestones]);
+
 
     const fetchAllData = async (silent = false) => {
         try {
@@ -59,20 +69,18 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
         }
     };
 
-    const updateConfig = async (updates: any) => {
+    const updateConfig = async (updates: any, mobile: string, otp: string) => {
         if (!displayConfig) return;
 
         const updateKeys = Object.keys(updates);
         const isGlobalToggle = updateKeys.includes('is_global_active');
-        const isStage1Toggle = updateKeys.includes('stage1_active') && !updateKeys.includes('stage1_percentage'); // Only toggle if not updating percentage
+        const isStage1Toggle = updateKeys.includes('stage1_active') && !updateKeys.includes('stage1_percentage');
         const isStage2Toggle = updateKeys.includes('stage2_active') && !updateKeys.includes('stage2_percentage');
 
         if (isGlobalToggle) setGlobalToggleLoading(true);
         if (isStage1Toggle) setStage1Loading(true);
         if (isStage2Toggle) setStage2Loading(true);
 
-        // Construct full payload to ensure all fields are preserved
-        // Force stages to be active if global toggle is changed (as per user request)
         const payload: any = {
             stage1_percentage: displayConfig.stage1_percentage,
             stage2_percentage: displayConfig.stage2_percentage,
@@ -83,31 +91,60 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
         };
 
         try {
-            const response = await referralConfigService.updateReferralConfig(payload);
+            const response = await referralConfigService.updateReferralConfig(payload, mobile, otp);
             if (response.error) {
-                console.error('Error updating config:', response.error);
-                return;
+                throw new Error(response.error);
             }
 
-            // Update local state immediately
+            setSnackbar({ message: 'Configuration updated successfully!', type: 'success' });
             setConfig(prev => prev ? { ...prev, ...updates } : { ...displayConfig, ...updates });
 
-            const shouldSilentRefresh = isGlobalToggle || isStage1Toggle || isStage2Toggle;
-
             if (onRefresh) {
-                if (shouldSilentRefresh) {
-                    // For toggles, use silent update but await it to ensure visual consistency
-                    await onRefresh(true);
-                } else {
-                    onRefresh();
-                }
+                const shouldSilentRefresh = isGlobalToggle || isStage1Toggle || isStage2Toggle;
+                await onRefresh(shouldSilentRefresh);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error updating referral config:', err);
+            throw err;
         } finally {
             if (isGlobalToggle) setGlobalToggleLoading(false);
             if (isStage1Toggle) setStage1Loading(false);
             if (isStage2Toggle) setStage2Loading(false);
+        }
+    };
+
+    const handleConfirmOtpAction = async (mobile: string, otp: string) => {
+        if (otpActionType === 'config' && pendingUpdates) {
+            await updateConfig(pendingUpdates, mobile, otp);
+            setPendingUpdates(null);
+        } else if (otpActionType === 'milestone' && pendingMilestone) {
+            try {
+                const result = await referralBenefitService.updateReferralMilestone(pendingMilestone.id, {
+                    is_active: !pendingMilestone.is_active,
+                    threshold: pendingMilestone.threshold,
+                    reward: pendingMilestone.reward,
+                    description: pendingMilestone.description
+                }, mobile, otp);
+
+                if (result.error) {
+                    throw new Error(result.error);
+                } else {
+                    setSnackbar({ message: `Milestone ${!pendingMilestone.is_active ? 'activated' : 'deactivated'} successfully!`, type: 'success' });
+                    if (onRefresh) {
+                        await onRefresh(true);
+                    } else {
+                        await fetchAllData(true);
+                    }
+                }
+            } catch (err: any) {
+                console.error("Failed to toggle status", err);
+                throw err;
+            } finally {
+                setPendingMilestone(null);
+            }
+        } else if (otpActionType === 'global_toggle' && pendingUpdates) {
+            await updateConfig(pendingUpdates, mobile, otp);
+            setPendingUpdates(null);
         }
     };
 
@@ -195,279 +232,291 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
         <div className={`flex flex-col font-sans custom-scrollbar ${isEmbedded ? 'h-full' : 'min-h-screen overflow-y-auto max-h-screen'} bg-[#f8fafc]`}>
             {/* Header */}
             <div className="p-6 pb-0">
-                <div>
-                    <h2 className="text-[2.25rem] font-[900] text-[#1e293b] tracking-tight leading-none mb-3">Manage Referral Benefits</h2>
-                    <p className="text-[#64748b] text-base font-semibold opacity-80">Track milestones and unlock exclusive rewards through network growth.</p>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <h2 className="text-[2.25rem] font-[900] text-[#1e293b] tracking-tight leading-none mb-3">Manage Referral Benefits</h2>
+                        <p className="text-[#64748b] text-base font-semibold opacity-80">Track milestones and unlock exclusive rewards through network growth.</p>
+                    </div>
                 </div>
             </div>
 
             {/* Coins Rewards Heading & Global Activation Toggle */}
-            <div className="px-6 mt-6 flex items-end justify-between">
-                <div>
-                    <h3 className="text-xl font-black text-[#1e293b] tracking-tight leading-none mb-1">Coins rewards</h3>
-                </div>
-                {/* Global Toggle */}
-                {displayConfig && (
-                    <button
-                        onClick={() => updateConfig({ is_global_active: !displayConfig.is_global_active })}
-                        disabled={globalToggleLoading}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black tracking-widest uppercase transition-all active:scale-95 shadow-sm border ${displayConfig.is_global_active
-                            ? 'bg-[#ef4444] text-white border-[#ef4444] shadow-lg shadow-[#ef4444]/20 hover:bg-[#dc2626]'
-                            : 'bg-[#10b981] text-white border-[#10b981] hover:bg-[#059669]'
-                            } ${globalToggleLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                        {globalToggleLoading ? (
-                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <div className="w-2 h-2 rounded-full bg-white" />
-                        )}
-                        {displayConfig.is_global_active ? 'Disable Offer' : 'Active All Offers'}
-                    </button>
-                )}
-            </div>
-
-            {/* Redesigned Commission Cards Grid */}
-            <div className="px-6 mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
-                {/* Stage 1 Card */}
-                <div className="bg-white rounded-[1.25rem] p-3.5 shadow-[0_5px_20px_rgba(0,0,0,0.01)] border border-[#f1f5f9] relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)] transition-all">
-                    <div className="flex items-center justify-between mb-1 pr-10">
-                        <span className="text-[9px] font-[900] text-[#1e293b] tracking-wider uppercase opacity-80">Direct Referral coins percent</span>
+            {displayConfig && Object.keys(displayConfig).length > 0 && (
+                <>
+                    <div className="px-6 mt-6 flex items-end justify-between">
+                        <div>
+                            <h3 className="text-xl font-black text-[#1e293b] tracking-tight leading-none mb-1">Coins rewards</h3>
+                        </div>
+                        {/* Global Toggle */}
                         <button
                             onClick={() => {
-                                setEditingStage(1);
-                                setEditValue(displayConfig?.stage1_percentage?.toString() || '0');
-                                setEditActiveStatus(displayConfig?.stage1_active || false);
+                                setOtpActionType('global_toggle');
+                                setPendingUpdates({ is_global_active: !displayConfig.is_global_active });
+                                setIsOtpModalOpen(true);
                             }}
-                            className="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#10b981] transition-all"
+                            disabled={globalToggleLoading}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black tracking-widest uppercase transition-all active:scale-95 shadow-sm border ${displayConfig.is_global_active
+                                ? 'bg-[#ef4444] text-white border-[#ef4444] shadow-lg shadow-[#ef4444]/20 hover:bg-[#dc2626]'
+                                : 'bg-[#10b981] text-white border-[#10b981] hover:bg-[#059669]'
+                                } ${globalToggleLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            <Edit2 size={10} />
+                            {globalToggleLoading ? (
+                                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <div className="w-2 h-2 rounded-full bg-white" />
+                            )}
+                            {displayConfig.is_global_active ? 'Disable Offer' : 'Active All Offers'}
                         </button>
                     </div>
-                    <button
-                        onClick={() => {
-                            if (!stage1Loading) {
-                                updateConfig({
-                                    stage1_active: !displayConfig?.stage1_active
-                                });
-                            }
-                        }}
-                        disabled={stage1Loading}
-                        className={`absolute top-4 right-4 w-8 h-4.5 rounded-full transition-all duration-500 relative ${displayConfig?.stage1_active ? 'bg-[#10b981] shadow-lg shadow-[#10b981]/10' : 'bg-slate-200'} ${stage1Loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                        {stage1Loading ? (
-                            <div className="absolute top-0.5 left-2.5 w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-all duration-500 shadow-sm ${displayConfig?.stage1_active ? 'left-4' : 'left-0.5'}`} />
-                        )}
-                    </button>
 
-                    <div className="flex flex-col items-center justify-center pt-0.5 pb-2">
-                        <div className="flex items-baseline gap-0.5">
-                            <span className="text-3xl font-[1000] text-[#1e293b] tracking-tighter leading-none">{displayConfig?.stage1_percentage}</span>
-                            <span className="text-sm font-black text-[#1e293b] mt-auto pb-0.5">%</span>
-                        </div>
+                    {/* Redesigned Commission Cards Grid */}
+                    <div className="px-6 mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+                        {/* Stage 1 Card */}
+                        <div className="bg-white rounded-[1.25rem] p-3.5 shadow-[0_5px_20px_rgba(0,0,0,0.01)] border border-[#f1f5f9] relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)] transition-all">
+                            <div className="flex items-center justify-between mb-1 pr-10">
+                                <span className="text-[9px] font-[900] text-[#1e293b] tracking-wider uppercase opacity-80">Direct Referral coins percent</span>
+                                <button
+                                    onClick={() => {
+                                        setEditingStage(1);
+                                        setEditValue(displayConfig?.stage1_percentage?.toString() || '0');
+                                        setEditActiveStatus(displayConfig?.stage1_active || false);
+                                    }}
+                                    className="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#10b981] transition-all"
+                                >
+                                    <Edit2 size={10} />
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    if (!stage1Loading) {
+                                        setOtpActionType('config');
+                                        setPendingUpdates({ stage1_active: !displayConfig?.stage1_active });
+                                        setIsOtpModalOpen(true);
+                                    }
+                                }}
+                                disabled={stage1Loading}
+                                className={`absolute top-4 right-4 w-8 h-4.5 rounded-full transition-all duration-500 relative ${displayConfig?.stage1_active ? 'bg-[#10b981] shadow-lg shadow-[#10b981]/10' : 'bg-slate-200'} ${stage1Loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            >
+                                {stage1Loading ? (
+                                    <div className="absolute top-0.5 left-2.5 w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-all duration-500 shadow-sm ${displayConfig?.stage1_active ? 'left-4' : 'left-0.5'}`} />
+                                )}
+                            </button>
 
-                        {/* Edit Popup */}
-                        {editingStage === 1 && (
-                            <div className="absolute -inset-1 z-30 bg-white rounded-[1.25rem] p-3.5 flex flex-col gap-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 animate-in fade-in zoom-in duration-200">
-                                <div className="flex items-center justify-between mb-0.5">
-                                    <span className="text-[10px] font-black text-[#1e293b] tracking-wider uppercase">Edit Stage 1</span>
-                                    <button onClick={() => setEditingStage(null)} className="p-1 text-slate-400 hover:text-red-500 transition-colors">
-                                        <X size={12} />
-                                    </button>
+                            <div className="flex flex-col items-center justify-center pt-0.5 pb-2">
+                                <div className="flex items-baseline gap-0.5">
+                                    <span className="text-3xl font-[1000] text-[#1e293b] tracking-tighter leading-none">{displayConfig?.stage1_percentage}</span>
+                                    <span className="text-sm font-black text-[#1e293b] mt-auto pb-0.5">%</span>
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block mb-1 px-1">Percentage</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={editValue}
-                                                onChange={(e) => setEditValue(e.target.value)}
-                                                className="w-full h-7 px-3 text-xs font-bold border border-slate-200 rounded-lg focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/10 outline-none transition-all"
-                                                autoFocus
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300">%</span>
+                                {/* Edit Popup */}
+                                {editingStage === 1 && (
+                                    <div className="absolute -inset-1 z-30 bg-white rounded-[1.25rem] p-3.5 flex flex-col gap-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 animate-in fade-in zoom-in duration-200">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <span className="text-[10px] font-black text-[#1e293b] tracking-wider uppercase">Edit Stage 1</span>
+                                            <button onClick={() => setEditingStage(null)} className="p-1 text-slate-400 hover:text-red-500 transition-colors">
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <div className="flex-1">
+                                                <label className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block mb-1 px-1">Percentage</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={editValue}
+                                                        onChange={(e) => setEditValue(e.target.value)}
+                                                        className="w-full h-7 px-3 text-xs font-bold border border-slate-200 rounded-lg focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/10 outline-none transition-all"
+                                                        autoFocus
+                                                    />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300">%</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <label className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block mb-1 px-1">Status</label>
+                                                <select
+                                                    value={editActiveStatus ? "active" : "inactive"}
+                                                    onChange={(e) => setEditActiveStatus(e.target.value === "active")}
+                                                    className="w-full h-7 px-2 text-[10px] font-bold border border-slate-200 rounded-lg focus:border-[#10b981] outline-none bg-slate-50 cursor-pointer"
+                                                >
+                                                    <option value="active">Active</option>
+                                                    <option value="inactive">Inactive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-1.5 mt-auto">
+                                            <button
+                                                onClick={() => {
+                                                    setOtpActionType('config');
+                                                    setPendingUpdates({ stage1_percentage: parseFloat(editValue), stage1_active: editActiveStatus });
+                                                    setIsOtpModalOpen(true);
+                                                    setEditingStage(null);
+                                                }}
+                                                className="flex-[2] h-7 bg-[#10b981] text-white text-[9px] font-black tracking-widest uppercase rounded-lg shadow-lg shadow-emerald-500/10 hover:bg-[#059669] active:scale-95 transition-all"
+                                            >
+                                                UPDATE
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingStage(null)}
+                                                className="flex-1 h-7 bg-slate-50 text-slate-400 text-[9px] font-black tracking-widest uppercase rounded-lg hover:bg-slate-100 transition-all border border-slate-100"
+                                            >
+                                                CLOSE
+                                            </button>
                                         </div>
                                     </div>
-
-                                    <div className="flex-1">
-                                        <label className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block mb-1 px-1">Status</label>
-                                        <select
-                                            value={editActiveStatus ? "active" : "inactive"}
-                                            onChange={(e) => setEditActiveStatus(e.target.value === "active")}
-                                            className="w-full h-7 px-2 text-[10px] font-bold border border-slate-200 rounded-lg focus:border-[#10b981] outline-none bg-slate-50 cursor-pointer"
-                                        >
-                                            <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-1.5 mt-auto">
-                                    <button
-                                        onClick={() => {
-                                            updateConfig({ stage1_percentage: parseFloat(editValue), stage1_active: editActiveStatus });
-                                            setEditingStage(null);
-                                        }}
-                                        className="flex-[2] h-7 bg-[#10b981] text-white text-[9px] font-black tracking-widest uppercase rounded-lg shadow-lg shadow-emerald-500/10 hover:bg-[#059669] active:scale-95 transition-all"
-                                    >
-                                        UPDATE
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingStage(null)}
-                                        className="flex-1 h-7 bg-slate-50 text-slate-400 text-[9px] font-black tracking-widest uppercase rounded-lg hover:bg-slate-100 transition-all border border-slate-100"
-                                    >
-                                        CLOSE
-                                    </button>
-                                </div>
+                                )}
                             </div>
-                        )}
-                    </div>
 
-                    <div className="border-t border-slate-50 pt-3 flex justify-center">
-                        <button
-                            onClick={() => {
-                                if (!stage1Loading) {
-                                    updateConfig({
-                                        stage1_active: !displayConfig?.stage1_active
-                                    });
-                                }
-                            }}
-                            disabled={stage1Loading}
-                            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase transition-all active:scale-95 ${displayConfig?.stage1_active ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'} ${stage1Loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        >
-                            {stage1Loading ? (
-                                <div className="w-2.5 h-2.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                                <div className={`w-1 h-1 rounded-full ${displayConfig?.stage1_active ? 'bg-[#10b981]' : 'bg-slate-300'}`} />
-                            )}
-                            {displayConfig?.stage1_active ? 'Active' : 'Inactive'}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Stage 2 Card */}
-                <div className="bg-white rounded-[1.25rem] p-3.5 shadow-[0_5px_20px_rgba(0,0,0,0.01)] border border-[#f1f5f9] relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)] transition-all">
-                    <div className="flex items-center justify-between mb-1 pr-10">
-                        <span className="text-[9px] font-[900] text-[#1e293b] tracking-wider uppercase opacity-80">Indirect Referral coins percent</span>
-                        <button
-                            onClick={() => {
-                                setEditingStage(2);
-                                setEditValue(displayConfig?.stage2_percentage?.toString() || '0');
-                                setEditActiveStatus(displayConfig?.stage2_active || false);
-                            }}
-                            className="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#10b981] transition-all"
-                        >
-                            <Edit2 size={10} />
-                        </button>
-                    </div>
-                    <button
-                        onClick={() => {
-                            if (!stage2Loading) {
-                                updateConfig({
-                                    stage2_active: !displayConfig?.stage2_active
-                                });
-                            }
-                        }}
-                        disabled={stage2Loading}
-                        className={`absolute top-4 right-4 w-8 h-4.5 rounded-full transition-all duration-500 relative ${displayConfig?.stage2_active ? 'bg-[#10b981] shadow-lg shadow-[#10b981]/10' : 'bg-slate-200'} ${stage2Loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                        {stage2Loading ? (
-                            <div className="absolute top-0.5 left-2.5 w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-all duration-500 shadow-sm ${displayConfig?.stage2_active ? 'left-4' : 'left-0.5'}`} />
-                        )}
-                    </button>
-
-                    <div className="flex flex-col items-center justify-center pt-0.5 pb-2">
-                        <div className="flex items-baseline gap-0.5">
-                            <span className="text-3xl font-[1000] text-[#1e293b] tracking-tighter leading-none">{displayConfig?.stage2_percentage}</span>
-                            <span className="text-sm font-black text-[#1e293b] mt-auto pb-0.5">%</span>
+                            <div className="border-t border-slate-50 pt-3 flex justify-center">
+                                <button
+                                    onClick={() => {
+                                        if (!stage1Loading) {
+                                            setOtpActionType('config');
+                                            setPendingUpdates({ stage1_active: !displayConfig?.stage1_active });
+                                            setIsOtpModalOpen(true);
+                                        }
+                                    }}
+                                    disabled={stage1Loading}
+                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase transition-all active:scale-95 ${displayConfig?.stage1_active ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'} ${stage1Loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                >
+                                    {stage1Loading ? (
+                                        <div className="w-2.5 h-2.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <div className={`w-1 h-1 rounded-full ${displayConfig?.stage1_active ? 'bg-[#10b981]' : 'bg-slate-300'}`} />
+                                    )}
+                                    {displayConfig?.stage1_active ? 'Active' : 'Inactive'}
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Edit Popup */}
-                        {editingStage === 2 && (
-                            <div className="absolute -inset-1 z-30 bg-white rounded-[1.25rem] p-3.5 flex flex-col gap-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 animate-in fade-in zoom-in duration-200">
-                                <div className="flex items-center justify-between mb-0.5">
-                                    <span className="text-[10px] font-black text-[#1e293b] tracking-wider uppercase">Edit Stage 2</span>
-                                    <button onClick={() => setEditingStage(null)} className="p-1 text-slate-400 hover:text-red-500 transition-colors">
-                                        <X size={12} />
-                                    </button>
+                        {/* Stage 2 Card */}
+                        <div className="bg-white rounded-[1.25rem] p-3.5 shadow-[0_5px_20px_rgba(0,0,0,0.01)] border border-[#f1f5f9] relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)] transition-all">
+                            <div className="flex items-center justify-between mb-1 pr-10">
+                                <span className="text-[9px] font-[900] text-[#1e293b] tracking-wider uppercase opacity-80">Indirect Referral coins percent</span>
+                                <button
+                                    onClick={() => {
+                                        setEditingStage(2);
+                                        setEditValue(displayConfig?.stage2_percentage?.toString() || '0');
+                                        setEditActiveStatus(displayConfig?.stage2_active || false);
+                                    }}
+                                    className="p-1 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#10b981] transition-all"
+                                >
+                                    <Edit2 size={10} />
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    if (!stage2Loading) {
+                                        setOtpActionType('config');
+                                        setPendingUpdates({ stage2_active: !displayConfig?.stage2_active });
+                                        setIsOtpModalOpen(true);
+                                    }
+                                }}
+                                disabled={stage2Loading}
+                                className={`absolute top-4 right-4 w-8 h-4.5 rounded-full transition-all duration-500 relative ${displayConfig?.stage2_active ? 'bg-[#10b981] shadow-lg shadow-[#10b981]/10' : 'bg-slate-200'} ${stage2Loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            >
+                                {stage2Loading ? (
+                                    <div className="absolute top-0.5 left-2.5 w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-all duration-500 shadow-sm ${displayConfig?.stage2_active ? 'left-4' : 'left-0.5'}`} />
+                                )}
+                            </button>
+
+                            <div className="flex flex-col items-center justify-center pt-0.5 pb-2">
+                                <div className="flex items-baseline gap-0.5">
+                                    <span className="text-3xl font-[1000] text-[#1e293b] tracking-tighter leading-none">{displayConfig?.stage2_percentage}</span>
+                                    <span className="text-sm font-black text-[#1e293b] mt-auto pb-0.5">%</span>
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block mb-1 px-1">Percentage</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={editValue}
-                                                onChange={(e) => setEditValue(e.target.value)}
-                                                className="w-full h-7 px-3 text-xs font-bold border border-slate-200 rounded-lg focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/10 outline-none transition-all"
-                                                autoFocus
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300">%</span>
+                                {/* Edit Popup */}
+                                {editingStage === 2 && (
+                                    <div className="absolute -inset-1 z-30 bg-white rounded-[1.25rem] p-3.5 flex flex-col gap-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 animate-in fade-in zoom-in duration-200">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <span className="text-[10px] font-black text-[#1e293b] tracking-wider uppercase">Edit Stage 2</span>
+                                            <button onClick={() => setEditingStage(null)} className="p-1 text-slate-400 hover:text-red-500 transition-colors">
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <div className="flex-1">
+                                                <label className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block mb-1 px-1">Percentage</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={editValue}
+                                                        onChange={(e) => setEditValue(e.target.value)}
+                                                        className="w-full h-7 px-3 text-xs font-bold border border-slate-200 rounded-lg focus:border-[#10b981] focus:ring-2 focus:ring-[#10b981]/10 outline-none transition-all"
+                                                        autoFocus
+                                                    />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300">%</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <label className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block mb-1 px-1">Status</label>
+                                                <select
+                                                    value={editActiveStatus ? "active" : "inactive"}
+                                                    onChange={(e) => setEditActiveStatus(e.target.value === "active")}
+                                                    className="w-full h-7 px-2 text-[10px] font-bold border border-slate-200 rounded-lg focus:border-[#10b981] outline-none bg-slate-50 cursor-pointer"
+                                                >
+                                                    <option value="active">Active</option>
+                                                    <option value="inactive">Inactive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-1.5 mt-auto">
+                                            <button
+                                                onClick={() => {
+                                                    setOtpActionType('config');
+                                                    setPendingUpdates({ stage2_percentage: parseFloat(editValue), stage2_active: editActiveStatus });
+                                                    setIsOtpModalOpen(true);
+                                                    setEditingStage(null);
+                                                }}
+                                                className="flex-[2] h-7 bg-[#10b981] text-white text-[9px] font-black tracking-widest uppercase rounded-lg shadow-lg shadow-emerald-500/10 hover:bg-[#059669] active:scale-95 transition-all"
+                                            >
+                                                UPDATE
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingStage(null)}
+                                                className="flex-1 h-7 bg-slate-50 text-slate-400 text-[9px] font-black tracking-widest uppercase rounded-lg hover:bg-slate-100 transition-all border border-slate-100"
+                                            >
+                                                CLOSE
+                                            </button>
                                         </div>
                                     </div>
-
-                                    <div className="flex-1">
-                                        <label className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block mb-1 px-1">Status</label>
-                                        <select
-                                            value={editActiveStatus ? "active" : "inactive"}
-                                            onChange={(e) => setEditActiveStatus(e.target.value === "active")}
-                                            className="w-full h-7 px-2 text-[10px] font-bold border border-slate-200 rounded-lg focus:border-[#10b981] outline-none bg-slate-50 cursor-pointer"
-                                        >
-                                            <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-1.5 mt-auto">
-                                    <button
-                                        onClick={() => {
-                                            updateConfig({ stage2_percentage: parseFloat(editValue), stage2_active: editActiveStatus });
-                                            setEditingStage(null);
-                                        }}
-                                        className="flex-[2] h-7 bg-[#10b981] text-white text-[9px] font-black tracking-widest uppercase rounded-lg shadow-lg shadow-emerald-500/10 hover:bg-[#059669] active:scale-95 transition-all"
-                                    >
-                                        UPDATE
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingStage(null)}
-                                        className="flex-1 h-7 bg-slate-50 text-slate-400 text-[9px] font-black tracking-widest uppercase rounded-lg hover:bg-slate-100 transition-all border border-slate-100"
-                                    >
-                                        CLOSE
-                                    </button>
-                                </div>
+                                )}
                             </div>
-                        )}
-                    </div>
 
-                    <div className="border-t border-slate-50 pt-3 flex justify-center">
-                        <button
-                            onClick={() => {
-                                if (!stage2Loading) {
-                                    updateConfig({
-                                        stage2_active: !displayConfig?.stage2_active
-                                    });
-                                }
-                            }}
-                            disabled={stage2Loading}
-                            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase transition-all active:scale-95 ${displayConfig?.stage2_active ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'} ${stage2Loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        >
-                            {stage2Loading ? (
-                                <div className="w-2.5 h-2.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                                <div className={`w-1 h-1 rounded-full ${displayConfig?.stage2_active ? 'bg-[#10b981]' : 'bg-slate-300'}`} />
-                            )}
-                            {displayConfig?.stage2_active ? 'Active' : 'Inactive'}
-                        </button>
+                            <div className="border-t border-slate-50 pt-3 flex justify-center">
+                                <button
+                                    onClick={() => {
+                                        if (!stage2Loading) {
+                                            setOtpActionType('config');
+                                            setPendingUpdates({ stage2_active: !displayConfig?.stage2_active });
+                                            setIsOtpModalOpen(true);
+                                        }
+                                    }}
+                                    disabled={stage2Loading}
+                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase transition-all active:scale-95 ${displayConfig?.stage2_active ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'} ${stage2Loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                >
+                                    {stage2Loading ? (
+                                        <div className="w-2.5 h-2.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <div className={`w-1 h-1 rounded-full ${displayConfig?.stage2_active ? 'bg-[#10b981]' : 'bg-slate-300'}`} />
+                                    )}
+                                    {displayConfig?.stage2_active ? 'Active' : 'Inactive'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </>
+            )}
 
             <div className="px-6 mt-8 flex items-center justify-between">
                 <div>
@@ -534,30 +583,12 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
 
                                         <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-50">
                                             <button
-                                                onClick={async (e) => {
+                                                onClick={(e) => {
                                                     e.stopPropagation();
                                                     if (processingId === milestone.id) return;
-
-                                                    setProcessingId(milestone.id);
-                                                    try {
-                                                        const result = await referralBenefitService.updateReferralMilestone(milestone.id, {
-                                                            is_active: !milestone.is_active,
-                                                            threshold: milestone.threshold,
-                                                            reward: milestone.reward,
-                                                            description: milestone.description
-                                                        });
-                                                        if (!result.error) {
-                                                            if (onRefresh) {
-                                                                await onRefresh(true);
-                                                            } else {
-                                                                await fetchAllData(true);
-                                                            }
-                                                        }
-                                                    } catch (err) {
-                                                        console.error("Failed to toggle status", err);
-                                                    } finally {
-                                                        setProcessingId(null);
-                                                    }
+                                                    setOtpActionType('milestone');
+                                                    setPendingMilestone(milestone);
+                                                    setIsOtpModalOpen(true);
                                                 }}
                                                 disabled={processingId === milestone.id}
                                                 className={`flex-1 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all shadow-sm active:scale-95 border flex items-center justify-center gap-1.5 ${milestone.is_active
@@ -609,6 +640,29 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
                 }}
             />
 
+            <OtpVerificationModal
+                isOpen={isOtpModalOpen}
+                onClose={() => {
+                    setIsOtpModalOpen(false);
+                    setPendingUpdates(null);
+                    setPendingMilestone(null);
+                }}
+                onVerify={handleConfirmOtpAction}
+                title="Admin Authorization"
+                description={
+                    otpActionType === 'milestone'
+                        ? `Authorize turning ${pendingMilestone?.is_active ? 'OFF' : 'ON'} the "${pendingMilestone?.reward}" milestone.`
+                        : otpActionType === 'global_toggle'
+                            ? `Authorize ${pendingUpdates?.is_global_active ? 'ACTIVATING ALL' : 'DEACTIVATING ALL'} referral offers.`
+                            : "Authorize changes to referral configuration percentages/status."
+                }
+                actionName={
+                    otpActionType === 'milestone'
+                        ? (pendingMilestone?.is_active ? "Deactivate" : "Activate")
+                        : "Confirm Changes"
+                }
+            />
+
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     height: 8px;
@@ -635,6 +689,14 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
                     animation: shimmer 3s infinite linear;
                 }
             `}</style>
+
+            {snackbar && (
+                <Snackbar
+                    message={snackbar.message}
+                    type={snackbar.type}
+                    onClose={() => setSnackbar(null)}
+                />
+            )}
         </div >
     );
 };

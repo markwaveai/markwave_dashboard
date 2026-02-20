@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, Award, Clock, AlertCircle, ShoppingBag, RotateCcw, Plus, Edit2, MoreVertical, X, MonitorPlay } from 'lucide-react';
+import { Gift, Award, Clock, AlertCircle, ShoppingBag, RotateCcw, Plus, Edit2, MoreVertical, X, MonitorPlay, ShieldCheck } from 'lucide-react';
 import { selfBenefitService } from '../../../services/api';
 import BenefitModal from './CreateBenefitModal';
+import OtpVerificationModal from '../../common/OtpVerificationModal';
 import { SelfBenefit } from '../../../types';
 
 interface SelfBenefitsListProps {
@@ -21,6 +22,10 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
 
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // OTP Verification State
+    const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+    const [pendingToggle, setPendingToggle] = useState<SelfBenefit | null>(null);
 
     useEffect(() => {
         const handleClickOutside = () => setActiveMenuId(null);
@@ -48,20 +53,38 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
         }
     };
 
-    const getAdminMobile = () => {
+    const handleConfirmToggle = async (mobile: string, otp: string) => {
+        if (!pendingToggle) return;
+
         try {
-            const session = localStorage.getItem('ak_dashboard_session');
-            if (session) {
-                const parsed = JSON.parse(session);
-                return parsed.mobile || '';
+            const result = await selfBenefitService.updateSelfBenefit(
+                pendingToggle.id,
+                {
+                    title: pendingToggle.title,
+                    description: pendingToggle.description,
+                    units_required: pendingToggle.units_required,
+                    is_active: !pendingToggle.is_active
+                },
+                mobile,
+                otp
+            );
+
+            if (!result.error) {
+                if (onRefresh) {
+                    await onRefresh(true);
+                } else {
+                    await fetchBenefits(true);
+                }
+            } else {
+                throw new Error(result.error);
             }
-        } catch (e) {
-            console.error('Error parsing session:', e);
+        } catch (err: any) {
+            console.error("Failed to toggle status", err);
+            throw err;
+        } finally {
+            setPendingToggle(null);
         }
-        return '';
     };
-
-
 
     const displayBenefits = propBenefits || benefits;
     const isLoading = propLoading !== undefined ? propLoading : loading;
@@ -165,43 +188,10 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
                             {/* Footer Actions (Right) */}
                             <div className="flex-shrink-0 flex flex-col items-center gap-2 ml-auto pl-6 border-l border-[#f1f5f9] self-center">
                                 <button
-                                    onClick={async (e) => {
+                                    onClick={(e) => {
                                         e.stopPropagation();
-                                        if (processingId === benefit.id) return;
-
-                                        const adminMobile = getAdminMobile();
-                                        if (!adminMobile) {
-                                            alert("Admin session not found");
-                                            return;
-                                        }
-
-                                        setProcessingId(benefit.id);
-                                        try {
-                                            const result = await selfBenefitService.updateSelfBenefit(
-                                                benefit.id,
-                                                {
-                                                    title: benefit.title,
-                                                    description: benefit.description,
-                                                    units_required: benefit.units_required,
-                                                    is_active: !benefit.is_active
-                                                },
-                                                adminMobile
-                                            );
-                                            if (!result.error) {
-                                                if (onRefresh) {
-                                                    // Pass true to indicate silent refresh (no global loading)
-                                                    await onRefresh(true);
-                                                } else {
-                                                    await fetchBenefits(true);
-                                                }
-                                            } else {
-                                                console.error(result.error);
-                                            }
-                                        } catch (err) {
-                                            console.error("Failed to toggle status", err);
-                                        } finally {
-                                            setProcessingId(null);
-                                        }
+                                        setPendingToggle(benefit);
+                                        setIsOtpModalOpen(true);
                                     }}
                                     disabled={processingId === benefit.id}
                                     className={`w-full py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-all active:scale-95 flex items-center justify-center gap-1.5 ${benefit.is_active
@@ -246,6 +236,19 @@ const SelfBenefitsList: React.FC<SelfBenefitsListProps> = ({ farmId, benefits: p
                         fetchBenefits(true);
                     }
                 }}
+            />
+
+            {/* Per-Action OTP Verification */}
+            <OtpVerificationModal
+                isOpen={isOtpModalOpen}
+                onClose={() => {
+                    setIsOtpModalOpen(false);
+                    setPendingToggle(null);
+                }}
+                onVerify={handleConfirmToggle}
+                title="Verify Status Change"
+                description={`Authorize turning ${pendingToggle?.is_active ? 'OFF' : 'ON'} the "${pendingToggle?.title}" benefit.`}
+                actionName={pendingToggle?.is_active ? "Deactivate" : "Activate"}
             />
         </div>
     );

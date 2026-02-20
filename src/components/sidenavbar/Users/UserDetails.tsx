@@ -98,8 +98,18 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
         <div className="bg-[#f8fafc] min-h-screen pb-24 font-sans text-slate-900">
             {/* Header and Filters Section */}
             <div className="p-6">
-                <div className="mb-6">
+                <div className="mb-6 flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-[#1e293b]">User Management</h2>
+                    <button
+                        onClick={() => {
+                            setEditingUser(null);
+                            setIsCreateModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl shadow-sm hover:bg-blue-700 hover:shadow-md active:scale-95 transition-all"
+                    >
+                        <Plus size={18} strokeWidth={3} />
+                        <span className="font-bold text-sm">Add User</span>
+                    </button>
                 </div>
 
                 {/* Filters Row */}
@@ -170,7 +180,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                 <div className="bg-white rounded-[1.5rem] shadow-sm border border-[var(--color-gray-200)] overflow-hidden">
                     <div className="overflow-x-auto [scrollbar-width:thin]">
                         <table className="w-full text-left">
-                            <thead className="bg-[var(--color-gray-50)] border-b border-[var(--color-gray-200)]">
+                            <thead className="bg-[var(--color-gray-50)] border-b border-[var(--color-gray-200)] sticky top-0 z-10">
                                 <tr>
                                     <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight text-center">S.No</th>
                                     <th className="px-6 py-5 text-[11px] font-bold text-[var(--color-gray-500)] uppercase tracking-tight">User Name</th>
@@ -287,28 +297,17 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-8 flex justify-end">
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages || 1}
-                        onPageChange={setCurrentPage}
-                    />
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages || 1}
+                    onPageChange={(page) => {
+                        setCurrentPage(page);
+                        document.getElementById('dashboard-main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                />
             </div>
 
-            {/* Add User Floating Button */}
-            <button
-                onClick={() => {
-                    setEditingUser(null);
-                    setIsCreateModalOpen(true);
-                }}
-                className="fixed bottom-10 right-10 flex items-center gap-2 pl-4 pr-2 py-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all z-40 group focus:outline-none"
-            >
-                <span className="font-bold text-xs tracking-wide">Add User</span>
-                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                </div>
-            </button>
+
 
             {/* Create/Edit User Modal */}
             <CreateUser

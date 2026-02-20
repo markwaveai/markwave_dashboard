@@ -333,7 +333,7 @@ const OrdersTab: React.FC = () => {
 
             <div className="overflow-x-auto">
                 <table className="w-full border-separate border-spacing-y-3">
-                    <thead>
+                    <thead className="sticky top-0 z-10 bg-[#f8fafc]">
                         <tr>
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">S.No</th>
                             <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">User Details</th>
@@ -591,6 +591,7 @@ const OrdersTab: React.FC = () => {
                 totalPages={totalPages || 1}
                 onPageChange={(p) => {
                     dispatch(setPage(p));
+                    document.getElementById('dashboard-main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
             />
 
@@ -977,10 +978,20 @@ const OrderVerificationModal: React.FC = () => {
                                                 </div>
                                             )}
                                             {isBankTransfer && (
-                                                <div className="p-2 bg-slate-50/30 border-t border-slate-100 col-span-2">
-                                                    <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Transfer Mode</div>
-                                                    <div className="text-[10px] font-bold text-slate-700 truncate">{tx.transferMode || '-'}</div>
-                                                </div>
+                                                <>
+                                                    <div className="p-2 border-t border-slate-100">
+                                                        <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Account Holder Name</div>
+                                                        <div className="text-[10px] font-bold text-slate-700 truncate">{tx.account_holder_name || '-'}</div>
+                                                    </div>
+                                                    <div className="p-2 bg-slate-50/30 border-t border-slate-100">
+                                                        <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Bank Name</div>
+                                                        <div className="text-[10px] font-bold text-slate-700 truncate">{tx.bank_name || '-'}</div>
+                                                    </div>
+                                                    <div className="p-2 border-t border-slate-100 col-span-2">
+                                                        <div className="text-[8px] font-bold text-slate-400 uppercase mb-0.5">Transfer Mode</div>
+                                                        <div className="text-[10px] font-bold text-slate-700 truncate">{tx.transferMode || '-'}</div>
+                                                    </div>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -1199,15 +1210,14 @@ const OrderVerificationModal: React.FC = () => {
                                     </button>
                                 </>
                             ) : (
-                                isAnyNotOk ? (
+                                <>
                                     <button
                                         onClick={handleReject}
-                                        disabled={isSubmitting || !rejectionNotes.trim()}
+                                        disabled={isSubmitting || !isAnyNotOk || !rejectionNotes.trim()}
                                         className="px-5 py-2 rounded-xl text-[10px] font-bold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-30 disabled:grayscale border-none cursor-pointer shadow-lg shadow-red-100 active:scale-[0.98]"
                                     >
                                         {isSubmitting ? 'PROCESSING...' : 'REJECT ORDER'}
                                     </button>
-                                ) : (
                                     <button
                                         onClick={handleApprove}
                                         disabled={isSubmitting || !isAllOk}
@@ -1215,13 +1225,13 @@ const OrderVerificationModal: React.FC = () => {
                                     >
                                         {isSubmitting ? 'APPROVING...' : 'APPROVE ORDER'}
                                     </button>
-                                )
+                                </>
                             )}
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

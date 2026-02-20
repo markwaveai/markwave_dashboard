@@ -9,8 +9,10 @@ const api = axios.create({
 export const userService = {
   getUsers: async (params?: any): Promise<{ users: User[], total?: number }> => {
     try {
-      const response = await api.get<{ status: string, statuscode: number, users: User[], total?: number }>(API_ENDPOINTS.getUsers(), { params });
-      return { users: response.data.users, total: response.data.total };
+      const response = await api.get<{ status: string, statuscode: number, users: User[], total?: number, count?: number, total_count?: number }>(API_ENDPOINTS.getUsers(), { params });
+      // Robust check for total count
+      const total = response.data.total ?? response.data.count ?? response.data.total_count ?? 0;
+      return { users: response.data.users, total };
     } catch (error) {
       console.error('Error fetching users:', error);
       throw error;
@@ -40,7 +42,13 @@ export const userService = {
   getNetwork: async (params?: any): Promise<any> => {
     try {
       const response = await api.get<any>(API_ENDPOINTS.getReferrals(), { params });
-      return response.data;
+      const data = response.data;
+      // Ensure we pass back useful info if structure differs
+      // If stats is missing but we have count/total, let's normalize it for the slice/component?
+      // Actually, the slice expects { stats, users }. Layout usually matches. 
+      // But if it's missing, let's try to polyfill in the slice or here.
+      // Returning raw data is fine, slice handles interpretation.
+      return data;
     } catch (error) {
       console.error('Error fetching network:', error);
       throw error;
@@ -165,6 +173,19 @@ export const farmService = {
   }
 };
 
+export const otpService = {
+  sendOtp: async (mobile: string, appName: string = 'TrueHarvest'): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(API_ENDPOINTS.sendOtp(), { mobile, appName });
+      return { data: response.data, message: 'OTP sent successfully' };
+    } catch (error: any) {
+      console.error('Error sending OTP:', error);
+      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to send OTP';
+      return { error: errorMessage };
+    }
+  }
+};
+
 export const selfBenefitService = {
   getSelfBenefits: async (farmId?: string): Promise<SelfBenefit[]> => {
     try {
@@ -177,11 +198,12 @@ export const selfBenefitService = {
     }
   },
 
-  createSelfBenefit: async (benefitData: CreateSelfBenefitRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+  createSelfBenefit: async (benefitData: CreateSelfBenefitRequest, adminMobile: string, adminOtp: string): Promise<ApiResponse<any>> => {
     try {
       const response = await api.post(API_ENDPOINTS.getSelfBenefits(), benefitData, {
         headers: {
-          'X-Admin-Mobile': adminMobile
+          'x-admin-mobile': adminMobile,
+          'x-admin-otp': adminOtp
         }
       });
 
@@ -197,13 +219,14 @@ export const selfBenefitService = {
     }
   },
 
-  updateSelfBenefit: async (benefitId: string, benefitData: CreateSelfBenefitRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+  updateSelfBenefit: async (benefitId: string, benefitData: CreateSelfBenefitRequest, adminMobile: string, adminOtp: string): Promise<ApiResponse<any>> => {
     try {
       // payload no longer requires id in the body
       const { id, ...payload } = benefitData as any;
       const response = await api.put(API_ENDPOINTS.updateSelfBenefit(encodeURIComponent(benefitId)), payload, {
         headers: {
-          'X-Admin-Mobile': adminMobile,
+          'x-admin-mobile': adminMobile,
+          'x-admin-otp': adminOtp,
           'id': benefitId
         }
       });
@@ -234,18 +257,28 @@ export const referralBenefitService = {
       throw error;
     }
   },
-  createReferralMilestone: async (data: CreateReferralMilestoneRequest): Promise<ApiResponse<ReferralMilestone>> => {
+  createReferralMilestone: async (data: CreateReferralMilestoneRequest, adminMobile: string, adminOtp: string): Promise<ApiResponse<ReferralMilestone>> => {
     try {
-      const response = await api.post<ApiResponse<ReferralMilestone>>(API_ENDPOINTS.getReferralMilestones(), data);
+      const response = await api.post<ApiResponse<ReferralMilestone>>(API_ENDPOINTS.getReferralMilestones(), data, {
+        headers: {
+          'x-admin-mobile': adminMobile,
+          'x-admin-otp': adminOtp
+        }
+      });
       return response.data;
     } catch (error) {
       console.error('Error creating referral milestone:', error);
       throw error;
     }
   },
-  updateReferralMilestone: async (id: string, data: CreateReferralMilestoneRequest): Promise<ApiResponse<ReferralMilestone>> => {
+  updateReferralMilestone: async (id: string, data: CreateReferralMilestoneRequest, adminMobile: string, adminOtp: string): Promise<ApiResponse<ReferralMilestone>> => {
     try {
-      const response = await api.put<ApiResponse<ReferralMilestone>>(API_ENDPOINTS.updateReferralMilestone(id), data);
+      const response = await api.put<ApiResponse<ReferralMilestone>>(API_ENDPOINTS.updateReferralMilestone(id), data, {
+        headers: {
+          'x-admin-mobile': adminMobile,
+          'x-admin-otp': adminOtp
+        }
+      });
       return response.data;
     } catch (error) {
       console.error('Error updating referral milestone:', error);
@@ -278,9 +311,14 @@ export const referralConfigService = {
       throw error;
     }
   },
-  updateReferralConfig: async (data: UpdateReferralConfigRequest): Promise<ApiResponse<ReferralConfig>> => {
+  updateReferralConfig: async (data: UpdateReferralConfigRequest, adminMobile: string, adminOtp: string): Promise<ApiResponse<ReferralConfig>> => {
     try {
-      const response = await api.put<ApiResponse<ReferralConfig>>(API_ENDPOINTS.updateReferralConfig(), data);
+      const response = await api.put<ApiResponse<ReferralConfig>>(API_ENDPOINTS.updateReferralConfig(), data, {
+        headers: {
+          'x-admin-mobile': adminMobile,
+          'x-admin-otp': adminOtp
+        }
+      });
       return response.data;
     } catch (error) {
       console.error('Error updating referral config:', error);

@@ -130,7 +130,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                     />
                 )}
 
-                <main className="flex-1 overflow-y-auto p-0 bg-[var(--color-gray-50)]">
+                <main id="dashboard-main-scroll-container" className="flex-1 overflow-y-auto p-0 bg-[var(--color-gray-50)]">
                     <div className="w-full p-3 lg:p-4">
                         {children}
                     </div>

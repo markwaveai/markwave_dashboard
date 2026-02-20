@@ -13,6 +13,7 @@ export const API_CONFIG = {
 };
 
 export const API_ENDPOINTS = {
+  sendOtp: () => `${API_CONFIG.getBaseUrl()}/otp/send-whatsapp`,
   getUsers: () => `${API_CONFIG.getBaseUrl()}/users/customers`,
   getReferrals: () => `${API_CONFIG.getBaseUrl()}/users/referrals`,
   createUser: () => `${API_CONFIG.getBaseUrl()}/users/referral-signup`,

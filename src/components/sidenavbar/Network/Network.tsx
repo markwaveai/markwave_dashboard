@@ -155,7 +155,7 @@ const NetworkTab: React.FC = () => {
                     <div className="overflow-x-auto [scrollbar-width:thin]">
                         <table className="w-full text-xs text-left border-collapse">
                             <thead>
-                                <tr className="bg-[var(--color-gray-50)] border-b border-[var(--color-gray-200)]">
+                                <tr className="bg-[var(--color-gray-50)] border-b border-[var(--color-gray-200)] sticky top-0 z-10">
                                     <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest text-center">S.No</th>
                                     <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest">Name</th>
                                     <th className="px-6 py-4 text-[10px] font-bold text-[var(--color-gray-500)] uppercase tracking-widest">Mobile</th>
@@ -228,48 +228,15 @@ const NetworkTab: React.FC = () => {
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-8 flex justify-center pb-8">
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm font-medium text-[#64748B] bg-white hover:bg-[#F8FAFC] disabled:opacity-50 transition-all shadow-sm"
-                        >
-                            Previous
-                        </button>
-
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                let pageNum = 1;
-                                if (totalPages <= 5) pageNum = i + 1;
-                                else if (currentPage <= 3) pageNum = i + 1;
-                                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                                else pageNum = currentPage - 2 + i;
-
-                                return (
-                                    <button
-                                        key={pageNum}
-                                        onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-10 h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${currentPage === pageNum
-                                            ? 'bg-[#3B82F6] text-white'
-                                            : 'bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]'
-                                            }`}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <button
-                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm font-medium text-[#64748B] bg-white hover:bg-[#F8FAFC] disabled:opacity-50 transition-all shadow-sm"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+                {/* Pagination */}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages || 1}
+                    onPageChange={(page) => {
+                        setCurrentPage(page);
+                        document.getElementById('dashboard-main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                />
             </div>
         </div>
     );
