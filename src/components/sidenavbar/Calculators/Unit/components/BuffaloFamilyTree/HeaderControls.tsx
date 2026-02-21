@@ -81,10 +81,10 @@ const HeaderControls = ({
 
     return (
         <div className="bg-white border-b border-slate-200 px-4 py-2 z-[80] relative">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto hide-scrollbar gap-4">
 
                 {/* Left Section: Configuration & Actions */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 shrink-0">
 
                     {/* Configuration Group */}
                     <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 shadow-sm">
@@ -190,7 +190,7 @@ const HeaderControls = ({
 
                 {/* Center Section: View Toggle */}
                 {treeData && !isViewRestricted && (
-                    <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner">
+                    <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner shrink-0">
                         <button
                             disabled={isViewRestricted}
                             className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
@@ -227,7 +227,7 @@ const HeaderControls = ({
 
                 {/* Right Section: Summary Stats */}
                 {treeData && treeData.summaryStats && (
-                    <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm">
+                    <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0">
 
                         <SimpleTooltip content={`Total buffaloes after ${years} years`} placement="bottom">
                             <div className="flex flex-col items-center cursor-default">

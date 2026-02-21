@@ -69,12 +69,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
         if (orderId && !foundEntry && adminMobile) {
             setIsFetchingInfo(true);
             orderService.getOrderDetails(orderId)
-                .then(response => {
+                .then((response: any) => {
                     if (response?.status === 'success' && response.data) {
                         setFetchedOrderData(response.data);
                     }
                 })
-                .catch(err => {
+                .catch((err: any) => {
                     console.error('Error fetching specifically:', err);
                 })
                 .finally(() => {

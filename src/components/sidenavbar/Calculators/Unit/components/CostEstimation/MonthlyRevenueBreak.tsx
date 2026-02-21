@@ -583,18 +583,18 @@ const MonthlyRevenueBreak = ({
                                                 </div>
                                             </th>
                                         ))}
-                                        <th className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-20 w-28 min-w-[7rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
-                                        <th className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700`}>
+                                        <th className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-20 w-28 min-w-[7rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
+                                        <th className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700`}>
                                             <SimpleTooltip content="Cattle Protection Fund" placement="bottom">
                                                 <span className="cursor-default">CPF</span>
                                             </SimpleTooltip>
                                         </th>
-                                        {isCGFEnabled && <th className="sticky right-[5rem] z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-rose-50 text-rose-700 ">
+                                        {isCGFEnabled && <th className="md:sticky md:right-[5rem] md:z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-rose-50 text-rose-700 ">
                                             <SimpleTooltip content="Cattle Growing Fund" placement="bottom">
                                                 <span className="cursor-default">CGF</span>
                                             </SimpleTooltip>
                                         </th>}
-                                        <th className="sticky right-0 z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-emerald-50 text-emerald-700 border-l border-slate-200">Net</th>
+                                        <th className="md:sticky md:right-0 md:z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-emerald-50 text-emerald-700 border-l border-slate-200">Net</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -740,18 +740,18 @@ const MonthlyRevenueBreak = ({
                                                             </td>
                                                         );
                                                     })}
-                                                    <td className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-10 px-2 py-3 text-center font-bold text-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
+                                                    <td className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-10 px-2 py-3 text-center font-bold text-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
                                                         {formatCurrency(unitTotal)}
                                                     </td>
-                                                    <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-3 text-center font-medium text-amber-600 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
+                                                    <td className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-10 px-2 py-3 text-center font-medium text-amber-600 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
                                                         {formatCurrency(monthlyCpfValue)}
                                                     </td>
                                                     {isCGFEnabled && (
-                                                        <td className={`sticky right-[5rem] z-10 px-2 py-3 text-center font-medium text-rose-600 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
+                                                        <td className={`md:sticky md:right-[5rem] md:z-10 px-2 py-3 text-center font-medium text-rose-600 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
                                                             {formatCurrency(monthlyCgfValue)}
                                                         </td>
                                                     )}
-                                                    <td className={`sticky right-0 z-10 px-2 py-3 text-center font-bold border-l border-slate-200 ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
+                                                    <td className={`md:sticky md:right-0 md:z-10 px-2 py-3 text-center font-bold border-l border-slate-200 ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
                                                         {formatCurrency(netRevenue)}
                                                     </td>
 
@@ -782,21 +782,21 @@ const MonthlyRevenueBreak = ({
                                                 </td>
                                             );
                                         })}
-                                        <td className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-10 px-2 py-4 text-center bg-slate-900 border-l border-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>
+                                        <td className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-10 px-2 py-4 text-center bg-slate-900 border-l border-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>
                                             {formatCurrency(unitBuffaloes.reduce((s: any, b: any) => s + Array.from({ length: 12 }).reduce((ms: any, _, m) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, m);
                                                 return ms + ((monthlyRevenue[year]?.[month]?.buffaloes[b.id] || 0));
                                             }, 0), 0))}
                                         </td>
-                                        <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-4 text-center bg-amber-900 text-amber-200`}>
+                                        <td className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-10 px-2 py-4 text-center bg-amber-900 text-amber-200`}>
                                             {formatCurrency(cpfCost.annualCPFCost * units)}
                                         </td>
                                         {isCGFEnabled && (
-                                            <td className="sticky right-[5rem] z-10 px-2 py-4 text-center bg-rose-900 text-rose-200">
+                                            <td className="md:sticky md:right-[5rem] md:z-10 px-2 py-4 text-center bg-rose-900 text-rose-200">
                                                 {formatCurrency((Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0) * units)}
                                             </td>
                                         )}
-                                        <td className={`sticky right-0 z-10 px-2 py-4 text-center bg-emerald-900 border-l border-slate-700 text-emerald-300`}>
+                                        <td className={`md:sticky md:right-0 md:z-10 px-2 py-4 text-center bg-emerald-900 border-l border-slate-700 text-emerald-300`}>
                                             {formatCurrency(((unitBuffaloes as any[]).reduce((s: number, b: any) => s + (Array.from({ length: 12 }) as any[]).reduce((ms: number, _, m: number) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, m);
                                                 return ms + (Number(monthlyRevenue[year]?.[month]?.buffaloes[b.id]) || 0);
