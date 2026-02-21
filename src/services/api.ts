@@ -130,11 +130,12 @@ export const farmService = {
     }
   },
 
-  addFarm: async (farmData: CreateFarmRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+  addFarm: async (farmData: CreateFarmRequest, adminMobile: string, adminOtp: string): Promise<ApiResponse<any>> => {
     try {
       const response = await api.post(API_ENDPOINTS.addFarm(), farmData, {
         headers: {
           'X-Admin-Mobile': adminMobile,
+          'x-admin-otp': adminOtp,
           'Content-Type': 'application/json'
         }
       });
@@ -151,11 +152,12 @@ export const farmService = {
     }
   },
 
-  updateFarm: async (farmId: string, farmData: CreateFarmRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+  updateFarm: async (farmId: string, farmData: CreateFarmRequest, adminMobile: string, adminOtp: string): Promise<ApiResponse<any>> => {
     try {
       const response = await api.put(API_ENDPOINTS.updateFarm(farmId), farmData, {
         headers: {
           'X-Admin-Mobile': adminMobile,
+          'x-admin-otp': adminOtp,
           'Content-Type': 'application/json'
         }
       });

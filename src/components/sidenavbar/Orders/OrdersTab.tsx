@@ -118,20 +118,7 @@ const OrdersTab: React.FC = () => {
     const [farms, setFarms] = useState<Farm[]>([]);
     const [farmsLoading, setFarmsLoading] = useState(false);
 
-    useEffect(() => {
-        const fetchFarms = async () => {
-            setFarmsLoading(true);
-            try {
-                const data = await farmService.getFarms('ACTIVE');
-                setFarms(data);
-            } catch (error) {
-                console.error('Error fetching farms:', error);
-            } finally {
-                setFarmsLoading(false);
-            }
-        };
-        fetchFarms();
-    }, []);
+
 
 
 
@@ -149,11 +136,29 @@ const OrdersTab: React.FC = () => {
     };
 
     useEffect(() => {
+        const fetchFarms = async () => {
+            if (selectedOrderId) return;
+            setFarmsLoading(true);
+            try {
+                const data = await farmService.getFarms('ACTIVE');
+                setFarms(data);
+            } catch (error) {
+                console.error('Error fetching farms:', error);
+            } finally {
+                setFarmsLoading(false);
+            }
+        };
+        fetchFarms();
+    }, [selectedOrderId]);
+
+    useEffect(() => {
         setLocalSearch(searchQuery);
     }, [searchQuery]);
 
     useEffect(() => {
         const fetchFn = () => {
+            if (selectedOrderId) return;
+
             dispatch(fetchPendingUnits({
                 adminMobile,
                 page,

@@ -3,6 +3,7 @@ import { X, MapPin, Tractor } from 'lucide-react';
 import { farmService } from '../../../services/api';
 import { CreateFarmRequest } from '../../../types';
 import Snackbar from '../../common/Snackbar';
+import OtpVerificationModal from '../../common/OtpVerificationModal';
 
 interface CreateFarmModalProps {
     isOpen: boolean;
@@ -37,6 +38,7 @@ const CreateFarmModal: React.FC<CreateFarmModalProps> = ({
     });
     const [loading, setLoading] = useState(false);
     const [snackbar, setSnackbar] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -73,6 +75,10 @@ const CreateFarmModal: React.FC<CreateFarmModalProps> = ({
             return;
         }
 
+        setIsOtpModalOpen(true);
+    };
+
+    const handleConfirmOtp = async (mobile: string, otp: string) => {
         setLoading(true);
 
         try {
@@ -86,19 +92,20 @@ const CreateFarmModal: React.FC<CreateFarmModalProps> = ({
 
             let response;
             if (isEditMode && initialData?.id) {
-                response = await farmService.updateFarm(initialData.id, farmData, adminMobile);
+                response = await farmService.updateFarm(initialData.id, farmData, mobile, otp);
             } else {
-                response = await farmService.addFarm(farmData, adminMobile);
+                response = await farmService.addFarm(farmData, mobile, otp);
             }
 
             if (response.error) {
-                setSnackbar({ message: response.error, type: 'error' });
+                throw new Error(response.error);
             } else {
                 onSuccess(isEditMode ? 'Farm updated successfully!' : 'Farm added successfully!');
                 onClose();
             }
-        } catch (error) {
-            setSnackbar({ message: 'An unexpected error occurred', type: 'error' });
+        } catch (error: any) {
+            setSnackbar({ message: error.message || 'An unexpected error occurred', type: 'error' });
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -222,6 +229,14 @@ const CreateFarmModal: React.FC<CreateFarmModalProps> = ({
                     onClose={() => setSnackbar(null)}
                 />
             )}
+            <OtpVerificationModal
+                isOpen={isOtpModalOpen}
+                onClose={() => setIsOtpModalOpen(false)}
+                onVerify={handleConfirmOtp}
+                title="Admin Authorization"
+                description={isEditMode ? "Authorize updating farm details." : "Authorize adding a new farm."}
+                actionName={isEditMode ? "Update Farm" : "Add Farm"}
+            />
         </div>
     );
 };

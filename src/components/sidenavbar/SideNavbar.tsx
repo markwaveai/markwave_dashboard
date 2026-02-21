@@ -108,7 +108,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                 </button>
 
                 {/* Inner Scrollable Container */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col">
+                <div className="flex-1 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col">
                     <ul className="list-none flex flex-col gap-1 w-full">
                         {/* {hasSession && (
                             <li>
@@ -128,6 +128,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                         <ClipboardList size={20} className={activeTab === 'orders' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
                                         {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Orders</span>}
                                     </div>
+                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Orders</div>}
                                 </button>
                             </li>
                         )}
@@ -310,6 +311,11 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                         {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Unit Calculator</span>}
                                     </div>
                                     {isSidebarOpen && (isUnitCalcOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
+                                    {!isSidebarOpen && (
+                                        <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                                            Unit Calculator
+                                        </div>
+                                    )}
                                 </button>
 
                                 {isSidebarOpen && isUnitCalcOpen && (
@@ -347,6 +353,11 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     <ShieldIcon size={20} className={activeTab === 'privacy-policy' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
                                     {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Privacy Policy</span>}
                                 </div>
+                                {!isSidebarOpen && (
+                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                                        Privacy Policy
+                                    </div>
+                                )}
                             </button>
                         </li>
 
@@ -359,6 +370,11 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     <UserMinus size={20} className={activeTab === 'deactivate-user' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
                                     {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Deactivate User</span>}
                                 </div>
+                                {!isSidebarOpen && (
+                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                                        Deactivate User
+                                    </div>
+                                )}
                             </button>
                         </li>
 
@@ -371,6 +387,11 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                     <LifeBuoy size={20} className={activeTab === 'support' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
                                     {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Support</span>}
                                 </div>
+                                {!isSidebarOpen && (
+                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                                        Support
+                                    </div>
+                                )}
                             </button>
                         </li>
 
@@ -391,6 +412,11 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                         {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Landify Platform</span>}
                                     </div>
                                     {isSidebarOpen && (isLandifyOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
+                                    {!isSidebarOpen && (
+                                        <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                                            Landify Platform
+                                        </div>
+                                    )}
                                 </button>
                                 {isSidebarOpen && isLandifyOpen && (
                                     <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
@@ -437,6 +463,11 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                         {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">True Harvest</span>}
                                     </div>
                                     {isSidebarOpen && (isTrueHarvestOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
+                                    {!isSidebarOpen && (
+                                        <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                                            True Harvest
+                                        </div>
+                                    )}
                                 </button>
                                 {isSidebarOpen && isTrueHarvestOpen && (
                                     <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
