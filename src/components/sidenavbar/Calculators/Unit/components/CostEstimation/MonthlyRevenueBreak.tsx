@@ -12,7 +12,6 @@ const MonthlyRevenueBreak = ({
     calculateTotalCumulativeRevenueUntilYear,
     monthNames,
     formatCurrency,
-    setHeaderStats,
     selectedYearIndex,
     isCGFEnabled
 }: any) => {
@@ -336,19 +335,6 @@ const MonthlyRevenueBreak = ({
         };
     }, [selectedUnit, buffaloDetails, treeData.startYear, treeData.years, treeData.startMonth, monthlyRevenue]);
 
-    // Sync with Header
-    React.useEffect(() => {
-        if (typeof setHeaderStats === 'function') {
-            setHeaderStats({
-                cumulativeNetRevenue: fullDurationStats.netRev,
-                cumulativeNetRevenueWithCaring: fullDurationStats.netRevWithCaring,
-                totalRevenue: totalCumulativeUntilYear, // Still used for internal logic potentially
-                totalAssetValue: fullDurationStats.assetValue,
-                totalBuffaloes: fullDurationStats.buffaloes,
-                endYear: selectedYear
-            });
-        }
-    }, [fullDurationStats, selectedYear, setHeaderStats]);
 
     const startMonthName = monthNames[treeData.startMonth || 0];
     const startDateString = `${startMonthName} ${treeData.startYear}`;
@@ -446,12 +432,68 @@ const MonthlyRevenueBreak = ({
         return () => window.removeEventListener('resize', checkScroll);
     }, [unitBuffaloes]);
 
+    const validMonthsThisYear = useMemo(() => {
+        const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+        const currentYearAbsStart = (treeData.startYear + selectedYearIndex) * 12;
+
+        let count = 0;
+        for (let m = 0; m < 12; m++) {
+            const absM = currentYearAbsStart + m;
+            if (absM >= absoluteStartMonth && absM <= absoluteEndMonth) count++;
+        }
+        return count;
+    }, [selectedYearIndex, treeData.startYear, treeData.startMonth, treeData.durationMonths, treeData.years]);
+
+    // Update annual calculations to use validMonthsThisYear
+    const annualRevenue = useMemo(() => {
+        return unitBuffaloes.reduce((sum: number, buffalo: any) => {
+            let yearSum = 0;
+            for (let m = 0; m < 12; m++) {
+                const { year, month, absMonth } = getCalendarDate(selectedYearIndex, m);
+                const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+                const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+
+                if (absMonth >= absoluteStartMonth && absMonth <= absoluteEndMonth) {
+                    yearSum += (Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0);
+                }
+            }
+            return sum + yearSum;
+        }, 0);
+    }, [unitBuffaloes, selectedYearIndex, monthlyRevenue, treeData]);
+
+    const annualCgfCost = useMemo(() => {
+        let total = 0;
+        for (let m = 0; m < 12; m++) {
+            const { absMonth } = getCalendarDate(selectedYearIndex, m);
+            const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+            const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+
+            if (absMonth >= absoluteStartMonth && absMonth <= absoluteEndMonth) {
+                total += calculateMonthlyCGF(selectedYearIndex, m);
+            }
+        }
+        return total * units;
+    }, [selectedYearIndex, treeData, units, isCGFEnabled, buffaloDetails]);
+
+    const annualCpfCost = useMemo(() => {
+        let total = 0;
+        for (let m = 0; m < 12; m++) {
+            const { absMonth } = getCalendarDate(selectedYearIndex, m);
+            const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+            const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+
+            if (absMonth >= absoluteStartMonth && absMonth <= absoluteEndMonth) {
+                total += cpfCost.monthlyCosts[m];
+            }
+        }
+        return total * units;
+    }, [selectedYearIndex, treeData, units, cpfCost]);
+
     return (
         <div className="w-full mb-6 space-y-2">
             {unitBuffaloes.length > 0 ? (
                 <>
-                    {/* 1. Top Summary Cards - KPI Grid */}
-                    {/* 1. Top Summary Cards - KPI Grid */}
                     {/* 1. Top Summary Cards - KPI Grid */}
                     <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isCGFEnabled ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-2`}>
 
@@ -460,12 +502,7 @@ const MonthlyRevenueBreak = ({
                             <div>
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Revenue</p>
                                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                                    {formatCurrency(unitBuffaloes.reduce((sum: number, buffalo: any) => {
-                                        return sum + Array.from({ length: 12 }).reduce((monthSum: number, _, mIndex: number) => {
-                                            const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
-                                            return monthSum + ((Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0));
-                                        }, 0);
-                                    }, 0))}
+                                    {formatCurrency(annualRevenue)}
                                 </h3>
                             </div>
                         </div>
@@ -475,7 +512,7 @@ const MonthlyRevenueBreak = ({
                             <div>
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CPF Cost</p>
                                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                                    {formatCurrency(cpfCost.annualCPFCost * units)}
+                                    {formatCurrency(annualCpfCost)}
                                 </h3>
                             </div>
                         </div>
@@ -486,7 +523,7 @@ const MonthlyRevenueBreak = ({
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CGF Cost</p>
                                     <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                                        {formatCurrency((Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0) * units)}
+                                        {formatCurrency(annualCgfCost)}
                                     </h3>
                                 </div>
                             </div>
@@ -599,7 +636,12 @@ const MonthlyRevenueBreak = ({
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {Array.from({ length: 12 }).map((_, mIndex: number) => {
-                                        const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
+                                        const { year, month, absMonth } = getCalendarDate(selectedYearIndex, mIndex);
+                                        const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+                                        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+
+                                        if (absMonth > absoluteEndMonth) return null;
+
                                         const monthName = monthNames[month];
                                         const unitTotal: number = (unitBuffaloes as any[]).reduce((sum: number, b: any) => sum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[b.id]) || 0), 0);
                                         const monthlyCpfValue: number = cpfCost.monthlyCosts[mIndex] * units;

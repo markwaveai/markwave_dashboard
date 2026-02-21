@@ -80,8 +80,8 @@ const HeaderControls = ({
     }, [units, years, endMonth, startYear, startMonth, startDay]);
 
     return (
-        <div className="bg-white border-b border-slate-200 px-4 py-2 z-[80] relative">
-            <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto hide-scrollbar gap-4">
+        <div className="bg-white border-b border-slate-200 px-4 py-2 z-[80] relative overflow-visible">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
 
                 {/* Left Section: Configuration & Actions */}
                 <div className="flex items-center gap-4 shrink-0">
@@ -111,14 +111,20 @@ const HeaderControls = ({
                                     selected={new Date(startYear, startMonth, 1)}
                                     onChange={(date: Date | null) => {
                                         if (date) {
-                                            setStartYear(date.getFullYear());
-                                            setStartMonth(date.getMonth());
+                                            const newYear = date.getFullYear();
+                                            const newMonth = date.getMonth();
+                                            setStartYear(newYear);
+                                            setStartMonth(newMonth);
                                             setStartDay(1);
+                                            // Reset to 10 years when start changes
+                                            setYears(10);
+                                            setEndMonth((newMonth + 10 * 12 - 1) % 12);
                                         }
                                     }}
                                     minDate={new Date(2026, 0, 1)}
                                     dateFormat="MMM yyyy"
                                     showMonthYearPicker
+                                    portalId="root"
                                     className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
                                     placeholderText="Select"
                                     onKeyDown={(e) => e.preventDefault()}
@@ -133,20 +139,28 @@ const HeaderControls = ({
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">End</span>
                             <div className="relative w-24">
                                 <DatePicker
-                                    selected={new Date(startYear + (isNaN(years) ? 0 : years - 1), endMonth, 1)}
+                                    selected={new Date(Math.floor((startYear * 12 + startMonth + Math.round(years * 12) - 1) / 12), (startMonth + Math.round(years * 12) - 1) % 12, 1)}
                                     onChange={(date: Date | null) => {
                                         if (date) {
-                                            const selectedYear = date.getFullYear();
-                                            const selectedMonth = date.getMonth();
-                                            const newYears = selectedYear - startYear + 1;
-                                            setYears(newYears);
-                                            setEndMonth(selectedMonth);
+                                            const newEndYear = date.getFullYear();
+                                            const newEndMonth = date.getMonth();
+                                            const startAbsolute = startYear * 12 + startMonth;
+                                            const endAbsolute = newEndYear * 12 + newEndMonth;
+
+                                            let diffMonths = (endAbsolute - startAbsolute) + 1;
+                                            if (diffMonths > 120) diffMonths = 120; // Cap at 10 years
+                                            if (diffMonths < 12) diffMonths = 12; // Min 1 year
+                                            const numYears = diffMonths / 12;
+
+                                            setYears(numYears);
+                                            setEndMonth(newEndMonth);
                                         }
                                     }}
-                                    minDate={new Date(startYear + 3, 0, 1)}
-                                    maxDate={new Date(startYear + 9, 11, 1)}
+                                    minDate={new Date(startYear, startMonth, 1)}
+                                    maxDate={new Date(Math.floor((startYear * 12 + startMonth + 10 * 12 - 1) / 12), (startMonth + 10 * 12 - 1) % 12, 1)}
                                     dateFormat="MMM yyyy"
                                     showMonthYearPicker
+                                    portalId="root"
                                     className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
                                     placeholderText="Select"
                                     onKeyDown={(e) => e.preventDefault()}
@@ -156,31 +170,8 @@ const HeaderControls = ({
                             </div>
                         </div>
 
-                        {/* Duration (Years) Input - Swapped Position */}
-                        <div className="flex items-center gap-1 px-1 py-1">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Years</span>
-                            <input
-                                type="number"
-                                min="4"
-                                max="10"
-                                className="w-10 bg-white/50 border border-slate-200 rounded px-1 text-sm font-semibold text-slate-700 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                                value={years || ''}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === '') {
-                                        setYears(NaN);
-                                    } else {
-                                        let num = parseInt(val, 10);
-                                        if (!isNaN(num)) {
-                                            if (num > 10) num = 10;
-                                            if (num < 4) num = 4;
-                                            setYears(num);
-                                        }
-                                    }
-                                }}
-                                placeholder="4-10"
-                            />
-                        </div>
+
+
 
                     </div>
 
@@ -227,7 +218,7 @@ const HeaderControls = ({
 
                 {/* Right Section: Summary Stats */}
                 {treeData && treeData.summaryStats && (
-                    <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0">
+                    <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 overflow-visible">
 
                         <SimpleTooltip content={`Total buffaloes after ${years} years`} placement="bottom">
                             <div className="flex flex-col items-center cursor-default">

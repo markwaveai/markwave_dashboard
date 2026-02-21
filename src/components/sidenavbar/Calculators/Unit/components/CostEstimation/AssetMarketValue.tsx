@@ -26,7 +26,12 @@ const AssetMarketValue = ({
     const startMonthName = monthNames[treeData.startMonth || 0];
     const startDateString = `${startMonthName} ${treeData.startYear}`;
 
-    const endDateString = `December ${endYear}`;
+    const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
+    const totalDuration = treeData.durationMonths || (treeData.years * 12);
+    const absoluteEnd = absoluteStart + totalDuration - 1;
+    const endMonthName = monthNames[absoluteEnd % 12];
+    const endYearDisplay = Math.floor(absoluteEnd / 12);
+    const endDateString = `${endMonthName} ${endYearDisplay}`;
 
     // const [selectedYear, setSelectedYear] = useState(treeData.startYear); // Controlled by Parent
     const breakdownYear = selectedYear;
@@ -79,14 +84,27 @@ const AssetMarketValue = ({
         let totalValue = 0;
         let totalCount = 0;
 
-        Object.values(buffaloDetails).forEach((buffalo: any) => {
-            // Only count buffaloes born before or in the last year/month
-            // Determine target month: December (11) for full years, or endMonth for the final year
-            // Use 12 (January of next year equivalent) for full years to capture completed year valuation
-            const targetMonth = (year === endYear && endMonth !== undefined && endMonth !== 11) ? endMonth : 12;
+        // Calculate the simulation year index for this calendar year
+        const simYearIndex = year - treeData.startYear;
+        const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const totalDurationMonths = treeData.durationMonths || (treeData.years * 12);
+        const absoluteEndMonth = absoluteStartMonth + totalDurationMonths - 1;
 
-            if (buffalo.birthYear < year || (buffalo.birthYear === year && (buffalo.birthMonth || 0) <= targetMonth)) {
-                const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
+        // Target month is the end of this simulation year span
+        const monthsPassed = Math.min((simYearIndex + 1) * 12, totalDurationMonths);
+        const absoluteTargetMonth = absoluteStartMonth + monthsPassed - 1;
+        // Cap at simulation end
+        const cappedAbsTarget = Math.min(absoluteTargetMonth, absoluteEndMonth);
+
+        const targetYear = Math.floor(cappedAbsTarget / 12);
+        const targetMonth = cappedAbsTarget % 12;
+
+        Object.values(buffaloDetails).forEach((buffalo: any) => {
+            const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+            const absoluteBirthMonth = buffalo.birthYear * 12 + birthMonth;
+
+            if (absoluteBirthMonth <= cappedAbsTarget) {
+                const ageInMonths = calculateAgeInMonths(buffalo, targetYear, targetMonth);
                 let value = getBuffaloValueByAge(ageInMonths);
 
                 // Override: 0-12 months value is 0 in the first year only

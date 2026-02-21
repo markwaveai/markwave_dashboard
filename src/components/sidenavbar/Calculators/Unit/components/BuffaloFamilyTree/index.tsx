@@ -106,6 +106,8 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
 
     const [shouldAutoRun, setShouldAutoRun] = useState(false);
 
+    const durationMonths = Math.round(years * 12);
+
     useEffect(() => {
         if (shouldAutoRun) {
             runSimulation();
@@ -123,6 +125,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                 startYear,
                 startMonth,
                 startDay,
+                durationMonths,
                 hasSimulation: !!treeData
             };
             localStorage.setItem('buffalo_sim_config', JSON.stringify(config));
@@ -130,7 +133,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
             // This is just for config, so it shouldn't fail, but good to have
             console.warn("Failed to save simulation config", e);
         }
-    }, [units, years, endMonth, startYear, startMonth, startDay, treeData]);
+    }, [units, years, endMonth, startYear, startMonth, startDay, treeData, durationMonths]);
 
     // Staggered revenue configuration
     const revenueConfig = {
@@ -292,7 +295,11 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
             }
 
             const matureBuffaloes = matureBuffaloIds.size;
-            const totalBuffaloes = herd.filter((buffalo: any) => buffalo.birthYear <= currentYear).length;
+            const currentYearEndAbsolute = Math.min(absoluteEndMonth, currentYear * 12 + 11);
+            const totalBuffaloes = herd.filter((buffalo: any) => {
+                const birthAbsolute = buffalo.birthYear * 12 + (buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0));
+                return birthAbsolute <= currentYearEndAbsolute;
+            }).length;
 
             totalRevenue += annualRevenue;
             totalMatureBuffaloYears += matureBuffaloes;
@@ -329,10 +336,8 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     const runSimulation = () => {
         setLoading(true);
         {
-            // Calculate totalMonthsDuration from Start Year/Month and End Year/Month
-            // Total Duration in months = ((FinalYear * 12) + FinalMonth) - ((StartYear * 12) + StartMonth) + 1
-            const finalYear = startYear + years - 1;
-            const totalMonthsDuration = ((finalYear * 12) + endMonth) - (startYear * 12 + startMonth) + 1;
+            // Use the calculated durationMonths
+            const totalMonthsDuration = durationMonths;
             const herd: any[] = [];
 
             // Create initial buffaloes (2 per unit) with staggered acquisition
@@ -511,8 +516,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
             let totalAssetValue = 0;
             herd.forEach(buffalo => {
                 // Calculate age at the specific end month of the simulation
-                // Consistent with Table: Use 12 (Jan next year equivalent) if end month is 11 (Dec)
-                const targetMonth = (endMonthOfSimulation === 11) ? 12 : endMonthOfSimulation;
+                const targetMonth = endMonthOfSimulation;
                 const ageInMonths = calculateAgeInMonths(buffalo, endYear, targetMonth);
 
                 // Only count buffaloes born before or in the last year
@@ -743,8 +747,9 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
 
             setTreeData({
                 units,
-                years: yearsToSimulate,
-                durationMonths: totalMonthsDuration,
+                years, // Passing the precise years state
+                yearsToSimulate,
+                durationMonths,
                 startYear,
                 startMonth,
                 startDay,
@@ -759,7 +764,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                     totalCaringCost: totalCaringCost,
                     roi: (isCGFEnabled ? (totalNetRevenue - totalCaringCost) : totalNetRevenue) + totalAssetValue,
                     totalAssetValue: totalAssetValue,
-                    duration: totalMonthsDuration / 12
+                    duration: durationMonths / 12
                 },
                 lineages: {} // Will be populated below
             });

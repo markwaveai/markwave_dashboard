@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     ClipboardList, Users, ShoppingBag, LogOut, UserCheck,
-    Calculator, MonitorPlay, Shield as ShieldIcon, LifeBuoy, Warehouse, Award, Trophy,
+    Calculator, Shield as ShieldIcon, LifeBuoy, Warehouse, Award, Trophy,
     UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search, UserCog, Coins
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
@@ -37,7 +37,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     if (currentPath === '/dashboard') activeTab = 'dashboard';
     else if (currentPath.includes('/orders')) activeTab = 'orders';
     else if (currentPath.includes('/user-management/network')) activeTab = 'network';
-    else if (currentPath.includes('/buffalo-viz')) activeTab = 'buffaloViz';
+
     else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
     else if (currentPath.includes('/acf-calculator')) activeTab = 'acf-calculator';
     else if (currentPath.includes('/acf')) activeTab = 'acf';
@@ -215,15 +215,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
                         {/* <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div> */}
 
-                        {/* <li>
-                            <button className={navItemClass('buffaloViz')} onClick={() => navigate('/buffalo-viz', { state: { fromDashboard: true } })}>
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <MonitorPlay size={20} className={activeTab === 'buffaloViz' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Buffalo Viz</span>}
-                                </div>
-                                {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Buffalo Visualization</div>}
-                            </button>
-                        </li> */}
+
                         {/* {hasSession && (
                             <li>
                                 <button className={navItemClass('acf')} onClick={() => navigate('/acf', { state: { fromDashboard: true } })}>

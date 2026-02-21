@@ -139,6 +139,7 @@ const CostEstimationTableContent = ({
             const currentAbsolute = currentYear * 12 + currentMonth;
             monthsSinceAcquisition = currentAbsolute - absoluteAcquisitionMonth;
         } else {
+            // Fallback for old/legacy data
             monthsSinceAcquisition = (currentYear - startYear) * 12 + (currentMonth - acquisitionMonth);
         }
 
@@ -705,20 +706,19 @@ const CostEstimationTableContent = ({
     const assetMarketValue = useMemo(() => {
         const assetValues: any[] = [];
         // Correctly calculate end year including partial years (same as index.jsx)
-        const totalMonthsDuration = treeData.durationMonths;
-        const endYear = treeData.startYear + Math.floor((treeData.startMonth + totalMonthsDuration - 1) / 12);
+        const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const yearsToSimulate = Math.ceil(treeData.durationMonths / 12);
 
-        const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths) - 1;
-        const endMonthOfSimulation = absoluteEndMonth % 12;
-
-        for (let year = treeData.startYear; year <= endYear; year++) {
+        for (let i = 0; i < yearsToSimulate; i++) {
             let totalAssetValue = 0;
 
-            // Determine target month: December (11) for full years, or endMonthOfSimulation for the final year
-            // Use 12 (January of next year equivalent) for full years to capture completed year valuation
-            // If it is the end year AND endMonthOfSimulation is 11 (Dec), use 12 to treat it as a full completed year
-            const targetMonth = (year === endYear && endMonthOfSimulation !== 11) ? endMonthOfSimulation : 12;
+            // Target absolute month is the end of this simulation year (12 months passed)
+            // For the final year, it strictly caps at the duration.
+            const monthsPassed = Math.min((i + 1) * 12, treeData.durationMonths);
+            const absoluteTargetMonth = absoluteStartMonth + monthsPassed - 1;
+
+            const targetYear = Math.floor(absoluteTargetMonth / 12);
+            const targetMonth = absoluteTargetMonth % 12;
 
             const ageCategories: any = {
                 '0-12 months': { count: 0, value: 0 },
@@ -730,13 +730,16 @@ const CostEstimationTableContent = ({
             };
 
             Object.values(buffaloDetails).forEach((buffalo: any) => {
-                // Only count buffaloes born before or in the last year/month
-                if (buffalo.birthYear < year || (buffalo.birthYear === year && (buffalo.birthMonth || 0) <= targetMonth)) {
-                    const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
+                const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                const absoluteBirthMonth = buffalo.birthYear * 12 + birthMonth;
+
+                // Only count buffaloes born before or exactly at the target absolute month
+                if (absoluteBirthMonth <= absoluteTargetMonth) {
+                    const ageInMonths = calculateAgeInMonths(buffalo, targetYear, targetMonth);
                     let value = getBuffaloValueByAge(ageInMonths);
 
                     // Consistency Override: 0-12 months value is 0 in the first year only
-                    if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
+                    if (i === 0 && ageInMonths <= 12) {
                         value = 0;
                     }
 
@@ -764,11 +767,14 @@ const CostEstimationTableContent = ({
                 }
             });
 
-            const yearData = yearlyData.find((d: any) => d.year === year);
+            // Map data from yearlyData correctly based on the index / year.
+            // yearlyData is also generated per calendar year, but for display let's mirror it
+            const displayYear = treeData.startYear + i;
+            const yearData = yearlyData.find((d: any) => d.year === displayYear) || yearlyData[yearlyData.length - 1];
 
             assetValues.push({
-                year: year,
-                totalBuffaloes: (yearData?.totalBuffaloes || 0),
+                year: displayYear, // Required for 'selectedYear' matching
+                totalBuffaloes: (Object.values(ageCategories) as any[]).reduce((sum: any, cat: any) => sum + cat.count, 0) * Number(treeData.units || 1), // Exact count at this point
                 ageCategories: Object.keys(ageCategories).reduce((acc: any, key: string) => {
                     const group = ageCategories[key];
                     const units = Number(treeData.units || 1);
@@ -787,7 +793,7 @@ const CostEstimationTableContent = ({
     }, [treeData.years, treeData.startYear, treeData.startMonth, buffaloDetails, yearlyData, treeData.units]);
 
 
-    const calculateDetailedAssetValue = (year: any) => {
+    const calculateDetailedAssetValue = (year: any, targetMonth: number = 11) => {
         const ageGroups: any = {
             '0-12 months': { count: 0, value: 0, unitValue: 10000 },
             '13-18 months': { count: 0, value: 0, unitValue: 25000 },
@@ -801,8 +807,9 @@ const CostEstimationTableContent = ({
         let totalCount = 0;
 
         Object.values(buffaloDetails).forEach((buffalo: any) => {
-            if (year >= buffalo.birthYear) {
-                const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
+            const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+            if (year > buffalo.birthYear || (year === buffalo.birthYear && birthMonth <= targetMonth)) {
+                const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
                 let value = getBuffaloValueByAge(ageInMonths);
 
                 // Override: 0-12 months value is 0 in the first year only
@@ -875,9 +882,12 @@ const CostEstimationTableContent = ({
             const cumulativeNetRevenueWithCaring = cumulativeNetRevenue - totalCGF;
 
             // 2. Calculate Asset Value & Count at End of Simulation
-            const endYearIndex = Math.ceil(treeData.durationMonths / 12) - 1;
-            const displayEndYear = treeData.startYear + endYearIndex;
-            const { totalValue, totalCount } = calculateDetailedAssetValue(displayEndYear);
+            // 2. Calculate Asset Value & Count at End of Simulation
+            const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
+            const absoluteEndMonth = absoluteStartMonth + treeData.durationMonths - 1;
+            const displayEndYear = Math.floor(absoluteEndMonth / 12);
+            const endMonthOfSimulation = absoluteEndMonth % 12;
+            const { totalValue, totalCount } = calculateDetailedAssetValue(displayEndYear, endMonthOfSimulation);
 
             setHeaderStats({
                 cumulativeNetRevenue,
@@ -975,11 +985,19 @@ const CostEstimationTableContent = ({
                                     style={{ backgroundImage: 'none' }}
                                 >
                                     {Array.from({ length: Math.ceil(treeData.durationMonths / 12) }, (_, i) => {
-                                        const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (i * 12);
+                                        const simAbsStart = (treeData.startYear * 12 + (treeData.startMonth || 0));
+                                        const simAbsEnd = simAbsStart + treeData.durationMonths - 1;
+
+                                        const startAbs = simAbsStart + (i * 12);
                                         const sYear = Math.floor(startAbs / 12);
                                         const sMonth = startAbs % 12;
                                         const sDate = new Date(sYear, sMonth, 1);
-                                        const eDate = new Date(sYear, sMonth + 11, 1);
+
+                                        // Cap end at simulation boundary for the last year
+                                        const endAbs = Math.min(startAbs + 11, simAbsEnd);
+                                        const eYear = Math.floor(endAbs / 12);
+                                        const eMonth = endAbs % 12;
+                                        const eDate = new Date(eYear, eMonth, 1);
 
                                         const startStr = sDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
                                         const endStr = eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -1020,7 +1038,6 @@ const CostEstimationTableContent = ({
                                 calculateTotalCumulativeRevenueUntilYear={calculateTotalCumulativeRevenueUntilYear}
                                 monthNames={monthNames}
                                 formatCurrency={formatCurrency}
-                                setHeaderStats={setHeaderStats}
                                 selectedYearIndex={globalYearIndex}
                                 isCGFEnabled={isCGFEnabled}
                             />

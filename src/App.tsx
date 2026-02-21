@@ -40,14 +40,12 @@ import Support from './components/sidenavbar/public/Support';
 import OrdersPageSkeleton from './components/common/skeletons/OrdersPageSkeleton';
 import UsersPageSkeleton from './components/common/skeletons/UsersPageSkeleton';
 import ProductsPageSkeleton from './components/common/skeletons/ProductsPageSkeleton';
-import BuffaloVizSkeleton from './components/common/skeletons/BuffaloVizSkeleton';
 import EmiCalculatorSkeleton from './components/common/skeletons/EmiCalculatorSkeleton';
 
 // Tabs (Lazy Loaded)
 const OrdersTab = React.lazy(() => import('./components/sidenavbar/Orders/OrdersTab'));
 const UserDetails = React.lazy(() => import('./components/sidenavbar/Users/UserDetails'));
 const ProductsTab = React.lazy(() => import('./components/sidenavbar/products/ProductsTab'));
-const BuffaloVisualizationTab = React.lazy(() => import('./components/sidenavbar/BuffaloViz/BuffaloVisualizationTab'));
 const EmiCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Emi/EmiCalculatorTab'));
 const AcfCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Acf/AcfCalculatorTab'));
 const UnitCalculatorTab = React.lazy(() => import('./components/sidenavbar/Calculators/Unit/UnitCalculatorTab'));
@@ -236,19 +234,15 @@ function App() {
           </Route>
 
           {/* Public/Hybrid Routes - Layout visible if logged in */}
-          <Route path="/buffalo-viz" element={
-            <React.Suspense fallback={<BuffaloVizSkeleton />}>
-              <BuffaloVisualizationTab />
-            </React.Suspense>
-          } />
+
 
           <Route path="/unit-calculator/73d2a" element={
-            <React.Suspense fallback={<BuffaloVizSkeleton />}>
+            <React.Suspense fallback={<OrdersPageSkeleton />}>
               <UnitCalculatorTab tree={true} />
             </React.Suspense>
           } />
           <Route path="/unit-calculator/92f1b" element={
-            <React.Suspense fallback={<BuffaloVizSkeleton />}>
+            <React.Suspense fallback={<OrdersPageSkeleton />}>
               <UnitCalculatorTab tree={false} />
             </React.Suspense>
           } />
@@ -285,7 +279,7 @@ function App() {
         <Route path="/dashboard/orders" element={<Navigate to="/orders" replace />} />
         <Route path="/dashboard/user-management" element={<Navigate to="/user-management" replace />} />
         <Route path="/dashboard/products" element={<Navigate to="/products" replace />} />
-        <Route path="/dashboard/buffalo-viz" element={<Navigate to="/buffalo-viz" replace />} />
+
         <Route path="/dashboard/emi-calculator" element={<Navigate to="/emi-calculator" replace />} />
         <Route path="/dashboard/acf-calculator" element={<Navigate to="/acf-calculator" replace />} />
         <Route path="/dashboard/*" element={<Navigate to="/orders" replace />} />
