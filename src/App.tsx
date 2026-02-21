@@ -4,6 +4,8 @@ import { setSession as setReduxSession } from './store/slices/authSlice';
 import { fetchAdminProfile } from './store/slices/usersSlice';
 import { RootState } from './store';
 import React, { useState, useCallback, useEffect } from 'react';
+import { API_ENDPOINTS } from './config/api';
+import notificationService, { ForegroundNotification } from './services/notificationService';
 import HealthStatus from './components/topnavbar/HealthStatus';
 import Breadcrumb from './components/Breadcrumb/Breadcrumb';
 import Login from './components/auth/Login';
@@ -104,14 +106,36 @@ function App() {
     }
   }, [dispatch, session]);
 
+  const [foregroundNotification, setForegroundNotification] = useState<ForegroundNotification | null>(null);
+
   // Fetch admin profile EXACTLY ONCE per session initialization
   useEffect(() => {
     if (session?.mobile && !adminProfile && !adminProfileLoading) {
       dispatch(fetchAdminProfile(session.mobile));
     }
-    // We intentionally omit adminProfile/loading to prevent re-triggering during the fetch lifecycle
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.mobile, dispatch]);
+
+  // Wire up FCM: register SW, get/save token, subscribe to admin topic,
+  // and listen for foreground messages — all via notificationService.
+  useEffect(() => {
+    if (!session?.mobile) return;
+
+    const roles = session.role ? session.role.split(',').map((r) => r.trim()) : [];
+
+    // Foreground listener (must be registered before getToken)
+    const unsubscribeMessage = notificationService.onForegroundMessage((payload) => {
+      setForegroundNotification(payload);
+      setTimeout(() => setForegroundNotification(null), 60000);
+    });
+
+    // Init FCM, save token, subscribe to admin topic
+    notificationService.onUserLogin(session.mobile, roles);
+
+    return () => {
+      unsubscribeMessage();
+    };
+  }, [session?.mobile]);
 
   const handleLogin = useCallback((s: Session) => {
     // Determine last login (from previous session or current if new)
@@ -159,6 +183,10 @@ function App() {
   }, [dispatch, location.state, navigate]);
 
   const handleLogout = () => {
+    if (session?.mobile) {
+      const roles = session.role ? session.role.split(',').map((r) => r.trim()) : [];
+      notificationService.onUserLogout(session.mobile, roles);
+    }
     window.localStorage.removeItem('ak_dashboard_session');
     setSession(null);
     navigate('/login', { replace: true });
@@ -174,6 +202,36 @@ function App() {
 
   return (
     <div className="App">
+      {/* Dynamic Foreground Push Notification Snackbar */}
+      {foregroundNotification && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          backgroundColor: '#334155',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)',
+          zIndex: 9999,
+          maxWidth: '350px',
+          animation: 'slideIn 0.3s ease-out',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+            <span style={{ fontWeight: 600, fontSize: '15px' }}>{foregroundNotification.title}</span>
+            <button
+              onClick={() => setForegroundNotification(null)}
+              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0px' }}>
+              ✕
+            </button>
+          </div>
+          <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.4', color: '#e2e8f0' }}>{foregroundNotification.body}</p>
+        </div>
+      )}
+
       <Routes>
         <Route path="/login" element={
           session ? <Navigate to="/orders" replace /> : <Login onLogin={handleLogin} />

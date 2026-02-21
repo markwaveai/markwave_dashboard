@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Smartphone, Lock, CheckCircle, AlertCircle, X, LayoutDashboard, TreePine } from 'lucide-react';
 import { API_CONFIG } from '../../config/api';
+import { messaging } from '../../config/firebase';
+import { getToken } from 'firebase/messaging';
 
 interface LoginProps {
   onLogin: (session: { mobile: string; role: string | null }) => void;
@@ -17,6 +19,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [info, setInfo] = useState<string | null>(null);
   const [serverOtp, setServerOtp] = useState<string | null>(null);
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem('ak_dashboard_session');
@@ -44,11 +47,33 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     // Animalkart Flow: Send OTP via WhatsApp
     setLoading(true);
+    let fcmToken = '';
+
     try {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          console.log('[DEBUG] Notification permission granted. Requesting token from Firebase...');
+          try {
+            fcmToken = await getToken(messaging, {
+              vapidKey: 'BI7QADN3NcxaEeiy8GoSAht_Ua52K8jvLPW66nHgWzMg7BAwkFLxt13Z70hwEwXJGu_XUOji2g18KOEAp13bMGQ'
+            });
+            console.log('[DEBUG] FCM Token generation SUCCESS:', fcmToken);
+          } catch (fetchErr: any) {
+            console.error('[DEBUG] FCM Token generation FAILED:', fetchErr?.message || fetchErr);
+          }
+        } else {
+          console.log('Notification permission not granted');
+        }
+      } catch (tokenErr) {
+        console.error('Error in permission wrapper', tokenErr);
+      }
+
       const baseUrl = API_CONFIG.getBaseUrl();
       const res = await axios.post(`${baseUrl}/otp/send-whatsapp`, {
         mobile,
         appName: 'animalkart_dashboard', // Always animalkart_dashboard for this flow
+        fcmToken, // Passed to backend
       });
 
       if (res.data?.statuscode !== 200) {
@@ -58,6 +83,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
       const otpFromServer = res.data?.otp || null;
       setServerOtp(otpFromServer);
+      setUserRole(res.data?.user?.role || null);
       setStep('enterOtp');
       setInfo('OTP sent via WhatsApp.');
     } catch (e: any) {
@@ -74,11 +100,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       return;
     }
 
-    const role = 'Animalkart admin';
-    const session = { mobile, role };
-    window.localStorage.setItem('ak_dashboard_session', JSON.stringify(session));
+    setLoading(true);
+    setError(null);
 
-    handleLoginSuccess(session);
+    try {
+      const baseUrl = API_CONFIG.getBaseUrl();
+      const res = await axios.post(`${baseUrl}/otp/verify`, { mobile, otp });
+
+      if (res.data?.statuscode !== 200) {
+        setError(res.data?.message || 'Invalid OTP. Please try again.');
+        return;
+      }
+
+      const role = userRole || 'Animalkart admin';
+      const session = { mobile, role };
+      handleLoginSuccess(session);
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'OTP verification failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLoginSuccess = (session: any) => {
