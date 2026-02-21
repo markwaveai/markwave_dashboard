@@ -91,7 +91,7 @@ const RevenueBreakEven: React.FC<any> = ({
     return (
         <div className="w-full mb-6 space-y-2">
             {/* Context Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
                 {/* Initial Investment */}
                 <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
                     <div className="text-center flex flex-col items-center">

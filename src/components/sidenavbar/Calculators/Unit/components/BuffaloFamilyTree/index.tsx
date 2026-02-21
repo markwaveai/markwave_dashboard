@@ -10,6 +10,13 @@ interface BuffaloFamilyTreeProps {
     tree?: boolean;
 }
 
+// Compute next-month defaults (so opening in Feb 2026 → defaults to Mar 2026)
+const getNextMonthDefaults = () => {
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return { year: nextMonth.getFullYear(), month: nextMonth.getMonth() };
+};
+
 export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProps) {
     const [searchParams, setSearchParams] = useSearchParams();
     const location = useLocation();
@@ -43,8 +50,9 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     const [units, setUnits] = useState(unitsParam ? parseInt(unitsParam) : 1);
     const [years, setYears] = useState(yearsParam ? parseInt(yearsParam) : 10);
     const [endMonth, setEndMonth] = useState(endMonthParam !== undefined ? parseInt(endMonthParam) : 11);
-    const [startYear, setStartYear] = useState(yearParam ? parseInt(yearParam) : 2026);
-    const [startMonth, setStartMonth] = useState(monthParam ? parseInt(monthParam) : 0);
+    const { year: defaultYear, month: defaultMonth } = getNextMonthDefaults();
+    const [startYear, setStartYear] = useState(yearParam ? parseInt(yearParam) : defaultYear);
+    const [startMonth, setStartMonth] = useState(monthParam ? parseInt(monthParam) : defaultMonth);
     const [startDay, setStartDay] = useState(1);
     const [treeData, setTreeData] = useState<any>(null);
     const [loading, setLoading] = useState(false);

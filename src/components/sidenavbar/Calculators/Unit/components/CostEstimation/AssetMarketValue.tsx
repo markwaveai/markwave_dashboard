@@ -195,7 +195,7 @@ const AssetMarketValue = ({
             <div className="w-full mb-8 space-y-4">
 
                 {/* 1. Value Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-2xl">
+                <div className="grid grid-cols-2 gap-2 max-w-2xl">
                     <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                         <div>
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Asset Value</p>
@@ -243,13 +243,13 @@ const AssetMarketValue = ({
                                                 <td className="px-6 py-3 font-medium text-slate-900 border-r border-slate-100">
                                                     {ageGroup}
                                                 </td>
-                                                <td className="px-6 py-3 font-medium text-slate-600 text-center border-r border-slate-100">
+                                                <td className="px-6 py-3 font-medium text-slate-600 text-center border-r border-slate-100 whitespace-nowrap">
                                                     {ageGroup === '0-12 months' && Number(selectedYear) === Number(treeData.startYear) ? formatCurrency(0) : formatCurrency(data.unitValue)}
                                                 </td>
                                                 <td className="px-6 py-3 font-bold text-slate-700 text-center border-r border-slate-100">
                                                     {data.count}
                                                 </td>
-                                                <td className="px-6 py-3 font-bold text-emerald-600 text-center border-r border-slate-100">
+                                                <td className="px-6 py-3 font-bold text-emerald-600 text-center border-r border-slate-100 whitespace-nowrap">
                                                     {formatCurrency(data.value)}
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
@@ -274,7 +274,7 @@ const AssetMarketValue = ({
                                     <td className="px-6 py-4 font-bold border-r border-slate-700">Total</td>
                                     <td className="px-6 py-4 font-bold text-center border-r border-slate-700">-</td>
                                     <td className="px-6 py-4 font-bold text-center border-r border-slate-700">{detailedValue.totalCount}</td>
-                                    <td className="px-6 py-4 font-bold text-emerald-400 text-center border-r border-slate-700">
+                                    <td className="px-6 py-4 font-bold text-emerald-400 text-center border-r border-slate-700 whitespace-nowrap">
                                         {formatCurrency(detailedValue.totalValue || 0)}
                                     </td>
                                     <td className="px-6 py-4 font-bold text-center">100%</td>
@@ -303,7 +303,7 @@ const AssetMarketValue = ({
                                         <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">25-34m</th>
                                         <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">35-40m</th>
                                         <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">41+m</th>
-                                        <th className="px-4 py-3 font-bold text-right">Value</th>
+                                        <th className="px-4 py-3 font-bold text-right whitespace-nowrap">Value</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -318,7 +318,7 @@ const AssetMarketValue = ({
                                                 <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['25-34 months']?.count || 0)}</td>
                                                 <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['35-40 months']?.count || 0)}</td>
                                                 <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['41+ months']?.count || 0)}</td>
-                                                <td className="px-4 py-3 font-bold text-right text-emerald-600">
+                                                <td className="px-4 py-3 font-bold text-right text-emerald-600 whitespace-nowrap">
                                                     {formatCurrency(asset.totalAssetValue || 0)}
                                                 </td>
                                             </tr>

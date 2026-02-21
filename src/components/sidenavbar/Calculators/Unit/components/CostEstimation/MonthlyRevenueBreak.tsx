@@ -494,8 +494,8 @@ const MonthlyRevenueBreak = ({
         <div className="w-full mb-6 space-y-2">
             {unitBuffaloes.length > 0 ? (
                 <>
-                    {/* 1. Top Summary Cards - KPI Grid */}
-                    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isCGFEnabled ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-2`}>
+                    {/* 1. Top Summary Cards - Row 1: Annual Revenue / CPF / CGF always side-by-side */}
+                    <div className={`grid gap-2 ${isCGFEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
 
                         {/* Annual Revenue */}
                         <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
@@ -528,6 +528,10 @@ const MonthlyRevenueBreak = ({
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Row 2: Net Revenue / Cumulative Net / Asset Value */}
+                    <div className="grid grid-cols-3 gap-2">
 
                         {/* Net Annual Revenue */}
                         <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
@@ -555,7 +559,6 @@ const MonthlyRevenueBreak = ({
                                     {formatCurrency(isCGFEnabled ? cumulativeNetRevenueWithCaring : cumulativeNetRevenue)}
                                 </h3>
                             </div>
-
                         </div>
 
                         {/* Asset Value */}

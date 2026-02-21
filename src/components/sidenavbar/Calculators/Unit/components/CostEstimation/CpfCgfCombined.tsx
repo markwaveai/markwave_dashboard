@@ -167,7 +167,7 @@ const CpfCgfCombined = ({
         <div className="w-full mb-6 space-y-2">
 
             {/* 1. Top Summary Cards - KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2">
                 {/* Cumulative CPF */}
                 <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                     <div>
@@ -200,9 +200,9 @@ const CpfCgfCombined = ({
                         <thead className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
                             <tr>
                                 <th className="py-4 px-6 font-bold border-r border-slate-100 w-1/4">Month</th>
-                                <th className="py-4 px-6 font-bold text-amber-700 text-center border-r border-slate-100 w-1/4">CPF Cost</th>
-                                <th className="py-4 px-6 font-bold text-rose-700 text-center border-r border-slate-100 w-1/4">CGF Cost</th>
-                                <th className="py-4 px-6 font-bold text-slate-800 text-center w-1/4">Total</th>
+                                <th className="py-4 px-6 font-bold text-amber-700 text-center border-r border-slate-100 whitespace-nowrap w-1/4">CPF Cost</th>
+                                <th className="py-4 px-6 font-bold text-rose-700 text-center border-r border-slate-100 whitespace-nowrap w-1/4">CGF Cost</th>
+                                <th className="py-4 px-6 font-bold text-slate-800 text-center whitespace-nowrap w-1/4">Total</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -210,9 +210,9 @@ const CpfCgfCombined = ({
                                 <React.Fragment key={idx}>
                                     <tr className={`hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                                         <td className="py-3 px-6 font-medium text-slate-900 border-r border-slate-100 bg-slate-50/30">{row.monthName}</td>
-                                        <td className="py-3 px-6 text-center text-amber-700 font-medium border-r border-slate-100">{row.isValid ? formatCurrency(row.cpf) : '-'}</td>
-                                        <td className="py-3 px-6 text-center text-rose-700 font-medium border-r border-slate-100">{row.isValid ? formatCurrency(row.cgf) : '-'}</td>
-                                        <td className="py-3 px-6 text-center text-slate-900 font-bold">{row.isValid ? formatCurrency(row.total) : '-'}</td>
+                                        <td className="py-3 px-6 text-center text-amber-700 font-medium border-r border-slate-100 whitespace-nowrap">{row.isValid ? formatCurrency(row.cpf) : '-'}</td>
+                                        <td className="py-3 px-6 text-center text-rose-700 font-medium border-r border-slate-100 whitespace-nowrap">{row.isValid ? formatCurrency(row.cgf) : '-'}</td>
+                                        <td className="py-3 px-6 text-center text-slate-900 font-bold whitespace-nowrap">{row.isValid ? formatCurrency(row.total) : '-'}</td>
                                     </tr>
                                     {(idx + 1) % 3 === 0 && idx < 11 && (
                                         <tr className="bg-slate-100/30">
@@ -225,9 +225,9 @@ const CpfCgfCombined = ({
                         <tfoot className="bg-slate-800 text-white border-t border-slate-700">
                             <tr>
                                 <td className="py-4 px-6 font-bold text-right border-r border-slate-700">Year Total</td>
-                                <td className="py-4 px-6 text-center font-bold text-amber-300 border-r border-slate-700">{formatCurrency(yearlyCpf)}</td>
-                                <td className="py-4 px-6 text-center font-bold text-rose-300 border-r border-slate-700">{formatCurrency(yearlyCgf)}</td>
-                                <td className="py-4 px-6 text-center font-bold text-white">{formatCurrency(yearlyTotal)}</td>
+                                <td className="py-4 px-6 text-center font-bold text-amber-300 border-r border-slate-700 whitespace-nowrap">{formatCurrency(yearlyCpf)}</td>
+                                <td className="py-4 px-6 text-center font-bold text-rose-300 border-r border-slate-700 whitespace-nowrap">{formatCurrency(yearlyCgf)}</td>
+                                <td className="py-4 px-6 text-center font-bold text-white whitespace-nowrap">{formatCurrency(yearlyTotal)}</td>
                             </tr>
                         </tfoot>
                     </table>
