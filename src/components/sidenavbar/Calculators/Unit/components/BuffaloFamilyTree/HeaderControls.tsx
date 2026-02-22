@@ -172,6 +172,18 @@ const HeaderControls = ({
                                 </div>
                             </div>
 
+                            {/* Initial Investment Display */}
+                            {treeData && (
+                                <div className="flex items-center gap-1 px-2 py-1">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Initial Inv</span>
+                                        <span className="text-sm font-black text-slate-900">
+                                            {formatCurrency((units * 2 * 175000) + (units * 15000))}
+                                        </span>
+                                        <span className="text-[8px] font-bold text-blue-600">CPF: {formatCurrency(units * 15000)}</span>
+                                    </div>
+                                </div>
+                            )}
 
 
 
