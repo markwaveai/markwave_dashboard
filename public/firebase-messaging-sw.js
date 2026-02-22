@@ -28,8 +28,9 @@ messaging.onBackgroundMessage((payload) => {
   let actionUrl = '/orders';
   if (data.type === 'MILESTONE_ACHIEVED') {
     actionUrl = `/offer-settings?highlight_milestone=${encodeURIComponent(data.milestone_id || '')}`;
-  } else if (data.type === 'REFERRAL_REWARD') {
-    actionUrl = `/orders?highlight_order=${encodeURIComponent(data.order_id || '')}`;
+  } else if (data.type === 'REFERRAL_REWARD' && data.recipient_mobile) {
+    // Admin notification — go to the recipient's network profile
+    actionUrl = `/user-management/network/${encodeURIComponent(data.recipient_mobile)}`;
   } else if (data.order_id) {
     actionUrl = `/orders?highlight_order=${encodeURIComponent(data.order_id)}`;
   }

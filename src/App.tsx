@@ -133,6 +133,8 @@ function App() {
       if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
         dispatch(setHighlightedMilestoneId(data.milestone_id));
         navigate('/offer-settings');
+      } else if (data.type === 'REFERRAL_REWARD' && data.recipient_mobile) {
+        navigate(`/user-management/network/${data.recipient_mobile}`);
       } else if (data.order_id) {
         dispatch(setHighlightedOrderId(data.order_id));
         navigate('/orders');
@@ -267,13 +269,15 @@ function App() {
           </div>
           <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.4', color: '#e2e8f0' }}>{foregroundNotification.body}</p>
           {/* Clickable "View" button — re-dispatches highlight in case the 3 s timer already cleared it */}
-          {(foregroundNotification.data?.order_id || foregroundNotification.data?.milestone_id) && (
+          {(foregroundNotification.data?.order_id || foregroundNotification.data?.milestone_id || foregroundNotification.data?.recipient_mobile) && (
             <button
               onClick={() => {
                 const data = foregroundNotification.data || {};
                 if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
                   dispatch(setHighlightedMilestoneId(data.milestone_id));
                   navigate('/offer-settings');
+                } else if (data.type === 'REFERRAL_REWARD' && data.recipient_mobile) {
+                  navigate(`/user-management/network/${data.recipient_mobile}`);
                 } else if (data.order_id) {
                   dispatch(setHighlightedOrderId(data.order_id));
                   navigate('/orders');
