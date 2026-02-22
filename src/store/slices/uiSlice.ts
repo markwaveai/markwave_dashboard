@@ -32,6 +32,10 @@ export interface UIState {
         message: string | null;
         type: 'success' | 'error' | null;
     };
+    highlight: {
+        orderId: string | null;
+        milestoneId: string | null;
+    };
 }
 
 
@@ -83,6 +87,10 @@ const initialState: UIState = {
     snackbar: {
         message: null,
         type: null,
+    },
+    highlight: {
+        orderId: null,
+        milestoneId: null,
     },
 };
 
@@ -149,6 +157,18 @@ const uiSlice = createSlice({
         setSnackbar: (state, action: PayloadAction<{ message: string | null; type: 'success' | 'error' | null }>) => {
             state.snackbar = action.payload;
         },
+        setHighlightedOrderId: (state, action: PayloadAction<string | null>) => {
+            state.highlight.orderId = action.payload;
+            state.highlight.milestoneId = null;
+        },
+        setHighlightedMilestoneId: (state, action: PayloadAction<string | null>) => {
+            state.highlight.milestoneId = action.payload;
+            state.highlight.orderId = null;
+        },
+        clearHighlight: (state) => {
+            state.highlight.orderId = null;
+            state.highlight.milestoneId = null;
+        },
     },
 });
 
@@ -166,6 +186,9 @@ export const {
     setCreationRole,
     setApprovalHistoryModal,
     setSnackbar,
+    setHighlightedOrderId,
+    setHighlightedMilestoneId,
+    clearHighlight,
 } = uiSlice.actions;
 
 

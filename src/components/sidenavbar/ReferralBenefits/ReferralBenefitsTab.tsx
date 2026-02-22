@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Gift, Award, Clock, AlertCircle, ShoppingBag, RotateCcw, Plus, Minus, Edit2, MoreVertical, XCircle, CheckCircle2, X, Star, MonitorPlay, Plane, Smartphone, Bike, Car, Check, ShieldCheck } from 'lucide-react';
 import { referralBenefitService, referralConfigService, otpService } from '../../../services/api';
 import { ReferralMilestone, ReferralConfig } from '../../../types';
@@ -13,6 +13,8 @@ interface ReferralBenefitsTabProps {
     preloadedConfig?: ReferralConfig | null;
     externalLoading?: boolean;
     onRefresh?: (silent?: boolean) => Promise<void> | void;
+    highlightedMilestoneId?: string | null;
+    onHighlightConsumed?: () => void;
 }
 
 const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
@@ -21,7 +23,9 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
     preloadedMilestones,
     preloadedConfig,
     externalLoading,
-    onRefresh
+    onRefresh,
+    highlightedMilestoneId,
+    onHighlightConsumed,
 }) => {
     const [milestones, setMilestones] = useState<ReferralMilestone[]>([]);
     const [loading, setLoading] = useState(true);
@@ -43,6 +47,18 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
     const [pendingUpdates, setPendingUpdates] = useState<any>(null);
     const [pendingMilestone, setPendingMilestone] = useState<ReferralMilestone | null>(null);
     const [snackbar, setSnackbar] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    // Refs for milestone cards (used to scroll & highlight on notification click)
+    const milestoneCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+    // Scroll to and highlight the notified milestone, then auto-clear after 3 s
+    useEffect(() => {
+        if (!highlightedMilestoneId) return;
+        const el = milestoneCardRefs.current[highlightedMilestoneId];
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const timer = setTimeout(() => onHighlightConsumed?.(), 3000);
+        return () => clearTimeout(timer);
+    }, [highlightedMilestoneId, onHighlightConsumed]);
 
     useEffect(() => {
         if (!preloadedMilestones && farmId) {
@@ -558,7 +574,8 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
 
                                     {/* Card */}
                                     <div
-                                        className={`relative z-10 w-[240px] bg-white rounded-[2rem] shadow-[0_15px_35px_rgba(0,0,0,0.03)] border-2 p-5 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 flex flex-col mx-3 ${milestone.is_active ? 'border-[#10b981] ring-4 ring-[#10b981]/5' : 'border-[#f1f5f9] opacity-90'}`}
+                                        ref={(el) => { milestoneCardRefs.current[milestone.id] = el; }}
+                                        className={`relative z-10 w-[240px] bg-white rounded-[2rem] shadow-[0_15px_35px_rgba(0,0,0,0.03)] border-2 p-5 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 flex flex-col mx-3 ${milestone.is_active ? 'border-[#10b981] ring-4 ring-[#10b981]/5' : 'border-[#f1f5f9] opacity-90'} ${highlightedMilestoneId === milestone.id ? 'ring-4 !ring-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.4)] animate-pulse' : ''}`}
                                     >
                                         {/* Action Header: Threshold Badge & Edit */}
                                         <div className="flex justify-between items-start mb-4">

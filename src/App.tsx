@@ -27,6 +27,7 @@ import DeactivateUserPage from './components/sidenavbar/public/DeactivateUserPag
 
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
+import { setHighlightedOrderId, setHighlightedMilestoneId } from './store/slices/uiSlice';
 
 // Privacy
 import PrivacyPolicy from './components/sidenavbar/public/PrivacyPolicy';
@@ -117,25 +118,61 @@ function App() {
   }, [session?.mobile, dispatch]);
 
   // Wire up FCM: register SW, get/save token, subscribe to admin topic,
-  // and listen for foreground messages — all via notificationService.
+  // and listen for foreground and background messages.
   useEffect(() => {
     if (!session?.mobile) return;
 
     const roles = session.role ? session.role.split(',').map((r) => r.trim()) : [];
 
-    // Foreground listener (must be registered before getToken)
+    // Foreground listener: show banner + navigate + highlight relevant item
     const unsubscribeMessage = notificationService.onForegroundMessage((payload) => {
       setForegroundNotification(payload);
       setTimeout(() => setForegroundNotification(null), 60000);
+
+      const data: Record<string, string> = payload.data || {};
+      if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
+        dispatch(setHighlightedMilestoneId(data.milestone_id));
+        navigate('/offer-settings');
+      } else if (data.order_id) {
+        dispatch(setHighlightedOrderId(data.order_id));
+        navigate('/orders');
+      }
     });
 
     // Init FCM, save token, subscribe to admin topic
     notificationService.onUserLogin(session.mobile, roles);
 
+    // Handle clicks on background OS notifications (posted by the service worker)
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data?.type !== 'FCM_NOTIFICATION_CLICK') return;
+      const url: string = event.data.url || '/orders';
+      const urlObj = new URL(url, window.location.origin);
+      const highlightOrder = urlObj.searchParams.get('highlight_order');
+      const highlightMilestone = urlObj.searchParams.get('highlight_milestone');
+      if (highlightOrder) dispatch(setHighlightedOrderId(highlightOrder));
+      if (highlightMilestone) dispatch(setHighlightedMilestoneId(highlightMilestone));
+      navigate(urlObj.pathname);
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleSwMessage);
+
     return () => {
       unsubscribeMessage();
+      navigator.serviceWorker?.removeEventListener('message', handleSwMessage);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.mobile]);
+
+  // Parse highlight query-params on cold open (tab opened by SW on notification click)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const highlightOrder = params.get('highlight_order');
+    const highlightMilestone = params.get('highlight_milestone');
+    if (highlightOrder) dispatch(setHighlightedOrderId(highlightOrder));
+    if (highlightMilestone) dispatch(setHighlightedMilestoneId(highlightMilestone));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const handleLogin = useCallback((s: Session) => {
     // Determine last login (from previous session or current if new)

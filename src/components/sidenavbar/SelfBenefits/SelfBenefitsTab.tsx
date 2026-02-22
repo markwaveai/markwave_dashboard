@@ -3,8 +3,14 @@ import SelfBenefitsList from './SelfBenefitsList';
 import ReferralBenefitsTab from '../ReferralBenefits/ReferralBenefitsTab';
 import { farmService, selfBenefitService, referralBenefitService, referralConfigService } from '../../../services/api';
 import { SelfBenefit, ReferralMilestone, ReferralConfig } from '../../../types';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { clearHighlight } from '../../../store/slices/uiSlice';
+import type { RootState } from '../../../store';
 
 const SelfBenefitsTab: React.FC = () => {
+    const dispatch = useAppDispatch();
+    const highlightedMilestoneId = useAppSelector((state: RootState) => state.ui.highlight.milestoneId);
+
     const [activeTab, setActiveTab] = useState<'self' | 'referral'>(() => {
         const saved = localStorage.getItem('offer_manager_active_tab');
         return (saved === 'self' || saved === 'referral') ? saved : 'self';
@@ -22,6 +28,11 @@ const SelfBenefitsTab: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('offer_manager_active_tab', activeTab);
     }, [activeTab]);
+
+    // Auto-switch to referral tab when a milestone highlight arrives
+    useEffect(() => {
+        if (highlightedMilestoneId) setActiveTab('referral');
+    }, [highlightedMilestoneId]);
 
     useEffect(() => {
         const fetchFarms = async () => {
@@ -152,6 +163,8 @@ const SelfBenefitsTab: React.FC = () => {
                         preloadedConfig={referralConfig}
                         externalLoading={loading}
                         onRefresh={(silent) => fetchReferralData(selectedFarmId, silent)}
+                        highlightedMilestoneId={highlightedMilestoneId}
+                        onHighlightConsumed={() => dispatch(clearHighlight())}
                     />
                 )}
             </div>
