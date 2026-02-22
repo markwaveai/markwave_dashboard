@@ -1,5 +1,28 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+export interface StoredNotification {
+    id: string;
+    title: string;
+    body: string;
+    data?: Record<string, string>;
+    receivedAt: string; // ISO string
+    read: boolean;
+}
+
+const loadNotifications = (): StoredNotification[] => {
+    try {
+        return JSON.parse(localStorage.getItem('dashboard_notifications') || '[]');
+    } catch {
+        return [];
+    }
+};
+
+const saveNotifications = (notifications: StoredNotification[]) => {
+    try {
+        localStorage.setItem('dashboard_notifications', JSON.stringify(notifications));
+    } catch {}
+};
+
 export interface UIState {
     activeTab: 'orders' | 'nonVerified' | 'existing' | 'tree' | 'products' | 'tracking' | 'buffaloViz' | 'emi';
     isSidebarOpen: boolean;
@@ -36,6 +59,7 @@ export interface UIState {
         orderId: string | null;
         milestoneId: string | null;
     };
+    notifications: StoredNotification[];
 }
 
 
@@ -92,6 +116,7 @@ const initialState: UIState = {
         orderId: null,
         milestoneId: null,
     },
+    notifications: loadNotifications(),
 };
 
 
@@ -169,6 +194,27 @@ const uiSlice = createSlice({
             state.highlight.orderId = null;
             state.highlight.milestoneId = null;
         },
+        addNotification: (state, action: PayloadAction<{ title: string; body: string; data?: Record<string, string> }>) => {
+            const notif: StoredNotification = {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                title: action.payload.title,
+                body: action.payload.body,
+                data: action.payload.data,
+                receivedAt: new Date().toISOString(),
+                read: false,
+            };
+            state.notifications.unshift(notif); // newest first
+            if (state.notifications.length > 50) state.notifications.length = 50;
+            saveNotifications(state.notifications);
+        },
+        markAllNotificationsRead: (state) => {
+            state.notifications.forEach(n => { n.read = true; });
+            saveNotifications(state.notifications);
+        },
+        clearAllNotifications: (state) => {
+            state.notifications = [];
+            saveNotifications([]);
+        },
     },
 });
 
@@ -189,6 +235,9 @@ export const {
     setHighlightedOrderId,
     setHighlightedMilestoneId,
     clearHighlight,
+    addNotification,
+    markAllNotificationsRead,
+    clearAllNotifications,
 } = uiSlice.actions;
 
 

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Menu, Search, Bell, Star } from 'lucide-react';
+import { ChevronDown, Menu, Bell } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toggleSidebar, setShowAdminDetails } from '../../store/slices/uiSlice';
 import type { RootState } from '../../store';
 import AdminDetailsModal from './AdminDetailsModal';
+import NotificationPanel from './NotificationPanel';
 
 interface TopNavbarProps {
     adminMobile?: string;
@@ -25,8 +26,10 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
     onLogoutTrigger
 }) => {
     const dispatch = useAppDispatch();
-    const { isSidebarOpen } = useAppSelector((state: RootState) => state.ui);
+    const { isSidebarOpen, notifications } = useAppSelector((state: RootState) => state.ui);
     const { adminProfile } = useAppSelector((state: RootState) => state.users);
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const unreadCount = notifications.filter(n => !n.read).length;
 
     const [displayAdminName, setDisplayAdminName] = useState(adminName);
     const [displayRole, setDisplayRole] = useState(adminRole);
@@ -63,8 +66,23 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
                         </button>
                     </div>
 
-                    {/* Right Side: Profile Dropdown */}
+                    {/* Right Side: Bell + Profile Dropdown */}
                     <div className="flex items-center gap-4">
+
+                        {/* Notification Bell */}
+                        <button
+                            onClick={() => setIsPanelOpen(prev => !prev)}
+                            className="relative p-2 text-[var(--slate-400)] hover:bg-[var(--slate-800)]/50 hover:text-white rounded-xl transition-colors"
+                            title="Notifications"
+                        >
+                            <Bell size={20} />
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] bg-indigo-500 text-white text-[10px] font-bold rounded-full px-1 leading-none">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                            )}
+                        </button>
+
                         {/* Profile Dropdown Trigger */}
                         <div
                             onClick={() => dispatch(setShowAdminDetails(true))}
@@ -89,6 +107,8 @@ const TopNavbar: React.FC<TopNavbarProps> = ({
                     </div>
                 </div>
             </header>
+
+            <NotificationPanel isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} />
 
             <AdminDetailsModal
                 adminName={displayAdminName}

@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setSession as setReduxSession } from './store/slices/authSlice';
 import { fetchAdminProfile } from './store/slices/usersSlice';
 import { RootState } from './store';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { API_ENDPOINTS } from './config/api';
 import notificationService, { ForegroundNotification } from './services/notificationService';
 import HealthStatus from './components/topnavbar/HealthStatus';
@@ -27,7 +27,7 @@ import DeactivateUserPage from './components/sidenavbar/public/DeactivateUserPag
 
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
-import { setHighlightedOrderId, setHighlightedMilestoneId } from './store/slices/uiSlice';
+import { setHighlightedOrderId, setHighlightedMilestoneId, addNotification } from './store/slices/uiSlice';
 
 // Privacy
 import PrivacyPolicy from './components/sidenavbar/public/PrivacyPolicy';
@@ -107,7 +107,22 @@ function App() {
     }
   }, [dispatch, session]);
 
-  const [foregroundNotification, setForegroundNotification] = useState<ForegroundNotification | null>(null);
+  // Each toast has its own id so they stack independently
+  type Toast = ForegroundNotification & { id: string };
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const dismissToast = useCallback((id: string) => {
+    clearTimeout(toastTimers.current[id]);
+    delete toastTimers.current[id];
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const pushToast = useCallback((payload: ForegroundNotification) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setToasts(prev => [...prev, { ...payload, id }]);
+    toastTimers.current[id] = setTimeout(() => dismissToast(id), 8000);
+  }, [dismissToast]);
 
   // Fetch admin profile EXACTLY ONCE per session initialization
   useEffect(() => {
@@ -124,10 +139,10 @@ function App() {
 
     const roles = session.role ? session.role.split(',').map((r) => r.trim()) : [];
 
-    // Foreground listener: show banner + navigate + highlight relevant item
+    // Foreground listener: store in Redux, show stacked toast, navigate + highlight
     const unsubscribeMessage = notificationService.onForegroundMessage((payload) => {
-      setForegroundNotification(payload);
-      setTimeout(() => setForegroundNotification(null), 60000);
+      dispatch(addNotification({ title: payload.title, body: payload.body, data: payload.data }));
+      pushToast(payload);
 
       const data: Record<string, string> = payload.data || {};
       if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
@@ -241,65 +256,77 @@ function App() {
 
   return (
     <div className="App">
-      {/* Dynamic Foreground Push Notification Snackbar */}
-      {foregroundNotification && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          backgroundColor: '#334155',
-          color: 'white',
-          padding: '16px 24px',
-          borderRadius: '8px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)',
-          zIndex: 9999,
-          maxWidth: '350px',
-          animation: 'slideIn 0.3s ease-out',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <span style={{ fontWeight: 600, fontSize: '15px' }}>{foregroundNotification.title}</span>
-            <button
-              onClick={() => setForegroundNotification(null)}
-              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0px' }}>
-              ✕
-            </button>
-          </div>
-          <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.4', color: '#e2e8f0' }}>{foregroundNotification.body}</p>
-          {/* Clickable "View" button — re-dispatches highlight in case the 3 s timer already cleared it */}
-          {(foregroundNotification.data?.order_id || foregroundNotification.data?.milestone_id || foregroundNotification.data?.recipient_mobile) && (
-            <button
-              onClick={() => {
-                const data = foregroundNotification.data || {};
-                if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
-                  dispatch(setHighlightedMilestoneId(data.milestone_id));
-                  navigate('/offer-settings');
-                } else if (data.type === 'REFERRAL_REWARD' && data.recipient_mobile) {
-                  navigate(`/user-management/network/${data.recipient_mobile}`);
-                } else if (data.order_id) {
-                  dispatch(setHighlightedOrderId(data.order_id));
-                  navigate('/orders');
-                }
-                setForegroundNotification(null);
-              }}
-              style={{
-                marginTop: '8px',
-                alignSelf: 'flex-end',
-                background: 'none',
-                border: '1px solid #64748b',
-                color: '#94a3b8',
-                cursor: 'pointer',
-                padding: '4px 12px',
-                borderRadius: '4px',
-                fontSize: '12px',
-              }}>
-              View →
-            </button>
-          )}
-        </div>
-      )}
+      {/* Stacked foreground notification toasts — bottom-right column */}
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 9997,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        maxWidth: '360px',
+        width: '360px',
+        pointerEvents: toasts.length === 0 ? 'none' : 'auto',
+      }}>
+        {toasts.map((toast) => {
+          const hasLink = !!(toast.data?.order_id || toast.data?.milestone_id || toast.data?.recipient_mobile);
+          const handleView = () => {
+            const data = toast.data || {};
+            if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
+              dispatch(setHighlightedMilestoneId(data.milestone_id));
+              navigate('/offer-settings');
+            } else if (data.type === 'REFERRAL_REWARD' && data.recipient_mobile) {
+              navigate(`/user-management/network/${data.recipient_mobile}`);
+            } else if (data.order_id) {
+              dispatch(setHighlightedOrderId(data.order_id));
+              navigate('/orders');
+            }
+            dismissToast(toast.id);
+          };
+          return (
+            <div key={toast.id} style={{
+              backgroundColor: '#1e293b',
+              color: 'white',
+              padding: '14px 16px',
+              borderRadius: '10px',
+              boxShadow: '0 10px 25px -3px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(99,102,241,0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              animation: 'slideIn 0.25s ease-out',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ fontWeight: 600, fontSize: '13px', lineHeight: '1.4', flex: 1 }}>{toast.title}</span>
+                <button
+                  onClick={() => dismissToast(toast.id)}
+                  style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0', flexShrink: 0 }}>
+                  ✕
+                </button>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', lineHeight: '1.5', color: '#94a3b8' }}>{toast.body}</p>
+              {hasLink && (
+                <button
+                  onClick={handleView}
+                  style={{
+                    marginTop: '6px',
+                    alignSelf: 'flex-end',
+                    background: 'none',
+                    border: '1px solid rgba(99,102,241,0.4)',
+                    color: '#818cf8',
+                    cursor: 'pointer',
+                    padding: '3px 12px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                  }}>
+                  View →
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       <Routes>
         <Route path="/login" element={
