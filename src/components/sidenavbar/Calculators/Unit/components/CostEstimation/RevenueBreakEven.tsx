@@ -168,16 +168,7 @@ const RevenueBreakEven: React.FC<any> = ({
                                         <td className="px-6 py-4 border-r border-slate-100 text-sm text-center">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-700">
-                                                    {(() => {
-                                                        const startM = treeData.startMonth || 0;
-                                                        const rowStartTotalMonths = startM + index * 12;
-                                                        const rowEndTotalMonths = rowStartTotalMonths + 11;
-                                                        const startY = treeData.startYear + Math.floor(rowStartTotalMonths / 12);
-                                                        const endY = treeData.startYear + Math.floor(rowEndTotalMonths / 12);
-                                                        const startMonthName = monthNames[rowStartTotalMonths % 12].substring(0, 3);
-                                                        const endMonthName = monthNames[rowEndTotalMonths % 12].substring(0, 3);
-                                                        return `${startMonthName} ${startY} - ${endMonthName} ${endY}`;
-                                                    })()}
+                                                    {data.displayLabel || data.year}
                                                 </span>
                                                 {isRevenueBreakEven && <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mt-0.5">Break-Even</span>}
                                             </div>

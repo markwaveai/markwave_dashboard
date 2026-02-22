@@ -67,7 +67,7 @@ const AnnualHerdRevenue = ({
                                                     {index + 1}
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-slate-800 text-sm">{data.year}</p>
+                                                    <p className="font-semibold text-slate-800 text-sm">{data.displayLabel || data.year}</p>
                                                 </div>
                                             </div>
                                         </td>

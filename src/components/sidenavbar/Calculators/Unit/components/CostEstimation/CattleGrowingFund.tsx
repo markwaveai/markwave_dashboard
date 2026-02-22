@@ -178,7 +178,7 @@ const CattleGrowingFund = ({
 
                     {/* Annual */}
                     <div className="flex flex-col items-center text-center">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Caring Cost</p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CGF Cost</p>
                         <div className="text-xl font-bold text-rose-600 mt-1">{formatCurrency(totalYearlyCaringCost)}</div>
                     </div>
 

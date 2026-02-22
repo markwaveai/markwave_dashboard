@@ -82,7 +82,7 @@ const HeaderControls = ({
     return (
         <div className="bg-white border-b border-slate-200 px-4 py-2 z-[80] relative">
             {/* Horizontally scrollable on mobile */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-hidden">
                 <div className="flex items-center justify-between gap-4 min-w-max">
 
                     {/* Left Section: Configuration & Actions */}
@@ -92,8 +92,8 @@ const HeaderControls = ({
                         <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 shadow-sm">
 
                             {/* Units Input */}
-                            <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Units</span>
+                            <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Units</span>
                                 <input
                                     type="number"
                                     min="1"
@@ -106,8 +106,8 @@ const HeaderControls = ({
                             </div>
 
                             {/* Start Date Picker */}
-                            <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200 relative">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start</span>
+                            <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Start Date</span>
                                 <div className="relative w-24">
                                     <DatePicker
                                         selected={new Date(startYear, startMonth, 1)}
@@ -118,9 +118,12 @@ const HeaderControls = ({
                                                 setStartYear(newYear);
                                                 setStartMonth(newMonth);
                                                 setStartDay(1);
-                                                // Reset to 10 years when start changes
-                                                setYears(10);
-                                                setEndMonth((newMonth + 10 * 12 - 1) % 12);
+
+                                                // Ensure at least 3 years 1 month gap (37 months total)
+                                                if (years < 3.0833) {
+                                                    setYears(3.0833);
+                                                    setEndMonth((newMonth + 36) % 12);
+                                                }
                                             }
                                         }}
                                         minDate={new Date(2026, 0, 1)}
@@ -137,8 +140,8 @@ const HeaderControls = ({
                             </div>
 
                             {/* End Date Picker - Swapped Position & DatePicker added */}
-                            <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200 relative">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">End</span>
+                            <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
                                 <div className="relative w-24">
                                     <DatePicker
                                         selected={new Date(Math.floor((startYear * 12 + startMonth + Math.round(years * 12) - 1) / 12), (startMonth + Math.round(years * 12) - 1) % 12, 1)}
@@ -150,16 +153,17 @@ const HeaderControls = ({
                                                 const endAbsolute = newEndYear * 12 + newEndMonth;
 
                                                 let diffMonths = (endAbsolute - startAbsolute) + 1;
+
                                                 if (diffMonths > 120) diffMonths = 120; // Cap at 10 years
-                                                if (diffMonths < 12) diffMonths = 12; // Min 1 year
+                                                if (diffMonths < 37) diffMonths = 37; // Min 3 years + 1 month
                                                 const numYears = diffMonths / 12;
 
                                                 setYears(numYears);
                                                 setEndMonth(newEndMonth);
                                             }
                                         }}
-                                        minDate={new Date(startYear, startMonth, 1)}
-                                        maxDate={new Date(Math.floor((startYear * 12 + startMonth + 10 * 12 - 1) / 12), (startMonth + 10 * 12 - 1) % 12, 1)}
+                                        minDate={new Date(startYear, startMonth + 36, 1)}
+                                        maxDate={new Date(startYear, startMonth + 119, 1)}
                                         dateFormat="MMM yyyy"
                                         showMonthYearPicker
                                         portalId="root"
@@ -196,37 +200,30 @@ const HeaderControls = ({
                     {/* Center Section: View Toggle */}
                     {treeData && !isViewRestricted && (
                         <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner shrink-0">
-                            <button
-                                disabled={isViewRestricted}
-                                className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
-                                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
-                                    : isViewRestricted ? 'opacity-50 cursor-not-allowed text-slate-400' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
-                                    }`}
-                                onClick={() => setActiveTab("familyTree")}
-                            >
-                                {/* <OrgTreeIcon className="w-5 h-5" /> */}
-                                <img src="/tree.png" alt="tree" className="w-7 h-7" />
-                                {/* Floating Tooltip */}
-                                <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                                    Tree View
-                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-slate-800"></span>
-                                </span>
-                            </button>
-                            <button
-                                className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
-                                    ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
-                                    : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
-                                    }`}
-                                onClick={() => setActiveTab("costEstimation")}
-                            >
-                                {/* <span className="text-base leading-none">📊</span> */}
-                                <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
-                                {/* Floating Tooltip */}
-                                <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                                    Revenue Projections
-                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-slate-800"></span>
-                                </span>
-                            </button>
+                            <SimpleTooltip content="Tree View" placement="bottom">
+                                <button
+                                    disabled={isViewRestricted}
+                                    className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
+                                        ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                                        : isViewRestricted ? 'opacity-50 cursor-not-allowed text-slate-400' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
+                                        }`}
+                                    onClick={() => setActiveTab("familyTree")}
+                                >
+                                    <img src="/tree.png" alt="tree" className="w-7 h-7" />
+                                </button>
+                            </SimpleTooltip>
+
+                            <SimpleTooltip content="Revenue Projections" placement="bottom">
+                                <button
+                                    className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
+                                        ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                                        : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
+                                        }`}
+                                    onClick={() => setActiveTab("costEstimation")}
+                                >
+                                    <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
+                                </button>
+                            </SimpleTooltip>
                         </div>
                     )}
 
@@ -234,7 +231,7 @@ const HeaderControls = ({
                     {treeData && treeData.summaryStats && (
                         <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 overflow-visible">
 
-                            <SimpleTooltip content={`Total buffaloes after ${years} years`} placement="bottom">
+                            <SimpleTooltip content="Total buffaloes" placement="bottom">
                                 <div className="flex flex-col items-center cursor-default">
                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
                                     <span className="text-sm font-black text-slate-800">
@@ -282,16 +279,17 @@ const HeaderControls = ({
 
 
                             {/* CGF Toggle - Integrated */}
-                            <button
-                                onClick={() => setIsCGFEnabled(!isCGFEnabled)}
-                                className={`flex items-center justify-center p-1.5 rounded-full transition-all ${isCGFEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
-                                title={isCGFEnabled ? "Disable CGF Mode" : "Enable CGF Mode"}
-                            >
-                                <span className="text-[9px] font-bold uppercase mr-1.5">CGF</span>
-                                <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 relative ${isCGFEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                                    <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${isCGFEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                                </div>
-                            </button>
+                            <SimpleTooltip content={isCGFEnabled ? "Disable CGF Mode" : "Enable CGF Mode"} placement="bottom">
+                                <button
+                                    onClick={() => setIsCGFEnabled(!isCGFEnabled)}
+                                    className={`flex items-center justify-center p-1.5 rounded-full transition-all ${isCGFEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                                >
+                                    <span className="text-[9px] font-bold uppercase mr-1.5">CGF</span>
+                                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 relative ${isCGFEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}>
+                                        <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${isCGFEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </button>
+                            </SimpleTooltip>
 
                             <div className="w-px h-8 bg-slate-200" />
 

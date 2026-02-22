@@ -109,7 +109,7 @@ const BreakEvenTimeline: React.FC<any> = ({
                                         <tr key={data.year} className={`group transition-all ${isBreakEven ? 'bg-emerald-50/50' : 'hover:bg-slate-50/50'}`}>
                                             <td className="px-6 py-4">
                                                 <div className={`relative ${isBreakEven ? 'z-10' : ''}`}>
-                                                    <span className="text-sm font-bold text-slate-800">{data.year}</span>
+                                                    <span className="text-sm font-bold text-slate-800">{data.displayLabel || data.year}</span>
                                                     <span className="block text-[10px] text-slate-400">Y{index + 1}</span>
                                                     {isBreakEven && (
                                                         <div className="absolute left-[-24px] top-1/2 -translate-y-1/2 w-1 h-8 bg-emerald-500 rounded-r-full" />
