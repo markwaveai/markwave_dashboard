@@ -266,6 +266,34 @@ function App() {
             </button>
           </div>
           <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.4', color: '#e2e8f0' }}>{foregroundNotification.body}</p>
+          {/* Clickable "View" button — re-dispatches highlight in case the 3 s timer already cleared it */}
+          {(foregroundNotification.data?.order_id || foregroundNotification.data?.milestone_id) && (
+            <button
+              onClick={() => {
+                const data = foregroundNotification.data || {};
+                if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
+                  dispatch(setHighlightedMilestoneId(data.milestone_id));
+                  navigate('/offer-settings');
+                } else if (data.order_id) {
+                  dispatch(setHighlightedOrderId(data.order_id));
+                  navigate('/orders');
+                }
+                setForegroundNotification(null);
+              }}
+              style={{
+                marginTop: '8px',
+                alignSelf: 'flex-end',
+                background: 'none',
+                border: '1px solid #64748b',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                fontSize: '12px',
+              }}>
+              View →
+            </button>
+          )}
         </div>
       )}
 

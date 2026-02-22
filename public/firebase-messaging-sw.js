@@ -22,14 +22,16 @@ messaging.onBackgroundMessage((payload) => {
   const title = notification.title || 'AnimalKart Dashboard';
   const body = notification.body || '';
 
-  // Determine the in-app URL to open on click
+  // Determine the in-app URL to open on click.
+  // encodeURIComponent is required because order IDs contain '#' (e.g. OD#123...)
+  // which the URL parser would treat as a fragment delimiter if left unencoded.
   let actionUrl = '/orders';
   if (data.type === 'MILESTONE_ACHIEVED') {
-    actionUrl = `/offer-settings?highlight_milestone=${data.milestone_id || ''}`;
+    actionUrl = `/offer-settings?highlight_milestone=${encodeURIComponent(data.milestone_id || '')}`;
   } else if (data.type === 'REFERRAL_REWARD') {
-    actionUrl = `/orders?highlight_order=${data.order_id || ''}`;
+    actionUrl = `/orders?highlight_order=${encodeURIComponent(data.order_id || '')}`;
   } else if (data.order_id) {
-    actionUrl = `/orders?highlight_order=${data.order_id}`;
+    actionUrl = `/orders?highlight_order=${encodeURIComponent(data.order_id)}`;
   }
 
   self.registration.showNotification(title, {
