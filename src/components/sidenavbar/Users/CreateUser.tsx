@@ -12,6 +12,7 @@ export interface CreateUserProps {
     adminReferralCode?: string; // Optional context
     initialData?: CreateUserFormData | null; // For Edit Mode
     isEditMode?: boolean;
+    initialRole?: string;
 }
 
 export interface CreateUserFormData {
@@ -24,9 +25,10 @@ export interface CreateUserFormData {
     is_test: boolean;
     refered_by_mobile?: string;
     refered_by_name?: string;
+    isabletorefer: boolean;
 }
 
-export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, initialData, isEditMode = false }: CreateUserProps) => {
+export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, initialData, isEditMode = false, initialRole }: CreateUserProps) => {
     const [formData, setFormData] = useState<CreateUserFormData>({
         mobile: '',
         first_name: '',
@@ -37,6 +39,7 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
         is_test: false,
         refered_by_mobile: '',
         refered_by_name: '',
+        isabletorefer: false,
     });
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState<string | null>(null);
@@ -58,17 +61,18 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
                     first_name: '',
                     last_name: '',
                     email: '',
-                    role: 'Investor',
+                    role: initialRole || 'Investor',
                     referral_code: adminReferralCode || '',
                     is_test: false,
                     refered_by_mobile: '',
                     refered_by_name: '',
+                    isabletorefer: false,
                 });
             }
             setErr(null);
             setValidationErrors({});
         }
-    }, [isOpen, isEditMode, initialData, adminReferralCode]);
+    }, [isOpen, isEditMode, initialData, adminReferralCode, initialRole]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -173,10 +177,19 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
                 onClose();
             } else {
                 // Create Logic
-                // Adapt formData to API expectation
-                const apiData: any = {
-                    ...formData,
-                    is_test: String(formData.is_test) // API likely expects string "true"/"false" based on previous code
+                // Adapt formData to API expectation based on user request
+                const isabletoreferr = formData.role === 'Employee' || formData.role === 'SpecialCategory';
+
+                const apiData = {
+                    mobile: formData.mobile,
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    email: formData.email,
+                    role: formData.role,
+                    referred_by_code: formData.referral_code,
+                    isabletorefer: isabletoreferr,
+                    isTestAccount: !!formData.is_test,
+                  
                 };
 
                 const result = await userService.createUser(apiData);

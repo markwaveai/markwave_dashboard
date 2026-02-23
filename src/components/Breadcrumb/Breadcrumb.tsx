@@ -20,6 +20,7 @@ import SideNavbar from '../sidenavbar/SideNavbar';
 import ImageNamesModal from '../common/ImageNamesModal';
 import Logout from '../auth/Logout';
 import Snackbar from '../common/Snackbar';
+import { CreateUser } from '../sidenavbar/Users/CreateUser';
 
 interface BreadcrumbProps {
     adminMobile?: string;
@@ -41,28 +42,11 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
     // Local State
     const [adminReferralCode, setAdminReferralCode] = useState<string>('');
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
-    // Form Data (moved from PageBreadcrumb, mostly for Admin Referral Modal if it's still needed here)
-    // Wait, the referral modal logic was in PageBreadcrumb. Is it triggered from Sidebar? 
-    // No, PageBreadcrumb had `handleChoiceSelection` which listened to `creationRole` from Redux. 
-    // This logic seems global, so it should stay in Layout.
-
-    const [formData, setFormData] = useState({
-        mobile: '',
-        first_name: '',
-        last_name: '',
-        email: '',
-        refered_by_mobile: '',
-        refered_by_name: '',
-        referral_code: '',
-        role: 'Investor',
-        is_test: 'false',
-    });
+    const [lastSelectedRole, setLastSelectedRole] = useState<'Investor' | 'Employee' | 'SpecialCategory' | undefined>(undefined);
 
     // UI State from Redux
     const { snackbar } = useAppSelector((state: RootState) => state.ui);
-    const { creationRole } = useAppSelector((state: RootState) => state.ui.modals);
+    const { creationRole, referral: isReferralModalOpen } = useAppSelector((state: RootState) => state.ui.modals);
     const { adminProfile } = useAppSelector((state: RootState) => state.users);
 
     // Resize Listener
@@ -89,25 +73,13 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
         }
     }, [adminProfile]);
 
-    // Referral Modal Logic
-    const handleChoiceSelection = useCallback((type: 'investor' | 'referral') => {
-        setFormData(prev => ({
-            ...prev,
-            role: type === 'investor' ? 'Investor' : 'Employee',
-            refered_by_mobile: adminMobile || '',
-            refered_by_name: adminName || '', // We use adminName here, display logic is separate in TopNavbar
-            referral_code: adminReferralCode || '',
-            is_test: 'false'
-        }));
-        dispatch(setReferralModalOpen(true));
-    }, [adminMobile, adminName, adminReferralCode, dispatch]);
-
     useEffect(() => {
         if (creationRole) {
-            handleChoiceSelection(creationRole === 'Investor' ? 'investor' : 'referral');
+            setLastSelectedRole(creationRole);
+            dispatch(setReferralModalOpen(true));
             dispatch(setCreationRole(null));
         }
-    }, [creationRole, dispatch, handleChoiceSelection]);
+    }, [creationRole, dispatch]);
 
     const hasSession = !!adminMobile;
 
@@ -153,6 +125,19 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 message={snackbar.message}
                 type={snackbar.type as 'success' | 'error' | null}
                 onClose={() => dispatch(setSnackbar({ message: null, type: null }))}
+            />
+
+            <CreateUser
+                isOpen={isReferralModalOpen}
+                onClose={() => {
+                    dispatch(setReferralModalOpen(false));
+                    setLastSelectedRole(undefined);
+                }}
+                onSuccess={() => {
+                    dispatch(setSnackbar({ message: 'Action completed successfully', type: 'success' }));
+                }}
+                adminReferralCode={adminReferralCode}
+                initialRole={lastSelectedRole}
             />
         </div>
     );

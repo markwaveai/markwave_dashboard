@@ -34,8 +34,13 @@ export interface User {
 
 export interface CreateUserRequest {
   mobile: string;
-  name: string;
-  referral_type: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: string;
+  referred_by_code: string;
+  isabletorefer: boolean;
+  isTestAccount: boolean;
 }
 
 export interface UserParams {
