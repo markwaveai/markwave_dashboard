@@ -1037,7 +1037,7 @@ const CostEstimationTableContent = ({
             <div className="bg-white border-b border-slate-200 sticky top-0 z-[60] shadow-sm">
                 <div className="flex flex-col items-center py-1 max-w-7xl mx-auto">
                     {/* Tabs - Single Row, Scroll if needed but hidden bar */}
-                    <div className="flex justify-start px-3 gap-1 overflow-x-auto overflow-y-hidden max-w-full pr-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden whitespace-nowrap">
+                    <div className="flex justify-start px-3 gap-1 overflow-x-auto overflow-y-hidden max-w-full pr-5 pb-2 whitespace-nowrap scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
                         {TAB_CONFIG.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;

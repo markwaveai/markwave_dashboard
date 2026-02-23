@@ -432,6 +432,8 @@ const MonthlyRevenueBreak = ({
         return () => window.removeEventListener('resize', checkScroll);
     }, [unitBuffaloes]);
 
+
+
     const validMonthsThisYear = useMemo(() => {
         const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
         const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
@@ -598,10 +600,10 @@ const MonthlyRevenueBreak = ({
 
 
 
-                    {/* 3. Main Data Table */}
+
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
                         {showScrollIndicator && (
-                            <div className="absolute right-[21rem] top-5 z-50 pointer-events-none">
+                            <div className="absolute left-[115px] top-[24px] z-50 pointer-events-none">
                                 <div className="bg-slate-900 text-white rounded-full p-1 shadow-xl animate-pulse flex items-center justify-center opacity-90 border border-slate-700">
                                     <ChevronRight className="w-4 h-4" />
                                 </div>
@@ -610,7 +612,7 @@ const MonthlyRevenueBreak = ({
                         <div
                             ref={scrollContainerRef}
                             onScroll={checkScroll}
-                            className="overflow-auto max-h-[calc(100vh-280px)]"
+                            className="overflow-x-auto pb-4"
                         >
                             <table className="w-full text-sm text-left">
                                 <thead className="text-xs text-slate-500 bg-slate-50 sticky top-0 z-[40] shadow-sm">
@@ -852,8 +854,6 @@ const MonthlyRevenueBreak = ({
                             </table>
                         </div>
                     </div>
-
-
                 </>
             ) : (
                 <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 shadow-sm text-center">
@@ -864,13 +864,9 @@ const MonthlyRevenueBreak = ({
                     <p className="text-slate-500 mt-2 max-w-sm mx-auto">
                         No revenue data found for Unit {selectedUnit} in Year {selectedYearIndex + 1}. Try selecting a different year.
                     </p>
-                    <div className="mt-6">
-                        {/* Selector Removed - Controlled globally */}
-                    </div>
                 </div>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 };
 
