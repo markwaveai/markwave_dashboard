@@ -97,9 +97,6 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                     setYears(Math.ceil(config.durationMonths / 12));
                     setEndMonth(11); // Default to December
                 }
-                if (config.startYear) setStartYear(config.startYear);
-                if (config.startMonth !== undefined) setStartMonth(config.startMonth);
-                if (config.startDay) setStartDay(config.startDay);
 
                 // Trigger an initial simulation after a short delay to ensure state updates are applied
                 setTimeout(() => {
@@ -826,15 +823,18 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     // Reset function
     const resetSimulation = () => {
         localStorage.removeItem('buffalo_sim_config');
-        localStorage.removeItem('buffalo_tree_data'); // Clean up old large data
+        localStorage.removeItem('buffalo_tree_data');
         setTreeData(null);
         setUnits(1);
         setYears(10);
-        setEndMonth(11);
-        setStartYear(2026);
-        setStartMonth(0);
-        setStartDay(1);
-        setActiveTab("familyTree");
+        setEndMonth(((getCurrentDateDefaults().month + 119) % 12));
+
+        const { year, month, day } = getCurrentDateDefaults();
+        setStartYear(year);
+        setStartMonth(month);
+        setStartDay(day);
+
+        setActiveTab("costEstimation");
         setZoom(1);
         setPosition({ x: 0, y: 0 });
     };

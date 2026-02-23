@@ -25,6 +25,11 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     const navigate = useNavigate();
     const location = useLocation();
     const { isSidebarOpen } = useAppSelector((state: RootState) => state.ui);
+    const { adminRole } = useAppSelector((state: RootState) => state.auth);
+    const { adminProfile } = useAppSelector((state: RootState) => state.users);
+
+    const effectiveRole = adminProfile?.role || adminRole || '';
+    const isSuperAdmin = effectiveRole.toLowerCase().includes('superadmin');
 
     // Sidebar Sub-menu States
     const [isUnitCalcOpen, setIsUnitCalcOpen] = useState(false);
@@ -173,7 +178,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
 
 
-                        {hasSession && (
+                        {hasSession && isSuperAdmin && (
                             <li>
                                 <Tooltip content="Offer Settings" disabled={isSidebarOpen}>
                                     <button className={navItemClass('offer-settings')} onClick={() => navigate('/offer-settings', { state: { fromDashboard: true } })}>

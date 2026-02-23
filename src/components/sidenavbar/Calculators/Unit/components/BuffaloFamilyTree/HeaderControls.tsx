@@ -126,7 +126,7 @@ const HeaderControls = ({
                                                 setEndMonth((newMonth + 119) % 12);
                                             }
                                         }}
-                                        minDate={new Date(2026, 0, 1)}
+                                        minDate={new Date(2024, 0, 1)}
                                         dateFormat="dd MMM yyyy"
                                         portalId="root"
                                         className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-6"
