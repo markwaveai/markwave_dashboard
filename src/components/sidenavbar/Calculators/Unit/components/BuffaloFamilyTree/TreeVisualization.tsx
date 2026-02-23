@@ -396,9 +396,9 @@ const TreeVisualization = ({
     const calculatedHeight = contentHeight + (PADDING * 2);
 
     // Apply strict sizing for horizontal layouts to ensure scroll works
-    // Added extra buffer to width/height to prevent clipping of labels or tooltips
-    const containerWidth = activeLayout === 'layout1' ? calculatedWidth + 500 : Math.max(calculatedWidth + 300, 1500);
-    const containerHeight = activeLayout === 'layout1' ? calculatedHeight : Math.max(calculatedHeight + 200, 1200);
+    // Added extra buffer to width/height to ensure scrollbars are always triggered and tooltips have room
+    const containerWidth = activeLayout === 'layout1' ? Math.max(calculatedWidth + 1200, 2500) : Math.max(calculatedWidth + 600, 1800);
+    const containerHeight = activeLayout === 'layout1' ? Math.max(calculatedHeight + 600, 1500) : Math.max(calculatedHeight + 600, 1400);
 
     // Normalize coordinates so content starts exactly at PADDING
     const xOffset = PADDING - minX;
@@ -419,7 +419,7 @@ const TreeVisualization = ({
 
 
     return (
-        <div className="w-full h-full flex flex-col relative">
+        <div className={`w-full h-full flex flex-col relative ${isFullScreen ? 'fixed inset-0 z-[1000] bg-white' : ''}`}>
             {/* Floating Header Controls */}
             <div className="absolute top-4 left-4 z-30 flex flex-row items-start gap-2 pointer-events-none">
 
@@ -545,7 +545,7 @@ const TreeVisualization = ({
                     <div className="p-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75">
                         {/* Buffaloes */}
                         <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
-                            <span className="text-xs font-medium text-slate-500">Buffaloes</span>
+                            <span className="text-xs font-medium text-slate-500">Buffaloes + calves</span>
                             <span className="text-sm font-black text-slate-800">{stats.count}</span>
                         </div>
 
@@ -593,10 +593,10 @@ const TreeVisualization = ({
                 </div>
             )}
 
-            {/* Scrollable Tree Container */}
             <div
                 ref={containerRef}
-                className="flex-1 overflow-auto relative bg-slate-50 active:cursor-grabbing"
+                className="flex-1 overflow-x-scroll overflow-y-auto tree-view-scroll-container relative bg-slate-50 active:cursor-grabbing"
+                style={{ display: 'block' }}
                 onScroll={updateXarrow} // Update arrows on scroll
                 onMouseDown={(e: React.MouseEvent) => {
                     const ele = containerRef.current;
@@ -627,7 +627,7 @@ const TreeVisualization = ({
             >
                 <div
                     ref={treeContainerRef}
-                    className="relative flex items-center justify-center p-20"
+                    className="relative p-20"
                     style={{
                         transform: `scale(${zoom})`,
                         transformOrigin: 'top left',

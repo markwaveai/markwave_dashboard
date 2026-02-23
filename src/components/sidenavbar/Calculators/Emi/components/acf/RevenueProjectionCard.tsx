@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { IndianRupee, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SimpleTooltip } from '../../../Unit/components/BuffaloFamilyTree/CommonComponents';
 
 interface RevenueProjectionCardProps {
     yearIndex: number; // 1-based index (1 = 2026, 2 = 2027...)
@@ -34,7 +35,16 @@ const RevenueProjectionCard: React.FC<RevenueProjectionCardProps> = ({
     const dataIndex = validYearIndex - 1;
 
     const entry = REVENUE_DATA[dataIndex] || REVENUE_DATA[0];
-    const displayYear = entry.year;
+
+    // Helper to get ordinal suffix
+    const getOrdinalLabel = (n: number) => {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        const suffix = s[(v - 20) % 10] || s[v] || s[0];
+        return `${n}${suffix} Year`;
+    };
+
+    const displayYearLabel = getOrdinalLabel(validYearIndex);
 
     const totalRevenue = entry.revenue * units;
     const totalCpf = entry.cpf * units;
@@ -52,42 +62,48 @@ const RevenueProjectionCard: React.FC<RevenueProjectionCardProps> = ({
     };
 
     return (
-        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center transition-transform hover:-translate-y-0.5 duration-300">
-            <div className="w-full flex justify-end mb-1">
-                {/* Pill Date Selector */}
-                <div className="flex items-center bg-slate-100 rounded p-0.5">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-                        className={`p-0.5 rounded transition-colors ${validYearIndex <= 1 ? 'opacity-30 cursor-not-allowed' : 'text-slate-600 hover:bg-white'}`}
-                        disabled={validYearIndex <= 1}
-                    >
-                        <ChevronLeft size={12} />
-                    </button>
-                    <span className="mx-1 text-[10px] font-bold text-slate-700 min-w-[30px] text-center">
-                        {displayYear}
-                    </span>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); handleNext(); }}
-                        className={`p-0.5 rounded transition-colors ${validYearIndex >= 10 ? 'opacity-30 cursor-not-allowed' : 'text-slate-600 hover:bg-white'}`}
-                        disabled={validYearIndex >= 10}
-                    >
-                        <ChevronRight size={12} />
-                    </button>
+        <SimpleTooltip
+            content="These values starts after your ACF is completed"
+            placement="bottom"
+            wrapperClassName="w-full h-full"
+        >
+            <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center transition-transform hover:-translate-y-0.5 duration-300 w-full h-full">
+                <div className="w-full flex justify-center mb-1">
+                    {/* Pill Date Selector */}
+                    <div className="flex items-center bg-slate-100 rounded p-0.5">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                            className={`p-0.5 rounded transition-colors ${validYearIndex <= 1 ? 'opacity-30 cursor-not-allowed' : 'text-slate-600 hover:bg-white'}`}
+                            disabled={validYearIndex <= 1}
+                        >
+                            <ChevronLeft size={12} />
+                        </button>
+                        <span className="mx-1 text-[10px] font-bold text-slate-700 min-w-[50px] text-center">
+                            {displayYearLabel}
+                        </span>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                            className={`p-0.5 rounded transition-colors ${validYearIndex >= 10 ? 'opacity-30 cursor-not-allowed' : 'text-slate-600 hover:bg-white'}`}
+                            disabled={validYearIndex >= 10}
+                        >
+                            <ChevronRight size={12} />
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Projected Revenue
-                </p>
-                <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                    ₹{formatCurrency(totalRevenue)}
-                </h3>
-                <div className="text-[10px] text-slate-500 mt-0.5">
-                    CPF: ₹{formatCurrency(totalCpf)}
+                <div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                        Projected Revenue
+                    </p>
+                    <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                        ₹{formatCurrency(totalRevenue)}
+                    </h3>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                        CPF: ₹{formatCurrency(totalCpf)}
+                    </div>
                 </div>
             </div>
-        </div>
+        </SimpleTooltip>
     );
 };
 

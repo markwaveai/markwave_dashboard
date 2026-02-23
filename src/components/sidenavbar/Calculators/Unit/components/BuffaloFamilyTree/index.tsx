@@ -974,7 +974,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     }, [treeData, units]);
 
     return (
-        <div className="h-screen bg-slate-50 flex flex-col overflow-hidden font-sans text-slate-900">
+        <div className="h-full bg-slate-50 flex flex-col overflow-hidden font-sans text-slate-900 relative">
             {!isFullScreen && (
                 <HeaderControls
                     units={units}
@@ -1008,7 +1008,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
 
 
             {/* Tab Content */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 relative">
                 {activeTab === "familyTree" ? (
                     <TreeVisualization
                         treeData={scaledTreeData}

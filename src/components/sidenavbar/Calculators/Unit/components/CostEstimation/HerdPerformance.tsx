@@ -21,7 +21,8 @@ const HerdPerformance = ({
     selectedYearIndex,
     startYear,
     breakEvenAnalysis,
-    assetMarketValue
+    assetMarketValue,
+    treeData
 }: any) => {
     // State for Line Chart
     const [localYearIndex, setLocalYearIndex] = useState(selectedYearIndex);
@@ -38,15 +39,29 @@ const HerdPerformance = ({
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+    // Helper to resolve Calendar Year/Month from Simulation Year/Month
+    const getCalendarDate = (yearIndex: number, monthIndexInSim: number) => {
+        const absStart = (treeData.startYear * 12 + (treeData.startMonth || 0));
+        const absTarget = absStart + (yearIndex * 12) + monthIndexInSim;
+        return {
+            year: Math.floor(absTarget / 12),
+            month: absTarget % 12,
+            absMonth: absTarget
+        };
+    };
+
     // Helper to get formatted monthly data
     const getMonthlyDataForYear = (yearIndex: number) => {
-        const targetYear = startYear + yearIndex;
-        const yearRevenue = monthlyRevenue?.[targetYear] || {};
+        return Array.from({ length: 12 }).map((_, mIndex) => {
+            const { year, month } = getCalendarDate(yearIndex, mIndex);
+            const yearRevenue = monthlyRevenue?.[year] || {};
+            const revenue = yearRevenue[month]?.total || 0;
 
-        return monthNames.map((month, index: number) => ({
-            name: month,
-            value: yearRevenue[index]?.total || 0
-        }));
+            return {
+                name: `${monthNames[month]} '${year.toString().slice(-2)}`,
+                value: revenue
+            };
+        });
     };
 
     // Prepare Revenue Data
@@ -66,19 +81,21 @@ const HerdPerformance = ({
 
         return safeYearlyData.map((data: any) => ({
             name: data.year,
+            displayLabel: data.displayLabel,
             Revenue: data.revenueWithCPF,
             "Asset Value": assetMap[data.year] || 0
         }));
     };
 
     const yearlyRevenueChartData = getYearlyRevenueData();
-    const totalYears = yearlyData?.length || 10;
+    const totalYears = Array.isArray(yearlyData) ? yearlyData.length : 1;
 
     // Prepare Herd Composition Data (Milking vs Non-Milking)
     const getHerdCompositionData = () => {
         const safeYearlyData = Array.isArray(yearlyData) ? yearlyData : [];
         return safeYearlyData.map((data: any) => ({
             name: data.year,
+            displayLabel: data.displayLabel,
             Milking: data.producingBuffaloes || 0,
             "Non-Milking": data.nonProducingBuffaloes || 0
         }));
@@ -140,10 +157,10 @@ const HerdPerformance = ({
                 className="appearance-none bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 rounded-md py-1 px-3 pr-8 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
             >
                 {Array.from({ length: totalYears }, (_, i: number) => {
-                    const year = startYear + i;
+                    const label = yearlyData[i]?.displayLabel || `Year ${i + 1}`;
                     return (
                         <option key={i} value={i}>
-                            {year}
+                            {label}
                         </option>
                     );
                 })}
@@ -154,16 +171,28 @@ const HerdPerformance = ({
         </div>
     );
 
+    // Helper to format display label to range (e.g. "Mar 2035 - Feb 2036" -> "2035-36")
+    const formatYearRange = (displayLabel: string, year: number) => {
+        if (!displayLabel) return year.toString();
+        const parts = displayLabel.split(' - ');
+        if (parts.length === 2) {
+            const startYearStr = parts[0].split(' ')[1];
+            const endYearStr = parts[1].split(' ')[1];
+            if (startYearStr && endYearStr) {
+                return `${startYearStr}-${endYearStr.slice(2)}`;
+            }
+        }
+        return year.toString();
+    };
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* -------------------- Row 1: Line Charts (Revenue) -------------------- */}
-
             {/* Card 1: Monthly Revenue Line Graph */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h2 className="text-base font-bold text-slate-800">Monthly Revenue (Line)</h2>
-                        <p className="text-xs text-slate-500">Distribution for selected year</p>
+                        <p className="text-xs text-slate-500">Distribution for selected simulation year</p>
                     </div>
                     <YearSelector value={localYearIndex} onChange={setLocalYearIndex} />
                 </div>
@@ -181,7 +210,6 @@ const HerdPerformance = ({
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
                                 dy={10}
-                                interval={1}
                             />
                             <YAxis
                                 axisLine={false}
@@ -193,7 +221,7 @@ const HerdPerformance = ({
                             <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
                             <Line
                                 type="monotone"
-                                dataKey="value" // For Monthly, we stick to generic 'value' or rename to Revenue if desired, but reusing component logic.
+                                dataKey="value"
                                 name="Revenue"
                                 stroke="#4f46e5"
                                 strokeWidth={2}
@@ -211,7 +239,7 @@ const HerdPerformance = ({
                 <div className="mb-4">
                     <h2 className="text-base font-bold text-slate-800">Annual Trend (Line)</h2>
                     <p className="text-xs text-slate-500">
-                        Revenue vs Asset Value ({startYear} - {startYear + totalYears - 1})
+                        Revenue vs Asset Value
                     </p>
                 </div>
 
@@ -229,7 +257,10 @@ const HerdPerformance = ({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                tickFormatter={(tick) => tick.toString()}
+                                tickFormatter={(tick) => {
+                                    const item = yearlyRevenueChartData.find((d: any) => d.name === tick);
+                                    return item ? formatYearRange(item.displayLabel, item.name) : tick.toString();
+                                }}
                                 dy={10}
                                 allowDecimals={false}
                             />
@@ -240,7 +271,14 @@ const HerdPerformance = ({
                                 tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
                                 width={40}
                             />
-                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                            <Tooltip
+                                content={<CustomTooltip />}
+                                cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                labelFormatter={(label) => {
+                                    const item = yearlyRevenueChartData.find((d: any) => d.name === label);
+                                    return item?.displayLabel || label;
+                                }}
+                            />
                             <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
                             <Line
                                 type="monotone"
@@ -284,14 +322,12 @@ const HerdPerformance = ({
                 </div>
             </div>
 
-            {/* -------------------- Row 2: Bar Charts (Revenue) -------------------- */}
-
             {/* Card 3: Monthly Revenue Bar Graph */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h2 className="text-base font-bold text-slate-800">Monthly Revenue (Bar)</h2>
-                        <p className="text-xs text-slate-500">Distribution for selected year</p>
+                        <p className="text-xs text-slate-500">Distribution for selected simulation year</p>
                     </div>
                     <YearSelector value={barLocalYearIndex} onChange={setBarLocalYearIndex} />
                 </div>
@@ -309,7 +345,6 @@ const HerdPerformance = ({
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
                                 dy={10}
-                                interval={1}
                             />
                             <YAxis
                                 axisLine={false}
@@ -320,7 +355,7 @@ const HerdPerformance = ({
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
                             <Bar
-                                dataKey="value" // Generic value for specific year
+                                dataKey="value"
                                 name="Revenue"
                                 fill="#8b5cf6"
                                 radius={[4, 4, 0, 0]}
@@ -337,7 +372,7 @@ const HerdPerformance = ({
                 <div className="mb-4">
                     <h2 className="text-base font-bold text-slate-800">Annual Trend (Bar)</h2>
                     <p className="text-xs text-slate-500">
-                        Revenue vs Asset Value ({startYear} - {startYear + totalYears - 1})
+                        Revenue vs Asset Value
                     </p>
                 </div>
 
@@ -354,6 +389,10 @@ const HerdPerformance = ({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
+                                tickFormatter={(tick) => {
+                                    const item = yearlyRevenueChartData.find((d: any) => d.name === tick);
+                                    return item ? formatYearRange(item.displayLabel, item.name) : tick.toString();
+                                }}
                                 dy={10}
                             />
                             <YAxis
@@ -363,7 +402,14 @@ const HerdPerformance = ({
                                 tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
                                 width={40}
                             />
-                            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
+                            <Tooltip
+                                content={<CustomTooltip />}
+                                cursor={{ fill: '#f1f5f9' }}
+                                labelFormatter={(label) => {
+                                    const item = yearlyRevenueChartData.find((d: any) => d.name === label);
+                                    return item?.displayLabel || label;
+                                }}
+                            />
                             <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
                             <Bar
                                 dataKey="Revenue"
@@ -379,33 +425,17 @@ const HerdPerformance = ({
                                 maxBarSize={20}
                                 animationDuration={1000}
                             />
-                            {breakEvenX && (
-                                <ReferenceLine
-                                    x={Math.floor(breakEvenX)}
-                                    stroke="#ef4444"
-                                    strokeDasharray="3 3"
-                                    label={{
-                                        value: 'Break Even',
-                                        position: 'insideTopRight',
-                                        fill: '#ef4444',
-                                        fontSize: 10,
-                                        fontWeight: 'bold'
-                                    }}
-                                />
-                            )}
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>
-
-            {/* -------------------- Row 3: Herd Composition (New) -------------------- */}
 
             {/* Card 5: Herd Composition Line Graph */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                 <div className="mb-4">
                     <h2 className="text-base font-bold text-slate-800">Herd Composition (Trend)</h2>
                     <p className="text-xs text-slate-500">
-                        Milking vs Non-Milking ({startYear} - {startYear + totalYears - 1})
+                        Milking vs Non-Milking
                     </p>
                 </div>
 
@@ -423,7 +453,10 @@ const HerdPerformance = ({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                tickFormatter={(tick) => tick.toString()}
+                                tickFormatter={(tick) => {
+                                    const item = herdCompositionData.find((d: any) => d.name === tick);
+                                    return item ? formatYearRange(item.displayLabel, item.name) : tick.toString();
+                                }}
                                 dy={10}
                                 allowDecimals={false}
                             />
@@ -433,7 +466,14 @@ const HerdPerformance = ({
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
                                 width={30}
                             />
-                            <Tooltip content={<CustomHerdTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                            <Tooltip
+                                content={<CustomHerdTooltip />}
+                                cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                labelFormatter={(label) => {
+                                    const item = herdCompositionData.find((d: any) => d.name === label);
+                                    return item?.displayLabel || label;
+                                }}
+                            />
                             <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
                             <Line
                                 type="monotone"
@@ -459,7 +499,7 @@ const HerdPerformance = ({
                 <div className="mb-4">
                     <h2 className="text-base font-bold text-slate-800">Herd Composition (Vol)</h2>
                     <p className="text-xs text-slate-500">
-                        Milking vs Non-Milking ({startYear} - {startYear + totalYears - 1})
+                        Milking vs Non-Milking
                     </p>
                 </div>
 
@@ -476,6 +516,10 @@ const HerdPerformance = ({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
+                                tickFormatter={(tick) => {
+                                    const item = herdCompositionData.find((d: any) => d.name === tick);
+                                    return item ? formatYearRange(item.displayLabel, item.name) : tick.toString();
+                                }}
                                 dy={10}
                             />
                             <YAxis
@@ -484,7 +528,14 @@ const HerdPerformance = ({
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
                                 width={30}
                             />
-                            <Tooltip content={<CustomHerdTooltip />} cursor={{ fill: '#f1f5f9' }} />
+                            <Tooltip
+                                content={<CustomHerdTooltip />}
+                                cursor={{ fill: '#f1f5f9' }}
+                                labelFormatter={(label) => {
+                                    const item = herdCompositionData.find((d: any) => d.name === label);
+                                    return item?.displayLabel || label;
+                                }}
+                            />
                             <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
                             <Bar
                                 dataKey="Milking"
@@ -502,7 +553,6 @@ const HerdPerformance = ({
                     </ResponsiveContainer>
                 </div>
             </div>
-
         </div>
     );
 };

@@ -9,7 +9,8 @@ import {
     PieChart,
     Clock,
     Sprout,
-    Calculator
+    Calculator,
+    ChevronDown
 } from 'lucide-react';
 import MonthlyRevenueBreak from './MonthlyRevenueBreak';
 import RevenueBreakEven from './RevenueBreakEven';
@@ -531,6 +532,8 @@ const CostEstimationTableContent = ({
             let annualCPF = 0;
             let annualCGF = 0;
             let finalBuffaloCount = 0;
+            let producingBuffaloes = 0;
+            let nonProducingBuffaloes = 0;
 
             const monthsThisYear = Math.min(12, treeData.durationMonths - i * 12);
             const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (i * 12);
@@ -545,10 +548,24 @@ const CostEstimationTableContent = ({
 
                 // Track buffalo count at the end of this year
                 if (m === monthsThisYear - 1) {
-                    finalBuffaloCount = Object.values(buffaloDetails).filter((b: any) => {
+                    const allBuffaloes = Object.values(buffaloDetails).filter((b: any) => {
                         const birthAbs = b.birthYear * 12 + (b.birthMonth !== undefined ? b.birthMonth : (b.acquisitionMonth || 0));
                         return birthAbs <= absM;
-                    }).length * units;
+                    });
+
+                    finalBuffaloCount = allBuffaloes.length * units;
+
+                    allBuffaloes.forEach((b: any) => {
+                        const birthAbs = b.birthYear * 12 + (b.birthMonth !== undefined ? b.birthMonth : (b.acquisitionMonth || 0));
+                        const ageAtMonth = absM - birthAbs;
+                        const offset = b.generation > 0 ? 34 : 2;
+
+                        if (ageAtMonth >= offset) {
+                            producingBuffaloes += units;
+                        } else {
+                            nonProducingBuffaloes += units;
+                        }
+                    });
                 }
             }
 
@@ -573,7 +590,9 @@ const CostEstimationTableContent = ({
                 cgfCost: annualCGF,
                 revenueWithoutCPF,
                 revenueWithCPF,
-                totalBuffaloes: finalBuffaloCount
+                totalBuffaloes: finalBuffaloCount,
+                producingBuffaloes,
+                nonProducingBuffaloes
             });
         }
         return results;
@@ -1031,37 +1050,40 @@ const CostEstimationTableContent = ({
                                     <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide group-hover:text-indigo-500 transition-colors">Year</span>
                                 </div>
-                                <select
-                                    value={globalYearIndex}
-                                    onChange={(e) => setGlobalYearIndex(parseInt(e.target.value))}
-                                    className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer min-w-[120px] appearance-none hover:text-indigo-600 transition-colors text-center"
-                                    style={{ backgroundImage: 'none' }}
-                                >
-                                    {Array.from({ length: Math.ceil(treeData.durationMonths / 12) }, (_, i) => {
-                                        const simAbsStart = (treeData.startYear * 12 + (treeData.startMonth || 0));
-                                        const simAbsEnd = simAbsStart + treeData.durationMonths - 1;
+                                <div className="relative flex items-center">
+                                    <select
+                                        value={globalYearIndex}
+                                        onChange={(e) => setGlobalYearIndex(parseInt(e.target.value))}
+                                        className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer min-w-[140px] appearance-none hover:text-indigo-600 transition-colors text-center pr-6"
+                                        style={{ backgroundImage: 'none' }}
+                                    >
+                                        {Array.from({ length: Math.ceil(treeData.durationMonths / 12) }, (_, i) => {
+                                            const simAbsStart = (treeData.startYear * 12 + (treeData.startMonth || 0));
+                                            const simAbsEnd = simAbsStart + treeData.durationMonths - 1;
 
-                                        const startAbs = simAbsStart + (i * 12);
-                                        const sYear = Math.floor(startAbs / 12);
-                                        const sMonth = startAbs % 12;
-                                        const sDate = new Date(sYear, sMonth, 1);
+                                            const startAbs = simAbsStart + (i * 12);
+                                            const sYear = Math.floor(startAbs / 12);
+                                            const sMonth = startAbs % 12;
+                                            const sDate = new Date(sYear, sMonth, 1);
 
-                                        // Cap end at simulation boundary for the last year
-                                        const endAbs = Math.min(startAbs + 11, simAbsEnd);
-                                        const eYear = Math.floor(endAbs / 12);
-                                        const eMonth = endAbs % 12;
-                                        const eDate = new Date(eYear, eMonth, 1);
+                                            // Cap end at simulation boundary for the last year
+                                            const endAbs = Math.min(startAbs + 11, simAbsEnd);
+                                            const eYear = Math.floor(endAbs / 12);
+                                            const eMonth = endAbs % 12;
+                                            const eDate = new Date(eYear, eMonth, 1);
 
-                                        const startStr = sDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                                        const endStr = eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                                            const startStr = sDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                                            const endStr = eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
-                                        return (
-                                            <option key={i} value={i}>
-                                                {startStr} - {endStr}
-                                            </option>
-                                        );
-                                    })}
-                                </select>
+                                            return (
+                                                <option key={i} value={i}>
+                                                    {startStr} - {endStr}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-0 pointer-events-none group-hover:text-indigo-500 transition-colors" />
+                                </div>
                             </div>
 
                         </div>
@@ -1199,6 +1221,7 @@ const CostEstimationTableContent = ({
                                 yearRange={`${startYear}-${startYear + Math.ceil(treeData.durationMonths / 12) - 1}`}
                                 breakEvenAnalysis={breakEvenAnalysis}
                                 assetMarketValue={assetMarketValue}
+                                treeData={treeData}
                             />
                         )}
 

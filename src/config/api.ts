@@ -4,7 +4,7 @@ export const API_CONFIG = {
 
     // Use local backend when running on localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:8000';
+      return 'https://animalkart-stagging-jn6cma3vvq-el.a.run.app';
     } else {
       const corsUrl = 'https://cors-612299373064.asia-south1.run.app';
       return `${corsUrl}/${productionUrl}`;

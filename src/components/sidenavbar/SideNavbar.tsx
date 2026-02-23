@@ -5,6 +5,7 @@ import {
     UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search, UserCog, Coins
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import Tooltip from '../common/Tooltip';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toggleSidebar, setSidebarOpen } from '../../store/slices/uiSlice';
 import type { RootState } from '../../store';
@@ -123,46 +124,50 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                         )} */}
                         {hasSession && (
                             <li className="relative group/toggle">
-                                <button className={navItemClass('orders')} onClick={() => navigate('/orders', { state: { fromDashboard: true } })}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <ClipboardList size={20} className={activeTab === 'orders' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Orders</span>}
-                                    </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Orders</div>}
-                                </button>
+                                <Tooltip content="Orders" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('orders')} onClick={() => navigate('/orders', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <ClipboardList size={20} className={activeTab === 'orders' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Orders</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('user-management')} onClick={() => navigate('/user-management', { state: { fromDashboard: true } })}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Users size={20} className={activeTab === 'user-management' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Users</span>}
-                                    </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Users</div>}
-                                </button>
+                                <Tooltip content="Users" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('user-management')} onClick={() => navigate('/user-management', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Users size={20} className={activeTab === 'user-management' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Users</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('network')} onClick={() => navigate('/user-management/network', { state: { fromDashboard: true } })}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Users size={20} className={activeTab === 'network' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Network</span>}
-                                    </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Network</div>}
-                                </button>
+                                <Tooltip content="Network" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('network')} onClick={() => navigate('/user-management/network', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Users size={20} className={activeTab === 'network' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Network</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('products')} onClick={() => navigate('/products', { state: { fromDashboard: true } })}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <ShoppingBag size={20} className={activeTab === 'products' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Products</span>}
-                                    </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Products</div>}
-                                </button>
+                                <Tooltip content="Products" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('products')} onClick={() => navigate('/products', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <ShoppingBag size={20} className={activeTab === 'products' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Products</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
                             </li>
                         )}
 
@@ -170,46 +175,50 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('offer-settings')} onClick={() => navigate('/offer-settings', { state: { fromDashboard: true } })}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Award size={20} className={activeTab === 'offer-settings' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Offer Settings</span>}
-                                    </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Offer Settings</div>}
-                                </button>
+                                <Tooltip content="Offer Settings" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('offer-settings')} onClick={() => navigate('/offer-settings', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Award size={20} className={activeTab === 'offer-settings' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Offer Settings</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('offers-achieved')} onClick={() => navigate('/offers-achieved', { state: { fromDashboard: true } })}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Trophy size={20} className={activeTab === 'offers-achieved' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Offers Achieved</span>}
-                                    </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Offers Achieved</div>}
-                                </button>
+                                <Tooltip content="Offers Achieved" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('offers-achieved')} onClick={() => navigate('/offers-achieved', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Trophy size={20} className={activeTab === 'offers-achieved' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Offers Achieved</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('role-requests')} onClick={() => navigate('/role-requests', { state: { fromDashboard: true } })}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <UserCog size={20} className={activeTab === 'role-requests' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Role Requests</span>}
-                                    </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Role Requests</div>}
-                                </button>
+                                <Tooltip content="Role Requests" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('role-requests')} onClick={() => navigate('/role-requests', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <UserCog size={20} className={activeTab === 'role-requests' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Role Requests</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
                             </li>
                         )}
                         {hasSession && (
                             <li>
-                                <button className={navItemClass('farm')} onClick={() => navigate('/farm-management', { state: { fromDashboard: true } })}>
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Warehouse size={20} className={activeTab === 'farm' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Farm Mgmt</span>}
-                                    </div>
-                                    {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Farm Management</div>}
-                                </button>
+                                <Tooltip content="Farm Management" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('farm')} onClick={() => navigate('/farm-management', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Warehouse size={20} className={activeTab === 'farm' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Farm Mgmt</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
                             </li>
                         )}
 
@@ -255,60 +264,51 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                         {/* Calculators Group */}
                         {/* EMI Calculator */}
                         <li>
-                            <button
-                                className={navItemClass('emi')}
-                                onClick={() => navigate('/emi-calculator', { state: { fromDashboard: true } })}
-                            >
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <Calculator size={20} className={activeTab === 'emi' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">EMI Calculator</span>}
-                                </div>
-                                {!isSidebarOpen && (
-                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                                        EMI Calculator
+                            <Tooltip content="EMI Calculator" disabled={isSidebarOpen}>
+                                <button
+                                    className={navItemClass('emi')}
+                                    onClick={() => navigate('/emi-calculator', { state: { fromDashboard: true } })}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Calculator size={20} className={activeTab === 'emi' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">EMI Calculator</span>}
                                     </div>
-                                )}
-                            </button>
+                                </button>
+                            </Tooltip>
                         </li>
 
                         {/* ACF Calculator */}
                         <li>
-                            <button
-                                className={navItemClass('acf-calculator')}
-                                onClick={() => navigate('/acf-calculator', { state: { fromDashboard: true } })}
-                            >
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <Calculator size={20} className={activeTab === 'acf-calculator' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">ACF Calculator</span>}
-                                </div>
-                                {!isSidebarOpen && (
-                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                                        ACF Calculator
+                            <Tooltip content="ACF Calculator" disabled={isSidebarOpen}>
+                                <button
+                                    className={navItemClass('acf-calculator')}
+                                    onClick={() => navigate('/acf-calculator', { state: { fromDashboard: true } })}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Calculator size={20} className={activeTab === 'acf-calculator' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">ACF Calculator</span>}
                                     </div>
-                                )}
-                            </button>
+                                </button>
+                            </Tooltip>
                         </li>
 
                         <li>
                             <div className="flex flex-col">
-                                <button
-                                    className={navItemClass('unit-calculator')}
-                                    onClick={() => {
-                                        if (!isSidebarOpen) dispatch(setSidebarOpen(true));
-                                        setIsUnitCalcOpen(!isUnitCalcOpen);
-                                    }}
-                                >
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Calculator size={20} className={activeTab === 'unit-calculator' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Unit Calculator</span>}
-                                    </div>
-                                    {isSidebarOpen && (isUnitCalcOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
-                                    {!isSidebarOpen && (
-                                        <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                                            Unit Calculator
+                                <Tooltip content="Unit Calculator" disabled={isSidebarOpen}>
+                                    <button
+                                        className={navItemClass('unit-calculator')}
+                                        onClick={() => {
+                                            if (!isSidebarOpen) dispatch(setSidebarOpen(true));
+                                            setIsUnitCalcOpen(!isUnitCalcOpen);
+                                        }}
+                                    >
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Calculator size={20} className={activeTab === 'unit-calculator' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Unit Calculator</span>}
                                         </div>
-                                    )}
-                                </button>
+                                        {isSidebarOpen && (isUnitCalcOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
+                                    </button>
+                                </Tooltip>
 
                                 {isSidebarOpen && isUnitCalcOpen && (
                                     <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
@@ -337,54 +337,45 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
                         {/* Privacy & Legal */}
                         <li>
-                            <button
-                                className={navItemClass('privacy-policy')}
-                                onClick={() => navigate('/privacy-policy', { state: { fromDashboard: true } })}
-                            >
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <ShieldIcon size={20} className={activeTab === 'privacy-policy' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Privacy Policy</span>}
-                                </div>
-                                {!isSidebarOpen && (
-                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                                        Privacy Policy
+                            <Tooltip content="Privacy Policy" disabled={isSidebarOpen}>
+                                <button
+                                    className={navItemClass('privacy-policy')}
+                                    onClick={() => navigate('/privacy-policy', { state: { fromDashboard: true } })}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <ShieldIcon size={20} className={activeTab === 'privacy-policy' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Privacy Policy</span>}
                                     </div>
-                                )}
-                            </button>
+                                </button>
+                            </Tooltip>
                         </li>
 
                         <li>
-                            <button
-                                className={navItemClass('deactivate-user')}
-                                onClick={() => navigate('/deactivate-user', { state: { fromDashboard: true } })}
-                            >
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <UserMinus size={20} className={activeTab === 'deactivate-user' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Deactivate User</span>}
-                                </div>
-                                {!isSidebarOpen && (
-                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                                        Deactivate User
+                            <Tooltip content="Deactivate User" disabled={isSidebarOpen}>
+                                <button
+                                    className={navItemClass('deactivate-user')}
+                                    onClick={() => navigate('/deactivate-user', { state: { fromDashboard: true } })}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <UserMinus size={20} className={activeTab === 'deactivate-user' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Deactivate User</span>}
                                     </div>
-                                )}
-                            </button>
+                                </button>
+                            </Tooltip>
                         </li>
 
                         <li>
-                            <button
-                                className={navItemClass('support')}
-                                onClick={() => navigate('/support', { state: { fromDashboard: true } })}
-                            >
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <LifeBuoy size={20} className={activeTab === 'support' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Support</span>}
-                                </div>
-                                {!isSidebarOpen && (
-                                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                                        Support
+                            <Tooltip content="Support" disabled={isSidebarOpen}>
+                                <button
+                                    className={navItemClass('support')}
+                                    onClick={() => navigate('/support', { state: { fromDashboard: true } })}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <LifeBuoy size={20} className={activeTab === 'support' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Support</span>}
                                     </div>
-                                )}
-                            </button>
+                                </button>
+                            </Tooltip>
                         </li>
 
 
@@ -392,24 +383,21 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                         {/* Platform Groups */}
                         <li>
                             <div className="flex flex-col">
-                                <button
-                                    className={navItemClass('landify-group')}
-                                    onClick={() => {
-                                        if (!isSidebarOpen) dispatch(setSidebarOpen(true));
-                                        setIsLandifyOpen(!isLandifyOpen);
-                                    }}
-                                >
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <ShieldIcon size={20} className={activeTab.startsWith('landify') ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Landify Platform</span>}
-                                    </div>
-                                    {isSidebarOpen && (isLandifyOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
-                                    {!isSidebarOpen && (
-                                        <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                                            Landify Platform
+                                <Tooltip content="Landify Platform" disabled={isSidebarOpen}>
+                                    <button
+                                        className={navItemClass('landify-group')}
+                                        onClick={() => {
+                                            if (!isSidebarOpen) dispatch(setSidebarOpen(true));
+                                            setIsLandifyOpen(!isLandifyOpen);
+                                        }}
+                                    >
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <ShieldIcon size={20} className={activeTab.startsWith('landify') ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Landify Platform</span>}
                                         </div>
-                                    )}
-                                </button>
+                                        {isSidebarOpen && (isLandifyOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
+                                    </button>
+                                </Tooltip>
                                 {isSidebarOpen && isLandifyOpen && (
                                     <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
                                         <li>
@@ -443,24 +431,21 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
                         <li>
                             <div className="flex flex-col">
-                                <button
-                                    className={navItemClass('true-harvest-group')}
-                                    onClick={() => {
-                                        if (!isSidebarOpen) dispatch(setSidebarOpen(true));
-                                        setIsTrueHarvestOpen(!isTrueHarvestOpen);
-                                    }}
-                                >
-                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                        <Warehouse size={20} className={activeTab.startsWith('true-harvest') ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">True Harvest</span>}
-                                    </div>
-                                    {isSidebarOpen && (isTrueHarvestOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
-                                    {!isSidebarOpen && (
-                                        <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--slate-800)] text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                                            True Harvest
+                                <Tooltip content="True Harvest" disabled={isSidebarOpen}>
+                                    <button
+                                        className={navItemClass('true-harvest-group')}
+                                        onClick={() => {
+                                            if (!isSidebarOpen) dispatch(setSidebarOpen(true));
+                                            setIsTrueHarvestOpen(!isTrueHarvestOpen);
+                                        }}
+                                    >
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Warehouse size={20} className={activeTab.startsWith('true-harvest') ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">True Harvest</span>}
                                         </div>
-                                    )}
-                                </button>
+                                        {isSidebarOpen && (isTrueHarvestOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
+                                    </button>
+                                </Tooltip>
                                 {isSidebarOpen && isTrueHarvestOpen && (
                                     <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
                                         <li>
@@ -495,16 +480,17 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
                     {hasSession && (
                         <div className="mt-auto pt-6 border-t border-[var(--slate-800)] w-full">
-                            <button
-                                className="flex items-center w-full px-3 py-3 rounded-xl text-[var(--slate-400)] hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 outline-none group"
-                                onClick={onLogoutTrigger}
-                            >
-                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                    <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
-                                    {isSidebarOpen && <span className="flex-1 font-bold text-[0.875rem]">Logout</span>}
-                                </div>
-                                {!isSidebarOpen && <div className="absolute left-full ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">Logout</div>}
-                            </button>
+                            <Tooltip content="Logout" disabled={isSidebarOpen}>
+                                <button
+                                    className="flex items-center w-full px-3 py-3 rounded-xl text-[var(--slate-400)] hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 outline-none group"
+                                    onClick={onLogoutTrigger}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
+                                        {isSidebarOpen && <span className="flex-1 font-bold text-[0.875rem]">Logout</span>}
+                                    </div>
+                                </button>
+                            </Tooltip>
                         </div>
                     )}
                 </div>

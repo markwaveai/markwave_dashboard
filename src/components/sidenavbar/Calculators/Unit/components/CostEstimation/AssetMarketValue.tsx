@@ -198,18 +198,16 @@ const AssetMarketValue = ({
                 <div className="grid grid-cols-2 gap-2 max-w-2xl">
                     <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Asset Value</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Asset Value</p>
                             <h3 className="text-base font-bold text-slate-900 mt-0.5">{formatCurrency(detailedValue.totalValue || 0)}</h3>
                         </div>
-                        <p className="text-[9px] text-slate-400 mt-1">Year {selectedYear}</p>
                     </div>
 
                     <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Headcount</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Headcount</p>
                             <h3 className="text-base font-bold text-indigo-600 mt-0.5">{detailedValue.totalCount}</h3>
                         </div>
-                        <p className="text-[9px] text-slate-400 mt-1">Buffaloes</p>
                     </div>
                 </div>
 

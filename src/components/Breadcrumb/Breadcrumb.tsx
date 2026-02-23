@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -34,6 +35,8 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
     adminMobile, adminName, adminRole, lastLogin, presentLogin, onLogout, children
 }) => {
     const dispatch = useAppDispatch();
+    const location = useLocation();
+    const isUnitCalculator = location.pathname.includes('/unit-calculator');
 
     // Local State
     const [adminReferralCode, setAdminReferralCode] = useState<string>('');
@@ -130,8 +133,8 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                     />
                 )}
 
-                <main id="dashboard-main-scroll-container" className="flex-1 overflow-y-auto p-0 bg-[var(--color-gray-50)]">
-                    <div className="w-full p-3 lg:p-4">
+                <main id="dashboard-main-scroll-container" className={`flex-1 ${isUnitCalculator ? 'overflow-hidden' : 'overflow-y-auto'} p-0 bg-[var(--color-gray-50)]`}>
+                    <div className={`w-full h-full ${isUnitCalculator ? 'p-0' : 'p-3 lg:p-4'}`}>
                         {children}
                     </div>
                 </main>

@@ -116,50 +116,49 @@ export const BuffaloNode = React.memo(({
 
     return (
         <div id={elementId} className="flex flex-col items-center group relative z-10 hover:z-50">
-            {/* Tooltip */}
-            <div className={tooltipClasses}>
-                <div className="bg-slate-800 text-white text-[11px] rounded-lg p-2 shadow-xl border border-slate-700 relative">
-                    <div className="font-bold text-xs mb-1.5 border-b border-slate-600 pb-1.5 text-white">
-                        Buffalo {displayName} ({data.ageInMonths >= 34 ? 'Milking' : 'Non-Milking'})
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Age:</span>
-                            <span className="font-semibold text-slate-200">{Math.floor(data.ageInMonths / 12)}y {data.ageInMonths % 12}m</span>
-                        </div>
-                        <div className="flex justify-between border-t border-slate-700 pt-2 mt-2">
-                            <span className="text-slate-400">Lifetime Revenue:</span>
-                            <span className="font-bold text-emerald-400">{formatCurrency(data.lifetimeRevenue)}</span>
+            {/* Tooltip using Portal */}
+            <SimpleTooltip
+                placement={tooltipPosition === 'right' ? 'right' : 'bottom'}
+                className="w-48"
+                wrapperClassName="flex flex-col items-center"
+                content={
+                    <div className="text-left">
+                        <div className="font-bold text-xs mb-1.5 border-b border-slate-600 pb-1.5 text-white">
+                            Buffalo {displayName} ({data.ageInMonths >= 34 ? 'Milking' : 'Non-Milking'})
                         </div>
 
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Asset Value:</span>
-                            <span className="font-bold text-blue-400">{formatCurrency(data.currentAssetValue)}</span>
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span className="text-slate-400">Age:</span>
+                                <span className="font-semibold text-slate-200">{Math.floor(data.ageInMonths / 12)}y {data.ageInMonths % 12}m</span>
+                            </div>
+                            <div className="flex justify-between border-t border-slate-700 pt-2 mt-2">
+                                <span className="text-slate-400">Lifetime Revenue:</span>
+                                <span className="font-bold text-emerald-400">{formatCurrency(data.lifetimeRevenue)}</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="text-slate-400">Asset Value:</span>
+                                <span className="font-bold text-blue-400">{formatCurrency(data.currentAssetValue)}</span>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Arrow */}
-                    <div className={arrowClasses}></div>
-                </div>
-            </div>
-
-            <div
-                className={`${colors[data.generation % colors.length]}
-          ${nodeShapeClasses} flex justify-center items-center
-          text-white shadow-md transform transition-all duration-200
-          hover:scale-110 border-none cursor-pointer relative`}
+                    </div> as any
+                }
             >
-                {/* Producing Indicator */}
-
-
-                <div className="text-[10px] font-bold drop-shadow-md leading-tight text-center px-1">
-                    {displayName}
+                <div
+                    className={`${colors[data.generation % colors.length]}
+              ${nodeShapeClasses} flex justify-center items-center
+              text-white shadow-md transform transition-all duration-200
+              hover:scale-110 border-none cursor-pointer relative`}
+                >
+                    <div className="text-[10px] font-bold drop-shadow-md leading-tight text-center px-1">
+                        {displayName}
+                    </div>
+                    <div className="text-[8px] font-medium opacity-90 bg-black/20 px-1 py-0 rounded-full mt-0.5">
+                        {founder ? 'F' : data.birthYear}
+                    </div>
                 </div>
-                <div className="text-[8px] font-medium opacity-90 bg-black/20 px-1 py-0 rounded-full mt-0.5">
-                    {founder ? 'F' : data.birthYear}
-                </div>
-            </div>
+            </SimpleTooltip>
         </div>
     );
 });
@@ -236,12 +235,14 @@ export const SimpleTooltip = ({
     children,
     content,
     placement = 'left',
-    className = ''
+    className = '',
+    wrapperClassName = ''
 }: {
     children: React.ReactNode,
-    content: string,
-    placement?: 'left' | 'bottom' | 'top' | 'bottom-right',
-    className?: string
+    content: string | React.ReactNode,
+    placement?: 'left' | 'bottom' | 'top' | 'right' | 'bottom-right',
+    className?: string,
+    wrapperClassName?: string
 }) => {
     const triggerRef = useRef<HTMLDivElement>(null);
     const [show, setShow] = useState(false);
@@ -258,6 +259,9 @@ export const SimpleTooltip = ({
         } else if (placement === 'top') {
             top = rect.top - 8;
             left = rect.left + rect.width / 2;
+        } else if (placement === 'right') {
+            top = rect.top + rect.height / 2;
+            left = rect.right + 8;
         } else if (placement === 'bottom-right') {
             top = rect.bottom + 8;
             left = rect.right;
@@ -280,17 +284,20 @@ export const SimpleTooltip = ({
 
     const transformStyle =
         placement === 'left' ? 'translateX(-100%) translateY(-50%)'
-            : placement === 'top' ? 'translateX(-50%) translateY(-100%)'
-                : placement === 'bottom-right' ? 'translateX(-100%)'
-                    : 'translateX(-50%)'; // bottom
+            : placement === 'right' ? 'translateY(-50%)'
+                : placement === 'top' ? 'translateX(-50%) translateY(-100%)'
+                    : placement === 'bottom-right' ? 'translateX(-100%)'
+                        : 'translateX(-50%)'; // bottom
 
     const arrowClasses = placement === 'left'
         ? "absolute left-full top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-slate-800"
-        : placement === 'top'
-            ? "absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-t-[6px] border-t-slate-800"
-            : placement === 'bottom-right'
-                ? "absolute bottom-full right-4 w-0 h-0 border-x-[6px] border-x-transparent border-b-[6px] border-b-slate-800"
-                : "absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-b-[6px] border-b-slate-800"; // bottom arrow
+        : placement === 'right'
+            ? "absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-r-[6px] border-r-slate-800"
+            : placement === 'top'
+                ? "absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-t-[6px] border-t-slate-800"
+                : placement === 'bottom-right'
+                    ? "absolute bottom-full right-4 w-0 h-0 border-x-[6px] border-x-transparent border-b-[6px] border-b-slate-800"
+                    : "absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-b-[6px] border-b-slate-800"; // bottom arrow
 
     const maxWidthClass = className.includes('max-w-') ? '' : 'max-w-[200px]';
 
@@ -316,7 +323,7 @@ export const SimpleTooltip = ({
     return (
         <div
             ref={triggerRef}
-            className="relative flex items-center justify-center"
+            className={`relative ${wrapperClassName}`}
             onMouseEnter={handleEnter}
             onMouseLeave={handleLeave}
         >

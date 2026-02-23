@@ -108,7 +108,7 @@ const HeaderControls = ({
                             {/* Start Date Picker */}
                             <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Start Date</span>
-                                <div className="relative w-24">
+                                <div className="relative w-28 group/date">
                                     <DatePicker
                                         selected={new Date(startYear, startMonth, 1)}
                                         onChange={(date: Date | null) => {
@@ -119,30 +119,30 @@ const HeaderControls = ({
                                                 setStartMonth(newMonth);
                                                 setStartDay(1);
 
-                                                // Ensure at least 3 years 1 month gap (37 months total)
-                                                if (years < 3.0833) {
-                                                    setYears(3.0833);
-                                                    setEndMonth((newMonth + 36) % 12);
-                                                }
+                                                // Always reset to 10 years (120 months) duration
+                                                setYears(10);
+                                                // End month for exactly 10 years is (startMonth + 120 - 1) % 12
+                                                setEndMonth((newMonth + 119) % 12);
                                             }
                                         }}
                                         minDate={new Date(2026, 0, 1)}
                                         dateFormat="MMM yyyy"
                                         showMonthYearPicker
                                         portalId="root"
-                                        className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
+                                        className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-6"
                                         placeholderText="Select"
                                         onKeyDown={(e) => e.preventDefault()}
                                         popperClassName="!z-[100]"
                                         popperPlacement="bottom-start"
                                     />
+                                    <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 group-hover/date:text-indigo-500 transition-colors pointer-events-none" />
                                 </div>
                             </div>
 
                             {/* End Date Picker - Swapped Position & DatePicker added */}
                             <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
-                                <div className="relative w-24">
+                                <div className="relative w-28 group/date">
                                     <DatePicker
                                         selected={new Date(Math.floor((startYear * 12 + startMonth + Math.round(years * 12) - 1) / 12), (startMonth + Math.round(years * 12) - 1) % 12, 1)}
                                         onChange={(date: Date | null) => {
@@ -167,12 +167,13 @@ const HeaderControls = ({
                                         dateFormat="MMM yyyy"
                                         showMonthYearPicker
                                         portalId="root"
-                                        className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
+                                        className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-6"
                                         placeholderText="Select"
                                         onKeyDown={(e) => e.preventDefault()}
                                         popperClassName="!z-[100]"
                                         popperPlacement="bottom-start"
                                     />
+                                    <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 group-hover/date:text-indigo-500 transition-colors pointer-events-none" />
                                 </div>
                             </div>
 
@@ -231,7 +232,7 @@ const HeaderControls = ({
                     {treeData && treeData.summaryStats && (
                         <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 overflow-visible">
 
-                            <SimpleTooltip content="Total buffaloes" placement="bottom">
+                            <SimpleTooltip content="Total buffaloes + calves" placement="bottom">
                                 <div className="flex flex-col items-center cursor-default">
                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
                                     <span className="text-sm font-black text-slate-800">

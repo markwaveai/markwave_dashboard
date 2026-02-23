@@ -8,7 +8,7 @@ interface UnitCalculatorAppProps {
 
 export const UnitCalculatorApp: React.FC<UnitCalculatorAppProps> = ({ tree = true }) => {
     return (
-        <div className="App unit-calculator-root">
+        <div className="App unit-calculator-root h-full">
             <BuffaloFamilyTree tree={tree} />
         </div>
     );

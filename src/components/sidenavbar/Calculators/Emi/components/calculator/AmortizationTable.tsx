@@ -27,7 +27,7 @@ const AmortizationTable = () => {
                 'CPF (Monthly)': row.cpf,
                 // 'CGF (Monthly)': row.cgf,
                 'Revenue': row.revenue,
-                'Payment': row.totalPayment,
+                'Payment (EMI + CPF)': row.totalPayment,
                 'Debit From Balance': row.debitFromBalance,
                 'Balance': row.loanPoolBalance,
                 'Profit': row.profit,
@@ -95,7 +95,7 @@ const AmortizationTable = () => {
                                 <th className="px-4 py-4 border-r border-gray-300 text-center whitespace-nowrap">CPF (Monthly)</th>
                                 {/* <th className="px-4 py-4 border-r border-gray-300 text-center whitespace-nowrap">CGF (Monthly)</th> */}
                                 <th className="px-4 py-4 border-r border-gray-300 text-center whitespace-nowrap">Revenue</th>
-                                <th className="px-4 py-4 border-r border-gray-300 text-center whitespace-nowrap">Payment</th>
+                                <th className="px-4 py-4 border-r border-gray-300 text-center whitespace-nowrap">Payment (EMI + CPF)</th>
                                 <th className="px-4 py-4 border-r border-gray-300 text-center whitespace-nowrap leading-tight">Debit From<br />Balance</th>
                                 <th className="px-4 py-4 border-r border-gray-300 text-center whitespace-nowrap">Balance</th>
                                 <th className="px-4 py-4 border-r border-gray-300 text-center whitespace-nowrap">Profit</th>
