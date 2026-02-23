@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import './Snackbar.css';
 import { X, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface SnackbarProps {
@@ -20,48 +19,34 @@ const Snackbar: React.FC<SnackbarProps> = ({ message, type, onClose, duration = 
     }, [message, duration, onClose]);
 
     if (!message) return null;
-
     return (
         <div
-            className={`snackbar-container snackbar-${type} animate-slideInRight`}
-            style={{
-                position: 'fixed',
-                top: '24px',
-                right: '24px',
-                left: 'auto',
-                transform: 'none',
-                zIndex: 100000,
-                width: '350px',
-                height: '60px',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 16px',
-                borderRadius: '8px',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2)',
-                backgroundColor: type === 'success' ? '#10b981' : '#ef4444',
-                color: 'white',
-                overflow: 'hidden'
-            }}
-
+            className={`fixed top-6 right-6 z-[99999] w-full max-w-[400px] flex items-center p-4 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-right duration-300 border backdrop-blur-md ${type === 'success'
+                    ? 'bg-emerald-600/95 border-emerald-500/50 shadow-emerald-500/20 text-white'
+                    : 'bg-red-600/95 border-red-500/50 shadow-red-500/20 text-white'
+                }`}
         >
-            <div className="snackbar-content" style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
-                {type === 'success' ? (
-                    <CheckCircle className="snackbar-icon" size={20} />
-                ) : (
-                    <AlertCircle className="snackbar-icon" size={20} />
-                )}
-                <span className="snackbar-message" style={{ fontSize: '0.9rem', fontWeight: '600', flexGrow: 1 }}>{message}</span>
+            <div className="flex items-start gap-4 w-full">
+                <div className="bg-white/20 p-2 rounded-full flex-shrink-0">
+                    {type === 'success' ? (
+                        <CheckCircle size={20} className="text-white" />
+                    ) : (
+                        <AlertCircle size={20} className="text-white" />
+                    )}
+                </div>
+                <div className="flex-grow pt-0.5">
+                    <p className="font-bold text-base mb-0.5">{type === 'success' ? 'Success' : 'Error'}</p>
+                    <p className="text-sm text-white/90 leading-snug">{message}</p>
+                </div>
                 <button
-                    className="snackbar-close"
+                    className="p-1 -mr-2 -mt-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
                     onClick={onClose}
-                    style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', opacity: 0.8 }}
                 >
-                    <X size={16} />
+                    <X size={18} />
                 </button>
             </div>
         </div>
     );
 };
-
 
 export default Snackbar;

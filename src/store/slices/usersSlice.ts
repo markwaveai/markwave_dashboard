@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
+import { userService } from '../../services/api';
+import { UserParams } from '../../types';
 
 // Async Thunks
 export const fetchReferralUsers = createAsyncThunk(
@@ -11,6 +13,54 @@ export const fetchReferralUsers = createAsyncThunk(
             return response.data.users || [];
         } catch (error: any) {
             return rejectWithValue('Failed to fetch referral users');
+        }
+    }
+);
+
+export const fetchManagedUsers = createAsyncThunk(
+    'users/fetchManagedUsers',
+    async (params: UserParams, { rejectWithValue }) => {
+        try {
+            const response = await userService.getUsers(params);
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch users');
+        }
+    }
+);
+
+export const fetchNetworkUserDetails = createAsyncThunk(
+    'users/fetchNetworkUserDetails',
+    async (mobile: string, { rejectWithValue }) => {
+        try {
+            const response = await userService.getNetworkUserDetails(mobile);
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch network user details');
+        }
+    }
+);
+
+export const fetchNetwork = createAsyncThunk(
+    'users/fetchNetwork',
+    async (params: UserParams, { rejectWithValue }) => {
+        try {
+            const response = await userService.getNetwork(params);
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch network data');
+        }
+    }
+);
+
+export const fetchCustomerDetails = createAsyncThunk(
+    'users/fetchCustomerDetails',
+    async (mobile: string, { rejectWithValue }) => {
+        try {
+            const response = await userService.getUserDetails(mobile);
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch customer details');
         }
     }
 );
@@ -69,6 +119,32 @@ export const deactivateConfirm = createAsyncThunk(
     }
 );
 
+export const activateRequestOtp = createAsyncThunk(
+    'users/activateRequestOtp',
+    async (payload: { mobile: string; channel: string; }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(API_ENDPOINTS.requestReactivationOtp(), payload);
+            return response.data;
+        } catch (error: any) {
+            const msg = error?.response?.data?.message || 'Failed to send OTP';
+            return rejectWithValue(msg);
+        }
+    }
+);
+
+export const activateConfirm = createAsyncThunk(
+    'users/activateConfirm',
+    async (payload: { mobile: string; otp: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(API_ENDPOINTS.confirmReactivation(), payload);
+            return response.data;
+        } catch (error: any) {
+            const msg = error?.response?.data?.message || 'Failed to activate account';
+            return rejectWithValue(msg);
+        }
+    }
+);
+
 export const fetchAdminProfile = createAsyncThunk(
     'users/fetchAdminProfile',
     async (mobile: string, { rejectWithValue }) => {
@@ -84,23 +160,66 @@ export const fetchAdminProfile = createAsyncThunk(
 export interface UsersState {
     referralUsers: any[];
     existingCustomers: any[];
+    managedUsers: any[];
+    managedTotal: number;
+    managedLoading: boolean;
+    managedError: string | null;
+    customerDetails: any | null;
+    customerDetailsLoading: boolean;
+    customerDetailsError: string | null;
+    network: {
+        stats: any | null;
+        users: any[];
+        loading: boolean;
+        error: string | null;
+    };
+    networkUserDetails: {
+        data: any | null;
+        loading: boolean;
+        error: string | null;
+    };
     referralLoading: boolean;
     existingLoading: boolean;
-    loading: boolean; // Computed loading state
+    loading: boolean;
     error: string | null;
-    actionLoading: boolean; // For create action
+    actionLoading: boolean;
     deactivation: {
         loading: boolean;
         error: string | null;
         success: boolean;
         message: string | null;
     };
+    activation: {
+        loading: boolean;
+        error: string | null;
+        success: boolean;
+        message: string | null;
+    };
     adminProfile: any | null;
+    adminProfileLoading: boolean;
 }
 
 const initialState: UsersState = {
     referralUsers: [],
     existingCustomers: [],
+    managedUsers: [],
+    managedTotal: 0,
+    managedLoading: false,
+    managedError: null,
+    customerDetails: null,
+    customerDetailsLoading: false,
+    customerDetailsError: null,
+    network: {
+        stats: null,
+        users: [],
+        loading: false,
+        error: null,
+    },
+    networkUserDetails: {
+        data: null,
+        loading: false,
+        error: null,
+    },
     referralLoading: false,
     existingLoading: false,
     loading: false,
@@ -112,10 +231,17 @@ const initialState: UsersState = {
         success: false,
         message: null,
     },
+    activation: {
+        loading: false,
+        error: null,
+        success: false,
+        message: null,
+    },
     adminProfile: null,
+    adminProfileLoading: false,
 };
 
-const usersSlice = createSlice({
+const UsersSlice = createSlice({
     name: 'users',
     initialState,
     reducers: {
@@ -133,9 +259,21 @@ const usersSlice = createSlice({
                 message: null,
             };
         },
+        resetActivationState: (state) => {
+            state.activation = {
+                loading: false,
+                error: null,
+                success: false,
+                message: null,
+            };
+        },
+        clearCustomerDetails: (state) => {
+            state.customerDetails = null;
+            state.customerDetailsLoading = false;
+            state.customerDetailsError = null;
+        },
     },
     extraReducers: (builder) => {
-        // Fetch Referral Users
         builder.addCase(fetchReferralUsers.pending, (state) => {
             state.referralLoading = true;
             state.loading = true;
@@ -152,7 +290,6 @@ const usersSlice = createSlice({
             state.error = action.payload as string;
         });
 
-        // Fetch Existing Customers
         builder.addCase(fetchExistingCustomers.pending, (state) => {
             state.existingLoading = true;
             state.loading = true;
@@ -169,7 +306,77 @@ const usersSlice = createSlice({
             state.error = action.payload as string;
         });
 
-        // Create Referral User
+        builder.addCase(fetchManagedUsers.pending, (state) => {
+            state.managedLoading = true;
+            state.managedError = null;
+        });
+        builder.addCase(fetchManagedUsers.fulfilled, (state, action) => {
+            state.managedLoading = false;
+            state.managedUsers = action.payload.users;
+            state.managedTotal = action.payload.total || 0;
+        });
+        builder.addCase(fetchManagedUsers.rejected, (state, action) => {
+            state.managedLoading = false;
+            state.managedError = action.payload as string;
+        });
+
+        builder.addCase(fetchCustomerDetails.pending, (state) => {
+            state.customerDetailsLoading = true;
+            state.customerDetailsError = null;
+        });
+        builder.addCase(fetchCustomerDetails.fulfilled, (state, action) => {
+            state.customerDetailsLoading = false;
+            state.customerDetails = action.payload;
+        });
+        builder.addCase(fetchCustomerDetails.rejected, (state, action) => {
+            state.customerDetailsLoading = false;
+            state.customerDetailsError = action.payload as string;
+        });
+
+        builder.addCase(fetchNetwork.pending, (state) => {
+            state.network.loading = true;
+            state.network.error = null;
+        });
+        builder.addCase(fetchNetwork.fulfilled, (state, action) => {
+            state.network.loading = false;
+
+            // Robust handling: If stats is missing, try to construct it from other fields
+            let stats = action.payload.stats;
+            const users = action.payload.users || [];
+
+            if (!stats) {
+                // Try to find a total count in the payload
+                const totalCount = action.payload.total ?? action.payload.count ?? action.payload.total_count ?? users.length;
+                stats = {
+                    user_count: totalCount,
+                    limit: 10, // Default limit if not provided
+                    // Add other stats fields if necessary (with 0/null defaults) to prevent crashes
+                    total_distributed_coins: 0,
+                    total_purchased_units: 0
+                };
+            }
+
+            state.network.stats = stats;
+            state.network.users = users;
+        });
+        builder.addCase(fetchNetwork.rejected, (state, action) => {
+            state.network.loading = false;
+            state.network.error = action.payload as string;
+        });
+
+        builder.addCase(fetchNetworkUserDetails.pending, (state) => {
+            state.networkUserDetails.loading = true;
+            state.networkUserDetails.error = null;
+        });
+        builder.addCase(fetchNetworkUserDetails.fulfilled, (state, action) => {
+            state.networkUserDetails.loading = false;
+            state.networkUserDetails.data = action.payload;
+        });
+        builder.addCase(fetchNetworkUserDetails.rejected, (state, action) => {
+            state.networkUserDetails.loading = false;
+            state.networkUserDetails.error = action.payload as string;
+        });
+
         builder.addCase(createReferralUser.pending, (state) => {
             state.actionLoading = true;
             state.error = null;
@@ -182,7 +389,6 @@ const usersSlice = createSlice({
             state.error = action.payload as string;
         });
 
-        // Deactivate Request OTP
         builder.addCase(deactivateRequestOtp.pending, (state) => {
             state.deactivation.loading = true;
             state.deactivation.error = null;
@@ -198,7 +404,6 @@ const usersSlice = createSlice({
             state.deactivation.error = action.payload as string;
         });
 
-        // Deactivate Confirm
         builder.addCase(deactivateConfirm.pending, (state) => {
             state.deactivation.loading = true;
             state.deactivation.error = null;
@@ -214,19 +419,49 @@ const usersSlice = createSlice({
             state.deactivation.error = action.payload as string;
         });
 
-        // Fetch Admin Profile
+        builder.addCase(activateRequestOtp.pending, (state) => {
+            state.activation.loading = true;
+            state.activation.error = null;
+            state.activation.message = null;
+        });
+        builder.addCase(activateRequestOtp.fulfilled, (state, action: PayloadAction<any>) => {
+            state.activation.loading = false;
+            state.activation.success = true;
+            state.activation.message = action.payload.message;
+        });
+        builder.addCase(activateRequestOtp.rejected, (state, action) => {
+            state.activation.loading = false;
+            state.activation.error = action.payload as string;
+        });
+
+        builder.addCase(activateConfirm.pending, (state) => {
+            state.activation.loading = true;
+            state.activation.error = null;
+            state.activation.message = null;
+        });
+        builder.addCase(activateConfirm.fulfilled, (state, action: PayloadAction<any>) => {
+            state.activation.loading = false;
+            state.activation.success = true;
+            state.activation.message = action.payload.message;
+        });
+        builder.addCase(activateConfirm.rejected, (state, action) => {
+            state.activation.loading = false;
+            state.activation.error = action.payload as string;
+        });
+
         builder.addCase(fetchAdminProfile.pending, (state) => {
-            // Option to handle loading state specifically for admin profile if needed
+            state.adminProfileLoading = true;
         });
         builder.addCase(fetchAdminProfile.fulfilled, (state, action) => {
+            state.adminProfileLoading = false;
             state.adminProfile = action.payload;
         });
         builder.addCase(fetchAdminProfile.rejected, (state) => {
-            // Handle error if needed
+            state.adminProfileLoading = false;
         });
     }
 });
 
-export const { setReferralUsers, setExistingCustomers, resetDeactivationState } = usersSlice.actions;
-export const usersReducer = usersSlice.reducer;
-export default usersSlice.reducer;
+export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState, clearCustomerDetails } = UsersSlice.actions;
+export const usersReducer = UsersSlice.reducer;
+export default UsersSlice.reducer;
