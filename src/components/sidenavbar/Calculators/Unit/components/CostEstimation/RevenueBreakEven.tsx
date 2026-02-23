@@ -106,7 +106,7 @@ const RevenueBreakEven: React.FC<any> = ({
                         {revenueBreakEvenSummary.withCPF.date ? (
                             <div className="flex flex-col items-center">
                                 <h3 className="text-base font-bold text-emerald-700 mt-0.5">
-                                    {monthNames[revenueBreakEvenSummary.withCPF.date.getMonth()]} {revenueBreakEvenSummary.withCPF.date.getFullYear()}
+                                    {revenueBreakEvenSummary.withCPF.date.getDate()} {monthNames[revenueBreakEvenSummary.withCPF.date.getMonth()]} {revenueBreakEvenSummary.withCPF.date.getFullYear()}
                                 </h3>
                                 <p className="text-[9px] text-emerald-600 mt-0.5 font-semibold px-1 py-0.5 bg-emerald-50 rounded inline-block">
                                     {revenueBreakEvenSummary.withCPF.monthsToBreakEven} Months

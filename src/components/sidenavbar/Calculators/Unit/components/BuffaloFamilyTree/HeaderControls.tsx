@@ -108,16 +108,17 @@ const HeaderControls = ({
                             {/* Start Date Picker */}
                             <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Start Date</span>
-                                <div className="relative w-28 group/date">
+                                <div className="relative w-32 group/date">
                                     <DatePicker
-                                        selected={new Date(startYear, startMonth, 1)}
+                                        selected={new Date(startYear, startMonth, startDay || 1)}
                                         onChange={(date: Date | null) => {
                                             if (date) {
                                                 const newYear = date.getFullYear();
                                                 const newMonth = date.getMonth();
+                                                const newDay = date.getDate();
                                                 setStartYear(newYear);
                                                 setStartMonth(newMonth);
-                                                setStartDay(1);
+                                                setStartDay(newDay);
 
                                                 // Always reset to 10 years (120 months) duration
                                                 setYears(10);
@@ -126,8 +127,7 @@ const HeaderControls = ({
                                             }
                                         }}
                                         minDate={new Date(2026, 0, 1)}
-                                        dateFormat="MMM yyyy"
-                                        showMonthYearPicker
+                                        dateFormat="dd MMM yyyy"
                                         portalId="root"
                                         className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-6"
                                         placeholderText="Select"
@@ -142,9 +142,9 @@ const HeaderControls = ({
                             {/* End Date Picker - Swapped Position & DatePicker added */}
                             <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
-                                <div className="relative w-28 group/date">
+                                <div className="relative w-32 group/date">
                                     <DatePicker
-                                        selected={new Date(Math.floor((startYear * 12 + startMonth + Math.round(years * 12) - 1) / 12), (startMonth + Math.round(years * 12) - 1) % 12, 1)}
+                                        selected={new Date(startYear, startMonth + Math.round(years * 12) - 1, startDay)}
                                         onChange={(date: Date | null) => {
                                             if (date) {
                                                 const newEndYear = date.getFullYear();
@@ -154,17 +154,19 @@ const HeaderControls = ({
 
                                                 let diffMonths = (endAbsolute - startAbsolute) + 1;
 
-                                                if (diffMonths > 120) diffMonths = 120; // Cap at 10 years
-                                                if (diffMonths < 37) diffMonths = 37; // Min 3 years + 1 month
-                                                const numYears = diffMonths / 12;
+                                                // Convert to years
+                                                let numYears = Math.round(diffMonths / 12);
+
+                                                if (numYears > 10) numYears = 10; // Cap at 10 years
+                                                if (numYears < 1) numYears = 1; // Min 1 year
 
                                                 setYears(numYears);
-                                                setEndMonth(newEndMonth);
+                                                setEndMonth((startMonth + (numYears * 12) - 1) % 12);
                                             }
                                         }}
-                                        minDate={new Date(startYear, startMonth + 36, 1)}
-                                        maxDate={new Date(startYear, startMonth + 119, 1)}
-                                        dateFormat="MMM yyyy"
+                                        minDate={new Date(startYear, startMonth + 11, startDay)}
+                                        maxDate={new Date(startYear, startMonth + 119, startDay)}
+                                        dateFormat="dd MMM yyyy"
                                         showMonthYearPicker
                                         portalId="root"
                                         className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-6"
@@ -175,6 +177,25 @@ const HeaderControls = ({
                                     />
                                     <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 group-hover/date:text-indigo-500 transition-colors pointer-events-none" />
                                 </div>
+                            </div>
+
+                            {/* Duration (Years) Dropdown */}
+                            <div className="flex flex-col items-center px-3 py-1 border-r border-slate-200">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Duration</span>
+                                <select
+                                    className="bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center appearance-none pr-4"
+                                    value={Math.round(years)}
+                                    onChange={(e) => {
+                                        const numYears = parseInt(e.target.value, 10);
+                                        setYears(numYears);
+                                        // Update end month based on new duration (duration is exactly numYears * 12 months)
+                                        setEndMonth((startMonth + (numYears * 12) - 1) % 12);
+                                    }}
+                                >
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(yr => (
+                                        <option key={yr} value={yr}>{yr} Year{yr > 1 ? 's' : ''}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Initial Investment Display */}

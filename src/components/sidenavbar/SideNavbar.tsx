@@ -63,7 +63,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
     useEffect(() => {
         if (location.pathname.includes('/unit-calculator')) {
-            setIsUnitCalcOpen(true);
+            // setIsUnitCalcOpen(true);
         }
     }, [location.pathname]);
 
@@ -293,44 +293,17 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                         </li>
 
                         <li>
-                            <div className="flex flex-col">
-                                <Tooltip content="Unit Calculator" disabled={isSidebarOpen}>
-                                    <button
-                                        className={navItemClass('unit-calculator')}
-                                        onClick={() => {
-                                            if (!isSidebarOpen) dispatch(setSidebarOpen(true));
-                                            setIsUnitCalcOpen(!isUnitCalcOpen);
-                                        }}
-                                    >
-                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                            <Calculator size={20} className={activeTab === 'unit-calculator' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Unit Calculator</span>}
-                                        </div>
-                                        {isSidebarOpen && (isUnitCalcOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
-                                    </button>
-                                </Tooltip>
-
-                                {isSidebarOpen && isUnitCalcOpen && (
-                                    <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
-                                        <li>
-                                            <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${location.pathname.includes('/73d2a') ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
-                                                onClick={() => navigate('/unit-calculator/73d2a', { state: { fromDashboard: true } })}
-                                            >
-                                                With Tree
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${location.pathname.includes('/92f1b') ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
-                                                onClick={() => navigate('/unit-calculator/92f1b', { state: { fromDashboard: true } })}
-                                            >
-                                                Without Tree
-                                            </button>
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
+                            <Tooltip content="Unit Calculator" disabled={isSidebarOpen}>
+                                <button
+                                    className={navItemClass('unit-calculator')}
+                                    onClick={() => navigate('/unit-calculator', { state: { fromDashboard: true } })}
+                                >
+                                    <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                        <Calculator size={20} className={activeTab === 'unit-calculator' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                        {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Unit Calculator</span>}
+                                    </div>
+                                </button>
+                            </Tooltip>
                         </li>
 
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { formatMonthDateRange } from '../BuffaloFamilyTree/CommonComponents';
 
 const CattleGrowingFund = ({
     treeData,
@@ -61,7 +62,7 @@ const CattleGrowingFund = ({
             const currentCalendarMonth = currentAbsoluteMonth % 12;
 
             const rowData: any = {
-                monthName: monthNames[currentCalendarMonth],
+                monthName: formatMonthDateRange(Math.floor(currentAbsoluteMonth / 12), currentCalendarMonth, treeData.startDay || 1),
                 costs: {},
                 totalMonthlyCost: 0,
                 isValidMonth: currentAbsoluteMonth < (treeData.startYear * 12 + treeData.startMonth + (treeData.durationMonths))

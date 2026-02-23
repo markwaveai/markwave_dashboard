@@ -10,11 +10,10 @@ interface BuffaloFamilyTreeProps {
     tree?: boolean;
 }
 
-// Compute next-month defaults (so opening in Feb 2026 → defaults to Mar 2026)
-const getNextMonthDefaults = () => {
+// Compute current date defaults (so opening today defaults to today)
+const getCurrentDateDefaults = () => {
     const now = new Date();
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    return { year: nextMonth.getFullYear(), month: nextMonth.getMonth() };
+    return { year: now.getFullYear(), month: now.getMonth(), day: now.getDate() };
 };
 
 export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProps) {
@@ -50,10 +49,10 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     const [units, setUnits] = useState(unitsParam ? parseInt(unitsParam) : 1);
     const [years, setYears] = useState(yearsParam ? parseInt(yearsParam) : 10);
     const [endMonth, setEndMonth] = useState(endMonthParam !== undefined ? parseInt(endMonthParam) : 11);
-    const { year: defaultYear, month: defaultMonth } = getNextMonthDefaults();
+    const { year: defaultYear, month: defaultMonth, day: defaultDay } = getCurrentDateDefaults();
     const [startYear, setStartYear] = useState(yearParam ? parseInt(yearParam) : defaultYear);
     const [startMonth, setStartMonth] = useState(monthParam ? parseInt(monthParam) : defaultMonth);
-    const [startDay, setStartDay] = useState(1);
+    const [startDay, setStartDay] = useState(defaultDay);
     const [treeData, setTreeData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [zoom, setZoom] = useState(1);
@@ -62,7 +61,7 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
     const [activeGraph, setActiveGraph] = useState("buffaloes");
     const [activeTab, setActiveTab] = useState(() => {
         if (!tree) return "costEstimation";
-        return viewParam === "revenue-projection" ? "costEstimation" : "familyTree";
+        return viewParam === "revenue-projection" ? "costEstimation" : "costEstimation"; // Default to costEstimation (Revenue Projections)
     });
     const [headerStats, setHeaderStats] = useState(null);
     const [isCGFEnabled, setIsCGFEnabled] = useState(true);

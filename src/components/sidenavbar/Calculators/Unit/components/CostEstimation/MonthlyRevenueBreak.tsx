@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { getBuffaloValueByAge, SimpleTooltip } from '../BuffaloFamilyTree/CommonComponents';
+import { getBuffaloValueByAge, SimpleTooltip, formatMonthDateRange } from '../BuffaloFamilyTree/CommonComponents';
 import { ChevronRight } from 'lucide-react';
 
 const MonthlyRevenueBreak = ({
@@ -336,9 +336,9 @@ const MonthlyRevenueBreak = ({
     }, [selectedUnit, buffaloDetails, treeData.startYear, treeData.years, treeData.startMonth, monthlyRevenue]);
 
 
-    const startMonthName = monthNames[treeData.startMonth || 0];
-    const startDateString = `${startMonthName} ${treeData.startYear}`;
-    const endDateString = `December ${selectedYear}`;
+    const startMonthNameShort = monthNames[treeData.startMonth || 0].substring(0, 3);
+    const startDateString = `${treeData.startDay || 1} ${startMonthNameShort} ${treeData.startYear}`;
+    const endDateString = `31 Dec ${selectedYear}`;
     const dateRangeString = `${startDateString} - ${endDateString}`;
 
     // Download Excel function
@@ -610,10 +610,10 @@ const MonthlyRevenueBreak = ({
                         <div
                             ref={scrollContainerRef}
                             onScroll={checkScroll}
-                            className="overflow-x-auto"
+                            className="overflow-auto max-h-[calc(100vh-280px)]"
                         >
                             <table className="w-full text-sm text-left">
-                                <thead className="text-xs text-slate-500 bg-slate-50 border-b border-slate-200 relative z-50">
+                                <thead className="text-xs text-slate-500 bg-slate-50 sticky top-0 z-[40] shadow-sm">
                                     <tr>
                                         <th className="sticky left-0 z-20 w-24 min-w-[6rem] px-4 py-4 font-bold border-r border-slate-100 bg-slate-50">Month</th>
                                         {unitBuffaloes.map((buffalo: any) => (
@@ -645,7 +645,7 @@ const MonthlyRevenueBreak = ({
 
                                         if (absMonth > absoluteEndMonth) return null;
 
-                                        const monthName = monthNames[month];
+                                        const formattedDateRange = formatMonthDateRange(year, month, treeData.startDay || 1, true);
                                         const unitTotal: number = (unitBuffaloes as any[]).reduce((sum: number, b: any) => sum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[b.id]) || 0), 0);
                                         const monthlyCpfValue: number = cpfCost.monthlyCosts[mIndex] * units;
                                         const monthlyCgfValue: number = calculateMonthlyCGF(selectedYearIndex, mIndex) * units;
@@ -656,7 +656,7 @@ const MonthlyRevenueBreak = ({
                                             <React.Fragment key={mIndex}>
                                                 <tr className={`group hover:bg-slate-50 transition-colors ${mIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                                                     <td className={`sticky left-0 z-10 px-4 py-3 font-medium text-slate-900 border-r border-slate-100 ${rowBg}`}>
-                                                        {monthName}
+                                                        {formattedDateRange}
                                                     </td>
                                                     {unitBuffaloes.map((buffalo: any, bIndex: any) => {
                                                         const revenue = monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0;

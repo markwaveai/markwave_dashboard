@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { formatMonthDateRange } from '../BuffaloFamilyTree/CommonComponents';
 
 const CpfCgfCombined = ({
     treeData,
@@ -116,7 +117,7 @@ const CpfCgfCombined = ({
         let yTotal = 0;
 
         for (let m = 0; m < 12; m++) {
-            const { absMonth, month } = getCalendarDate(selectedYearIndex, m);
+            const { absMonth, month, year } = getCalendarDate(selectedYearIndex, m);
             const globalEnd = startYear * 12 + (treeData.startMonth || 0) + (treeData.durationMonths) - 1;
             const isValid = absMonth <= globalEnd;
 
@@ -129,7 +130,7 @@ const CpfCgfCombined = ({
             yTotal += total;
 
             tData.push({
-                monthName: monthNames[month],
+                monthName: formatMonthDateRange(year, month, treeData.startDay || 1),
                 isValid,
                 cgf,
                 cpf,

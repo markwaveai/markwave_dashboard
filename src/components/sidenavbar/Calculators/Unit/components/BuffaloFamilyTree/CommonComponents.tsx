@@ -56,6 +56,31 @@ export const calculateAgeInMonths = (buffalo: any, targetYear: number, targetMon
     return Math.max(0, totalMonths);
 };
 
+// Format Date Range based on Start Day
+export const formatMonthDateRange = (year: number, month: number, startDay: number, startOnly: boolean = false) => {
+    const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Start date is the `startDay` of the current month
+    const startDate = new Date(year, month, startDay);
+
+    // End date is `startDay - 1` of the NEXT month
+    const endDate = new Date(year, month + 1, startDay - 1);
+
+    // Formatting helper
+    const formatDate = (date: Date) => `${date.getDate()} ${monthNamesShort[date.getMonth()]}`;
+
+    if (startOnly) {
+        return formatDate(startDate);
+    }
+
+    // Special case handling if startDay is 1
+    if (startDay === 1) {
+        return monthNamesShort[month]; // Just return "Jan", "Feb" etc
+    }
+
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+};
+
 // Get Buffalo Value by Age
 // Get Buffalo Value by Age
 export const getBuffaloValueByAge = (ageInMonths: number) => {

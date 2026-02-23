@@ -515,12 +515,18 @@ const CostEstimationTableContent = ({
         const startM = (startAbs + simYearIndex * 12) % 12;
 
         const monthsInThisYear = Math.min(12, treeData.durationMonths - simYearIndex * 12);
-        const endAbs = startAbs + simYearIndex * 12 + monthsInThisYear - 1;
-        const endY = Math.floor(endAbs / 12);
-        const endM = endAbs % 12;
 
-        const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        return `${monthNamesShort[startM]} ${startY} - ${monthNamesShort[endM]} ${endY}`;
+        const startDay = treeData.startDay || 1;
+        const startDate = new Date(startY, startM, startDay);
+        // End date represents the start date of the final month in this period
+        const endDate = new Date(startY, startM + monthsInThisYear - 1, startDay);
+
+        const formatDate = (date: Date) => {
+            const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            return `${startDay !== 1 ? date.getDate() + ' ' : ''}${monthNamesShort[date.getMonth()]} ${date.getFullYear()}`;
+        };
+
+        return `${formatDate(startDate)} - ${formatDate(endDate)}`;
     };
 
     const yearlyDataWithCPF = useMemo(() => {
@@ -1064,16 +1070,17 @@ const CostEstimationTableContent = ({
                                             const startAbs = simAbsStart + (i * 12);
                                             const sYear = Math.floor(startAbs / 12);
                                             const sMonth = startAbs % 12;
-                                            const sDate = new Date(sYear, sMonth, 1);
+                                            const sDate = new Date(sYear, sMonth, treeData.startDay || 1);
 
                                             // Cap end at simulation boundary for the last year
                                             const endAbs = Math.min(startAbs + 11, simAbsEnd);
                                             const eYear = Math.floor(endAbs / 12);
                                             const eMonth = endAbs % 12;
-                                            const eDate = new Date(eYear, eMonth, 1);
+                                            const eDate = new Date(eYear, eMonth, treeData.startDay || 1);
 
-                                            const startStr = sDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                                            const endStr = eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                                            const options = { day: '2-digit', month: 'short', year: 'numeric' } as const;
+                                            const startStr = sDate.toLocaleDateString('en-GB', options);
+                                            const endStr = eDate.toLocaleDateString('en-GB', options);
 
                                             return (
                                                 <option key={i} value={i}>

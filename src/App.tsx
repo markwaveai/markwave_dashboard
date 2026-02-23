@@ -69,11 +69,7 @@ interface Session {
 
 
 
-// Helper component to handle smart redirects for Unit Calculator based on session history
-const SmartUnitCalculatorRedirect = () => {
-  const lastMode = sessionStorage.getItem('lastUnitCalcMode') || '73d2a';
-  return <Navigate to={`/unit-calculator/${lastMode}`} replace />;
-};
+// Smart redirect component removed as it is no longer needed
 
 function App() {
   const [session, setSession] = useState<Session | null>(() => {
@@ -390,17 +386,11 @@ function App() {
           {/* Public/Hybrid Routes - Layout visible if logged in */}
 
 
-          <Route path="/unit-calculator/73d2a" element={
+          <Route path="/unit-calculator" element={
             <React.Suspense fallback={<OrdersPageSkeleton />}>
               <UnitCalculatorTab tree={true} />
             </React.Suspense>
           } />
-          <Route path="/unit-calculator/92f1b" element={
-            <React.Suspense fallback={<OrdersPageSkeleton />}>
-              <UnitCalculatorTab tree={false} />
-            </React.Suspense>
-          } />
-          <Route path="/unit-calculator" element={<SmartUnitCalculatorRedirect />} />
 
           <Route path="/emi-calculator" element={
             <React.Suspense fallback={<EmiCalculatorSkeleton />}>
