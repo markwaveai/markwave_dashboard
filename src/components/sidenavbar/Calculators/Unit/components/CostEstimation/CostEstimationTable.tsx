@@ -367,8 +367,12 @@ const CostEstimationTableContent = ({
                 const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
                 let value = getBuffaloValueByAge(ageInMonths);
 
-                // Override: 0-12 months value is 0 in the first year only
-                if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
+                const absStart = Number(treeData.startYear) * 12 + Number(treeData.startMonth || 0);
+                const absCurrent = Number(year) * 12 + Number(targetMonth);
+                const monthsPassed = absCurrent - absStart + 1;
+
+                // Override: 0-12 months value is 0 in the first 12 months of simulation
+                if (monthsPassed <= 12 && ageInMonths <= 12) {
                     value = 0;
                 }
 

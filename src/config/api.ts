@@ -33,7 +33,7 @@ export const API_ENDPOINTS = {
   rejectAcfEmi: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/reject-emi`,
   getEmiDetails: () => `${API_CONFIG.getBaseUrl()}/purchases/units/emi-details`,
   getInvoice: () => `${API_CONFIG.getBaseUrl()}/purchases/invoice`,
-  getOrderDetails: (orderId: string) => `${API_CONFIG.getBaseUrl()}/purchases/admin/orders/${orderId}`,
+  getOrderDetails: (orderId: string) => `${API_CONFIG.getBaseUrl()}/purchases/units/order-details?orderId=${encodeURIComponent(orderId)}`,
 
   uploadProductImage: (id: string) => `${API_CONFIG.getBaseUrl()}/products/${id}/images`,
   getOrderStatus: () => `${API_CONFIG.getBaseUrl()}/order-tracking/stages`,

@@ -137,8 +137,7 @@ const SimulationSummary = () => {
                     <GenericCard
                         label={
                             <div className="flex flex-col">
-                                <span>Total Payment</span>
-                                <span className="text-[10px] sm:text-[11px] font-medium opacity-90 leading-tight">(EMI+CPF)</span>
+                                <span>Total Payment(EMI+CPF)</span>
                             </div>
                         }
                         value={totalPayment + totalCpf}

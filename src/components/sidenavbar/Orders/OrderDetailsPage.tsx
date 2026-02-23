@@ -31,6 +31,7 @@ import { useReactToPrint } from 'react-to-print';
 import html2canvas from 'html2canvas';
 // @ts-ignore
 import jsPDF from 'jspdf';
+import { userService } from '../../../services/api';
 
 
 interface OrderDetailsPageProps {
@@ -57,6 +58,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
     const [isFetchingInvoice, setIsFetchingInvoice] = useState(false);
     const invoiceComponentRef = React.useRef<HTMLDivElement>(null);
 
+    // Investor State for standalone fetching
+    const [fetchedInvestor, setFetchedInvestor] = useState<any>(null);
+
     // Find order in current list or use specifically fetched data
     const foundEntry = useMemo(() => {
         if (fetchedOrderData) return fetchedOrderData;
@@ -70,8 +74,9 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
             setIsFetchingInfo(true);
             orderService.getOrderDetails(orderId)
                 .then((response: any) => {
-                    if (response?.status === 'success' && response.data) {
-                        setFetchedOrderData(response.data);
+                    if (response?.status === 'success' && response.order) {
+                        // Keep the expected structure { order: ... } for foundEntry
+                        setFetchedOrderData(response);
                     }
                 })
                 .catch((err: any) => {
@@ -83,12 +88,28 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
         }
     }, [orderId, adminMobile, dispatch, foundEntry]);
 
-    const { order, transaction, investor } = foundEntry || {};
+    const { order, transaction, investor: initialInvestor } = foundEntry || {};
+
+    const investor = initialInvestor || fetchedInvestor;
+
+    useEffect(() => {
+        if (order?.userId && !initialInvestor && !fetchedInvestor) {
+            userService.getUserDetails(order.userId)
+                .then((res: any) => {
+                    if (res && res.user) {
+                        setFetchedInvestor(res.user);
+                    } else if (res && Object.keys(res).length > 0) {
+                        setFetchedInvestor(res); // Fallback in case response is the user itself
+                    }
+                })
+                .catch(console.error);
+        }
+    }, [order?.userId, initialInvestor, fetchedInvestor]);
 
     // Helper to get transaction object - API structure might vary
     const rawTx = transaction || {};
-    const txData: any = { ...rawTx, ...(rawTx.transaction || {}) };
     const orderObj: any = order || {};
+    const txData: any = { ...orderObj, ...rawTx, ...(rawTx.transaction || {}) };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -336,7 +357,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                     />
                                     <InfoItem
                                         label={txData?.paymentType === 'CASH' ? "Cash Payment Date" : "Transaction Date"}
-                                        value={findVal(txData, ['cash_payment_date', 'chequeDate', 'cheque_date', 'date', 'transactionDate', 'paymentDate'], ['date'])}
+                                        value={findVal(txData, ['cash_payment_date', 'chequeDate', 'cheque_date', 'date', 'transactionDate', 'paymentDate', 'placedAt'], ['date', 'placed'])}
                                     />
                                     {txData?.paymentType === 'CASH' && txData?.cashier_phone && (
                                         <InfoItem label="Cashier Phone" value={txData.cashier_phone} />
@@ -387,6 +408,90 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                 })()}
                             </div>
                         </div>
+
+                        {/* Order History Timeline */}
+                        {order?.history && order.history.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50">
+                                    <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                        <Clock className="text-blue-500" size={20} />
+                                        Order History & Approvals
+                                    </h2>
+                                </div>
+                                <div className="p-6">
+                                    <div className="relative border-l-2 border-gray-200 ml-3 space-y-8">
+                                        {order.history.map((event: any, index: number) => {
+                                            const isApprove = event.action === 'APPROVE';
+                                            const actionDate = event.approvedAt || event.rejectedAt || '-';
+                                            const actionBy = event.approvedByName || event.rejectedByName || '-';
+                                            const actionRole = event.role || event.stage || '-';
+
+                                            // Make icon slightly overlap the border
+                                            return (
+                                                <div key={index} className="relative pl-8">
+                                                    {/* Timeline dot */}
+                                                    <div className={`absolute -left-[11px] bg-white p-0.5 rounded-full border-2 ${isApprove ? 'border-green-500' : 'border-red-500'}`}>
+                                                        {isApprove ? (
+                                                            <CheckCircle className="text-green-500 bg-white rounded-full" size={16} />
+                                                        ) : (
+                                                            <AlertCircle className="text-red-500 bg-white rounded-full" size={16} />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Content Card */}
+                                                    <div className={`bg-white rounded-lg border p-4 shadow-sm ${isApprove ? 'border-green-100' : 'border-red-100'}`}>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div>
+                                                                <h4 className={`text-md font-bold uppercase ${isApprove ? 'text-green-700' : 'text-red-700'}`}>
+                                                                    {event.action} ({actionRole})
+                                                                </h4>
+                                                                <p className="text-sm text-gray-600 mt-1">
+                                                                    By: <span className="font-semibold">{actionBy}</span>
+                                                                    {(event.approvedByNumber || event.rejectedByNumber) && (
+                                                                        <span className="text-xs text-gray-400 ml-1">({event.approvedByNumber || event.rejectedByNumber})</span>
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-xs font-semibold text-gray-500 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
+                                                                <Calendar size={12} />
+                                                                {actionDate}
+                                                            </div>
+                                                        </div>
+
+                                                        {event.comments && (
+                                                            <div className="mt-3 bg-gray-50 p-2.5 rounded text-sm text-gray-700 border border-gray-100">
+                                                                <span className="font-semibold text-gray-500 text-xs uppercase mr-2">Comments:</span>
+                                                                {event.comments}
+                                                            </div>
+                                                        )}
+
+                                                        {event.checks && Object.keys(event.checks).length > 0 && (
+                                                            <div className="mt-4 pt-3 border-t border-gray-100">
+                                                                <p className="text-xs font-bold text-gray-400 uppercase mb-2">Verification Checks</p>
+                                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                                    {Object.entries(event.checks).map(([key, value]: [string, any]) => (
+                                                                        <div key={key} className="flex items-center gap-1.5 text-xs">
+                                                                            {value ? (
+                                                                                <CheckCircle size={12} className="text-green-500" />
+                                                                            ) : (
+                                                                                <AlertCircle size={12} className="text-gray-300" />
+                                                                            )}
+                                                                            <span className={value ? 'text-gray-700 font-medium' : 'text-gray-400 line-through'}>
+                                                                                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                     </div>
 

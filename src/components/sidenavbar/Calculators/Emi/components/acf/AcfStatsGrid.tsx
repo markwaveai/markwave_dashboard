@@ -57,7 +57,7 @@ const AcfStatsGrid = () => {
                 prefix="₹"
                 icon={PiggyBank}
                 color="green"
-                secondaryText={`Discount + Free CPF`}
+                secondaryText={acfTenureMonths === 11 ? 'Discount + Free CPF (1 Buffalo per unit)' : 'Discount + Free CPF (2 Buffaloes per unit)'}
                 formatCurrency={formatCurrency}
             />
 

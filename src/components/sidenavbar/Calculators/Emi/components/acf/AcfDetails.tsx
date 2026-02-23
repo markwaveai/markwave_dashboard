@@ -84,21 +84,21 @@ const AcfDetails = () => {
                                         {acfTenureMonths === 11 ? (
                                             <div className="group relative inline-block">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="line-through text-gray-400">30,000</span>
-                                                    <span className="text-blue-600 font-bold">15,000</span>
+                                                    <span className="line-through text-gray-400">{formatCurrency(30000 * acfUnits)}</span>
+                                                    <span className="text-blue-600 font-bold">{formatCurrency(15000 * acfUnits)}</span>
                                                 </div>
                                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none shadow-xl">
-                                                    1 buffalo cpf free
+                                                    {acfUnits === 1 ? '1 buffalo' : `${acfUnits} buffaloes`} cpf free
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="group relative inline-block">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="line-through text-gray-400">30,000</span>
+                                                    <span className="line-through text-gray-400">{formatCurrency(30000 * acfUnits)}</span>
                                                     <span className="text-green-600 font-bold">0</span>
                                                 </div>
                                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none shadow-xl">
-                                                    2 buffaloes cpf free
+                                                    {2 * acfUnits} buffaloes cpf free
                                                 </div>
                                             </div>
                                         )}

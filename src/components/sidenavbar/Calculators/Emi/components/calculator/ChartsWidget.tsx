@@ -139,7 +139,7 @@ const PieChartWidget: React.FC<PieChartWidgetProps> = ({ amount, totalPayment, t
                             data={data}
                             cx="50%"
                             cy="50%"
-                            innerRadius={80}
+                            innerRadius={95}
                             outerRadius={135}
                             paddingAngle={0}
                             dataKey="value"
@@ -170,11 +170,18 @@ const PieChartWidget: React.FC<PieChartWidgetProps> = ({ amount, totalPayment, t
                 </ResponsiveContainer>
 
                 {/* Center Text */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 px-4">
                     <span className="text-[11px] text-gray-400 font-bold mb-0.5 uppercase tracking-widest">
                         {hoveredData ? hoveredData.name : 'Total'}
                     </span>
-                    <span className="text-[22px] font-black text-gray-900 tracking-tight">
+                    <span
+                        className={clsx(
+                            "font-black text-gray-900 tracking-tight text-center break-all",
+                            (hoveredData ? hoveredData.value : totalPayment).toLocaleString('en-IN').length > 12
+                                ? "text-[16px] sm:text-[18px]"
+                                : "text-[20px] sm:text-[22px]"
+                        )}
+                    >
                         ₹{(hoveredData ? hoveredData.value : totalPayment).toLocaleString('en-IN', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
@@ -263,7 +270,7 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, yearlySche
                         <p className="text-sm font-bold text-gray-800">
                             Yearly EMI : <span className="font-mono">₹{formatCurrency(data.amount)}</span>
                         </p>
-                        {data.cpf > 0 && (
+                        {data.cpf !== undefined && (
                             <p className="text-xs font-semibold text-gray-600">
                                 CPF : <span className="font-mono">₹{formatCurrency(data.cpf)}</span>
                             </p>

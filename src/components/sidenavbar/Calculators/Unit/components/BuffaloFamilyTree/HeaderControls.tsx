@@ -222,6 +222,18 @@ const HeaderControls = ({
                     {/* Center Section: View Toggle */}
                     {treeData && !isViewRestricted && (
                         <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner shrink-0">
+                            <SimpleTooltip content="Revenue Projections" placement="bottom">
+                                <button
+                                    className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
+                                        ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                                        : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
+                                        }`}
+                                    onClick={() => setActiveTab("costEstimation")}
+                                >
+                                    <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
+                                </button>
+                            </SimpleTooltip>
+
                             <SimpleTooltip content="Tree View" placement="bottom">
                                 <button
                                     disabled={isViewRestricted}
@@ -232,18 +244,6 @@ const HeaderControls = ({
                                     onClick={() => setActiveTab("familyTree")}
                                 >
                                     <img src="/tree.png" alt="tree" className="w-7 h-7" />
-                                </button>
-                            </SimpleTooltip>
-
-                            <SimpleTooltip content="Revenue Projections" placement="bottom">
-                                <button
-                                    className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
-                                        ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
-                                        : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
-                                        }`}
-                                    onClick={() => setActiveTab("costEstimation")}
-                                >
-                                    <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
                                 </button>
                             </SimpleTooltip>
                         </div>

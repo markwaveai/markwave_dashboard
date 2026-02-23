@@ -15,6 +15,7 @@ const InputCard = () => {
     } = useEmi();
 
     const [localAmount, setLocalAmount] = React.useState(amount);
+    const [isFocused, setIsFocused] = React.useState(false);
 
     const UNIT_COST = 400000;
 
@@ -65,15 +66,19 @@ const InputCard = () => {
                         <span className="text-gray-600 font-bold mr-1 text-sm">₹</span>
                         <input
                             type="text"
-                            value={formatCurrency(localAmount)}
+                            value={isFocused ? localAmount.toString() : formatCurrency(localAmount)}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={() => setIsFocused(false)}
                             onChange={(e) => {
-                                const valStr = e.target.value.replace(/,/g, '');
-                                if (!isNaN(Number(valStr))) {
-                                    let val = Number(valStr);
-                                    // Limit to 10 Crores
-                                    if (val > 100000000) val = 100000000;
-                                    setLocalAmount(val);
+                                const valStr = e.target.value.replace(/[^0-9]/g, '');
+                                if (valStr === '') {
+                                    setLocalAmount(0);
+                                    return;
                                 }
+                                let val = Number(valStr);
+                                // Limit to 10 Crores
+                                if (val > 100000000) val = 100000000;
+                                setLocalAmount(val);
                             }}
                             className="bg-transparent border-none focus:outline-none w-full text-gray-800 font-bold text-base"
                         />
@@ -180,7 +185,7 @@ const InputCard = () => {
                     />
                 </div>
                 <p className="text-[9px] lg:text-[8px] text-gray-400 font-medium px-1 leading-relaxed">
-                    {units || 0} units = ₹{formatCurrency(totalRequired)} (₹{formatCurrency(perUnitBase)} + ₹{formatCurrency(perUnitCpf)} CPF per unit)
+                    {units || 0} units = ₹{formatCurrency(totalRequired)} (₹{formatCurrency(perUnitBase)}{cpfEnabled ? ` + ₹${formatCurrency(perUnitCpf)} CPF per unit` : ' per unit'})
                 </p>
             </div>
 
