@@ -18,7 +18,7 @@ import {
     rejectOrder,
     setFarmFilter,
 } from '../../../store/slices/ordersSlice';
-import { setProofModal, setApprovalModal, setSnackbar, setApprovalHistoryModal } from '../../../store/slices/uiSlice';
+import { setProofModal, setApprovalModal, setSnackbar, setApprovalHistoryModal, clearHighlight } from '../../../store/slices/uiSlice';
 import Pagination from '../../common/Pagination';
 import { farmService } from '../../../services/api';
 import type { Farm } from '../../../types';
@@ -113,6 +113,24 @@ const OrdersTab: React.FC = () => {
     const userRoles = effectiveRole ? effectiveRole.split(',').map((r: string) => r.trim()) : [];
     const isSuperAdmin = userRoles.includes('SuperAdmin');
     const isAdmin = userRoles.some((r: string) => r === 'Admin' || r === 'Animalkart admin');
+
+    // Notification highlight
+    const highlightedOrderId = useAppSelector((state: RootState) => state.ui.highlight.orderId);
+    const highlightRowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+
+    // Auto-clear highlight after 3 seconds
+    useEffect(() => {
+        if (!highlightedOrderId) return;
+        const timer = setTimeout(() => dispatch(clearHighlight()), 3000);
+        return () => clearTimeout(timer);
+    }, [highlightedOrderId, dispatch]);
+
+    // Scroll highlighted row into view when orders load
+    useEffect(() => {
+        if (!highlightedOrderId) return;
+        const el = highlightRowRefs.current[highlightedOrderId];
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [highlightedOrderId, pendingUnits]);
 
     // Farm State
     const [farms, setFarms] = useState<Farm[]>([]);
@@ -400,12 +418,14 @@ const OrdersTab: React.FC = () => {
                                 // Expandable only if PAID/Approved
                                 const isExpandable = (unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved') && statusFilter === 'PAID';
 
+                                const isHighlighted = highlightedOrderId === unit.id;
                                 return (
                                     <React.Fragment key={`${unit.id || 'order'} -${index} `}>
                                         <tr
+                                            ref={(el) => { if (unit.id) highlightRowRefs.current[unit.id] = el; }}
                                             onClick={() => setSelectedOrderId(unit.id)}
                                             style={{ cursor: 'pointer' }}
-                                            className="group hover:transform hover:scale-[1.002] transition-all duration-200 bg-white shadow-sm rounded-xl"
+                                            className={`group hover:transform hover:scale-[1.002] transition-all duration-200 bg-white shadow-sm rounded-xl ${isHighlighted ? 'ring-2 ring-amber-400 shadow-amber-200 shadow-lg animate-pulse' : ''}`}
                                         >
                                             <td className="px-6 py-5 text-[13px] font-medium text-slate-800 rounded-l-xl">
                                                 {serialNumber}

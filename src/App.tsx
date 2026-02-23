@@ -3,7 +3,9 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setSession as setReduxSession } from './store/slices/authSlice';
 import { fetchAdminProfile } from './store/slices/usersSlice';
 import { RootState } from './store';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { API_ENDPOINTS } from './config/api';
+import notificationService, { ForegroundNotification } from './services/notificationService';
 import HealthStatus from './components/topnavbar/HealthStatus';
 import Breadcrumb from './components/Breadcrumb/Breadcrumb';
 import Login from './components/auth/Login';
@@ -25,6 +27,7 @@ import DeactivateUserPage from './components/sidenavbar/public/DeactivateUserPag
 
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
+import { setHighlightedOrderId, setHighlightedMilestoneId, addNotification } from './store/slices/uiSlice';
 
 // Privacy
 import PrivacyPolicy from './components/sidenavbar/public/PrivacyPolicy';
@@ -102,14 +105,89 @@ function App() {
     }
   }, [dispatch, session]);
 
+  // Each toast has its own id so they stack independently
+  type Toast = ForegroundNotification & { id: string };
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const dismissToast = useCallback((id: string) => {
+    clearTimeout(toastTimers.current[id]);
+    delete toastTimers.current[id];
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const pushToast = useCallback((payload: ForegroundNotification) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setToasts(prev => [...prev, { ...payload, id }]);
+    toastTimers.current[id] = setTimeout(() => dismissToast(id), 8000);
+  }, [dismissToast]);
+
   // Fetch admin profile EXACTLY ONCE per session initialization
   useEffect(() => {
     if (session?.mobile && !adminProfile && !adminProfileLoading) {
       dispatch(fetchAdminProfile(session.mobile));
     }
-    // We intentionally omit adminProfile/loading to prevent re-triggering during the fetch lifecycle
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.mobile, dispatch]);
+
+  // Wire up FCM: register SW, get/save token, subscribe to admin topic,
+  // and listen for foreground and background messages.
+  useEffect(() => {
+    if (!session?.mobile) return;
+
+    const roles = session.role ? session.role.split(',').map((r) => r.trim()) : [];
+
+    // Foreground listener: store in Redux, show stacked toast, navigate + highlight
+    const unsubscribeMessage = notificationService.onForegroundMessage((payload) => {
+      dispatch(addNotification({ title: payload.title, body: payload.body, data: payload.data }));
+      pushToast(payload);
+
+      const data: Record<string, string> = payload.data || {};
+      if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
+        dispatch(setHighlightedMilestoneId(data.milestone_id));
+        navigate('/offer-settings');
+      } else if (data.type === 'REFERRAL_REWARD' && data.recipient_mobile) {
+        navigate(`/user-management/network/${data.recipient_mobile}`);
+      } else if (data.order_id) {
+        dispatch(setHighlightedOrderId(data.order_id));
+        navigate('/orders');
+      }
+    });
+
+    // Init FCM, save token, subscribe to admin topic
+    notificationService.onUserLogin(session.mobile, roles);
+
+    // Handle clicks on background OS notifications (posted by the service worker)
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data?.type !== 'FCM_NOTIFICATION_CLICK') return;
+      const url: string = event.data.url || '/orders';
+      const urlObj = new URL(url, window.location.origin);
+      const highlightOrder = urlObj.searchParams.get('highlight_order');
+      const highlightMilestone = urlObj.searchParams.get('highlight_milestone');
+      if (highlightOrder) dispatch(setHighlightedOrderId(highlightOrder));
+      if (highlightMilestone) dispatch(setHighlightedMilestoneId(highlightMilestone));
+      navigate(urlObj.pathname);
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleSwMessage);
+
+    return () => {
+      unsubscribeMessage();
+      navigator.serviceWorker?.removeEventListener('message', handleSwMessage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.mobile]);
+
+  // Parse highlight query-params on cold open (tab opened by SW on notification click)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const highlightOrder = params.get('highlight_order');
+    const highlightMilestone = params.get('highlight_milestone');
+    if (highlightOrder) dispatch(setHighlightedOrderId(highlightOrder));
+    if (highlightMilestone) dispatch(setHighlightedMilestoneId(highlightMilestone));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const handleLogin = useCallback((s: Session) => {
     // Determine last login (from previous session or current if new)
@@ -157,6 +235,10 @@ function App() {
   }, [dispatch, location.state, navigate]);
 
   const handleLogout = () => {
+    if (session?.mobile) {
+      const roles = session.role ? session.role.split(',').map((r) => r.trim()) : [];
+      notificationService.onUserLogout(session.mobile, roles);
+    }
     window.localStorage.removeItem('ak_dashboard_session');
     setSession(null);
     navigate('/login', { replace: true });
@@ -172,6 +254,78 @@ function App() {
 
   return (
     <div className="App">
+      {/* Stacked foreground notification toasts — bottom-right column */}
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 9997,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        maxWidth: '360px',
+        width: '360px',
+        pointerEvents: toasts.length === 0 ? 'none' : 'auto',
+      }}>
+        {toasts.map((toast) => {
+          const hasLink = !!(toast.data?.order_id || toast.data?.milestone_id || toast.data?.recipient_mobile);
+          const handleView = () => {
+            const data = toast.data || {};
+            if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
+              dispatch(setHighlightedMilestoneId(data.milestone_id));
+              navigate('/offer-settings');
+            } else if (data.type === 'REFERRAL_REWARD' && data.recipient_mobile) {
+              navigate(`/user-management/network/${data.recipient_mobile}`);
+            } else if (data.order_id) {
+              dispatch(setHighlightedOrderId(data.order_id));
+              navigate('/orders');
+            }
+            dismissToast(toast.id);
+          };
+          return (
+            <div key={toast.id} style={{
+              backgroundColor: '#1e293b',
+              color: 'white',
+              padding: '14px 16px',
+              borderRadius: '10px',
+              boxShadow: '0 10px 25px -3px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(99,102,241,0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              animation: 'slideIn 0.25s ease-out',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                <span style={{ fontWeight: 600, fontSize: '13px', lineHeight: '1.4', flex: 1 }}>{toast.title}</span>
+                <button
+                  onClick={() => dismissToast(toast.id)}
+                  style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0', flexShrink: 0 }}>
+                  ✕
+                </button>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', lineHeight: '1.5', color: '#94a3b8' }}>{toast.body}</p>
+              {hasLink && (
+                <button
+                  onClick={handleView}
+                  style={{
+                    marginTop: '6px',
+                    alignSelf: 'flex-end',
+                    background: 'none',
+                    border: '1px solid rgba(99,102,241,0.4)',
+                    color: '#818cf8',
+                    cursor: 'pointer',
+                    padding: '3px 12px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                  }}>
+                  View →
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       <Routes>
         <Route path="/login" element={
           session ? <Navigate to="/orders" replace /> : <Login onLogin={handleLogin} />
