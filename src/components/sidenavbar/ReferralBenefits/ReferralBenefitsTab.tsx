@@ -138,8 +138,7 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
                 const result = await referralBenefitService.updateReferralMilestone(pendingMilestone.id, {
                     is_active: !pendingMilestone.is_active,
                     threshold: pendingMilestone.threshold,
-                    reward: pendingMilestone.reward,
-                    description: pendingMilestone.description
+                    reward: pendingMilestone.reward
                 }, mobile, otp);
 
                 if (result.error) {
@@ -567,7 +566,7 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
                                 <div key={milestone.id} className="flex items-center relative group/milestone">
                                     {/* Connecting Line */}
                                     {index !== displayMilestones.length - 1 && (
-                                        <div className={`absolute left-[calc(100%-1.5rem)] right-[-1.5rem] top-[45%] -translate-y-1/2 h-0.5 z-0 overflow-hidden transition-all duration-700 ${milestone.is_active ? 'bg-[#10b981]' : 'bg-[#e2e8f0]'}`}>
+                                        <div className={`absolute left-[calc(100%-1.5rem)] right-[-1.5rem] top-1/2 -translate-y-1/2 h-0.5 z-0 overflow-hidden transition-all duration-700 ${milestone.is_active ? 'bg-[#10b981]' : 'bg-[#e2e8f0]'}`}>
                                             <div className="w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
                                         </div>
                                     )}
@@ -585,18 +584,16 @@ const ReferralBenefitsTab: React.FC<ReferralBenefitsTabProps> = ({
                                         </div>
 
                                         {/* Content: Icon & Text */}
-                                        <div className="flex items-start gap-4 mb-4">
+                                        <div className="flex items-center gap-3 mb-6">
                                             <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl shadow-lg transition-all duration-500 group-hover/milestone:scale-105 shrink-0 ${milestone.is_active ? 'bg-gradient-to-br from-[#10b981] to-[#059669] text-white shadow-[#10b981]/20' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>
                                                 {getRewardIcon(milestone.reward)}
                                             </div>
-                                            <div>
-                                                <h3 className="text-lg font-black text-[#1e293b] leading-tight mb-1.5 tracking-tight transition-colors">{milestone.reward}</h3>
+                                            <div className="min-w-0">
+                                                <h3 className="text-base font-black text-[#1e293b] leading-tight tracking-tight transition-colors break-words">{milestone.reward}</h3>
                                             </div>
                                         </div>
 
-                                        <div className="mb-4 h-10">
-                                            <p className="text-[#64748b] text-xs font-bold leading-relaxed opacity-80 line-clamp-2">{milestone.description || 'Exclusive reward for dedicated partners.'}</p>
-                                        </div>
+
 
                                         <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-50">
                                             <button

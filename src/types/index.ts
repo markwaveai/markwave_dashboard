@@ -8,6 +8,8 @@ export interface User {
   referral_type?: string;
   refered_by_name?: string;
   refered_by_mobile?: string;
+  referal_code?: string;
+  referral_code?: string;
   isFormFilled?: boolean;
   email?: string;
   address?: string;
@@ -231,7 +233,6 @@ export interface ReferralMilestone {
   id: string;
   threshold: number;
   reward: string;
-  description?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -240,7 +241,6 @@ export interface ReferralMilestone {
 export interface CreateReferralMilestoneRequest {
   threshold: number;
   reward: string;
-  description?: string;
   is_active: boolean;
 }
 

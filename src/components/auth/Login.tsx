@@ -6,7 +6,7 @@ import { messaging } from '../../config/firebase';
 import { getToken } from 'firebase/messaging';
 
 interface LoginProps {
-  onLogin: (session: { mobile: string; role: string | null }) => void;
+  onLogin: (session: { mobile: string; role: string | null; referralCode?: string }) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -20,6 +20,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [serverOtp, setServerOtp] = useState<string | null>(null);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userReferralCode, setUserReferralCode] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem('ak_dashboard_session');
@@ -27,7 +28,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       try {
         const parsed = JSON.parse(saved);
         if (parsed?.mobile) {
-          onLogin({ mobile: parsed.mobile, role: parsed.role || null });
+          onLogin({ mobile: parsed.mobile, role: parsed.role || null, referralCode: parsed.referralCode || '' });
         }
       } catch {
         // ignore invalid
@@ -84,6 +85,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const otpFromServer = res.data?.otp || null;
       setServerOtp(otpFromServer);
       setUserRole(res.data?.user?.role || null);
+      setUserReferralCode(res.data?.user?.referal_code || res.data?.user?.referral_code || null);
       setStep('enterOtp');
       setInfo('OTP sent via WhatsApp.');
     } catch (e: any) {
@@ -113,7 +115,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       }
 
       const role = userRole || 'Animalkart admin';
-      const session = { mobile, role };
+      const referralCode = userReferralCode || '';
+      const session = { mobile, role, referralCode };
       handleLoginSuccess(session);
     } catch (e: any) {
       setError(e?.response?.data?.message || 'OTP verification failed. Please try again.');

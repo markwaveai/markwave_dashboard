@@ -62,6 +62,7 @@ interface Session {
   mobile: string;
   role: string | null;
   name?: string;
+  referralCode?: string;
   lastLoginTime?: string;
   currentLoginTime?: string;
 }
@@ -97,6 +98,7 @@ function App() {
         adminRole: session.role || 'Admin',
         lastLogin: session.lastLoginTime || 'First Login',
         presentLogin: session.currentLoginTime || new Date().toLocaleString(),
+        referralCode: session.referralCode || '',
       }));
     }
   }, [dispatch, session]);
@@ -213,6 +215,7 @@ function App() {
       adminRole: newSession.role || 'Admin',
       lastLogin: newSession.lastLoginTime || 'First Login',
       presentLogin: newSession.currentLoginTime || new Date().toLocaleString(),
+      referralCode: newSession.referralCode || '',
     }));
 
     const userRoles = newSession.role ? newSession.role.split(',').map(r => r.trim()) : [];

@@ -266,11 +266,16 @@ const BenefitModal: React.FC<BenefitModalProps> = ({ isOpen, onClose, onSuccess,
                                     <ShoppingBag size={12} /> Units Required
                                 </label>
                                 <input
-                                    type="number"
+                                    type="text"
+                                    inputMode="numeric"
                                     name="units_required"
-                                    value={formData.units_required}
-                                    onChange={handleChange}
-                                    min="0"
+                                    value={formData.units_required === 0 ? '' : formData.units_required}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        setFormData(prev => ({ ...prev, units_required: val === '' ? 0 : parseInt(val) }));
+                                    }}
+                                    onFocus={(e) => e.target.select()}
+                                    placeholder="0"
                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-blue-600"
                                     required
                                 />

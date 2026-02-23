@@ -15,7 +15,6 @@ const CreateReferralMilestoneModal: React.FC<CreateReferralMilestoneModalProps> 
     const [formData, setFormData] = useState({
         threshold: 0,
         reward: '',
-        description: '',
         is_active: true
     });
     const [loading, setLoading] = useState(false);
@@ -30,14 +29,12 @@ const CreateReferralMilestoneModal: React.FC<CreateReferralMilestoneModalProps> 
             setFormData({
                 threshold: milestone.threshold,
                 reward: milestone.reward,
-                description: milestone.description || '',
                 is_active: milestone.is_active
             });
         } else {
             setFormData({
                 threshold: 0,
                 reward: '',
-                description: '',
                 is_active: true // Default to active for new milestones
             });
         }
@@ -230,14 +227,18 @@ const CreateReferralMilestoneModal: React.FC<CreateReferralMilestoneModalProps> 
                                 </label>
                                 <div className="relative group">
                                     <input
-                                        type="number"
+                                        type="text"
+                                        inputMode="numeric"
                                         name="threshold"
-                                        value={formData.threshold}
-                                        onChange={handleChange}
-                                        placeholder="e.g., 30"
+                                        value={formData.threshold === 0 ? '' : formData.threshold}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                            setFormData(prev => ({ ...prev, threshold: val === '' ? 0 : parseInt(val) }));
+                                        }}
+                                        onFocus={(e) => e.target.select()}
+                                        placeholder="0"
                                         className="w-full px-4 py-2.5 bg-[#f8fafc] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#10b981]/30 focus:ring-4 focus:ring-[#10b981]/5 outline-none transition-all text-base font-bold text-[#111827]"
                                         required
-                                        min="1"
                                     />
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-[#94a3b8] uppercase">Direct</div>
                                 </div>
@@ -260,20 +261,7 @@ const CreateReferralMilestoneModal: React.FC<CreateReferralMilestoneModalProps> 
                                 />
                             </div>
 
-                            {/* Description Input */}
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-[#94a3b8] uppercase tracking-[0.1em] flex items-center gap-1.5">
-                                    <Type size={12} /> Description
-                                </label>
-                                <textarea
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    placeholder="e.g., 4D/3N All-inclusive getaway."
-                                    rows={2}
-                                    className="w-full px-4 py-2 bg-[#f8fafc] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#10b981]/30 focus:ring-4 focus:ring-[#10b981]/5 outline-none transition-all text-[13px] font-medium text-[#111827] resize-none"
-                                />
-                            </div>
+
                         </div>
 
                         {/* Actions */}

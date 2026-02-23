@@ -6,6 +6,7 @@ export interface AuthState {
     adminRole: string;
     lastLogin: string;
     presentLogin: string;
+    referralCode: string;
     isAuthenticated: boolean;
 }
 
@@ -15,6 +16,7 @@ const initialState: AuthState = {
     adminRole: '',
     lastLogin: '',
     presentLogin: '',
+    referralCode: '',
     isAuthenticated: false,
 };
 
