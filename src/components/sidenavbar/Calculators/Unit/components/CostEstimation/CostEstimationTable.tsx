@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
     Info,
     Calendar,
@@ -65,6 +65,14 @@ const CostEstimationTableContent = ({
     const [activeTab, setActiveTab] = useState("Monthly Revenue Break");
     const [cpfToggle, setCpfToggle] = useState("withCPF");
     const [globalYearIndex, setGlobalYearIndex] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to top when year or tab changes
+    useEffect(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [globalYearIndex, activeTab]);
 
     const treeData = propTreeData || { buffaloes: [], startYear: 0, startMonth: 0, durationMonths: 0, revenueData: { yearlyData: [] } };
     const units = treeData.units || 1;
@@ -1103,7 +1111,10 @@ const CostEstimationTableContent = ({
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto bg-slate-50 transition-all duration-300 relative">
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto bg-slate-50 transition-all duration-300 relative"
+            >
 
                 {/* Dashboard Header */}
 

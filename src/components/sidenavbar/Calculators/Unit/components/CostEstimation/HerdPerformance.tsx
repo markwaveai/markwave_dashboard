@@ -176,8 +176,8 @@ const HerdPerformance = ({
         if (!displayLabel) return year.toString();
         const parts = displayLabel.split(' - ');
         if (parts.length === 2) {
-            const startYearStr = parts[0].split(' ')[1];
-            const endYearStr = parts[1].split(' ')[1];
+            const startYearStr = parts[0].split(' ').pop();
+            const endYearStr = parts[1].split(' ').pop();
             if (startYearStr && endYearStr) {
                 return `${startYearStr}-${endYearStr.slice(2)}`;
             }
@@ -215,8 +215,8 @@ const HerdPerformance = ({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
-                                width={40}
+                                tickFormatter={(value) => formatCurrency(value)}
+                                width={65}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
                             <Line
@@ -268,8 +268,8 @@ const HerdPerformance = ({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
-                                width={40}
+                                tickFormatter={(value) => formatCurrency(value)}
+                                width={65}
                             />
                             <Tooltip
                                 content={<CustomTooltip />}
@@ -350,8 +350,8 @@ const HerdPerformance = ({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
-                                width={40}
+                                tickFormatter={(value) => formatCurrency(value)}
+                                width={65}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
                             <Bar
@@ -399,8 +399,8 @@ const HerdPerformance = ({
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
-                                width={40}
+                                tickFormatter={(value) => formatCurrency(value)}
+                                width={65}
                             />
                             <Tooltip
                                 content={<CustomTooltip />}
