@@ -68,7 +68,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
     // Sync Admin Profile
     useEffect(() => {
         if (adminProfile) {
-            const code = adminProfile.referal_code || adminProfile.referral_code;
+            const code = adminProfile.referral_code || adminProfile.referral_code;
             if (code) setAdminReferralCode(code);
         }
     }, [adminProfile]);

@@ -24,14 +24,14 @@ import { setProofModal } from '../../../store/slices/uiSlice';
 import ImageNamesModal from '../../common/ImageNamesModal';
 import InvoiceModal from './components/InvoiceModal';
 import InvoiceTemplate from './components/InvoiceTemplate';
-import { orderService } from '../../../services/api';
+import { userService, orderService } from '../../../services/api';
+import { formatRawDateTime } from '../../../utils/format';
 // @ts-ignore
 import { useReactToPrint } from 'react-to-print';
 // @ts-ignore
 import html2canvas from 'html2canvas';
 // @ts-ignore
 import jsPDF from 'jspdf';
-import { userService } from '../../../services/api';
 
 
 interface OrderDetailsPageProps {
@@ -48,9 +48,11 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
     const { adminMobile } = useAppSelector((state: RootState) => state.auth);
     const { pendingUnits, loading } = useAppSelector((state: RootState) => state.orders);
 
-    // Local state to handle "single order fetch" status if not in list
-    const [isFetchingInfo, setIsFetchingInfo] = useState(false);
-    const [fetchedOrderData, setFetchedOrderData] = useState<any>(null);
+    // Find order in current list
+    const foundEntry = useMemo(() => {
+        if (!pendingUnits || !orderId) return null;
+        return pendingUnits.find((u: any) => u.order?.id === orderId);
+    }, [pendingUnits, orderId]);
 
     // Invoice State
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
@@ -58,53 +60,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
     const [isFetchingInvoice, setIsFetchingInvoice] = useState(false);
     const invoiceComponentRef = React.useRef<HTMLDivElement>(null);
 
-    // Investor State for standalone fetching
-    const [fetchedInvestor, setFetchedInvestor] = useState<any>(null);
-
-    // Find order in current list or use specifically fetched data
-    const foundEntry = useMemo(() => {
-        if (fetchedOrderData) return fetchedOrderData;
-        if (!pendingUnits || !orderId) return null;
-        return pendingUnits.find((u: any) => u.order?.id === orderId);
-    }, [pendingUnits, orderId, fetchedOrderData]);
-
-    useEffect(() => {
-        // If not found in current list, try fetching specifically using the dedicated endpoint
-        if (orderId && !foundEntry && adminMobile) {
-            setIsFetchingInfo(true);
-            orderService.getOrderDetails(orderId)
-                .then((response: any) => {
-                    if (response?.status === 'success' && response.order) {
-                        // Keep the expected structure { order: ... } for foundEntry
-                        setFetchedOrderData(response);
-                    }
-                })
-                .catch((err: any) => {
-                    console.error('Error fetching specifically:', err);
-                })
-                .finally(() => {
-                    setIsFetchingInfo(false);
-                });
-        }
-    }, [orderId, adminMobile, dispatch, foundEntry]);
-
-    const { order, transaction, investor: initialInvestor } = foundEntry || {};
-
-    const investor = initialInvestor || fetchedInvestor;
-
-    useEffect(() => {
-        if (order?.userId && !initialInvestor && !fetchedInvestor) {
-            userService.getUserDetails(order.userId)
-                .then((res: any) => {
-                    if (res && res.user) {
-                        setFetchedInvestor(res.user);
-                    } else if (res && Object.keys(res).length > 0) {
-                        setFetchedInvestor(res); // Fallback in case response is the user itself
-                    }
-                })
-                .catch(console.error);
-        }
-    }, [order?.userId, initialInvestor, fetchedInvestor]);
+    const { order, transaction, investor } = foundEntry || {};
 
     // Helper to get transaction object - API structure might vary
     const rawTx = transaction || {};
@@ -165,7 +121,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
         }));
     };
 
-    // Memoized fetch function to avoid re-fetching if data exists
+    // Manual fetch function triggered by action
     const fetchInvoiceData = async () => {
         if (!order?.id || !investor?.mobile || invoiceData || isFetchingInvoice) return;
         setIsFetchingInvoice(true);
@@ -180,12 +136,6 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
             setIsFetchingInvoice(false);
         }
     };
-
-    useEffect(() => {
-        if (order?.paymentStatus === 'PAID') {
-            fetchInvoiceData();
-        }
-    }, [order?.paymentStatus, order?.id, investor?.mobile]);
 
     const handlePrintInvoice = useReactToPrint({
         contentRef: invoiceComponentRef,
@@ -229,7 +179,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
     };
 
     // Fallback while loading
-    if ((loading || isFetchingInfo) && !foundEntry) {
+    if (loading && !foundEntry) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-gray-500 font-medium">Loading Order Details...</div>
@@ -237,7 +187,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
         );
     }
 
-    if (!foundEntry && !loading && !isFetchingInfo) {
+    if (!foundEntry && !loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
                 <div className="text-gray-800 font-bold text-lg mb-2">Order Not Found</div>
@@ -250,6 +200,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
             </div>
         );
     }
+
 
     return (
         <div className="min-h-screen bg-gray-50 pb-12 font-sans">
@@ -273,7 +224,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                     </span>
                                 </h1>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                    Placed on {order?.placedAt || '-'}
+                                    Placed on {formatRawDateTime(order?.placedAt)}
                                 </p>
                             </div>
                         </div>
@@ -311,24 +262,48 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                 <InfoItem icon={<Calendar size={16} />} label="Joined Date" value={investor?.user_created_date || '-'} />
                             </div>
 
-                            {investor?.panCardUrl && (
-                                <div className="px-6 pb-6 pt-2">
-                                    <p className="text-sm font-medium text-gray-700 mb-3 block">Documents</p>
-                                    <div className="inline-block relative group cursor-pointer" onClick={() => handleImageClick(investor.panCardUrl, 'PAN Card')}>
-                                        <div className="border border-gray-200 rounded-lg p-2 bg-gray-50">
-                                            <img src={investor.panCardUrl} alt="PAN Card" className="h-32 w-auto object-cover rounded shadow-sm" />
-                                        </div>
-                                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
-                                        <div
-                                            className="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow hover:bg-gray-50 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            title="View Full Size"
-                                        >
-                                            <FileText size={16} />
+                            {(() => {
+                                const panImg = investor?.panCardUrl;
+                                const aadhaarFront = investor?.aadhar_front_image_url;
+                                const aadhaarBack = investor?.aadhar_back_image_url;
+
+                                if (!panImg && !aadhaarFront && !aadhaarBack) return null;
+
+                                return (
+                                    <div className="px-6 pb-6 pt-2">
+                                        <p className="text-sm font-medium text-gray-700 mb-3 block">Documents</p>
+                                        <div className="flex flex-wrap gap-4">
+                                            {panImg && (
+                                                <div className="flex flex-col gap-1 cursor-pointer group" onClick={() => handleImageClick(panImg, 'PAN Card')}>
+                                                    <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48 relative shadow-sm">
+                                                        <img src={panImg} alt="PAN Card" className="w-full h-32 object-contain" />
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-500 font-bold text-center group-hover:text-blue-600 transition-colors uppercase tracking-tight">PAN Card</span>
+                                                </div>
+                                            )}
+                                            {aadhaarFront && (
+                                                <div className="flex flex-col gap-1 cursor-pointer group" onClick={() => handleImageClick(aadhaarFront, 'Aadhaar Front')}>
+                                                    <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48 relative shadow-sm">
+                                                        <img src={aadhaarFront} alt="Aadhaar Front" className="w-full h-32 object-contain" />
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-500 font-bold text-center group-hover:text-blue-600 transition-colors uppercase tracking-tight">Aadhaar Front</span>
+                                                </div>
+                                            )}
+                                            {aadhaarBack && (
+                                                <div className="flex flex-col gap-1 cursor-pointer group" onClick={() => handleImageClick(aadhaarBack, 'Aadhaar Back')}>
+                                                    <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50 w-48 relative shadow-sm">
+                                                        <img src={aadhaarBack} alt="Aadhaar Back" className="w-full h-32 object-contain" />
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-500 font-bold text-center group-hover:text-blue-600 transition-colors uppercase tracking-tight">Aadhaar Back</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-1">PAN Card Image</p>
-                                </div>
-                            )}
+                                );
+                            })()}
                         </div>
 
                         {/* Transaction Card */}
@@ -356,8 +331,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                         value={txData?.transferMode || txData?.paymentType || orderObj?.paymentType}
                                     />
                                     <InfoItem
-                                        label={txData?.paymentType === 'CASH' ? "Cash Payment Date" : "Transaction Date"}
-                                        value={findVal(txData, ['cash_payment_date', 'chequeDate', 'cheque_date', 'date', 'transactionDate', 'paymentDate', 'placedAt'], ['date', 'placed'])}
+                                        label={order?.paymentStatus === 'PENDING_PAYMENT' ? "Order Date" : (txData?.paymentType === 'CASH' ? "Cash Payment Date" : "Transaction Date")}
+                                        value={formatRawDateTime(findVal(txData, ['cash_payment_date', 'chequeDate', 'cheque_date', 'date', 'transactionDate', 'paymentDate', 'placedAt'], ['date', 'placed']))}
                                     />
                                     {txData?.paymentType === 'CASH' && txData?.cashier_phone && (
                                         <InfoItem label="Cashier Phone" value={txData.cashier_phone} />
@@ -454,7 +429,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                                             </div>
                                                             <div className="text-xs font-semibold text-gray-500 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
                                                                 <Calendar size={12} />
-                                                                {actionDate}
+                                                                {formatRawDateTime(actionDate)}
                                                             </div>
                                                         </div>
 
@@ -515,11 +490,12 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                 </div>
 
                                 <div className="space-y-3 pt-4">
+                                    <SummaryRow label="Breed ID" value={order?.breedId} />
                                     <SummaryRow label="Items / Units" value={order?.numUnits} />
                                     <SummaryRow label="Buffalo Count" value={order?.buffaloCount} />
                                     <SummaryRow label="Calf Count" value={order?.calfCount} />
+                                    <SummaryRow label="Base Cost" value={`₹ ${order?.baseUnitCost?.toLocaleString()}`} />
                                     <SummaryRow label="Cost per Unit" value={`₹ ${order?.unitCost?.toLocaleString()}`} />
-                                    <SummaryRow label="CPF Included" value={order?.withCpf ? 'Yes' : 'No'} />
                                     <SummaryRow label="Farm Location" value={order?.location} />
                                 </div>
                             </div>

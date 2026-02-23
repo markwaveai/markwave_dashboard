@@ -26,7 +26,7 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = (props) => {
 
     // Get from adminProfile in store if available, or props
     const adminProfile = useAppSelector((state: RootState) => state.users.adminProfile);
-    const adminReferralCode = props.adminReferralCode || adminProfile?.referal_code || adminProfile?.referral_code || '';
+    const adminReferralCode = props.adminReferralCode || adminProfile?.referral_code || adminProfile?.referral_code || '';
 
     const onClose = () => {
         dispatch(setShowAdminDetails(false));

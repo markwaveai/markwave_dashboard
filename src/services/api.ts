@@ -412,14 +412,5 @@ export const orderService = {
       console.error('Error fetching invoice details:', error);
       throw error;
     }
-  },
-  getOrderDetails: async (orderId: string): Promise<any> => {
-    try {
-      const response = await api.get<any>(API_ENDPOINTS.getOrderDetails(orderId));
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching order details:', error);
-      throw error;
-    }
   }
 };
