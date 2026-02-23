@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Users, DollarSign, ArrowUpRight, Wallet } from 'lucide-react';
+import { Calendar, Users, IndianRupee, ArrowUpRight, Wallet } from 'lucide-react';
 
 const AnnualHerdRevenue = ({
     cumulativeYearlyData,
@@ -22,7 +22,7 @@ const AnnualHerdRevenue = ({
                             <Wallet className="text-indigo-600" size={20} />
                             Annual Revenue Analysis
                         </h2>
-                       
+
                     </div>
                 </div>
 
@@ -45,7 +45,7 @@ const AnnualHerdRevenue = ({
                                 </th>
                                 <th className="px-6 py-4 font-semibold text-slate-600 text-sm text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <DollarSign size={16} className="text-slate-400" />
+                                        <IndianRupee size={16} className="text-slate-400" />
                                         Net Revenue
                                     </div>
                                 </th>
@@ -67,7 +67,7 @@ const AnnualHerdRevenue = ({
                                                     {index + 1}
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-slate-800 text-sm">{data.year}</p>
+                                                    <p className="font-semibold text-slate-800 text-sm">{data.displayLabel || data.year}</p>
                                                 </div>
                                             </div>
                                         </td>

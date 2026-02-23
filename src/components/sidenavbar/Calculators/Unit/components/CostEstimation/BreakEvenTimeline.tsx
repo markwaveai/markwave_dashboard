@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info, TrendingUp, Calendar, DollarSign, ArrowUpRight, PieChart, Clock } from 'lucide-react';
+import { Info, TrendingUp, Calendar, IndianRupee, ArrowUpRight, PieChart, Clock } from 'lucide-react';
 
 const BreakEvenTimeline: React.FC<any> = ({
     treeData,
@@ -32,12 +32,12 @@ const BreakEvenTimeline: React.FC<any> = ({
     return (
         <div className="w-full mb-12 space-y-6">
             {/* Simplified Summary Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Initial Investment */}
                 <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm group hover:border-indigo-200 transition-all">
                     <div className="flex items-center gap-1.5 mb-1">
                         <div className="p-1 bg-indigo-50 rounded text-indigo-600">
-                            <DollarSign size={14} />
+                            <IndianRupee size={14} />
                         </div>
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Invested</span>
                     </div>
@@ -98,8 +98,8 @@ const BreakEvenTimeline: React.FC<any> = ({
                                 <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider font-bold text-slate-400">
                                     <th className="px-6 py-3">Year</th>
                                     <th className="px-6 py-3 text-right">Annual Net Sales</th>
-                                    <th className="px-6 py-3 text-right">Asset Value</th>
-                                    <th className="px-6 py-3 text-right">Cumulative Net</th>
+                                    <th className="px-6 py-3 text-right whitespace-nowrap">Asset Value</th>
+                                    <th className="px-6 py-3 text-right whitespace-nowrap">Cumulative Net</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -109,7 +109,7 @@ const BreakEvenTimeline: React.FC<any> = ({
                                         <tr key={data.year} className={`group transition-all ${isBreakEven ? 'bg-emerald-50/50' : 'hover:bg-slate-50/50'}`}>
                                             <td className="px-6 py-4">
                                                 <div className={`relative ${isBreakEven ? 'z-10' : ''}`}>
-                                                    <span className="text-sm font-bold text-slate-800">{data.year}</span>
+                                                    <span className="text-sm font-bold text-slate-800">{data.displayLabel || data.year}</span>
                                                     <span className="block text-[10px] text-slate-400">Y{index + 1}</span>
                                                     {isBreakEven && (
                                                         <div className="absolute left-[-24px] top-1/2 -translate-y-1/2 w-1 h-8 bg-emerald-500 rounded-r-full" />
@@ -123,11 +123,11 @@ const BreakEvenTimeline: React.FC<any> = ({
                                                     <span className="block text-[10px] text-red-500 font-medium">CGF: -{formatNumber(data.cgfCost)}</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-6 py-4 text-right whitespace-nowrap">
                                                 <span className="text-sm font-medium text-slate-600">{formatCurrency(data.assetValue)}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <span className={`text-sm font-bold ${isBreakEven ? 'text-emerald-700' : 'text-indigo-600'}`}>${formatCurrency(data.cumulativeRevenueWithCPF + data.assetValue)}</span>
+                                            <td className="px-6 py-4 text-right whitespace-nowrap">
+                                                <span className={`text-sm font-bold ${isBreakEven ? 'text-emerald-700' : 'text-indigo-600'}`}>{formatCurrency(data.cumulativeRevenueWithCPF + data.assetValue)}</span>
                                             </td>
                                         </tr>
                                     );

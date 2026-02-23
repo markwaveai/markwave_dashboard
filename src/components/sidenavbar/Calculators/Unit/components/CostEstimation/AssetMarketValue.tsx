@@ -26,7 +26,12 @@ const AssetMarketValue = ({
     const startMonthName = monthNames[treeData.startMonth || 0];
     const startDateString = `${startMonthName} ${treeData.startYear}`;
 
-    const endDateString = `December ${endYear}`;
+    const absoluteStart = treeData.startYear * 12 + (treeData.startMonth || 0);
+    const totalDuration = treeData.durationMonths || (treeData.years * 12);
+    const absoluteEnd = absoluteStart + totalDuration - 1;
+    const endMonthName = monthNames[absoluteEnd % 12];
+    const endYearDisplay = Math.floor(absoluteEnd / 12);
+    const endDateString = `${endMonthName} ${endYearDisplay}`;
 
     // const [selectedYear, setSelectedYear] = useState(treeData.startYear); // Controlled by Parent
     const breakdownYear = selectedYear;
@@ -79,14 +84,27 @@ const AssetMarketValue = ({
         let totalValue = 0;
         let totalCount = 0;
 
-        Object.values(buffaloDetails).forEach((buffalo: any) => {
-            // Only count buffaloes born before or in the last year/month
-            // Determine target month: December (11) for full years, or endMonth for the final year
-            // Use 12 (January of next year equivalent) for full years to capture completed year valuation
-            const targetMonth = (year === endYear && endMonth !== undefined && endMonth !== 11) ? endMonth : 12;
+        // Calculate the simulation year index for this calendar year
+        const simYearIndex = year - treeData.startYear;
+        const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const totalDurationMonths = treeData.durationMonths || (treeData.years * 12);
+        const absoluteEndMonth = absoluteStartMonth + totalDurationMonths - 1;
 
-            if (buffalo.birthYear < year || (buffalo.birthYear === year && (buffalo.birthMonth || 0) <= targetMonth)) {
-                const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
+        // Target month is the end of this simulation year span
+        const monthsPassed = Math.min((simYearIndex + 1) * 12, totalDurationMonths);
+        const absoluteTargetMonth = absoluteStartMonth + monthsPassed - 1;
+        // Cap at simulation end
+        const cappedAbsTarget = Math.min(absoluteTargetMonth, absoluteEndMonth);
+
+        const targetYear = Math.floor(cappedAbsTarget / 12);
+        const targetMonth = cappedAbsTarget % 12;
+
+        Object.values(buffaloDetails).forEach((buffalo: any) => {
+            const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+            const absoluteBirthMonth = buffalo.birthYear * 12 + birthMonth;
+
+            if (absoluteBirthMonth <= cappedAbsTarget) {
+                const ageInMonths = calculateAgeInMonths(buffalo, targetYear, targetMonth);
                 let value = getBuffaloValueByAge(ageInMonths);
 
                 // Override: 0-12 months value is 0 in the first year only
@@ -177,7 +195,7 @@ const AssetMarketValue = ({
             <div className="w-full mb-8 space-y-4">
 
                 {/* 1. Value Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-2xl">
+                <div className="grid grid-cols-2 gap-2 max-w-2xl">
                     <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                         <div>
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Total Asset Value</p>
@@ -225,13 +243,13 @@ const AssetMarketValue = ({
                                                 <td className="px-6 py-3 font-medium text-slate-900 border-r border-slate-100">
                                                     {ageGroup}
                                                 </td>
-                                                <td className="px-6 py-3 font-medium text-slate-600 text-center border-r border-slate-100">
+                                                <td className="px-6 py-3 font-medium text-slate-600 text-center border-r border-slate-100 whitespace-nowrap">
                                                     {ageGroup === '0-12 months' && Number(selectedYear) === Number(treeData.startYear) ? formatCurrency(0) : formatCurrency(data.unitValue)}
                                                 </td>
                                                 <td className="px-6 py-3 font-bold text-slate-700 text-center border-r border-slate-100">
                                                     {data.count}
                                                 </td>
-                                                <td className="px-6 py-3 font-bold text-emerald-600 text-center border-r border-slate-100">
+                                                <td className="px-6 py-3 font-bold text-emerald-600 text-center border-r border-slate-100 whitespace-nowrap">
                                                     {formatCurrency(data.value)}
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
@@ -256,7 +274,7 @@ const AssetMarketValue = ({
                                     <td className="px-6 py-4 font-bold border-r border-slate-700">Total</td>
                                     <td className="px-6 py-4 font-bold text-center border-r border-slate-700">-</td>
                                     <td className="px-6 py-4 font-bold text-center border-r border-slate-700">{detailedValue.totalCount}</td>
-                                    <td className="px-6 py-4 font-bold text-emerald-400 text-center border-r border-slate-700">
+                                    <td className="px-6 py-4 font-bold text-emerald-400 text-center border-r border-slate-700 whitespace-nowrap">
                                         {formatCurrency(detailedValue.totalValue || 0)}
                                     </td>
                                     <td className="px-6 py-4 font-bold text-center">100%</td>
@@ -285,7 +303,7 @@ const AssetMarketValue = ({
                                         <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">25-34m</th>
                                         <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">35-40m</th>
                                         <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">41+m</th>
-                                        <th className="px-4 py-3 font-bold text-right">Value</th>
+                                        <th className="px-4 py-3 font-bold text-right whitespace-nowrap">Value</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -300,7 +318,7 @@ const AssetMarketValue = ({
                                                 <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['25-34 months']?.count || 0)}</td>
                                                 <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['35-40 months']?.count || 0)}</td>
                                                 <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['41+ months']?.count || 0)}</td>
-                                                <td className="px-4 py-3 font-bold text-right text-emerald-600">
+                                                <td className="px-4 py-3 font-bold text-right text-emerald-600 whitespace-nowrap">
                                                     {formatCurrency(asset.totalAssetValue || 0)}
                                                 </td>
                                             </tr>

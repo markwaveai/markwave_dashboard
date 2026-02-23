@@ -49,6 +49,7 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
 
     // Local state to handle "single order fetch" status if not in list
     const [isFetchingInfo, setIsFetchingInfo] = useState(false);
+    const [fetchedOrderData, setFetchedOrderData] = useState<any>(null);
 
     // Invoice State
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
@@ -56,24 +57,29 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
     const [isFetchingInvoice, setIsFetchingInvoice] = useState(false);
     const invoiceComponentRef = React.useRef<HTMLDivElement>(null);
 
-    // Find order in current list
+    // Find order in current list or use specifically fetched data
     const foundEntry = useMemo(() => {
+        if (fetchedOrderData) return fetchedOrderData;
         if (!pendingUnits || !orderId) return null;
         return pendingUnits.find((u: any) => u.order?.id === orderId);
-    }, [pendingUnits, orderId]);
+    }, [pendingUnits, orderId, fetchedOrderData]);
 
     useEffect(() => {
-        // If not found in current list, try fetching specifically
+        // If not found in current list, try fetching specifically using the dedicated endpoint
         if (orderId && !foundEntry && adminMobile) {
             setIsFetchingInfo(true);
-            dispatch(fetchPendingUnits({
-                adminMobile,
-                search: orderId,
-                page: 1,
-                pageSize: 10 // Fetch at least a few to be safe, though search should return 1
-            })).finally(() => {
-                setIsFetchingInfo(false);
-            });
+            orderService.getOrderDetails(orderId)
+                .then((response: any) => {
+                    if (response?.status === 'success' && response.data) {
+                        setFetchedOrderData(response.data);
+                    }
+                })
+                .catch((err: any) => {
+                    console.error('Error fetching specifically:', err);
+                })
+                .finally(() => {
+                    setIsFetchingInfo(false);
+                });
         }
     }, [orderId, adminMobile, dispatch, foundEntry]);
 

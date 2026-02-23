@@ -81,234 +81,238 @@ const HeaderControls = ({
 
     return (
         <div className="bg-white border-b border-slate-200 px-4 py-2 z-[80] relative">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
+            {/* Horizontally scrollable on mobile */}
+            <div className="overflow-x-auto overflow-y-hidden">
+                <div className="flex items-center justify-between gap-4 min-w-max">
 
-                {/* Left Section: Configuration & Actions */}
-                <div className="flex items-center gap-4">
+                    {/* Left Section: Configuration & Actions */}
+                    <div className="flex items-center gap-4 shrink-0">
 
-                    {/* Configuration Group */}
-                    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 shadow-sm">
+                        {/* Configuration Group */}
+                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 shadow-sm">
 
-                        {/* Units Input */}
-                        <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Units</span>
-                            <input
-                                type="number"
-                                min="1"
-                                max="999"
-                                className="w-12 bg-white/50 border border-slate-200 rounded px-1 text-sm font-semibold text-slate-700 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                                value={units || ''}
-                                onChange={(e) => handleNumberChange(e.target.value, setUnits)}
-                                placeholder="1-999"
-                            />
-                        </div>
-
-                        {/* Start Date Picker */}
-                        <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200 relative">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start</span>
-                            <div className="relative w-24">
-                                <DatePicker
-                                    selected={new Date(startYear, startMonth, 1)}
-                                    onChange={(date: Date | null) => {
-                                        if (date) {
-                                            setStartYear(date.getFullYear());
-                                            setStartMonth(date.getMonth());
-                                            setStartDay(1);
-                                        }
-                                    }}
-                                    minDate={new Date(2026, 0, 1)}
-                                    dateFormat="MMM yyyy"
-                                    showMonthYearPicker
-                                    className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
-                                    placeholderText="Select"
-                                    onKeyDown={(e) => e.preventDefault()}
-                                    popperClassName="!z-[100]"
-                                    popperPlacement="bottom-start"
+                            {/* Units Input */}
+                            <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Units</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="999"
+                                    className="w-12 bg-white/50 border border-slate-200 rounded px-1 text-sm font-semibold text-slate-700 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                    value={units || ''}
+                                    onChange={(e) => handleNumberChange(e.target.value, setUnits)}
+                                    placeholder="1-999"
                                 />
                             </div>
-                        </div>
 
-                        {/* End Date Picker - Swapped Position & DatePicker added */}
-                        <div className="flex items-center gap-1 px-1 py-1 border-r border-slate-200 relative">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">End</span>
-                            <div className="relative w-24">
-                                <DatePicker
-                                    selected={new Date(startYear + (isNaN(years) ? 0 : years - 1), endMonth, 1)}
-                                    onChange={(date: Date | null) => {
-                                        if (date) {
-                                            const selectedYear = date.getFullYear();
-                                            const selectedMonth = date.getMonth();
-                                            const newYears = selectedYear - startYear + 1;
-                                            setYears(newYears);
-                                            setEndMonth(selectedMonth);
-                                        }
-                                    }}
-                                    minDate={new Date(startYear + 3, 0, 1)}
-                                    maxDate={new Date(startYear + 9, 11, 1)}
-                                    dateFormat="MMM yyyy"
-                                    showMonthYearPicker
-                                    className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
-                                    placeholderText="Select"
-                                    onKeyDown={(e) => e.preventDefault()}
-                                    popperClassName="!z-[100]"
-                                    popperPlacement="bottom-start"
-                                />
+                            {/* Start Date Picker */}
+                            <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Start Date</span>
+                                <div className="relative w-24">
+                                    <DatePicker
+                                        selected={new Date(startYear, startMonth, 1)}
+                                        onChange={(date: Date | null) => {
+                                            if (date) {
+                                                const newYear = date.getFullYear();
+                                                const newMonth = date.getMonth();
+                                                setStartYear(newYear);
+                                                setStartMonth(newMonth);
+                                                setStartDay(1);
+
+                                                // Ensure at least 3 years 1 month gap (37 months total)
+                                                if (years < 3.0833) {
+                                                    setYears(3.0833);
+                                                    setEndMonth((newMonth + 36) % 12);
+                                                }
+                                            }
+                                        }}
+                                        minDate={new Date(2026, 0, 1)}
+                                        dateFormat="MMM yyyy"
+                                        showMonthYearPicker
+                                        portalId="root"
+                                        className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
+                                        placeholderText="Select"
+                                        onKeyDown={(e) => e.preventDefault()}
+                                        popperClassName="!z-[100]"
+                                        popperPlacement="bottom-start"
+                                    />
+                                </div>
                             </div>
+
+                            {/* End Date Picker - Swapped Position & DatePicker added */}
+                            <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
+                                <div className="relative w-24">
+                                    <DatePicker
+                                        selected={new Date(Math.floor((startYear * 12 + startMonth + Math.round(years * 12) - 1) / 12), (startMonth + Math.round(years * 12) - 1) % 12, 1)}
+                                        onChange={(date: Date | null) => {
+                                            if (date) {
+                                                const newEndYear = date.getFullYear();
+                                                const newEndMonth = date.getMonth();
+                                                const startAbsolute = startYear * 12 + startMonth;
+                                                const endAbsolute = newEndYear * 12 + newEndMonth;
+
+                                                let diffMonths = (endAbsolute - startAbsolute) + 1;
+
+                                                if (diffMonths > 120) diffMonths = 120; // Cap at 10 years
+                                                if (diffMonths < 37) diffMonths = 37; // Min 3 years + 1 month
+                                                const numYears = diffMonths / 12;
+
+                                                setYears(numYears);
+                                                setEndMonth(newEndMonth);
+                                            }
+                                        }}
+                                        minDate={new Date(startYear, startMonth + 36, 1)}
+                                        maxDate={new Date(startYear, startMonth + 119, 1)}
+                                        dateFormat="MMM yyyy"
+                                        showMonthYearPicker
+                                        portalId="root"
+                                        className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center"
+                                        placeholderText="Select"
+                                        onKeyDown={(e) => e.preventDefault()}
+                                        popperClassName="!z-[100]"
+                                        popperPlacement="bottom-start"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Initial Investment Display */}
+                            {treeData && (
+                                <div className="flex items-center gap-1 px-2 py-1">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Initial Inv</span>
+                                        <span className="text-sm font-black text-slate-900">
+                                            {formatCurrency((units * 2 * 175000) + (units * 15000))}
+                                        </span>
+                                        <span className="text-[8px] font-bold text-blue-600">CPF: {formatCurrency(units * 15000)}</span>
+                                    </div>
+                                </div>
+                            )}
+
+
+
                         </div>
 
-                        {/* Duration (Years) Input - Swapped Position */}
-                        <div className="flex items-center gap-1 px-1 py-1">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Years</span>
-                            <input
-                                type="number"
-                                min="4"
-                                max="10"
-                                className="w-10 bg-white/50 border border-slate-200 rounded px-1 text-sm font-semibold text-slate-700 text-center focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                                value={years || ''}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === '') {
-                                        setYears(NaN);
-                                    } else {
-                                        let num = parseInt(val, 10);
-                                        if (!isNaN(num)) {
-                                            if (num > 10) num = 10;
-                                            if (num < 4) num = 4;
-                                            setYears(num);
-                                        }
-                                    }
-                                }}
-                                placeholder="4-10"
-                            />
-                        </div>
+                        {/* Run Button */}
 
                     </div>
 
-                    {/* Run Button */}
+                    {/* Center Section: View Toggle */}
+                    {treeData && !isViewRestricted && (
+                        <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner shrink-0">
+                            <SimpleTooltip content="Tree View" placement="bottom">
+                                <button
+                                    disabled={isViewRestricted}
+                                    className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
+                                        ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                                        : isViewRestricted ? 'opacity-50 cursor-not-allowed text-slate-400' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
+                                        }`}
+                                    onClick={() => setActiveTab("familyTree")}
+                                >
+                                    <img src="/tree.png" alt="tree" className="w-7 h-7" />
+                                </button>
+                            </SimpleTooltip>
 
+                            <SimpleTooltip content="Revenue Projections" placement="bottom">
+                                <button
+                                    className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
+                                        ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
+                                        : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
+                                        }`}
+                                    onClick={() => setActiveTab("costEstimation")}
+                                >
+                                    <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
+                                </button>
+                            </SimpleTooltip>
+                        </div>
+                    )}
+
+                    {/* Right Section: Summary Stats */}
+                    {treeData && treeData.summaryStats && (
+                        <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 overflow-visible">
+
+                            <SimpleTooltip content="Total buffaloes" placement="bottom">
+                                <div className="flex flex-col items-center cursor-default">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
+                                    <span className="text-sm font-black text-slate-800">
+                                        {activeTab === "costEstimation" && headerStats?.totalBuffaloes !== undefined
+                                            ? headerStats.totalBuffaloes
+                                            : treeData.summaryStats.totalBuffaloes}
+                                    </span>
+                                </div>
+                            </SimpleTooltip>
+
+                            <div className="w-px h-8 bg-slate-200" />
+
+                            {/* Asset Value - Added */}
+                            <SimpleTooltip content="Buffaloes asset value" placement="bottom">
+                                <div className="flex flex-col items-center cursor-default">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Value</span>
+                                    <span className="text-sm font-black text-blue-600">
+                                        {formatCurrency(activeTab === "costEstimation" && headerStats?.totalAssetValue !== undefined
+                                            ? headerStats.totalAssetValue
+                                            : treeData.summaryStats.totalAssetValue)}
+                                    </span>
+                                </div>
+                            </SimpleTooltip>
+
+                            <div className="w-px h-8 bg-slate-200" />
+
+                            <SimpleTooltip
+                                content={isCGFEnabled ? `Total Recurring Revenue - (CPF +CGF)` : `Total Recurring Revenue - CPF`}
+                                placement="bottom-right"
+                                className="whitespace-nowrap max-w-none"
+                            >
+                                <div className="flex flex-col items-center cursor-default">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                        {isCGFEnabled ? "Net (-(CPF+CGF))" : "Net (-CPF)"}
+                                    </span>
+                                    <span className="text-sm font-black text-emerald-600">
+                                        {formatCurrency(
+                                            activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
+                                                ? (isCGFEnabled ? headerStats.cumulativeNetRevenueWithCaring || headerStats.cumulativeNetRevenue : headerStats.cumulativeNetRevenue)
+                                                : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)
+                                        )}
+                                    </span>
+                                </div>
+                            </SimpleTooltip>
+
+
+                            {/* CGF Toggle - Integrated */}
+                            <SimpleTooltip content={isCGFEnabled ? "Disable CGF Mode" : "Enable CGF Mode"} placement="bottom">
+                                <button
+                                    onClick={() => setIsCGFEnabled(!isCGFEnabled)}
+                                    className={`flex items-center justify-center p-1.5 rounded-full transition-all ${isCGFEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                                >
+                                    <span className="text-[9px] font-bold uppercase mr-1.5">CGF</span>
+                                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 relative ${isCGFEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}>
+                                        <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${isCGFEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </button>
+                            </SimpleTooltip>
+
+                            <div className="w-px h-8 bg-slate-200" />
+
+                            <SimpleTooltip content="Total Projected Revenue" placement="bottom-right">
+                                <div className="flex flex-col items-center cursor-default">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total PR</span>
+                                    <span className="text-sm font-black text-slate-900">
+                                        {formatCurrency(
+                                            activeTab === "costEstimation" && headerStats
+                                                ? (isCGFEnabled ? (headerStats.cumulativeNetRevenueWithCaring ?? headerStats.cumulativeNetRevenue) : headerStats.cumulativeNetRevenue) + headerStats.totalAssetValue
+                                                : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) + treeData.summaryStats.totalAssetValue
+                                        )}
+                                    </span>
+                                </div>
+                            </SimpleTooltip>
+
+
+
+
+                        </div>
+                    )}
                 </div>
-
-                {/* Center Section: View Toggle */}
-                {treeData && !isViewRestricted && (
-                    <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner">
-                        <button
-                            disabled={isViewRestricted}
-                            className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
-                                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
-                                : isViewRestricted ? 'opacity-50 cursor-not-allowed text-slate-400' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
-                                }`}
-                            onClick={() => setActiveTab("familyTree")}
-                        >
-                            {/* <OrgTreeIcon className="w-5 h-5" /> */}
-                            <img src="/tree.png" alt="tree" className="w-7 h-7" />
-                            {/* Floating Tooltip */}
-                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                                Tree View
-                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-slate-800"></span>
-                            </span>
-                        </button>
-                        <button
-                            className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
-                                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
-                                : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
-                                }`}
-                            onClick={() => setActiveTab("costEstimation")}
-                        >
-                            {/* <span className="text-base leading-none">📊</span> */}
-                            <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
-                            {/* Floating Tooltip */}
-                            <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                                Revenue Projections
-                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-slate-800"></span>
-                            </span>
-                        </button>
-                    </div>
-                )}
-
-                {/* Right Section: Summary Stats */}
-                {treeData && treeData.summaryStats && (
-                    <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm">
-
-                        <SimpleTooltip content={`Total buffaloes after ${years} years`} placement="bottom">
-                            <div className="flex flex-col items-center cursor-default">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
-                                <span className="text-sm font-black text-slate-800">
-                                    {activeTab === "costEstimation" && headerStats?.totalBuffaloes !== undefined
-                                        ? headerStats.totalBuffaloes
-                                        : treeData.summaryStats.totalBuffaloes}
-                                </span>
-                            </div>
-                        </SimpleTooltip>
-
-                        <div className="w-px h-8 bg-slate-200" />
-
-                        {/* Asset Value - Added */}
-                        <SimpleTooltip content="Buffaloes asset value" placement="bottom">
-                            <div className="flex flex-col items-center cursor-default">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Value</span>
-                                <span className="text-sm font-black text-blue-600">
-                                    {formatCurrency(activeTab === "costEstimation" && headerStats?.totalAssetValue !== undefined
-                                        ? headerStats.totalAssetValue
-                                        : treeData.summaryStats.totalAssetValue)}
-                                </span>
-                            </div>
-                        </SimpleTooltip>
-
-                        <div className="w-px h-8 bg-slate-200" />
-
-                        <SimpleTooltip
-                            content={isCGFEnabled ? `Total Recurring Revenue - (CPF +CGF)` : `Total Recurring Revenue - CPF`}
-                            placement="bottom-right"
-                            className="whitespace-nowrap max-w-none"
-                        >
-                            <div className="flex flex-col items-center cursor-default">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                                    {isCGFEnabled ? "Net (-(CPF+CGF))" : "Net (-CPF)"}
-                                </span>
-                                <span className="text-sm font-black text-emerald-600">
-                                    {formatCurrency(
-                                        activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
-                                            ? (isCGFEnabled ? headerStats.cumulativeNetRevenueWithCaring || headerStats.cumulativeNetRevenue : headerStats.cumulativeNetRevenue)
-                                            : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue)
-                                    )}
-                                </span>
-                            </div>
-                        </SimpleTooltip>
-
-
-                        {/* CGF Toggle - Integrated */}
-                        <button
-                            onClick={() => setIsCGFEnabled(!isCGFEnabled)}
-                            className={`flex items-center justify-center p-1.5 rounded-full transition-all ${isCGFEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
-                            title={isCGFEnabled ? "Disable CGF Mode" : "Enable CGF Mode"}
-                        >
-                            <span className="text-[9px] font-bold uppercase mr-1.5">CGF</span>
-                            <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 relative ${isCGFEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                                <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${isCGFEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                            </div>
-                        </button>
-
-                        <div className="w-px h-8 bg-slate-200" />
-
-                        <SimpleTooltip content="Total Projected Revenue" placement="bottom-right">
-                            <div className="flex flex-col items-center cursor-default">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total PR</span>
-                                <span className="text-sm font-black text-slate-900">
-                                    {formatCurrency(
-                                        activeTab === "costEstimation" && headerStats
-                                            ? (isCGFEnabled ? (headerStats.cumulativeNetRevenueWithCaring ?? headerStats.cumulativeNetRevenue) : headerStats.cumulativeNetRevenue) + headerStats.totalAssetValue
-                                            : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue) + treeData.summaryStats.totalAssetValue
-                                    )}
-                                </span>
-                            </div>
-                        </SimpleTooltip>
-
-
-
-
-                    </div>
-                )}
-            </div>
+            </div>{/* end overflow-x-auto */}
         </div>
     );
 };

@@ -91,7 +91,7 @@ const RevenueBreakEven: React.FC<any> = ({
     return (
         <div className="w-full mb-6 space-y-2">
             {/* Context Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
                 {/* Initial Investment */}
                 <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
                     <div className="text-center flex flex-col items-center">
@@ -168,16 +168,7 @@ const RevenueBreakEven: React.FC<any> = ({
                                         <td className="px-6 py-4 border-r border-slate-100 text-sm text-center">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-700">
-                                                    {(() => {
-                                                        const startM = treeData.startMonth || 0;
-                                                        const rowStartTotalMonths = startM + index * 12;
-                                                        const rowEndTotalMonths = rowStartTotalMonths + 11;
-                                                        const startY = treeData.startYear + Math.floor(rowStartTotalMonths / 12);
-                                                        const endY = treeData.startYear + Math.floor(rowEndTotalMonths / 12);
-                                                        const startMonthName = monthNames[rowStartTotalMonths % 12].substring(0, 3);
-                                                        const endMonthName = monthNames[rowEndTotalMonths % 12].substring(0, 3);
-                                                        return `${startMonthName} ${startY} - ${endMonthName} ${endY}`;
-                                                    })()}
+                                                    {data.displayLabel || data.year}
                                                 </span>
                                                 {isRevenueBreakEven && <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mt-0.5">Break-Even</span>}
                                             </div>

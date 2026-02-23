@@ -13,9 +13,15 @@ import { farmService } from '../../../services/api';
 import { Farm, CreateFarmRequest } from '../../../types';
 import Snackbar from '../../common/Snackbar';
 import CreateFarmModal from './CreateFarmModal';
+import OtpVerificationModal from '../../common/OtpVerificationModal';
 
 const FarmManagement: React.FC = () => {
-    const { adminMobile } = useAppSelector((state) => state.auth);
+    const { adminMobile, adminRole } = useAppSelector((state: any) => state.auth);
+    const adminProfile = useAppSelector((state: any) => state.users.adminProfile);
+
+    const effectiveRole = adminProfile?.role || adminRole;
+    const isSuperAdmin = effectiveRole?.split(',').map((r: string) => r.trim()).includes('SuperAdmin');
+
     const [farms, setFarms] = useState<Farm[]>([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('--');
@@ -25,11 +31,15 @@ const FarmManagement: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFarm, setSelectedFarm] = useState<Farm | null>(null);
 
-    // Snackbar state
     const [snackbar, setSnackbar] = useState<{ message: string | null; type: 'success' | 'error' | null }>({
         message: null,
         type: null,
     });
+
+    // Per-Action OTP State
+    const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+    const [otpActionType, setOtpActionType] = useState<'status' | 'benefit'>('status');
+    const [pendingAction, setPendingAction] = useState<any>(null);
 
     const fetchFarms = async (showLoading = true) => {
         try {
@@ -52,73 +62,91 @@ const FarmManagement: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleStatusToggle = async (farm: Farm) => {
+    const handleStatusToggle = (farm: Farm) => {
         if (!adminMobile) {
             setSnackbar({ message: 'Admin mobile number not found. Please log in again.', type: 'error' });
             return;
         }
 
-        try {
-            setProcessingAction({ id: farm.id, type: 'status' });
-            const newStatus = farm.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-            const farmData: CreateFarmRequest = {
-                location: farm.location,
-                strength: farm.strength,
-                status: newStatus,
-                isSelfBenefitsActive: farm.isSelfBenefitsActive,
-                isReferralBenefitsActive: farm.isReferralBenefitsActive,
-            };
-
-            const response = await farmService.updateFarm(farm.id, farmData, adminMobile);
-
-            if (response.error) {
-                setSnackbar({ message: response.error, type: 'error' });
-            } else {
-                setSnackbar({
-                    message: `Farm status updated to ${newStatus}!`,
-                    type: 'success'
-                });
-                await fetchFarms(false); // Silent refresh
-            }
-        } catch (error) {
-            setSnackbar({ message: 'An unexpected error occurred', type: 'error' });
-        } finally {
-            setProcessingAction(null);
-        }
+        setOtpActionType('status');
+        setPendingAction(farm);
+        setIsOtpModalOpen(true);
     };
 
-    const handleBenefitToggle = async (farm: Farm, field: 'isSelfBenefitsActive' | 'isReferralBenefitsActive') => {
+    const handleBenefitToggle = (farm: Farm, field: 'isSelfBenefitsActive' | 'isReferralBenefitsActive') => {
         if (!adminMobile) {
             setSnackbar({ message: 'Admin mobile number not found. Please log in again.', type: 'error' });
             return;
         }
 
-        try {
-            setProcessingAction({ id: farm.id, type: field });
-            const farmData: CreateFarmRequest = {
-                location: farm.location,
-                strength: farm.strength,
-                status: farm.status,
-                isSelfBenefitsActive: farm.isSelfBenefitsActive,
-                isReferralBenefitsActive: farm.isReferralBenefitsActive,
-                [field]: !farm[field]
-            };
+        setOtpActionType('benefit');
+        setPendingAction({ farm, field });
+        setIsOtpModalOpen(true);
+    };
 
-            const response = await farmService.updateFarm(farm.id, farmData, adminMobile);
+    const handleConfirmOtp = async (mobile: string, otp: string) => {
+        if (otpActionType === 'status' && pendingAction) {
+            const farm = pendingAction as Farm;
+            try {
+                setProcessingAction({ id: farm.id, type: 'status' });
+                const newStatus = farm.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                const farmData: CreateFarmRequest = {
+                    location: farm.location,
+                    strength: farm.strength,
+                    status: newStatus,
+                    isSelfBenefitsActive: farm.isSelfBenefitsActive,
+                    isReferralBenefitsActive: farm.isReferralBenefitsActive,
+                };
 
-            if (response.error) {
-                setSnackbar({ message: response.error, type: 'error' });
-            } else {
-                setSnackbar({
-                    message: `${field === 'isSelfBenefitsActive' ? 'Self Benefits' : 'Referral Benefits'} updated!`,
-                    type: 'success'
-                });
-                await fetchFarms(false);
+                const response = await farmService.updateFarm(farm.id, farmData, mobile, otp);
+
+                if (response.error) {
+                    throw new Error(response.error);
+                } else {
+                    setSnackbar({
+                        message: `Farm status updated to ${newStatus}!`,
+                        type: 'success'
+                    });
+                    await fetchFarms(false);
+                }
+            } catch (error: any) {
+                setSnackbar({ message: error.message || 'An unexpected error occurred', type: 'error' });
+                throw error;
+            } finally {
+                setProcessingAction(null);
+                setPendingAction(null);
             }
-        } catch (error) {
-            setSnackbar({ message: 'An unexpected error occurred', type: 'error' });
-        } finally {
-            setProcessingAction(null);
+        } else if (otpActionType === 'benefit' && pendingAction) {
+            const { farm, field } = pendingAction;
+            try {
+                setProcessingAction({ id: farm.id, type: field });
+                const farmData: CreateFarmRequest = {
+                    location: farm.location,
+                    strength: farm.strength,
+                    status: farm.status,
+                    isSelfBenefitsActive: farm.isSelfBenefitsActive,
+                    isReferralBenefitsActive: farm.isReferralBenefitsActive,
+                    [field]: !farm[field]
+                };
+
+                const response = await farmService.updateFarm(farm.id, farmData, mobile, otp);
+
+                if (response.error) {
+                    throw new Error(response.error);
+                } else {
+                    setSnackbar({
+                        message: `${field === 'isSelfBenefitsActive' ? 'Self Benefits' : 'Referral Benefits'} updated!`,
+                        type: 'success'
+                    });
+                    await fetchFarms(false);
+                }
+            } catch (error: any) {
+                setSnackbar({ message: error.message || 'An unexpected error occurred', type: 'error' });
+                throw error;
+            } finally {
+                setProcessingAction(null);
+                setPendingAction(null);
+            }
         }
     };
 
@@ -223,7 +251,7 @@ const FarmManagement: React.FC = () => {
                                     <th className="px-6 py-4 text-center">Total Cap.</th>
                                     <th className="px-6 py-4 text-center">Onboarded</th>
                                     <th className="px-6 py-4 text-center">Remaining</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
+                                    {isSuperAdmin && <th className="px-6 py-4 text-right">Actions</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -251,8 +279,8 @@ const FarmManagement: React.FC = () => {
                                             <td className="px-6 py-5 text-center">
                                                 <button
                                                     onClick={() => handleStatusToggle(farm)}
-                                                    disabled={processingAction?.id === farm.id && processingAction?.type === 'status'}
-                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${farm.status === 'ACTIVE'
+                                                    disabled={!isSuperAdmin || (processingAction?.id === farm.id && processingAction?.type === 'status')}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${!isSuperAdmin ? 'cursor-default' : ''} ${farm.status === 'ACTIVE'
                                                         ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                                                         : farm.status === 'FULL'
                                                             ? 'bg-orange-50 text-orange-600 border border-orange-100'
@@ -269,8 +297,8 @@ const FarmManagement: React.FC = () => {
                                             <td className="px-6 py-5 text-center">
                                                 <button
                                                     onClick={() => handleBenefitToggle(farm, 'isSelfBenefitsActive')}
-                                                    disabled={processingAction?.id === farm.id && processingAction?.type === 'isSelfBenefitsActive'}
-                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${farm.isSelfBenefitsActive
+                                                    disabled={!isSuperAdmin || (processingAction?.id === farm.id && processingAction?.type === 'isSelfBenefitsActive')}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${!isSuperAdmin ? 'cursor-default' : ''} ${farm.isSelfBenefitsActive
                                                         ? 'bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100'
                                                         : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
                                                         }`}
@@ -285,8 +313,8 @@ const FarmManagement: React.FC = () => {
                                             <td className="px-6 py-5 text-center">
                                                 <button
                                                     onClick={() => handleBenefitToggle(farm, 'isReferralBenefitsActive')}
-                                                    disabled={processingAction?.id === farm.id && processingAction?.type === 'isReferralBenefitsActive'}
-                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${farm.isReferralBenefitsActive
+                                                    disabled={!isSuperAdmin || (processingAction?.id === farm.id && processingAction?.type === 'isReferralBenefitsActive')}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-1 min-w-[80px] ${!isSuperAdmin ? 'cursor-default' : ''} ${farm.isReferralBenefitsActive
                                                         ? 'bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100'
                                                         : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
                                                         }`}
@@ -301,16 +329,18 @@ const FarmManagement: React.FC = () => {
                                             <td className="px-6 py-5 text-center font-semibold text-slate-600 tracking-tight">{farm.strength.toLocaleString()}</td>
                                             <td className="px-6 py-5 text-center font-semibold text-slate-600 tracking-tight">{(farm.currentUnits || 0).toLocaleString()}</td>
                                             <td className="px-6 py-5 text-center font-bold text-blue-600 tracking-tight">{farm.availableUnits.toLocaleString()}</td>
-                                            <td className="px-6 py-5">
-                                                <div className="flex items-center justify-end">
-                                                    <button
-                                                        onClick={() => handleEditClick(farm)}
-                                                        className="p-2 rounded-lg transition-all text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        <Pencil size={18} />
-                                                    </button>
-                                                </div>
-                                            </td>
+                                            {isSuperAdmin && (
+                                                <td className="px-6 py-5">
+                                                    <div className="flex items-center justify-end">
+                                                        <button
+                                                            onClick={() => handleEditClick(farm)}
+                                                            className="p-2 rounded-lg transition-all text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                                                        >
+                                                            <Pencil size={18} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 })}
@@ -339,18 +369,20 @@ const FarmManagement: React.FC = () => {
             </div>
 
             {/* Add Farm Floating Button */}
-            <button
-                onClick={() => {
-                    setSelectedFarm(null);
-                    setIsModalOpen(true);
-                }}
-                className="fixed bottom-10 right-10 flex items-center gap-2 pl-4 pr-2 py-2 bg-blue-600 text-white rounded-full shadow-[0_12px_40px_rgba(37,99,235,0.35)] hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all z-40 group focus:outline-none"
-            >
-                <span className="font-bold text-xs tracking-wide">Add Farm</span>
-                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                </div>
-            </button>
+            {isSuperAdmin && (
+                <button
+                    onClick={() => {
+                        setSelectedFarm(null);
+                        setIsModalOpen(true);
+                    }}
+                    className="fixed bottom-10 right-10 flex items-center gap-2 pl-4 pr-2 py-2 bg-blue-600 text-white rounded-full shadow-[0_12px_40px_rgba(37,99,235,0.35)] hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all z-40 group focus:outline-none"
+                >
+                    <span className="font-bold text-xs tracking-wide">Add Farm</span>
+                    <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                        <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                </button>
+            )}
 
             <CreateFarmModal
                 isOpen={isModalOpen}
@@ -368,6 +400,22 @@ const FarmManagement: React.FC = () => {
                 } : null}
                 isEditMode={!!selectedFarm}
                 adminMobile={adminMobile || undefined}
+            />
+
+            <OtpVerificationModal
+                isOpen={isOtpModalOpen}
+                onClose={() => {
+                    setIsOtpModalOpen(false);
+                    setPendingAction(null);
+                }}
+                onVerify={handleConfirmOtp}
+                title="Admin Authorization"
+                description={
+                    otpActionType === 'status'
+                        ? `Authorize changing status for ${pendingAction?.location} to ${pendingAction?.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'}.`
+                        : `Authorize toggling ${pendingAction?.field === 'isSelfBenefitsActive' ? 'Self Benefits' : 'Referral Benefits'} for ${pendingAction?.farm?.location}.`
+                }
+                actionName="Confirm Action"
             />
         </div>
     );

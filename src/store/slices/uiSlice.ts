@@ -24,7 +24,7 @@ const saveNotifications = (notifications: StoredNotification[]) => {
 };
 
 export interface UIState {
-    activeTab: 'orders' | 'nonVerified' | 'existing' | 'tree' | 'products' | 'tracking' | 'buffaloViz' | 'emi';
+    activeTab: 'orders' | 'nonVerified' | 'existing' | 'tree' | 'products' | 'tracking' | 'emi';
     isSidebarOpen: boolean;
     showAdminDetails: boolean;
     modals: {
@@ -65,7 +65,7 @@ export interface UIState {
 
 const getInitialActiveTab = (): UIState['activeTab'] => {
     const saved = localStorage.getItem('activeTab');
-    if (saved && ['orders', 'nonVerified', 'existing', 'tree', 'products', 'tracking', 'buffaloViz', 'emi'].includes(saved)) {
+    if (saved && ['orders', 'nonVerified', 'existing', 'tree', 'products', 'tracking', 'emi'].includes(saved)) {
         return saved as UIState['activeTab'];
     }
     return 'orders';

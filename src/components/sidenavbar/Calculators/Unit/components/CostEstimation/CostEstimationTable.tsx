@@ -70,6 +70,14 @@ const CostEstimationTableContent = ({
     const startYear = treeData.startYear;
     const startMonth = treeData.startMonth;
 
+    // Clamp year selector if current selection exceeds new range
+    React.useEffect(() => {
+        if (treeData.durationMonths > 0) {
+            const lastYearIndex = Math.ceil(treeData.durationMonths / 12) - 1;
+            setGlobalYearIndex(prev => prev > lastYearIndex ? lastYearIndex : prev);
+        }
+    }, [treeData.durationMonths, treeData.startYear, treeData.startMonth]);
+
     const { yearlyData = [], totalRevenue = 0, totalUnits = 0, totalMatureBuffaloYears = 0 } = treeData.revenueData || {};
 
     // Shared calculation functions
@@ -91,7 +99,7 @@ const CostEstimationTableContent = ({
             // For Gen > 0, we can use birthMonth if available or inherit from parent acquisition if consistent.
             // In the new treeData, acquisitionMonth is passed down.
 
-            const birthMonth = buffalo.generation === 0 ? (buffalo.acquisitionMonth || 0) : (buffalo.acquisitionMonth || 0);
+            const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
 
             buffaloDetails[buffalo.id] = {
                 id: buffalo.id,
@@ -139,6 +147,7 @@ const CostEstimationTableContent = ({
             const currentAbsolute = currentYear * 12 + currentMonth;
             monthsSinceAcquisition = currentAbsolute - absoluteAcquisitionMonth;
         } else {
+            // Fallback for old/legacy data
             monthsSinceAcquisition = (currentYear - startYear) * 12 + (currentMonth - acquisitionMonth);
         }
 
@@ -338,6 +347,58 @@ const CostEstimationTableContent = ({
         }
     };
 
+    const calculateDetailedAssetValue = (year: any, targetMonth: number = 11) => {
+        const ageGroups: any = {
+            '0-12 months': { count: 0, value: 0, unitValue: 10000 },
+            '13-18 months': { count: 0, value: 0, unitValue: 25000 },
+            '19-24 months': { count: 0, value: 0, unitValue: 40000 },
+            '25-34 months': { count: 0, value: 0, unitValue: 100000 },
+            '35-40 months': { count: 0, value: 0, unitValue: 150000 },
+            '41+ months': { count: 0, value: 0, unitValue: 175000 }
+        };
+
+        let totalValue = 0;
+        let totalCount = 0;
+
+        Object.values(buffaloDetails).forEach((buffalo: any) => {
+            const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+            if (year > buffalo.birthYear || (year === buffalo.birthYear && birthMonth <= targetMonth)) {
+                const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
+                let value = getBuffaloValueByAge(ageInMonths);
+
+                // Override: 0-12 months value is 0 in the first year only
+                if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
+                    value = 0;
+                }
+
+                if (ageInMonths >= 41) {
+                    ageGroups['41+ months'].count += units;
+                    ageGroups['41+ months'].value += value * units;
+                } else if (ageInMonths >= 35) {
+                    ageGroups['35-40 months'].count += units;
+                    ageGroups['35-40 months'].value += value * units;
+                } else if (ageInMonths >= 25) {
+                    ageGroups['25-34 months'].count += units;
+                    ageGroups['25-34 months'].value += value * units;
+                } else if (ageInMonths >= 19) {
+                    ageGroups['19-24 months'].count += units;
+                    ageGroups['19-24 months'].value += value * units;
+                } else if (ageInMonths >= 13) {
+                    ageGroups['13-18 months'].count += units;
+                    ageGroups['13-18 months'].value += value * units;
+                } else {
+                    ageGroups['0-12 months'].count += units;
+                    ageGroups['0-12 months'].value += value * units;
+                }
+
+                totalValue += value * units;
+                totalCount += units;
+            }
+        });
+
+        return { ageGroups, totalValue, totalCount };
+    };
+
     const MOTHER_BUFFALO_PRICE = 175000;
     const CPF_PER_UNIT = 15000;
 
@@ -446,55 +507,96 @@ const CostEstimationTableContent = ({
         return { monthlyRevenue, investorMonthlyRevenue, revenueBuffaloDetails: buffaloDetails, buffaloValuesByYear };
     }, [treeData.startYear, treeData.startMonth, treeData.durationMonths, buffaloDetails, units]);
 
-    const yearlyDataWithCPF = useMemo(() => {
-        return yearlyData.map((yearData: any) => {
-            const cpfCost = (yearlyCPFCost[yearData.year] || 0) * units;
-            const cgfCost = (yearlyCGFCost[yearData.year] || 0); // Already scaled by units in calculation
+    // --- Helper for Simulation Year Labels ---
+    const getSimulationYearLabel = (simYearIndex: number) => {
+        const startAbs = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const startY = Math.floor((startAbs + simYearIndex * 12) / 12);
+        const startM = (startAbs + simYearIndex * 12) % 12;
 
-            // CORRECTED REVENUE CALCULATION:
-            // Instead of using 'yearData.revenue' which comes from treeData (and might be unscaled or incorrect),
-            // we calculate annual revenue by summing up the precise 'investorMonthlyRevenue' which IS scaled by units.
-            let correctedAnnualRevenue = 0;
-            const yRevenue = investorMonthlyRevenue[yearData.year];
-            if (yRevenue) {
-                correctedAnnualRevenue = (Object.values(yRevenue) as number[]).reduce((a: number, b: number) => a + b, 0);
+        const monthsInThisYear = Math.min(12, treeData.durationMonths - simYearIndex * 12);
+        const endAbs = startAbs + simYearIndex * 12 + monthsInThisYear - 1;
+        const endY = Math.floor(endAbs / 12);
+        const endM = endAbs % 12;
+
+        const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return `${monthNamesShort[startM]} ${startY} - ${monthNamesShort[endM]} ${endY}`;
+    };
+
+    const yearlyDataWithCPF = useMemo(() => {
+        const simYears = Math.ceil(treeData.durationMonths / 12);
+        const results = [];
+
+        for (let i = 0; i < simYears; i++) {
+            let annualRevenue = 0;
+            let annualCPF = 0;
+            let annualCGF = 0;
+            let finalBuffaloCount = 0;
+
+            const monthsThisYear = Math.min(12, treeData.durationMonths - i * 12);
+            const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (i * 12);
+
+            for (let m = 0; m < monthsThisYear; m++) {
+                const absM = startAbs + m;
+                const year = Math.floor(absM / 12);
+                const month = absM % 12;
+
+                annualRevenue += (investorMonthlyRevenue[year]?.[month] || 0);
+                annualCPF += ((monthlyCPFCost[year]?.[month] || 0) * units);
+
+                // Track buffalo count at the end of this year
+                if (m === monthsThisYear - 1) {
+                    finalBuffaloCount = Object.values(buffaloDetails).filter((b: any) => {
+                        const birthAbs = b.birthYear * 12 + (b.birthMonth !== undefined ? b.birthMonth : (b.acquisitionMonth || 0));
+                        return birthAbs <= absM;
+                    }).length * units;
+                }
             }
 
-            const revenueWithoutCPF = correctedAnnualRevenue; // Use our corrected value
-            // Subtract both CPF and CGF from revenue
-            const revenueWithCPF = revenueWithoutCPF - cpfCost - cgfCost;
+            // Sync CGF (already calculated by month)
+            if (isCGFEnabled) {
+                for (let m = 0; m < monthsThisYear; m++) {
+                    const absM = startAbs + m;
+                    const year = Math.floor(absM / 12);
+                    const month = absM % 12;
+                    annualCGF += (monthlyCGFCost[year]?.[month] || 0);
+                }
+            }
 
-            return {
-                ...yearData,
-                revenue: correctedAnnualRevenue, // Overwrite with corrected revenue
-                cpfCost,
-                cgfCost, // Add to data structure
+            const revenueWithoutCPF = annualRevenue;
+            const revenueWithCPF = annualRevenue - annualCPF - annualCGF;
+
+            results.push({
+                year: treeData.startYear + i, // Numeric year index for sorting/legacy
+                displayLabel: getSimulationYearLabel(i),
+                revenue: annualRevenue,
+                cpfCost: annualCPF,
+                cgfCost: annualCGF,
                 revenueWithoutCPF,
-                revenueWithCPF
-            };
-        });
-    }, [yearlyData, yearlyCPFCost, yearlyCGFCost, units, investorMonthlyRevenue]);
+                revenueWithCPF,
+                totalBuffaloes: finalBuffaloCount
+            });
+        }
+        return results;
+    }, [treeData.durationMonths, treeData.startYear, treeData.startMonth, investorMonthlyRevenue, monthlyCPFCost, monthlyCGFCost, units, isCGFEnabled, buffaloDetails]);
 
-    const calculateCumulativeRevenueData = () => {
+    const cumulativeYearlyData = useMemo(() => {
         const cumulativeData: any[] = [];
         let cumulativeRevenueWithoutCPF = 0;
         let cumulativeRevenueWithCPF = 0;
 
-        yearlyDataWithCPF.forEach((yearData: any, index: number) => {
+        yearlyDataWithCPF.forEach((yearData: any) => {
             cumulativeRevenueWithoutCPF += yearData.revenueWithoutCPF;
             cumulativeRevenueWithCPF += yearData.revenueWithCPF;
 
             cumulativeData.push({
                 ...yearData,
                 cumulativeRevenueWithCPF: cumulativeRevenueWithCPF,
-                cumulativeCPFCost: cumulativeRevenueWithoutCPF - cumulativeRevenueWithCPF // This is technically "Lost Revenue" or "Total Cost" now
+                cumulativeCPFCost: cumulativeRevenueWithoutCPF - cumulativeRevenueWithCPF
             });
         });
 
         return cumulativeData;
-    };
-
-    const cumulativeYearlyData = calculateCumulativeRevenueData();
+    }, [yearlyDataWithCPF]);
 
     const breakEvenAnalysis = useMemo(() => {
         const breakEvenData = [];
@@ -508,21 +610,7 @@ const CostEstimationTableContent = ({
 
         // Helper to calculate total asset value for a specific point in time
         const calculateTotalAssetValueForMonth = (targetYear: number, targetMonth: number) => {
-            let totalValue = 0;
-            Object.values(buffaloDetails as Record<string, any>).forEach((buffalo: any) => {
-                // Only count buffaloes born before or in this month
-                if (buffalo.birthYear < targetYear || (buffalo.birthYear === targetYear && (buffalo.birthMonth || 0) <= targetMonth)) {
-                    const ageInMonths = calculateAgeInMonths(buffalo, targetYear, targetMonth);
-                    let value = getBuffaloValueByAge(ageInMonths);
-
-                    // Consistency Override: 0-12 months value is 0 in the first year only
-                    if (Number(targetYear) === Number(treeData.startYear) && ageInMonths <= 12) {
-                        value = 0;
-                    }
-
-                    totalValue += value * units;
-                }
-            });
+            const { totalValue } = calculateDetailedAssetValue(targetYear, targetMonth);
             return totalValue;
         };
 
@@ -615,7 +703,8 @@ const CostEstimationTableContent = ({
 
         // Asset Value Calculation Helper (Projected at end of Sim Year)
         const calculateAssetAtSimYearEnd = (simYear: number) => {
-            const { year, month } = getCalendarDate(simYear, 11);
+            const monthsPassed = Math.min((simYear + 1) * 12, treeData.durationMonths);
+            const { year, month } = getCalendarDate(0, monthsPassed - 1);
             return calculateTotalAssetValueForMonth(year, month);
         };
 
@@ -625,8 +714,11 @@ const CostEstimationTableContent = ({
             let annualCPF = 0;
             let annualCGF = 0;
 
-            // Sum 12 months
-            for (let m = 0; m < 12; m++) {
+            // For the last year, only sum months within durationMonths
+            const monthsThisYear = Math.min(12, treeData.durationMonths - i * 12);
+
+            // Sum months (truncated for final partial year)
+            for (let m = 0; m < monthsThisYear; m++) {
                 const { year, month } = getCalendarDate(i, m);
                 /* Revenue */
                 const rev = investorMonthlyRevenue[year]?.[month] || 0;
@@ -635,7 +727,7 @@ const CostEstimationTableContent = ({
                 const cpfMonth = (monthlyCPFCost[year]?.[month] || 0) * units;
                 annualCPF += cpfMonth;
                 /* CGF */
-                const cgfMonth = calculateMonthlyCGF(i, m) * units;
+                const cgfMonth = (monthlyCGFCost[year]?.[month] || 0);
                 annualCGF += cgfMonth;
             }
 
@@ -672,6 +764,7 @@ const CostEstimationTableContent = ({
 
             breakEvenData.push({
                 year: treeData.startYear + i,
+                displayLabel: getSimulationYearLabel(i),
                 annualRevenueWithCPF: annualNet, // Net Rev
                 cpfCost: annualCPF, // Already scaled inside loop
                 cgfCost: annualCGF, // Already scaled inside loop
@@ -700,25 +793,24 @@ const CostEstimationTableContent = ({
             initialInvestment: initialInvestment.totalInvestment,
             finalCumulativeRevenueWithCPF: breakEvenData.length > 0 ? breakEvenData[breakEvenData.length - 1].cumulativeRevenueWithCPF : 0
         };
-    }, [treeData.startYear, treeData.startMonth, treeData.years, buffaloDetails, initialInvestment, investorMonthlyRevenue, monthlyCPFCost, isCGFEnabled]);
+    }, [treeData.durationMonths, treeData.startYear, treeData.startMonth, treeData.years, buffaloDetails, initialInvestment, investorMonthlyRevenue, monthlyCPFCost, isCGFEnabled]);
 
     const assetMarketValue = useMemo(() => {
         const assetValues: any[] = [];
         // Correctly calculate end year including partial years (same as index.jsx)
-        const totalMonthsDuration = treeData.durationMonths;
-        const endYear = treeData.startYear + Math.floor((treeData.startMonth + totalMonthsDuration - 1) / 12);
+        const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
+        const yearsToSimulate = Math.ceil(treeData.durationMonths / 12);
 
-        const absoluteStartMonth = treeData.startYear * 12 + treeData.startMonth;
-        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths) - 1;
-        const endMonthOfSimulation = absoluteEndMonth % 12;
-
-        for (let year = treeData.startYear; year <= endYear; year++) {
+        for (let i = 0; i < yearsToSimulate; i++) {
             let totalAssetValue = 0;
 
-            // Determine target month: December (11) for full years, or endMonthOfSimulation for the final year
-            // Use 12 (January of next year equivalent) for full years to capture completed year valuation
-            // If it is the end year AND endMonthOfSimulation is 11 (Dec), use 12 to treat it as a full completed year
-            const targetMonth = (year === endYear && endMonthOfSimulation !== 11) ? endMonthOfSimulation : 12;
+            // Target absolute month is the end of this simulation year (12 months passed)
+            // For the final year, it strictly caps at the duration.
+            const monthsPassed = Math.min((i + 1) * 12, treeData.durationMonths);
+            const absoluteTargetMonth = absoluteStartMonth + monthsPassed - 1;
+
+            const targetYear = Math.floor(absoluteTargetMonth / 12);
+            const targetMonth = absoluteTargetMonth % 12;
 
             const ageCategories: any = {
                 '0-12 months': { count: 0, value: 0 },
@@ -730,13 +822,16 @@ const CostEstimationTableContent = ({
             };
 
             Object.values(buffaloDetails).forEach((buffalo: any) => {
-                // Only count buffaloes born before or in the last year/month
-                if (buffalo.birthYear < year || (buffalo.birthYear === year && (buffalo.birthMonth || 0) <= targetMonth)) {
-                    const ageInMonths = calculateAgeInMonths(buffalo, year, targetMonth);
+                const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                const absoluteBirthMonth = buffalo.birthYear * 12 + birthMonth;
+
+                // Only count buffaloes born before or exactly at the target absolute month
+                if (absoluteBirthMonth <= absoluteTargetMonth) {
+                    const ageInMonths = calculateAgeInMonths(buffalo, targetYear, targetMonth);
                     let value = getBuffaloValueByAge(ageInMonths);
 
                     // Consistency Override: 0-12 months value is 0 in the first year only
-                    if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
+                    if (i === 0 && ageInMonths <= 12) {
                         value = 0;
                     }
 
@@ -764,11 +859,14 @@ const CostEstimationTableContent = ({
                 }
             });
 
-            const yearData = yearlyData.find((d: any) => d.year === year);
+            // Map data from yearlyData correctly based on the index / year.
+            // yearlyData is also generated per calendar year, but for display let's mirror it
+            const displayYear = treeData.startYear + i;
+            const yearData = yearlyData.find((d: any) => d.year === displayYear) || yearlyData[yearlyData.length - 1];
 
             assetValues.push({
-                year: year,
-                totalBuffaloes: (yearData?.totalBuffaloes || 0),
+                year: displayYear, // Required for 'selectedYear' matching
+                totalBuffaloes: (Object.values(ageCategories) as any[]).reduce((sum: any, cat: any) => sum + cat.count, 0) * Number(treeData.units || 1), // Exact count at this point
                 ageCategories: Object.keys(ageCategories).reduce((acc: any, key: string) => {
                     const group = ageCategories[key];
                     const units = Number(treeData.units || 1);
@@ -784,59 +882,9 @@ const CostEstimationTableContent = ({
         }
 
         return assetValues;
-    }, [treeData.years, treeData.startYear, treeData.startMonth, buffaloDetails, yearlyData, treeData.units]);
+    }, [treeData.durationMonths, treeData.years, treeData.startYear, treeData.startMonth, buffaloDetails, yearlyData, treeData.units]);
 
 
-    const calculateDetailedAssetValue = (year: any) => {
-        const ageGroups: any = {
-            '0-12 months': { count: 0, value: 0, unitValue: 10000 },
-            '13-18 months': { count: 0, value: 0, unitValue: 25000 },
-            '19-24 months': { count: 0, value: 0, unitValue: 40000 },
-            '25-34 months': { count: 0, value: 0, unitValue: 100000 },
-            '35-40 months': { count: 0, value: 0, unitValue: 150000 },
-            '41+ months': { count: 0, value: 0, unitValue: 175000 }
-        };
-
-        let totalValue = 0;
-        let totalCount = 0;
-
-        Object.values(buffaloDetails).forEach((buffalo: any) => {
-            if (year >= buffalo.birthYear) {
-                const ageInMonths = calculateAgeInMonths(buffalo, year, 11);
-                let value = getBuffaloValueByAge(ageInMonths);
-
-                // Override: 0-12 months value is 0 in the first year only
-                if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
-                    value = 0;
-                }
-
-                if (ageInMonths >= 41) {
-                    ageGroups['41+ months'].count += units;
-                    ageGroups['41+ months'].value += value * units;
-                } else if (ageInMonths >= 35) {
-                    ageGroups['35-40 months'].count += units;
-                    ageGroups['35-40 months'].value += value * units;
-                } else if (ageInMonths >= 25) {
-                    ageGroups['25-34 months'].count += units;
-                    ageGroups['25-34 months'].value += value * units;
-                } else if (ageInMonths >= 19) {
-                    ageGroups['19-24 months'].count += units;
-                    ageGroups['19-24 months'].value += value * units;
-                } else if (ageInMonths >= 13) {
-                    ageGroups['13-18 months'].count += units;
-                    ageGroups['13-18 months'].value += value * units;
-                } else {
-                    ageGroups['0-12 months'].count += units;
-                    ageGroups['0-12 months'].value += value * units;
-                }
-
-                totalValue += value * units;
-                totalCount += units;
-            }
-        });
-
-        return { ageGroups, totalValue, totalCount };
-    };
 
     const calculateCumulativeRevenueUntilYear = (unit: number, selectedYear: number) => {
         const cumulativeRevenue: any = {};
@@ -857,27 +905,42 @@ const CostEstimationTableContent = ({
         );
     };
 
-    // Sync Header Stats - Hoisted from MonthlyRevenueBreak to ensure updates from any tab
+    // Sync Header Stats - Use precise monthly loop matching MonthlyRevenueBreak's calculation
     React.useEffect(() => {
         if (typeof setHeaderStats === 'function' && yearlyDataWithCPF.length > 0) {
-            // 1. Calculate Cumulative Financials
+            // 1. Calculate Cumulative Financials using precise monthly loop
             let totalRevenue = 0;
             let totalCPF = 0;
             let totalCGF = 0;
+            // Use yearsToSimulate * 12 to match MonthlyRevenueBreak's loop structure
+            // (full 12 months per year, even for partial final year)
+            const yearsToSimulate = Math.ceil(treeData.durationMonths / 12);
+            const totalMonths = treeData.durationMonths;
+            const simAbsStart = treeData.startYear * 12 + (treeData.startMonth || 0);
 
-            yearlyDataWithCPF.forEach((data: any) => {
-                totalRevenue += data.revenue;
-                totalCPF += data.cpfCost;
-                totalCGF += data.cgfCost;
-            });
+            for (let absM = 0; absM < totalMonths; absM++) {
+                const currentAbsMonth = simAbsStart + absM;
+                const year = Math.floor(currentAbsMonth / 12);
+                const month = currentAbsMonth % 12;
+
+                // Revenue
+                totalRevenue += (investorMonthlyRevenue[year]?.[month] || 0);
+                // CPF
+                totalCPF += ((monthlyCPFCost[year]?.[month] || 0) * units);
+                // CGF
+                if (isCGFEnabled) {
+                    totalCGF += (monthlyCGFCost[year]?.[month] || 0);
+                }
+            }
 
             const cumulativeNetRevenue = totalRevenue - totalCPF;
             const cumulativeNetRevenueWithCaring = cumulativeNetRevenue - totalCGF;
 
             // 2. Calculate Asset Value & Count at End of Simulation
-            const endYearIndex = Math.ceil(treeData.durationMonths / 12) - 1;
-            const displayEndYear = treeData.startYear + endYearIndex;
-            const { totalValue, totalCount } = calculateDetailedAssetValue(displayEndYear);
+            const absoluteEndMonth = simAbsStart + treeData.durationMonths - 1;
+            const displayEndYear = Math.floor(absoluteEndMonth / 12);
+            const endMonthOfSimulation = absoluteEndMonth % 12;
+            const { totalValue, totalCount } = calculateDetailedAssetValue(displayEndYear, endMonthOfSimulation);
 
             setHeaderStats({
                 cumulativeNetRevenue,
@@ -888,7 +951,7 @@ const CostEstimationTableContent = ({
                 endYear: displayEndYear
             });
         }
-    }, [yearlyDataWithCPF, treeData.durationMonths, treeData.startYear, setHeaderStats, units]); // Added units dependency explicitely (though yearlyDataWithCPF changes with units)
+    }, [yearlyDataWithCPF, treeData.durationMonths, treeData.startYear, treeData.startMonth, setHeaderStats, units, isCGFEnabled, buffaloDetails, investorMonthlyRevenue, monthlyCPFCost]);
 
     const calculateTotalCumulativeRevenueUntilYear = (unit: number, selectedYear: number) => {
         const cumulativeRevenue = calculateCumulativeRevenueUntilYear(unit, selectedYear);
@@ -911,7 +974,7 @@ const CostEstimationTableContent = ({
         { id: "Herd Performance", icon: Activity, label: "Herd Performance", showYearSelector: false },
         { id: "Annual Herd Revenue", icon: PieChart, label: "Annual Revenue", showYearSelector: false },
         { id: "Break Even Timeline", icon: Clock, label: "Break Even Timeline", showYearSelector: false },
-        { id: "Cattle Growing Fund", icon: Sprout, label: "Annual Caring Cost", showYearSelector: true },
+        { id: "Cattle Growing Fund", icon: Sprout, label: "Annual CGF Cost", showYearSelector: true },
         { id: "CPF + CGF", icon: Calculator, label: "CPF + CGF Analysis", showYearSelector: true }
     ];
 
@@ -975,11 +1038,19 @@ const CostEstimationTableContent = ({
                                     style={{ backgroundImage: 'none' }}
                                 >
                                     {Array.from({ length: Math.ceil(treeData.durationMonths / 12) }, (_, i) => {
-                                        const startAbs = (treeData.startYear * 12 + (treeData.startMonth || 0)) + (i * 12);
+                                        const simAbsStart = (treeData.startYear * 12 + (treeData.startMonth || 0));
+                                        const simAbsEnd = simAbsStart + treeData.durationMonths - 1;
+
+                                        const startAbs = simAbsStart + (i * 12);
                                         const sYear = Math.floor(startAbs / 12);
                                         const sMonth = startAbs % 12;
                                         const sDate = new Date(sYear, sMonth, 1);
-                                        const eDate = new Date(sYear, sMonth + 11, 1);
+
+                                        // Cap end at simulation boundary for the last year
+                                        const endAbs = Math.min(startAbs + 11, simAbsEnd);
+                                        const eYear = Math.floor(endAbs / 12);
+                                        const eMonth = endAbs % 12;
+                                        const eDate = new Date(eYear, eMonth, 1);
 
                                         const startStr = sDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
                                         const endStr = eDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -1020,7 +1091,6 @@ const CostEstimationTableContent = ({
                                 calculateTotalCumulativeRevenueUntilYear={calculateTotalCumulativeRevenueUntilYear}
                                 monthNames={monthNames}
                                 formatCurrency={formatCurrency}
-                                setHeaderStats={setHeaderStats}
                                 selectedYearIndex={globalYearIndex}
                                 isCGFEnabled={isCGFEnabled}
                             />
@@ -1125,8 +1195,8 @@ const CostEstimationTableContent = ({
                                 activeGraph={activeGraph}
                                 setActiveGraph={setActiveGraph}
                                 startYear={startYear}
-                                endYear={startYear + Math.ceil(treeData.durationMonths / 12)}
-                                yearRange={`${startYear}-${startYear + Math.ceil(treeData.durationMonths / 12)}`}
+                                endYear={startYear + Math.ceil(treeData.durationMonths / 12) - 1}
+                                yearRange={`${startYear}-${startYear + Math.ceil(treeData.durationMonths / 12) - 1}`}
                                 breakEvenAnalysis={breakEvenAnalysis}
                                 assetMarketValue={assetMarketValue}
                             />

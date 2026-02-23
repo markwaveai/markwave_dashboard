@@ -262,12 +262,16 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                                             {/* Verified */}
                                             <td className="px-6 py-5">
                                                 <div className="flex justify-center">
-                                                    <div className="flex items-center gap-2 w-fit px-1">
-                                                        <div className={`w-2 h-2 rounded-full ${user.verified ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'}`}></div>
-                                                        <span className={`text-[0.8rem] font-bold ${user.verified ? 'text-emerald-600' : 'text-amber-500'}`}>
-                                                            {user.verified ? 'Verified' : 'Pending'}
-                                                        </span>
-                                                    </div>
+                                                    {user.verified == null ? (
+                                                        <span className="text-slate-400 font-bold">-</span>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 w-fit px-1">
+                                                            <div className={`w-2 h-2 rounded-full ${user.verified ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'}`}></div>
+                                                            <span className={`text-[0.8rem] font-bold ${user.verified ? 'text-emerald-600' : 'text-amber-500'}`}>
+                                                                {user.verified ? 'Verified' : 'Pending'}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
 

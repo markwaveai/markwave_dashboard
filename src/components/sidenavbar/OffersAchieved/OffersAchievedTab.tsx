@@ -24,7 +24,6 @@ interface AchievedBenefit {
 interface MilestoneSummary {
     threshold: number;
     reward: string;
-    is_active: boolean;
     members_achieved: number;
 }
 
@@ -48,7 +47,7 @@ interface ReferralAchievement {
     username: string;
     role: string;
     total_referral_units: number;
-    rewards: (ReferralReward & { is_active: boolean })[];
+    rewards: ReferralReward[];
 }
 
 type TabType = 'self' | 'referral';
@@ -98,13 +97,7 @@ const OffersAchievedTab: React.FC = () => {
                         username: user.username,
                         role: user.role,
                         total_referral_units: user.total_referral_units,
-                        rewards: user.rewards.map(reward => {
-                            const summary = summaries.find(s => s.threshold === reward.threshold);
-                            return {
-                                ...reward,
-                                is_active: summary ? summary.is_active : true
-                            };
-                        })
+                        rewards: user.rewards
                     }));
 
                     setReferralAchievements(mapped);
@@ -208,22 +201,19 @@ const OffersAchievedTab: React.FC = () => {
                         {activeTab === 'referral' && milestoneSummaries.length > 0 && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                                 {milestoneSummaries.map((summary, idx) => (
-                                    <div key={idx} className={`bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-2 transition-all ${summary.is_active ? 'border-gray-100' : 'border-gray-200 opacity-75'}`}>
+                                    <div key={idx} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-2 transition-all">
                                         <div className="flex items-center justify-between">
-                                            <div className={`p-2 rounded-lg ${summary.is_active ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                                            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
                                                 <Target size={18} />
                                             </div>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${summary.is_active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
-                                                {summary.is_active ? 'ACTIVE' : 'INACTIVE'}
-                                            </span>
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{summary.threshold} Units Milestone</p>
-                                            <p className={`font-bold text-sm truncate ${summary.is_active ? 'text-gray-900' : 'text-gray-500'}`}>{summary.reward}</p>
+                                            <p className="font-bold text-sm truncate text-gray-900">{summary.reward}</p>
                                         </div>
                                         <div className="mt-1 pt-2 border-t border-gray-50 flex items-center justify-between">
                                             <span className="text-xs text-gray-500">Achievers</span>
-                                            <span className={`text-sm font-bold ${summary.is_active ? 'text-indigo-600' : 'text-gray-400'}`}>{summary.members_achieved} Members</span>
+                                            <span className="text-sm font-bold text-indigo-600">{summary.members_achieved} Members</span>
                                         </div>
                                     </div>
                                 ))}
@@ -231,7 +221,7 @@ const OffersAchievedTab: React.FC = () => {
                         )}
 
                         {/* Table */}
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="bg-gray-50/80 border-b border-gray-100">
@@ -241,9 +231,16 @@ const OffersAchievedTab: React.FC = () => {
                                         <th className="text-center px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                             {activeTab === 'self' ? 'Units' : 'Referral Units'}
                                         </th>
-                                        <th className="text-left px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider" colSpan={2}>
-                                            {activeTab === 'self' ? 'Award Details' : 'Milestone Achievements'}
-                                        </th>
+                                        {activeTab === 'self' ? (
+                                            <>
+                                                <th className="text-left px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">Order ID</th>
+                                                <th className="text-left px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">Award Details</th>
+                                            </>
+                                        ) : (
+                                            <th className="text-left px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider" colSpan={2}>
+                                                Milestone Achievements
+                                            </th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
@@ -270,28 +267,27 @@ const OffersAchievedTab: React.FC = () => {
                                                         {benefit.purchased_units} purchased
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-4" colSpan={2}>
+                                                <td className="px-5 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span
+                                                            className="text-[10px] font-mono font-bold text-indigo-500 cursor-pointer hover:underline"
+                                                            onClick={() => handleSelectOrder(benefit.order_id)}
+                                                        >
+                                                            {benefit.order_id}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-5 py-4">
                                                     <div className="flex flex-col gap-2 border-l-2 border-indigo-50 pl-4 py-0.5">
                                                         <div>
                                                             <p className="font-bold text-[0.875rem] text-gray-900 leading-tight">{benefit.title}</p>
                                                             <p className="text-[10px] text-gray-400 truncate max-w-[250px] mt-0.5">{benefit.description}</p>
                                                         </div>
-                                                        <div className="flex items-center gap-10">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider leading-none mb-1">Order ID</span>
-                                                                <span
-                                                                    className="text-[10px] font-mono font-bold text-indigo-500 cursor-pointer hover:underline"
-                                                                    onClick={() => setSelectedOrderId(benefit.order_id)}
-                                                                >
-                                                                    {benefit.order_id}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider leading-none mb-1">Awarded At</span>
-                                                                <div className="flex items-center gap-1.5 font-bold text-gray-800 text-[0.8125rem]">
-                                                                    <Calendar size={11} className="text-gray-400" />
-                                                                    <span>{formatDate(benefit.awarded_at) || '-'}</span>
-                                                                </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider leading-none mb-1">Awarded At</span>
+                                                            <div className="flex items-center gap-1.5 font-bold text-gray-800 text-[0.8125rem]">
+                                                                <Calendar size={11} className="text-gray-400" />
+                                                                <span>{formatDate(benefit.awarded_at) || '-'}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -327,14 +323,9 @@ const OffersAchievedTab: React.FC = () => {
                                                             <div key={rIdx} className="flex flex-col gap-2 border-l-2 border-indigo-50/60 pl-4 py-0.5 group transition-all duration-200">
                                                                 {/* First Row: Reward Title */}
                                                                 <div className="flex items-center gap-3">
-                                                                    <p className={`font-bold text-[0.875rem] ${reward.is_active ? 'text-gray-900 group-hover:text-indigo-600' : 'text-gray-400 italic'}`}>
+                                                                    <p className="font-bold text-[0.875rem] text-gray-900 group-hover:text-indigo-600">
                                                                         {reward.reward}
                                                                     </p>
-                                                                    {!reward.is_active && (
-                                                                        <span className="text-[8px] text-red-500 font-black bg-red-50 px-1.5 py-0.5 rounded border border-red-100 tracking-tighter uppercase">
-                                                                            INACTIVE
-                                                                        </span>
-                                                                    )}
                                                                 </div>
 
                                                                 {/* Second Row: Metadata (Units and Time) */}

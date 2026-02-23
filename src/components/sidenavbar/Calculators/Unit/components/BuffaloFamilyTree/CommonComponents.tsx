@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import Xarrow from "react-xarrows";
 
 const lineColors = [
@@ -242,14 +243,46 @@ export const SimpleTooltip = ({
     placement?: 'left' | 'bottom' | 'top' | 'bottom-right',
     className?: string
 }) => {
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const [show, setShow] = useState(false);
+    const [pos, setPos] = useState({ top: 0, left: 0 });
 
-    const containerClasses = placement === 'left'
-        ? "absolute right-full top-1/2 -translate-y-1/2 mr-3"
-        : placement === 'top'
-            ? "absolute bottom-full left-1/2 -translate-x-1/2 mb-3"
-            : placement === 'bottom-right'
-                ? "absolute top-full right-0 mt-3"
-                : "absolute top-full left-1/2 -translate-x-1/2 mt-3"; // bottom
+    const updatePos = useCallback(() => {
+        if (!triggerRef.current) return;
+        const rect = triggerRef.current.getBoundingClientRect();
+        let top = 0, left = 0;
+
+        if (placement === 'left') {
+            top = rect.top + rect.height / 2;
+            left = rect.left - 8;
+        } else if (placement === 'top') {
+            top = rect.top - 8;
+            left = rect.left + rect.width / 2;
+        } else if (placement === 'bottom-right') {
+            top = rect.bottom + 8;
+            left = rect.right;
+        } else {
+            // bottom (default)
+            top = rect.bottom + 8;
+            left = rect.left + rect.width / 2;
+        }
+        setPos({ top, left });
+    }, [placement]);
+
+    const handleEnter = useCallback(() => {
+        updatePos();
+        setShow(true);
+    }, [updatePos]);
+
+    const handleLeave = useCallback(() => {
+        setShow(false);
+    }, []);
+
+    const transformStyle =
+        placement === 'left' ? 'translateX(-100%) translateY(-50%)'
+            : placement === 'top' ? 'translateX(-50%) translateY(-100%)'
+                : placement === 'bottom-right' ? 'translateX(-100%)'
+                    : 'translateX(-50%)'; // bottom
 
     const arrowClasses = placement === 'left'
         ? "absolute left-full top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-slate-800"
@@ -261,15 +294,34 @@ export const SimpleTooltip = ({
 
     const maxWidthClass = className.includes('max-w-') ? '' : 'max-w-[200px]';
 
-    return (
-        <div className="group/tooltip relative flex items-center justify-center">
-            {children}
-            <div className={`${containerClasses} hidden group-hover/tooltip:block z-[9999] w-max ${maxWidthClass} pointer-events-none`}>
-                <div className={`bg-slate-800 text-white text-[11px] font-medium rounded p-2 shadow-xl border border-slate-700 relative whitespace-pre-line text-center ${className}`}>
-                    {content}
-                    <div className={arrowClasses}></div>
-                </div>
+    const tooltipEl = show ? ReactDOM.createPortal(
+        <div
+            style={{
+                position: 'fixed',
+                top: pos.top,
+                left: pos.left,
+                transform: transformStyle,
+                zIndex: 99999,
+                pointerEvents: 'none',
+            }}
+        >
+            <div className={`bg-slate-800 text-white text-[11px] font-medium rounded p-2 shadow-xl border border-slate-700 relative whitespace-pre-line text-center w-max ${maxWidthClass} ${className}`}>
+                {content}
+                <div className={arrowClasses}></div>
             </div>
+        </div>,
+        document.body
+    ) : null;
+
+    return (
+        <div
+            ref={triggerRef}
+            className="relative flex items-center justify-center"
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+        >
+            {children}
+            {tooltipEl}
         </div>
     );
 };

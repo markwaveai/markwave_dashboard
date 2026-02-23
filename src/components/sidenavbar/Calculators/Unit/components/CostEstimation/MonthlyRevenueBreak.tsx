@@ -12,7 +12,6 @@ const MonthlyRevenueBreak = ({
     calculateTotalCumulativeRevenueUntilYear,
     monthNames,
     formatCurrency,
-    setHeaderStats,
     selectedYearIndex,
     isCGFEnabled
 }: any) => {
@@ -336,19 +335,6 @@ const MonthlyRevenueBreak = ({
         };
     }, [selectedUnit, buffaloDetails, treeData.startYear, treeData.years, treeData.startMonth, monthlyRevenue]);
 
-    // Sync with Header
-    React.useEffect(() => {
-        if (typeof setHeaderStats === 'function') {
-            setHeaderStats({
-                cumulativeNetRevenue: fullDurationStats.netRev,
-                cumulativeNetRevenueWithCaring: fullDurationStats.netRevWithCaring,
-                totalRevenue: totalCumulativeUntilYear, // Still used for internal logic potentially
-                totalAssetValue: fullDurationStats.assetValue,
-                totalBuffaloes: fullDurationStats.buffaloes,
-                endYear: selectedYear
-            });
-        }
-    }, [fullDurationStats, selectedYear, setHeaderStats]);
 
     const startMonthName = monthNames[treeData.startMonth || 0];
     const startDateString = `${startMonthName} ${treeData.startYear}`;
@@ -446,26 +432,77 @@ const MonthlyRevenueBreak = ({
         return () => window.removeEventListener('resize', checkScroll);
     }, [unitBuffaloes]);
 
+    const validMonthsThisYear = useMemo(() => {
+        const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+        const currentYearAbsStart = (treeData.startYear + selectedYearIndex) * 12;
+
+        let count = 0;
+        for (let m = 0; m < 12; m++) {
+            const absM = currentYearAbsStart + m;
+            if (absM >= absoluteStartMonth && absM <= absoluteEndMonth) count++;
+        }
+        return count;
+    }, [selectedYearIndex, treeData.startYear, treeData.startMonth, treeData.durationMonths, treeData.years]);
+
+    // Update annual calculations to use validMonthsThisYear
+    const annualRevenue = useMemo(() => {
+        return unitBuffaloes.reduce((sum: number, buffalo: any) => {
+            let yearSum = 0;
+            for (let m = 0; m < 12; m++) {
+                const { year, month, absMonth } = getCalendarDate(selectedYearIndex, m);
+                const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+                const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+
+                if (absMonth >= absoluteStartMonth && absMonth <= absoluteEndMonth) {
+                    yearSum += (Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0);
+                }
+            }
+            return sum + yearSum;
+        }, 0);
+    }, [unitBuffaloes, selectedYearIndex, monthlyRevenue, treeData]);
+
+    const annualCgfCost = useMemo(() => {
+        let total = 0;
+        for (let m = 0; m < 12; m++) {
+            const { absMonth } = getCalendarDate(selectedYearIndex, m);
+            const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+            const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+
+            if (absMonth >= absoluteStartMonth && absMonth <= absoluteEndMonth) {
+                total += calculateMonthlyCGF(selectedYearIndex, m);
+            }
+        }
+        return total * units;
+    }, [selectedYearIndex, treeData, units, isCGFEnabled, buffaloDetails]);
+
+    const annualCpfCost = useMemo(() => {
+        let total = 0;
+        for (let m = 0; m < 12; m++) {
+            const { absMonth } = getCalendarDate(selectedYearIndex, m);
+            const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+            const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+
+            if (absMonth >= absoluteStartMonth && absMonth <= absoluteEndMonth) {
+                total += cpfCost.monthlyCosts[m];
+            }
+        }
+        return total * units;
+    }, [selectedYearIndex, treeData, units, cpfCost]);
+
     return (
         <div className="w-full mb-6 space-y-2">
             {unitBuffaloes.length > 0 ? (
                 <>
-                    {/* 1. Top Summary Cards - KPI Grid */}
-                    {/* 1. Top Summary Cards - KPI Grid */}
-                    {/* 1. Top Summary Cards - KPI Grid */}
-                    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isCGFEnabled ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-2`}>
+                    {/* 1. Top Summary Cards - Row 1: Annual Revenue / CPF / CGF always side-by-side */}
+                    <div className={`grid gap-2 ${isCGFEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
 
                         {/* Annual Revenue */}
                         <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Revenue</p>
                                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                                    {formatCurrency(unitBuffaloes.reduce((sum: number, buffalo: any) => {
-                                        return sum + Array.from({ length: 12 }).reduce((monthSum: number, _, mIndex: number) => {
-                                            const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
-                                            return monthSum + ((Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0));
-                                        }, 0);
-                                    }, 0))}
+                                    {formatCurrency(annualRevenue)}
                                 </h3>
                             </div>
                         </div>
@@ -475,7 +512,7 @@ const MonthlyRevenueBreak = ({
                             <div>
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CPF Cost</p>
                                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                                    {formatCurrency(cpfCost.annualCPFCost * units)}
+                                    {formatCurrency(annualCpfCost)}
                                 </h3>
                             </div>
                         </div>
@@ -486,11 +523,15 @@ const MonthlyRevenueBreak = ({
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CGF Cost</p>
                                     <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                                        {formatCurrency((Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0) * units)}
+                                        {formatCurrency(annualCgfCost)}
                                     </h3>
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Row 2: Net Revenue / Cumulative Net / Asset Value */}
+                    <div className="grid grid-cols-3 gap-2">
 
                         {/* Net Annual Revenue */}
                         <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
@@ -518,7 +559,6 @@ const MonthlyRevenueBreak = ({
                                     {formatCurrency(isCGFEnabled ? cumulativeNetRevenueWithCaring : cumulativeNetRevenue)}
                                 </h3>
                             </div>
-
                         </div>
 
                         {/* Asset Value */}
@@ -583,23 +623,28 @@ const MonthlyRevenueBreak = ({
                                                 </div>
                                             </th>
                                         ))}
-                                        <th className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-20 w-28 min-w-[7rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
-                                        <th className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700`}>
+                                        <th className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-20 w-28 min-w-[7rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
+                                        <th className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700`}>
                                             <SimpleTooltip content="Cattle Protection Fund" placement="bottom">
                                                 <span className="cursor-default">CPF</span>
                                             </SimpleTooltip>
                                         </th>
-                                        {isCGFEnabled && <th className="sticky right-[5rem] z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-rose-50 text-rose-700 ">
+                                        {isCGFEnabled && <th className="md:sticky md:right-[5rem] md:z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-rose-50 text-rose-700 ">
                                             <SimpleTooltip content="Cattle Growing Fund" placement="bottom">
                                                 <span className="cursor-default">CGF</span>
                                             </SimpleTooltip>
                                         </th>}
-                                        <th className="sticky right-0 z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-emerald-50 text-emerald-700 border-l border-slate-200">Net</th>
+                                        <th className="md:sticky md:right-0 md:z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-emerald-50 text-emerald-700 border-l border-slate-200">Net</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {Array.from({ length: 12 }).map((_, mIndex: number) => {
-                                        const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
+                                        const { year, month, absMonth } = getCalendarDate(selectedYearIndex, mIndex);
+                                        const absoluteStartMonth = (treeData.startYear * 12 + (treeData.startMonth || 0));
+                                        const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths || (treeData.years * 12)) - 1;
+
+                                        if (absMonth > absoluteEndMonth) return null;
+
                                         const monthName = monthNames[month];
                                         const unitTotal: number = (unitBuffaloes as any[]).reduce((sum: number, b: any) => sum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[b.id]) || 0), 0);
                                         const monthlyCpfValue: number = cpfCost.monthlyCosts[mIndex] * units;
@@ -740,18 +785,18 @@ const MonthlyRevenueBreak = ({
                                                             </td>
                                                         );
                                                     })}
-                                                    <td className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-10 px-2 py-3 text-center font-bold text-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
+                                                    <td className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-10 px-2 py-3 text-center font-bold text-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
                                                         {formatCurrency(unitTotal)}
                                                     </td>
-                                                    <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-3 text-center font-medium text-amber-600 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
+                                                    <td className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-10 px-2 py-3 text-center font-medium text-amber-600 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
                                                         {formatCurrency(monthlyCpfValue)}
                                                     </td>
                                                     {isCGFEnabled && (
-                                                        <td className={`sticky right-[5rem] z-10 px-2 py-3 text-center font-medium text-rose-600 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
+                                                        <td className={`md:sticky md:right-[5rem] md:z-10 px-2 py-3 text-center font-medium text-rose-600 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
                                                             {formatCurrency(monthlyCgfValue)}
                                                         </td>
                                                     )}
-                                                    <td className={`sticky right-0 z-10 px-2 py-3 text-center font-bold border-l border-slate-200 ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
+                                                    <td className={`md:sticky md:right-0 md:z-10 px-2 py-3 text-center font-bold border-l border-slate-200 ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
                                                         {formatCurrency(netRevenue)}
                                                     </td>
 
@@ -782,21 +827,21 @@ const MonthlyRevenueBreak = ({
                                                 </td>
                                             );
                                         })}
-                                        <td className={`sticky ${isCGFEnabled ? 'right-[15rem]' : 'right-[10rem]'} z-10 px-2 py-4 text-center bg-slate-900 border-l border-slate-700 shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>
+                                        <td className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-10 px-2 py-4 text-center bg-slate-900 border-l border-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>
                                             {formatCurrency(unitBuffaloes.reduce((s: any, b: any) => s + Array.from({ length: 12 }).reduce((ms: any, _, m) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, m);
                                                 return ms + ((monthlyRevenue[year]?.[month]?.buffaloes[b.id] || 0));
                                             }, 0), 0))}
                                         </td>
-                                        <td className={`sticky ${isCGFEnabled ? 'right-[10rem]' : 'right-[5rem]'} z-10 px-2 py-4 text-center bg-amber-900 text-amber-200`}>
+                                        <td className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-10 px-2 py-4 text-center bg-amber-900 text-amber-200`}>
                                             {formatCurrency(cpfCost.annualCPFCost * units)}
                                         </td>
                                         {isCGFEnabled && (
-                                            <td className="sticky right-[5rem] z-10 px-2 py-4 text-center bg-rose-900 text-rose-200">
+                                            <td className="md:sticky md:right-[5rem] md:z-10 px-2 py-4 text-center bg-rose-900 text-rose-200">
                                                 {formatCurrency((Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0) * units)}
                                             </td>
                                         )}
-                                        <td className={`sticky right-0 z-10 px-2 py-4 text-center bg-emerald-900 border-l border-slate-700 text-emerald-300`}>
+                                        <td className={`md:sticky md:right-0 md:z-10 px-2 py-4 text-center bg-emerald-900 border-l border-slate-700 text-emerald-300`}>
                                             {formatCurrency(((unitBuffaloes as any[]).reduce((s: number, b: any) => s + (Array.from({ length: 12 }) as any[]).reduce((ms: number, _, m: number) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, m);
                                                 return ms + (Number(monthlyRevenue[year]?.[month]?.buffaloes[b.id]) || 0);
