@@ -229,7 +229,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ getSortIcon }) => {
                                             {/* Mobile */}
                                             <td className="px-6 py-5">
                                                 <span
-                                                    className="text-slate-600 font-bold text-[13px] hover:text-blue-600 cursor-pointer transition-colors"
+                                                    className="text-blue-600 font-bold text-[13px] underline hover:text-blue-800 cursor-pointer transition-colors"
                                                     onClick={() => handleMobileClick(user.mobile)}
                                                 >
                                                     {user.mobile || '9999999999'}

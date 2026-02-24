@@ -518,6 +518,8 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
             const endMonthOfSimulation = absoluteEndMonth % 12;
 
             let totalAssetValue = 0;
+            let calvesCount = 0;
+            let buffaloesCount = 0;
             herd.forEach(buffalo => {
                 // Calculate age at the specific end month of the simulation
                 const targetMonth = endMonthOfSimulation;
@@ -536,6 +538,12 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                         }
 
                         totalAssetValue += value;
+
+                        if (ageInMonths <= 24) {
+                            calvesCount++;
+                        } else {
+                            buffaloesCount++;
+                        }
                     }
                 }
             });
@@ -762,6 +770,8 @@ export default function BuffaloFamilyTree({ tree = true }: BuffaloFamilyTreeProp
                 revenueData: revenueData,
                 summaryStats: {
                     totalBuffaloes: herd.length,
+                    calvesCount: calvesCount,
+                    buffaloesCount: buffaloesCount,
                     totalRevenue: totalRevenue,
                     totalNetRevenue: totalNetRevenue,
                     totalNetRevenueWithCaring: totalNetRevenue - totalCaringCost,

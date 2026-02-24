@@ -85,7 +85,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const otpFromServer = res.data?.otp || null;
       setServerOtp(otpFromServer);
       setUserRole(res.data?.user?.role || null);
-      setUserReferralCode(res.data?.user?.referal_code || res.data?.user?.referral_code || null);
+      setUserReferralCode(res.data?.user?.referral_code || res.data?.user?.referral_code || null);
       setStep('enterOtp');
       setInfo('OTP sent via WhatsApp.');
     } catch (e: any) {

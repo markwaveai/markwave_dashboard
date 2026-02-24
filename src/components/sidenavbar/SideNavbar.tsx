@@ -34,8 +34,6 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     // Sidebar Sub-menu States
     const [isUnitCalcOpen, setIsUnitCalcOpen] = useState(false);
     const [isCalculatorsOpen, setIsCalculatorsOpen] = useState(false);
-    const [isLandifyOpen, setIsLandifyOpen] = useState(false);
-    const [isTrueHarvestOpen, setIsTrueHarvestOpen] = useState(false);
 
     // Determine active tab
     const currentPath = location.pathname;
@@ -53,16 +51,10 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     else if (currentPath.includes('/offers-achieved')) activeTab = 'offers-achieved';
     else if (currentPath.includes('/role-requests')) activeTab = 'role-requests';
     else if (currentPath.includes('/farm-management')) activeTab = 'farm';
-    else if (currentPath.includes('/true-harvest-privacy-policy')) activeTab = 'true-harvest-privacy';
     else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy-policy';
-    else if (currentPath.includes('/true-harvest-support')) activeTab = 'true-harvest-support';
-    else if (currentPath.includes('/landify/legal')) activeTab = 'landify-legal';
-    else if (currentPath.includes('/landify/support')) activeTab = 'landify-support';
-    else if (currentPath.includes('/landify/delete')) activeTab = 'landify-delete';
     else if (currentPath.includes('/support-tickets')) activeTab = 'support-tickets';
     else if (currentPath.includes('/support')) activeTab = 'support';
     else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
-    else if (currentPath.includes('/true-harvest-delete-user')) activeTab = 'true-harvest-delete-user';
     else if (currentPath.includes('/deactivate-user')) activeTab = 'deactivate-user';
     else if (currentPath.includes('/unit-calculator')) activeTab = 'unit-calculator';
 
@@ -227,6 +219,19 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </li>
                         )}
 
+                        {hasSession && (
+                            <li>
+                                <Tooltip content="Referral Page" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('referral-landing')} onClick={() => navigate('/referral-landing', { state: { fromDashboard: true, adminReferralCode } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Star size={20} className={activeTab === 'referral-landing' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Referral Page</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
+                            </li>
+                        )}
+
                         {/* <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div> */}
 
 
@@ -358,102 +363,6 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
 
 
 
-                        {/* Platform Groups */}
-                        <li>
-                            <div className="flex flex-col">
-                                <Tooltip content="Landify Platform" disabled={isSidebarOpen}>
-                                    <button
-                                        className={navItemClass('landify-group')}
-                                        onClick={() => {
-                                            if (!isSidebarOpen) dispatch(setSidebarOpen(true));
-                                            setIsLandifyOpen(!isLandifyOpen);
-                                        }}
-                                    >
-                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                            <ShieldIcon size={20} className={activeTab.startsWith('landify') ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Landify Platform</span>}
-                                        </div>
-                                        {isSidebarOpen && (isLandifyOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
-                                    </button>
-                                </Tooltip>
-                                {isSidebarOpen && isLandifyOpen && (
-                                    <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
-                                        <li>
-                                            <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'landify-legal' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
-                                                onClick={() => navigate('/landify/legal', { state: { fromDashboard: true } })}
-                                            >
-                                                Legal
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'landify-support' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
-                                                onClick={() => navigate('/landify/support', { state: { fromDashboard: true } })}
-                                            >
-                                                Support
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'landify-delete' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
-                                                onClick={() => navigate('/landify/delete', { state: { fromDashboard: true } })}
-                                            >
-                                                Delete User
-                                            </button>
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
-                        </li>
-
-                        <li>
-                            <div className="flex flex-col">
-                                <Tooltip content="True Harvest" disabled={isSidebarOpen}>
-                                    <button
-                                        className={navItemClass('true-harvest-group')}
-                                        onClick={() => {
-                                            if (!isSidebarOpen) dispatch(setSidebarOpen(true));
-                                            setIsTrueHarvestOpen(!isTrueHarvestOpen);
-                                        }}
-                                    >
-                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                            <Warehouse size={20} className={activeTab.startsWith('true-harvest') ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">True Harvest</span>}
-                                        </div>
-                                        {isSidebarOpen && (isTrueHarvestOpen ? <ChevronDown size={14} className="opacity-70 ml-auto" /> : <ChevronRight size={14} className="opacity-70 ml-auto" />)}
-                                    </button>
-                                </Tooltip>
-                                {isSidebarOpen && isTrueHarvestOpen && (
-                                    <ul className="pl-4 mt-1 border-l border-[var(--slate-800)] ml-6 space-y-1">
-                                        <li>
-                                            <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'true-harvest-privacy' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
-                                                onClick={() => navigate('/true-harvest-privacy-policy', { state: { fromDashboard: true } })}
-                                            >
-                                                Privacy
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'true-harvest-support' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg(--slate-800)]/30'}`}
-                                                onClick={() => navigate('/true-harvest-support', { state: { fromDashboard: true } })}
-                                            >
-                                                Support
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button
-                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeTab === 'true-harvest-delete-user' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--slate-500)] hover:text-[var(--slate-200)] hover:bg-[var(--slate-800)]/30'}`}
-                                                onClick={() => navigate('/true-harvest-delete-user', { state: { fromDashboard: true } })}
-                                            >
-                                                Delete User
-                                            </button>
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
-                        </li>
                     </ul>
 
                     {hasSession && (

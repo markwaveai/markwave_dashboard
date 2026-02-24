@@ -8,7 +8,6 @@ export interface User {
   referral_type?: string;
   refered_by_name?: string;
   refered_by_mobile?: string;
-  referal_code?: string;
   referral_code?: string;
   isFormFilled?: boolean;
   email?: string;
@@ -34,8 +33,13 @@ export interface User {
 
 export interface CreateUserRequest {
   mobile: string;
-  name: string;
-  referral_type: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: string;
+  referred_by_code: string;
+  isabletorefer: boolean;
+  isTestAccount: boolean;
 }
 
 export interface UserParams {
@@ -88,7 +92,6 @@ export interface Referral {
   occupation?: string;
   gender?: string;
   referral_code?: string;
-  referal_code?: string;
   otp_verified?: boolean;
   isTestAccount?: boolean;
   isQuit?: boolean;

@@ -105,7 +105,7 @@ const OrdersTab: React.FC = () => {
         pageSize
     } = filters;
 
-    const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
+    const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile); // Removed unstable fallback to prevent 4x calls
     const authRole = useAppSelector((state: RootState) => state.auth.adminRole);
     const adminProfile = useAppSelector((state: RootState) => state.users.adminProfile);
 
@@ -155,7 +155,6 @@ const OrdersTab: React.FC = () => {
 
     useEffect(() => {
         const fetchFarms = async () => {
-            if (selectedOrderId) return;
             setFarmsLoading(true);
             try {
                 const data = await farmService.getFarms('ACTIVE');
@@ -167,7 +166,7 @@ const OrdersTab: React.FC = () => {
             }
         };
         fetchFarms();
-    }, [selectedOrderId]);
+    }, []);
 
     useEffect(() => {
         setLocalSearch(searchQuery);
@@ -175,8 +174,6 @@ const OrdersTab: React.FC = () => {
 
     useEffect(() => {
         const fetchFn = () => {
-            if (selectedOrderId) return;
-
             dispatch(fetchPendingUnits({
                 adminMobile,
                 page,
@@ -423,7 +420,9 @@ const OrdersTab: React.FC = () => {
                                     <React.Fragment key={`${unit.id || 'order'} -${index} `}>
                                         <tr
                                             ref={(el) => { if (unit.id) highlightRowRefs.current[unit.id] = el; }}
-                                            onClick={() => setSelectedOrderId(unit.id)}
+                                            onClick={() => {
+                                                setSelectedOrderId(unit.id);
+                                            }}
                                             style={{ cursor: 'pointer' }}
                                             className={`group hover:transform hover:scale-[1.002] transition-all duration-200 bg-white shadow-sm rounded-xl ${isHighlighted ? 'ring-2 ring-amber-400 shadow-amber-200 shadow-lg animate-pulse' : ''}`}
                                         >
@@ -635,7 +634,7 @@ const OrderVerificationModal: React.FC = () => {
     const { pendingUnits } = useAppSelector((state: RootState) => state.orders);
 
     // Auth & Profile Data
-    const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
+    const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile);
     const adminProfile = useAppSelector((state: RootState) => state.users?.adminProfile);
     const adminRole = useAppSelector((state: RootState) => state.auth?.adminRole);
 

@@ -31,12 +31,6 @@ import { setHighlightedOrderId, setHighlightedMilestoneId, addNotification } fro
 
 // Privacy
 import PrivacyPolicy from './components/sidenavbar/public/PrivacyPolicy';
-import TrueHarvestPrivacyPolicy from './components/sidenavbar/true-harvest/TrueHarvestPrivacyPolicy';
-import TrueHarvestDeleteUser from './components/sidenavbar/true-harvest/TrueHarvestDeleteUser';
-import TrueHarvestSupport from './components/sidenavbar/true-harvest/TrueHarvestSupport';
-import LandifyLegal from './components/sidenavbar/landify/LandifyLegal';
-import LandifySupport from './components/sidenavbar/landify/LandifySupport';
-import LandifyDeleteUser from './components/sidenavbar/landify/LandifyDeleteUser';
 import Support from './components/sidenavbar/public/Support';
 
 // Skeletons
@@ -89,7 +83,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Sync session stats to Redux
+  // Sync session stats to Redux exactly once when session is set/changed
   useEffect(() => {
     if (session) {
       dispatch(setReduxSession({
@@ -101,7 +95,7 @@ function App() {
         referralCode: session.referralCode || '',
       }));
     }
-  }, [dispatch, session]);
+  }, [dispatch, session?.mobile]); // Only re-run if mobile changes
 
   // Each toast has its own id so they stack independently
   type Toast = ForegroundNotification & { id: string };
@@ -121,8 +115,10 @@ function App() {
   }, [dismissToast]);
 
   // Fetch admin profile EXACTLY ONCE per session initialization
+  const fetchStartedRef = useRef(false);
   useEffect(() => {
-    if (session?.mobile && !adminProfile && !adminProfileLoading) {
+    if (session?.mobile && !adminProfile && !adminProfileLoading && !fetchStartedRef.current) {
+      fetchStartedRef.current = true;
       dispatch(fetchAdminProfile(session.mobile));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -413,13 +409,7 @@ function App() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/support" element={<Support />} />
 
-          <Route path="/true-harvest-privacy-policy" element={<TrueHarvestPrivacyPolicy />} />
-          <Route path="/true-harvest-delete-user" element={<TrueHarvestDeleteUser />} />
-          <Route path="/true-harvest-support" element={<TrueHarvestSupport />} />
 
-          <Route path="/landify/legal" element={<LandifyLegal />} />
-          <Route path="/landify/support" element={<LandifySupport />} />
-          <Route path="/landify/delete" element={<LandifyDeleteUser />} />
         </Route>
 
         {/* Backward Compatibility Redirects */}
@@ -470,7 +460,8 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/deactivate-user',
     '/unit-calculator',
     '/emi-calculator',
-    '/acf-calculator'
+    '/acf-calculator',
+    '/referral-landing'
   ];
   const isHybridPath = hybridPrefixes.some(prefix => location.pathname.startsWith(prefix));
 

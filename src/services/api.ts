@@ -6,6 +6,32 @@ const api = axios.create({
   timeout: 30000,
 });
 
+// Helper to extract a string error message from various backend response formats
+const extractErrorMessage = (error: any): string => {
+  if (!error) return 'An unknown error occurred';
+  if (typeof error === 'string') return error;
+
+  // If it's already an error object we extracted
+  if (error.error && typeof error.error === 'string') return error.error;
+
+  // Handle Axios error structure or direct response data
+  const data = error?.response?.data || error;
+
+  if (data) {
+    if (data.message) return typeof data.message === 'string' ? data.message : JSON.stringify(data.message);
+    if (data.detail) {
+      if (Array.isArray(data.detail)) {
+        return data.detail.map((d: any) => d.msg || d.message || JSON.stringify(d)).join(', ');
+      }
+      return typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+    }
+    if (data.error) return typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+  }
+
+  if (error.message) return error.message;
+  return 'An unexpected error occurred';
+};
+
 export const userService = {
   getUsers: async (params?: any): Promise<{ users: User[], total?: number }> => {
     try {
@@ -71,15 +97,13 @@ export const userService = {
 
       // Check if response indicates an error despite 200 OK (soft error)
       if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
-        return { error: response.data.message || response.data.detail || 'Failed to create user' };
+        return { error: extractErrorMessage(response.data) };
       }
 
       return { data: response.data, message: 'User created successfully' };
     } catch (error: any) {
       console.error('Error creating user:', error);
-      // Extract the actual error message from the API response
-      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || error?.response?.data?.error || 'Failed to create user';
-      return { error: errorMessage };
+      return { error: extractErrorMessage(error) };
     }
   },
 
@@ -147,8 +171,7 @@ export const farmService = {
       return { data: response.data, message: 'Farm added successfully' };
     } catch (error: any) {
       console.error('Error adding farm:', error);
-      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to add farm';
-      return { error: errorMessage };
+      return { error: extractErrorMessage(error) };
     }
   },
 
@@ -169,8 +192,7 @@ export const farmService = {
       return { data: response.data, message: 'Farm updated successfully' };
     } catch (error: any) {
       console.error('Error updating farm:', error);
-      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to update farm';
-      return { error: errorMessage };
+      return { error: extractErrorMessage(error) };
     }
   }
 };
@@ -182,8 +204,7 @@ export const otpService = {
       return { data: response.data, message: 'OTP sent successfully' };
     } catch (error: any) {
       console.error('Error sending OTP:', error);
-      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to send OTP';
-      return { error: errorMessage };
+      return { error: extractErrorMessage(error) };
     }
   }
 };
@@ -215,9 +236,8 @@ export const selfBenefitService = {
 
       return { data: response.data, message: 'Benefit created successfully' };
     } catch (error: any) {
-      console.error('Error creating benefit:', error);
-      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to create benefit';
-      return { error: errorMessage };
+      console.error('Error creating self benefit:', error);
+      return { error: extractErrorMessage(error) };
     }
   },
 
@@ -239,9 +259,8 @@ export const selfBenefitService = {
 
       return { data: response.data, message: 'Benefit updated successfully' };
     } catch (error: any) {
-      console.error('Error updating benefit:', error);
-      const errorMessage = error?.response?.data?.message || error?.response?.data?.detail || 'Failed to update benefit';
-      return { error: errorMessage };
+      console.error('Error updating self benefit:', error);
+      return { error: extractErrorMessage(error) };
     }
   },
 
@@ -391,15 +410,6 @@ export const orderService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching invoice details:', error);
-      throw error;
-    }
-  },
-  getOrderDetails: async (orderId: string): Promise<any> => {
-    try {
-      const response = await api.get<any>(API_ENDPOINTS.getOrderDetails(orderId));
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching order details:', error);
       throw error;
     }
   }
