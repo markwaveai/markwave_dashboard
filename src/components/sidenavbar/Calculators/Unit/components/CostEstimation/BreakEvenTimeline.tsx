@@ -96,10 +96,10 @@ const BreakEvenTimeline: React.FC<any> = ({
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider font-bold text-slate-400">
-                                    <th className="px-6 py-3">Year</th>
-                                    <th className="px-6 py-3 text-right">Annual Net Sales</th>
-                                    <th className="px-6 py-3 text-right whitespace-nowrap">Asset Value</th>
-                                    <th className="px-6 py-3 text-right whitespace-nowrap">Cumulative Net</th>
+                                    <th className="px-2 sm:px-6 py-3 sm:py-4 w-[35%] sm:w-auto text-center">Year</th>
+                                    <th className="px-2 sm:px-6 py-3 sm:py-4 text-center w-[25%] sm:w-auto">Net Sales</th>
+                                    <th className="px-2 sm:px-6 py-3 sm:py-4 text-center whitespace-nowrap w-[20%] sm:w-auto">Asset</th>
+                                    <th className="px-2 sm:px-6 py-3 sm:py-4 text-center whitespace-nowrap w-[20%] sm:w-auto">Cumulative</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -107,27 +107,26 @@ const BreakEvenTimeline: React.FC<any> = ({
                                     const isBreakEven = data.isBreakEvenWithCPF;
                                     return (
                                         <tr key={data.year} className={`group transition-all ${isBreakEven ? 'bg-emerald-50/50' : 'hover:bg-slate-50/50'}`}>
-                                            <td className="px-6 py-4">
+                                            <td className="px-2 sm:px-6 py-3 sm:py-4 text-center">
                                                 <div className={`relative ${isBreakEven ? 'z-10' : ''}`}>
-                                                    <span className="text-sm font-bold text-slate-800">{data.displayLabel || data.year}</span>
-                                                    <span className="block text-[10px] text-slate-400">Y{index + 1}</span>
+                                                    <span className="text-[10px] sm:text-sm font-semibold text-slate-800 leading-tight block">{data.displayLabel || data.year}</span>
                                                     {isBreakEven && (
-                                                        <div className="absolute left-[-24px] top-1/2 -translate-y-1/2 w-1 h-8 bg-emerald-500 rounded-r-full" />
+                                                        <div className="absolute left-[-2px] sm:left-[-24px] top-1/2 -translate-y-1/2 w-1 h-8 bg-emerald-500 rounded-r-full" />
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <span className="text-sm font-semibold text-slate-700">{formatCurrency(data.annualRevenueWithCPF)}</span>
-                                                <span className="block text-[10px] text-amber-500 font-medium">CPF: -{formatNumber(data.cpfCost)}</span>
+                                            <td className="px-2 sm:px-6 py-4 text-center">
+                                                <span className="text-[10px] sm:text-sm font-semibold text-slate-700 block">{formatCurrency(data.annualRevenueWithCPF)}</span>
+                                                <span className="block text-[8px] sm:text-[10px] text-amber-500 font-medium">CPF: -{formatNumber(data.cpfCost)}</span>
                                                 {isCGFEnabled && (
-                                                    <span className="block text-[10px] text-red-500 font-medium">CGF: -{formatNumber(data.cgfCost)}</span>
+                                                    <span className="block text-[8px] sm:text-[10px] text-red-500 font-medium">CGF: -{formatNumber(data.cgfCost)}</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-right whitespace-nowrap">
-                                                <span className="text-sm font-medium text-slate-600">{formatCurrency(data.assetValue)}</span>
+                                            <td className="px-2 sm:px-6 py-4 text-center whitespace-nowrap">
+                                                <span className="text-[10px] sm:text-sm font-medium text-slate-600">{formatCurrency(data.assetValue)}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-right whitespace-nowrap">
-                                                <span className={`text-sm font-bold ${isBreakEven ? 'text-emerald-700' : 'text-indigo-600'}`}>{formatCurrency(data.cumulativeRevenueWithCPF + data.assetValue)}</span>
+                                            <td className="px-2 sm:px-6 py-4 text-center whitespace-nowrap">
+                                                <span className={`text-[10px] sm:text-sm font-bold ${isBreakEven ? 'text-emerald-700' : 'text-indigo-600'}`}>{formatCurrency(data.cumulativeRevenueWithCPF + data.assetValue)}</span>
                                             </td>
                                         </tr>
                                     );

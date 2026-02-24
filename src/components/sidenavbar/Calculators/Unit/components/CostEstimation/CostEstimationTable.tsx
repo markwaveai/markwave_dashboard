@@ -368,6 +368,8 @@ const CostEstimationTableContent = ({
 
         let totalValue = 0;
         let totalCount = 0;
+        let buffaloesCount = 0;
+        let calvesCount = 0;
 
         Object.values(buffaloDetails).forEach((buffalo: any) => {
             const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
@@ -382,6 +384,13 @@ const CostEstimationTableContent = ({
                 // Override: 0-12 months value is 0 in the first 12 months of simulation
                 if (monthsPassed <= 12 && ageInMonths <= 12) {
                     value = 0;
+                }
+
+                // Breakdown: Buffaloes (> 24m), Calves (<= 24m)
+                if (ageInMonths > 24) {
+                    buffaloesCount += units;
+                } else {
+                    calvesCount += units;
                 }
 
                 if (ageInMonths >= 41) {
@@ -409,7 +418,8 @@ const CostEstimationTableContent = ({
             }
         });
 
-        return { ageGroups, totalValue, totalCount };
+        return { ageGroups, totalValue, totalCount, buffaloesCount, calvesCount };
+
     };
 
     const MOTHER_BUFFALO_PRICE = 175000;
@@ -995,8 +1005,11 @@ const CostEstimationTableContent = ({
                 totalBuffaloes: totalCount,
                 buffaloesCount,
                 calvesCount,
+                buffaloesCount,
+                calvesCount,
                 endYear: displayEndYear
             });
+
         }
     }, [yearlyDataWithCPF, treeData.durationMonths, treeData.startYear, treeData.startMonth, setHeaderStats, units, isCGFEnabled, buffaloDetails, investorMonthlyRevenue, monthlyCPFCost]);
 
@@ -1129,7 +1142,7 @@ const CostEstimationTableContent = ({
                 {/* Dashboard Header */}
 
 
-                <div className="w-full max-w-7xl mx-auto px-8 pt-2 pb-8">
+                <div className="w-full max-w-7xl mx-auto px-2 sm:px-8 pt-2 pb-8">
 
 
 

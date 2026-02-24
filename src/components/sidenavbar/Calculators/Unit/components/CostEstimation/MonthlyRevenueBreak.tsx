@@ -348,7 +348,7 @@ const MonthlyRevenueBreak = ({
 
         csvContent += "Month,";
         unitBuffaloes.forEach((buffalo: any) => {
-            csvContent += buffalo.id + ",";
+            csvContent += "Buffalo " + buffalo.id + " Revenue,";
         });
         csvContent += "Unit Total,CPF Cost,CGF Cost,Net Revenue,Cumulative Revenue Until " + yearLabel + "\n";
 
@@ -500,20 +500,20 @@ const MonthlyRevenueBreak = ({
                     <div className={`grid gap-2 ${isCGFEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
 
                         {/* Annual Revenue */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="bg-white rounded-md p-2 sm:p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Revenue</p>
-                                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Annual Revenue</p>
+                                <h3 className="text-sm sm:text-lg font-bold text-slate-900 mt-1">
                                     {formatCurrency(annualRevenue)}
                                 </h3>
                             </div>
                         </div>
 
                         {/* Annual CPF Cost */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="bg-white rounded-md p-2 sm:p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CPF Cost</p>
-                                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Annual CPF Cost</p>
+                                <h3 className="text-sm sm:text-lg font-bold text-slate-900 mt-1">
                                     {formatCurrency(annualCpfCost)}
                                 </h3>
                             </div>
@@ -521,10 +521,10 @@ const MonthlyRevenueBreak = ({
 
                         {/* Annual CGF Cost */}
                         {isCGFEnabled && (
-                            <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                            <div className="bg-white rounded-md p-2 sm:p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CGF Cost</p>
-                                    <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                    <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Annual CGF Cost</p>
+                                    <h3 className="text-sm sm:text-lg font-bold text-slate-900 mt-1">
                                         {formatCurrency(annualCgfCost)}
                                     </h3>
                                 </div>
@@ -536,11 +536,11 @@ const MonthlyRevenueBreak = ({
                     <div className="grid grid-cols-3 gap-2">
 
                         {/* Net Annual Revenue */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
+                        <div className="bg-white rounded-md p-2 sm:p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden">
                             <div className="relative z-10 h-full flex flex-col justify-between items-center">
                                 <div className="flex flex-col items-center">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Revenue (-{isCGFEnabled ? '(CPF+CGF)' : 'CPF'})</p>
-                                    <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                    <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Net Annual</p>
+                                    <h3 className="text-sm sm:text-lg font-bold text-slate-900 mt-1">
                                         {formatCurrency(((unitBuffaloes as any[]).reduce((sum: number, buffalo: any) => {
                                             return sum + (Array.from({ length: 12 }) as any[]).reduce((monthSum: number, _, mIndex: number) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
@@ -554,20 +554,20 @@ const MonthlyRevenueBreak = ({
                         </div>
 
                         {/* Cumulative Net */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="bg-white rounded-md p-2 sm:p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Cumulative Net (Till Date)</p>
-                                <h3 className="text-base font-bold text-indigo-600 mt-0.5">
+                                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Cumulative Net</p>
+                                <h3 className="text-sm sm:text-lg font-bold text-indigo-600 mt-1">
                                     {formatCurrency(isCGFEnabled ? cumulativeNetRevenueWithCaring : cumulativeNetRevenue)}
                                 </h3>
                             </div>
                         </div>
 
                         {/* Asset Value */}
-                        <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="bg-white rounded-md p-2 sm:p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                             <div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Asset Value</p>
-                                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Asset Value</p>
+                                <h3 className="text-sm sm:text-lg font-bold text-slate-900 mt-1">
                                     {formatCurrency(
                                         selectedYearIndex === 0
                                             ? 350000 * units
@@ -596,6 +596,7 @@ const MonthlyRevenueBreak = ({
                             </div>
                         </div>
 
+
                     </div>
 
 
@@ -614,29 +615,32 @@ const MonthlyRevenueBreak = ({
                             onScroll={checkScroll}
                             className="overflow-x-auto pb-4"
                         >
-                            <table className="w-full text-sm text-left">
-                                <thead className="text-xs text-slate-500 bg-slate-50 sticky top-0 z-[40] shadow-sm">
+                            <table className="w-full text-[10px] sm:text-base text-left">
+                                <thead className="text-[10px] sm:text-sm text-slate-500 bg-slate-50 sticky top-0 z-[40] shadow-sm">
                                     <tr>
-                                        <th className="sticky left-0 z-20 w-24 min-w-[6rem] px-4 py-4 font-bold border-r border-slate-100 bg-slate-50">Month</th>
+                                        <th className="sticky left-0 z-20 w-20 sm:w-24 min-w-[5rem] sm:min-w-[6rem] px-2 sm:px-4 py-3 sm:py-5 font-bold border-r border-slate-100 bg-slate-50 text-center">Month</th>
+
                                         {unitBuffaloes.map((buffalo: any) => (
-                                            <th key={buffalo.id} className="px-4 py-4 font-semibold text-center border-r border-slate-100 min-w-[80px]">
-                                                <div className="text-slate-800 text-xs">
+                                            <th key={buffalo.id} className="px-2 sm:px-4 py-3 sm:py-5 font-semibold text-center border-r border-slate-100 min-w-[60px] sm:min-w-[80px]">
+                                                <div className="text-slate-800 text-[10px] sm:text-sm">
                                                     Buffalo {buffalo.id} revenue
                                                 </div>
                                             </th>
                                         ))}
-                                        <th className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-20 w-28 min-w-[7rem] px-2 py-4 font-bold text-center bg-slate-100 text-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
-                                        <th className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-amber-50 text-amber-700`}>
+
+                                        <th className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-20 w-20 sm:w-28 min-w-[5rem] sm:min-w-[7rem] px-1 sm:px-2 py-3 sm:py-5 font-bold text-center bg-slate-100 text-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)]`}>Total Revenue</th>
+                                        <th className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-50 w-12 sm:w-20 min-w-[3rem] sm:min-w-[5rem] px-1 sm:px-2 py-3 sm:py-5 font-bold text-center bg-amber-50 text-amber-700`}>
                                             <SimpleTooltip content="Cattle Protection Fund" placement="bottom">
                                                 <span className="cursor-default">CPF</span>
                                             </SimpleTooltip>
                                         </th>
-                                        {isCGFEnabled && <th className="md:sticky md:right-[5rem] md:z-50 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-rose-50 text-rose-700 ">
+                                        {isCGFEnabled && <th className="md:sticky md:right-[5rem] md:z-50 w-12 sm:w-20 min-w-[3rem] sm:min-w-[5rem] px-1 sm:px-2 py-3 sm:py-5 font-bold text-center bg-rose-50 text-rose-700 ">
                                             <SimpleTooltip content="Cattle Growing Fund" placement="bottom">
                                                 <span className="cursor-default">CGF</span>
                                             </SimpleTooltip>
                                         </th>}
-                                        <th className="md:sticky md:right-0 md:z-20 w-20 min-w-[5rem] px-2 py-4 font-bold text-center bg-emerald-50 text-emerald-700 border-l border-slate-200">Net</th>
+                                        <th className="md:sticky md:right-0 md:z-20 w-12 sm:w-20 min-w-[3rem] sm:min-w-[5rem] px-1 sm:px-2 py-3 sm:py-5 font-bold text-center bg-emerald-50 text-emerald-700 border-l border-slate-200">Net</th>
+
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -657,9 +661,10 @@ const MonthlyRevenueBreak = ({
                                         return (
                                             <React.Fragment key={mIndex}>
                                                 <tr className={`group hover:bg-slate-50 transition-colors ${mIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                                                    <td className={`sticky left-0 z-10 px-4 py-3 font-medium text-slate-900 border-r border-slate-100 ${rowBg}`}>
+                                                    <td className={`sticky left-0 z-10 px-2 sm:px-4 py-3 sm:py-4 font-medium text-slate-900 border-r border-slate-100 ${rowBg} text-center`}>
                                                         {formattedDateRange}
                                                     </td>
+
                                                     {unitBuffaloes.map((buffalo: any, bIndex: any) => {
                                                         const revenue = monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0;
                                                         const isCpfApplicable = isCpfApplicableForMonth(buffalo, selectedYearIndex, mIndex);
@@ -698,7 +703,7 @@ const MonthlyRevenueBreak = ({
                                                             else if (revenue >= 6000) cellClass = "text-blue-600 font-semibold bg-blue-50/30";
                                                         } else if (revenue === 0 && monthDiff >= 2 && buffalo.generation === 0) {
                                                             // For Gen 0 buffaloes, show "Rest" for zero-revenue months after the landing period
-                                                            cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                            cellClass = "text-slate-400 text-sm font-medium bg-slate-50";
                                                             displayText = "-";
                                                         } else if (buffalo.generation > 0) {
                                                             // Children Logic
@@ -707,12 +712,12 @@ const MonthlyRevenueBreak = ({
                                                             if (monthDiff < 0) {
                                                                 displayText = "-";
                                                             } else if (monthDiff === 24) {
-                                                                cellClass = "text-amber-600 text-xs font-bold bg-amber-50";
+                                                                cellClass = "text-amber-600 text-sm font-bold bg-amber-50";
                                                                 displayText = (
                                                                     <SimpleTooltip content="For a calf, CPF starts from the 25th month" placement="top">
                                                                         <div className="flex flex-col items-center leading-none">
                                                                             <span>CPF Start</span>
-                                                                            <span className="text-[9px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
+                                                                            <span className="text-[11px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
                                                                         </div>
                                                                     </SimpleTooltip>
                                                                 );
@@ -725,11 +730,11 @@ const MonthlyRevenueBreak = ({
 
                                                                 if (monthsSinceFirstBirth >= 0 && monthsSinceFirstBirth % 12 === 0) {
                                                                     const childIndex = 1 + (monthsSinceFirstBirth / 12);
-                                                                    cellClass = "text-slate-500 text-xs font-medium bg-slate-100";
+                                                                    cellClass = "text-slate-500 text-sm font-medium bg-slate-100";
                                                                     displayText = (
                                                                         <div className="flex flex-col items-center leading-none">
                                                                             <span>{buffalo.id}{childIndex} Child (born)</span>
-                                                                            <span className="text-[9px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
+                                                                            <span className="text-[11px] text-slate-400 font-normal">({monthDiff + 1}th month)</span>
                                                                         </div>
                                                                     );
                                                                 } else if (monthDiff < 34) {
@@ -744,23 +749,23 @@ const MonthlyRevenueBreak = ({
                                                                     // So this ELSE block is ONLY for months where Revenue == 0.
                                                                     // Which are the "Resting" months.
                                                                     // So "Rest" is the correct default here.
-                                                                    cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                                    cellClass = "text-slate-400 text-sm font-medium bg-slate-50";
                                                                     displayText = "-";
                                                                 } else {
-                                                                    cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                                    cellClass = "text-slate-400 text-sm font-medium bg-slate-50";
                                                                     displayText = "-";
                                                                 }
                                                             } else if (monthDiff < 34) { // 0-31
                                                                 displayText = "-";
                                                             } else {
-                                                                cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                                cellClass = "text-slate-400 text-sm font-medium bg-slate-50";
                                                                 displayText = "-";
                                                             }
                                                         } else if (monthDiff < 0 && buffalo.id === 'B') {
-                                                            cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                            cellClass = "text-slate-400 text-sm font-medium bg-slate-50";
                                                             displayText = "-";
                                                         } else if (monthDiff === 0) {
-                                                            cellClass = "text-slate-500 text-xs font-medium bg-slate-50";
+                                                            cellClass = "text-slate-500 text-sm font-medium bg-slate-50";
                                                             displayText = (
                                                                 <SimpleTooltip
                                                                     content={`5 days for procurement
@@ -774,31 +779,33 @@ const MonthlyRevenueBreak = ({
                                                                 </SimpleTooltip>
                                                             );
                                                         } else if (monthDiff === 1) {
-                                                            cellClass = "text-slate-500 text-xs font-medium bg-slate-50";
+                                                            cellClass = "text-slate-500 text-sm font-medium bg-slate-50";
                                                             displayText = "Milk Yield Starts";
                                                         } else if (isCpfApplicable) {
-                                                            cellClass = "text-slate-400 text-xs font-medium bg-slate-50";
+                                                            cellClass = "text-slate-400 text-sm font-medium bg-slate-50";
                                                             displayText = "-";
                                                         }
 
                                                         return (
-                                                            <td key={buffalo.id} className={`px-4 py-3 text-center border-r border-slate-100 ${cellClass}`}>
+                                                            <td key={buffalo.id} className={`px-2 sm:px-4 py-3 sm:py-4 text-center border-r border-slate-100 ${cellClass}`}>
                                                                 {displayText}
                                                             </td>
                                                         );
+
                                                     })}
-                                                    <td className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-10 px-2 py-3 text-center font-bold text-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
+                                                    <td className={`md:sticky ${isCGFEnabled ? 'md:right-[15rem]' : 'md:right-[10rem]'} md:z-10 px-1 sm:px-2 py-3 sm:py-4 text-center font-bold text-slate-700 md:shadow-[-4px_0_4px_-2px_rgba(0,0,0,0.1)] ${mIndex % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}`}>
                                                         {formatCurrency(unitTotal)}
                                                     </td>
-                                                    <td className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-10 px-2 py-3 text-center font-medium text-amber-600 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
+                                                    <td className={`md:sticky ${isCGFEnabled ? 'md:right-[10rem]' : 'md:right-[5rem]'} md:z-10 px-1 sm:px-2 py-3 sm:py-4 text-center font-medium text-amber-600 ${mIndex % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100'}`}>
                                                         {formatCurrency(monthlyCpfValue)}
                                                     </td>
                                                     {isCGFEnabled && (
-                                                        <td className={`md:sticky md:right-[5rem] md:z-10 px-2 py-3 text-center font-medium text-rose-600 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
+                                                        <td className={`md:sticky md:right-[5rem] md:z-10 px-1 sm:px-2 py-3 sm:py-4 text-center font-medium text-rose-600 ${mIndex % 2 === 0 ? 'bg-rose-50' : 'bg-rose-100'}`}>
                                                             {formatCurrency(monthlyCgfValue)}
                                                         </td>
                                                     )}
-                                                    <td className={`md:sticky md:right-0 md:z-10 px-2 py-3 text-center font-bold border-l border-slate-200 ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
+
+                                                    <td className={`md:sticky md:right-0 md:z-10 px-2 py-4 text-center font-bold border-l border-slate-200 ${netRevenue >= 0 ? (mIndex % 2 === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-100 text-emerald-600') : (mIndex % 2 === 0 ? 'bg-rose-50 text-rose-600' : 'bg-rose-100 text-rose-600')}`}>
                                                         {formatCurrency(netRevenue)}
                                                     </td>
 
@@ -817,7 +824,7 @@ const MonthlyRevenueBreak = ({
                                 <tfoot className="border-t-[3px] border-slate-300">
                                     {/* Yearly Footer */}
                                     <tr className="bg-slate-800 text-white font-semibold shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-                                        <td className="sticky left-0 z-10 px-4 py-4 border-r border-slate-700 bg-slate-800">Year Total</td>
+                                        <td className="sticky left-0 z-10 px-4 py-4 border-r border-slate-700 bg-slate-800 text-center">Year Total</td>
                                         {unitBuffaloes.map((buffalo: any) => {
                                             const yearTot = Array.from({ length: 12 }).reduce((s: number, _, m: number) => {
                                                 const { year, month } = getCalendarDate(selectedYearIndex, m);

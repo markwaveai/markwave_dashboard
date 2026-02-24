@@ -170,26 +170,26 @@ const CpfCgfCombined = ({
             {/* 1. Top Summary Cards - KPI Grid */}
             <div className="grid grid-cols-3 gap-2">
                 {/* Cumulative CPF */}
-                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                <div className="bg-white rounded-md p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                     <div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Cumulative CPF Cost</p>
-                        <h3 className="text-base font-bold text-amber-600 mt-0.5">{formatCurrency(cumulativeCpf)}</h3>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Cumulative CPF Cost</p>
+                        <h3 className="text-lg font-bold text-amber-600 mt-1">{formatCurrency(cumulativeCpf)}</h3>
                     </div>
                 </div>
 
                 {/* Cumulative CGF */}
-                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                <div className="bg-white rounded-md p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                     <div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Cumulative CGF Cost</p>
-                        <h3 className="text-base font-bold text-rose-600 mt-0.5">{formatCurrency(cumulativeCgf)}</h3>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Cumulative CGF Cost</p>
+                        <h3 className="text-lg font-bold text-rose-600 mt-1">{formatCurrency(cumulativeCgf)}</h3>
                     </div>
                 </div>
 
                 {/* Combined Total */}
-                <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                <div className="bg-white rounded-md p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                     <div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Combined Cumulative Total</p>
-                        <h3 className="text-base font-bold text-slate-900 mt-0.5">{formatCurrency(cumulativeTotal)}</h3>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Combined Cumulative Total</p>
+                        <h3 className="text-lg font-bold text-slate-900 mt-1">{formatCurrency(cumulativeTotal)}</h3>
                     </div>
                 </div>
             </div>
@@ -197,23 +197,23 @@ const CpfCgfCombined = ({
             {/* 3. Table */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left border-collapse">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
+                    <table className="w-full text-base text-left border-collapse">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-sm text-slate-500 uppercase">
                             <tr>
-                                <th className="py-4 px-6 font-bold border-r border-slate-100 w-1/4">Month</th>
-                                <th className="py-4 px-6 font-bold text-amber-700 text-center border-r border-slate-100 whitespace-nowrap w-1/4">CPF Cost</th>
-                                <th className="py-4 px-6 font-bold text-rose-700 text-center border-r border-slate-100 whitespace-nowrap w-1/4">CGF Cost</th>
-                                <th className="py-4 px-6 font-bold text-slate-800 text-center whitespace-nowrap w-1/4">Total</th>
+                                <th className="py-5 px-6 font-bold border-r border-slate-100 w-32 min-w-[8rem] text-center">Month</th>
+                                <th className="py-5 px-6 font-bold text-amber-700 text-center border-r border-slate-100 whitespace-nowrap">CPF Cost</th>
+                                <th className="py-5 px-6 font-bold text-rose-700 text-center border-r border-slate-100 whitespace-nowrap">CGF Cost</th>
+                                <th className="py-5 px-6 font-bold text-slate-800 text-center whitespace-nowrap">Total</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {tableData.map((row: any, idx: number) => (
                                 <React.Fragment key={idx}>
                                     <tr className={`hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                                        <td className="py-3 px-6 font-medium text-slate-900 border-r border-slate-100 bg-slate-50/30">{row.monthName}</td>
-                                        <td className="py-3 px-6 text-center text-amber-700 font-medium border-r border-slate-100 whitespace-nowrap">{row.isValid ? formatCurrency(row.cpf) : '-'}</td>
-                                        <td className="py-3 px-6 text-center text-rose-700 font-medium border-r border-slate-100 whitespace-nowrap">{row.isValid ? formatCurrency(row.cgf) : '-'}</td>
-                                        <td className="py-3 px-6 text-center text-slate-900 font-bold whitespace-nowrap">{row.isValid ? formatCurrency(row.total) : '-'}</td>
+                                        <td className="py-4 px-6 font-medium text-slate-900 border-r border-slate-100 bg-slate-50/30 whitespace-nowrap text-center">{row.monthName}</td>
+                                        <td className="py-4 px-6 text-center text-amber-700 font-medium border-r border-slate-100 whitespace-nowrap">{row.isValid ? formatCurrency(row.cpf) : '-'}</td>
+                                        <td className="py-4 px-6 text-center text-rose-700 font-medium border-r border-slate-100 whitespace-nowrap">{row.isValid ? formatCurrency(row.cgf) : '-'}</td>
+                                        <td className="py-4 px-6 text-center text-slate-900 font-bold whitespace-nowrap">{row.isValid ? formatCurrency(row.total) : '-'}</td>
                                     </tr>
                                     {(idx + 1) % 3 === 0 && idx < 11 && (
                                         <tr className="bg-slate-100/30">
@@ -225,10 +225,10 @@ const CpfCgfCombined = ({
                         </tbody>
                         <tfoot className="bg-slate-800 text-white border-t border-slate-700">
                             <tr>
-                                <td className="py-4 px-6 font-bold text-right border-r border-slate-700">Year Total</td>
-                                <td className="py-4 px-6 text-center font-bold text-amber-300 border-r border-slate-700 whitespace-nowrap">{formatCurrency(yearlyCpf)}</td>
-                                <td className="py-4 px-6 text-center font-bold text-rose-300 border-r border-slate-700 whitespace-nowrap">{formatCurrency(yearlyCgf)}</td>
-                                <td className="py-4 px-6 text-center font-bold text-white whitespace-nowrap">{formatCurrency(yearlyTotal)}</td>
+                                <td className="py-5 px-6 font-bold text-center border-r border-slate-700">Year Total</td>
+                                <td className="py-5 px-6 text-center font-bold text-amber-300 border-r border-slate-700 whitespace-nowrap">{formatCurrency(yearlyCpf)}</td>
+                                <td className="py-5 px-6 text-center font-bold text-rose-300 border-r border-slate-700 whitespace-nowrap">{formatCurrency(yearlyCgf)}</td>
+                                <td className="py-5 px-6 text-center font-bold text-white whitespace-nowrap">{formatCurrency(yearlyTotal)}</td>
                             </tr>
                         </tfoot>
                     </table>

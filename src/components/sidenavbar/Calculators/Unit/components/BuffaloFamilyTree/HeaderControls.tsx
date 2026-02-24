@@ -80,20 +80,21 @@ const HeaderControls = ({
     }, [units, years, endMonth, startYear, startMonth, startDay]);
 
     return (
-        <div className="bg-white border-b border-slate-200 px-4 py-2 z-[80] relative">
+        <div className="bg-white border-b border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 z-[80] relative">
+
             {/* Horizontally scrollable on mobile */}
             <div className="overflow-x-auto overflow-y-hidden">
-                <div className="flex items-center justify-between gap-4 min-w-max">
+                <div className="flex items-center justify-between gap-3 min-w-max">
 
                     {/* Left Section: Configuration & Actions */}
-                    <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex items-center gap-3 shrink-0">
 
                         {/* Configuration Group */}
                         <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 shadow-sm">
 
                             {/* Units Input */}
                             <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Units</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Units</span>
                                 <input
                                     type="number"
                                     min="1"
@@ -106,9 +107,9 @@ const HeaderControls = ({
                             </div>
 
                             {/* Start Date Picker */}
-                            <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Start Date</span>
-                                <div className="relative w-32 group/date">
+                            <div className="flex flex-col items-center px-1.5 sm:px-2 py-1 border-r border-slate-200 relative">
+                                <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Start Date</span>
+                                <div className="relative w-[110px] sm:w-32 group/date">
                                     <DatePicker
                                         selected={new Date(startYear, startMonth, startDay || 1)}
                                         onChange={(date: Date | null) => {
@@ -129,20 +130,21 @@ const HeaderControls = ({
                                         minDate={new Date(2024, 0, 1)}
                                         dateFormat="dd MMM yyyy"
                                         portalId="root"
-                                        className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-6"
+                                        className="w-full bg-transparent text-[11px] sm:text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-4 sm:pr-6"
                                         placeholderText="Select"
                                         onKeyDown={(e) => e.preventDefault()}
                                         popperClassName="!z-[100]"
                                         popperPlacement="bottom-start"
                                     />
-                                    <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 group-hover/date:text-indigo-500 transition-colors pointer-events-none" />
+                                    <ChevronDown size={12} className="absolute right-0.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover/date:text-indigo-500 transition-colors pointer-events-none sm:w-3.5 sm:h-3.5" />
                                 </div>
                             </div>
 
+
                             {/* End Date Picker - Swapped Position & DatePicker added */}
-                            <div className="flex flex-col items-center px-2 py-1 border-r border-slate-200 relative">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
-                                <div className="relative w-32 group/date">
+                            <div className="flex flex-col items-center px-1.5 sm:px-2 py-1 border-r border-slate-200 relative">
+                                <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">End Date</span>
+                                <div className="relative w-[110px] sm:w-32 group/date">
                                     <DatePicker
                                         selected={new Date(startYear, startMonth + Math.round(years * 12) - 1, startDay)}
                                         onChange={(date: Date | null) => {
@@ -169,19 +171,20 @@ const HeaderControls = ({
                                         dateFormat="dd MMM yyyy"
                                         showMonthYearPicker
                                         portalId="root"
-                                        className="w-full bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-6"
+                                        className="w-full bg-transparent text-[11px] sm:text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center pr-4 sm:pr-6"
                                         placeholderText="Select"
                                         onKeyDown={(e) => e.preventDefault()}
                                         popperClassName="!z-[100]"
                                         popperPlacement="bottom-start"
                                     />
-                                    <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 group-hover/date:text-indigo-500 transition-colors pointer-events-none" />
+                                    <ChevronDown size={12} className="absolute right-0.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover/date:text-indigo-500 transition-colors pointer-events-none sm:w-3.5 sm:h-3.5" />
                                 </div>
                             </div>
 
+
                             {/* Duration (Years) Dropdown */}
                             <div className="flex flex-col items-center px-3 py-1 border-r border-slate-200">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Duration</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Duration</span>
                                 <select
                                     className="bg-transparent text-sm font-semibold text-slate-700 cursor-pointer focus:outline-none text-center appearance-none pr-4"
                                     value={Math.round(years)}
@@ -202,7 +205,7 @@ const HeaderControls = ({
                             {treeData && (
                                 <div className="flex items-center gap-1 px-2 py-1">
                                     <div className="flex flex-col items-center">
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Initial Inv</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Initial Inv</span>
                                         <span className="text-sm font-black text-slate-900">
                                             {formatCurrency((units * 2 * 175000) + (units * 15000))}
                                         </span>
@@ -221,44 +224,45 @@ const HeaderControls = ({
 
                     {/* Center Section: View Toggle */}
                     {treeData && !isViewRestricted && (
-                        <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1 shadow-inner shrink-0">
+                        <div className="bg-slate-100 p-0.5 rounded-lg border border-slate-200 flex items-center gap-0.5 shadow-inner shrink-0 scale-90 sm:scale-100 origin-center">
                             <SimpleTooltip content="Revenue Projections" placement="bottom">
                                 <button
-                                    className={`group relative  px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
+                                    className={`group relative  px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "costEstimation"
                                         ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
                                         : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
                                         }`}
                                     onClick={() => setActiveTab("costEstimation")}
                                 >
-                                    <img src="/org-tree.png" alt="org-tree" className="w-7 h-7" />
+                                    <img src="/revenue-projection.png" alt="revenue-projection" className="w-5 h-5 sm:w-7 sm:h-7" />
                                 </button>
                             </SimpleTooltip>
 
                             <SimpleTooltip content="Tree View" placement="bottom">
                                 <button
                                     disabled={isViewRestricted}
-                                    className={`group relative px-3 py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
+                                    className={`group relative px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-md transition-all duration-300 flex items-center justify-center ${activeTab === "familyTree"
                                         ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-100'
                                         : isViewRestricted ? 'opacity-50 cursor-not-allowed text-slate-400' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'
                                         }`}
                                     onClick={() => setActiveTab("familyTree")}
                                 >
-                                    <img src="/tree.png" alt="tree" className="w-7 h-7" />
+                                    <img src="/tree.png" alt="tree" className="w-5 h-5 sm:w-7 sm:h-7" />
                                 </button>
                             </SimpleTooltip>
                         </div>
                     )}
 
+
                     {/* Right Section: Summary Stats */}
                     {treeData && treeData.summaryStats && (
-                        <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 overflow-visible">
+                        <div className="flex items-center gap-3 bg-white px-2.5 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 overflow-visible">
 
                             <SimpleTooltip
                                 content={`Buffaloes: ${activeTab === "costEstimation" && headerStats?.buffaloesCount !== undefined ? headerStats.buffaloesCount : treeData.summaryStats.buffaloesCount} / Calves: ${activeTab === "costEstimation" && headerStats?.calvesCount !== undefined ? headerStats.calvesCount : treeData.summaryStats.calvesCount}`}
                                 placement="bottom"
                             >
                                 <div className="flex flex-col items-center cursor-default">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
                                     <span className="text-sm font-black text-slate-800">
                                         {activeTab === "costEstimation" && headerStats?.totalBuffaloes !== undefined
                                             ? headerStats.totalBuffaloes
@@ -267,12 +271,13 @@ const HeaderControls = ({
                                 </div>
                             </SimpleTooltip>
 
+
                             <div className="w-px h-8 bg-slate-200" />
 
                             {/* Asset Value - Added */}
                             <SimpleTooltip content="Buffaloes asset value" placement="bottom">
                                 <div className="flex flex-col items-center cursor-default">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Value</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Asset Value</span>
                                     <span className="text-sm font-black text-blue-600">
                                         {formatCurrency(activeTab === "costEstimation" && headerStats?.totalAssetValue !== undefined
                                             ? headerStats.totalAssetValue
@@ -284,12 +289,49 @@ const HeaderControls = ({
                             <div className="w-px h-8 bg-slate-200" />
 
                             <SimpleTooltip
-                                content={isCGFEnabled ? `Total Recurring Revenue - (CPF +CGF)` : `Total Recurring Revenue - CPF`}
+                                content={
+                                    <div className="text-left space-y-1">
+                                        <div className="flex justify-between gap-4">
+                                            <span>Recurring Revenue:</span>
+                                            <span className="font-bold text-emerald-400">
+                                                {formatCurrency(activeTab === "costEstimation" && headerStats?.totalRevenue !== undefined
+                                                    ? headerStats.totalRevenue
+                                                    : treeData.summaryStats.totalRevenue)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between gap-4">
+                                            <span>CPF:</span>
+                                            <span className="font-bold text-amber-400">
+                                                -{formatCurrency(activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
+                                                    ? (headerStats.totalRevenue - headerStats.cumulativeNetRevenue)
+                                                    : (treeData.summaryStats.totalRevenue - treeData.summaryStats.totalNetRevenue))}
+                                            </span>
+                                        </div>
+                                        {isCGFEnabled && (
+                                            <div className="flex justify-between gap-4">
+                                                <span>CGF:</span>
+                                                <span className="font-bold text-rose-400">
+                                                    -{formatCurrency(activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
+                                                        ? (headerStats.cumulativeNetRevenue - (headerStats.cumulativeNetRevenueWithCaring || headerStats.cumulativeNetRevenue))
+                                                        : (treeData.summaryStats.totalNetRevenue - treeData.summaryStats.totalNetRevenueWithCaring))}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="border-t border-slate-600 pt-1 mt-1 flex justify-between gap-4">
+                                            <span className="font-bold">Total Net:</span>
+                                            <span className="font-black text-white">
+                                                {formatCurrency(activeTab === "costEstimation" && headerStats?.cumulativeNetRevenue !== undefined
+                                                    ? (isCGFEnabled ? (headerStats.cumulativeNetRevenueWithCaring || headerStats.cumulativeNetRevenue) : headerStats.cumulativeNetRevenue)
+                                                    : (isCGFEnabled ? treeData.summaryStats.totalNetRevenueWithCaring : treeData.summaryStats.totalNetRevenue))}
+                                            </span>
+                                        </div>
+                                    </div> as any
+                                }
                                 placement="bottom-right"
                                 className="whitespace-nowrap max-w-none"
                             >
                                 <div className="flex flex-col items-center cursor-default">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
                                         {isCGFEnabled ? "Net (-(CPF+CGF))" : "Net (-CPF)"}
                                     </span>
                                     <span className="text-sm font-black text-emerald-600">
@@ -309,7 +351,7 @@ const HeaderControls = ({
                                     onClick={() => setIsCGFEnabled(!isCGFEnabled)}
                                     className={`flex items-center justify-center p-1.5 rounded-full transition-all ${isCGFEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                                 >
-                                    <span className="text-[9px] font-bold uppercase mr-1.5">CGF</span>
+                                    <span className="text-[10px] font-bold uppercase mr-1.5">CGF</span>
                                     <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-200 relative ${isCGFEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}>
                                         <div className={`w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${isCGFEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                                     </div>
@@ -320,7 +362,7 @@ const HeaderControls = ({
 
                             <SimpleTooltip content="Total Projected Revenue" placement="bottom-right">
                                 <div className="flex flex-col items-center cursor-default">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total PR</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total PR</span>
                                     <span className="text-sm font-black text-slate-900">
                                         {formatCurrency(
                                             activeTab === "costEstimation" && headerStats

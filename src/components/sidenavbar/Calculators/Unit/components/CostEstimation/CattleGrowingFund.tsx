@@ -172,28 +172,29 @@ const CattleGrowingFund = ({
     return (
         <div className="w-full mb-6 space-y-2">
             {/* Top Stats Cards */}
-            {/* Top Stats Cards */}
-            <div className="flex justify-start">
+            <div className="flex flex-col sm:flex-row justify-start gap-4">
                 {/* Annual & Cumulative Caring Cost */}
-                <div className="bg-white rounded-md p-4 border border-slate-200 shadow-sm relative overflow-hidden flex items-center justify-between gap-8 min-w-[300px]">
+                <div className="bg-white rounded-md p-3 sm:p-4 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-8 min-w-full sm:min-w-[300px]">
 
                     {/* Annual */}
                     <div className="flex flex-col items-center text-center">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual CGF Cost</p>
-                        <div className="text-xl font-bold text-rose-600 mt-1">{formatCurrency(totalYearlyCaringCost)}</div>
+                        <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Annual CGF Cost</p>
+                        <div className="text-lg sm:text-xl font-bold text-rose-600 mt-1">{formatCurrency(totalYearlyCaringCost)}</div>
                     </div>
 
-                    <div className="h-8 w-px bg-slate-200"></div>
+                    <div className="hidden sm:block h-8 w-px bg-slate-200"></div>
+                    <div className="block sm:hidden w-full h-px bg-slate-100"></div>
 
                     {/* Cumulative */}
                     <div className="flex flex-col items-center text-center">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Cumulative Caring Cost</p>
-                        <div className="text-xl font-bold text-indigo-600 mt-1">{formatCurrency(totalCumulativeCaringCost)}</div>
+                        <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide">Cumulative Caring Cost</p>
+                        <div className="text-lg sm:text-xl font-bold text-indigo-600 mt-1">{formatCurrency(totalCumulativeCaringCost)}</div>
                     </div>
 
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
                 </div>
             </div>
+
 
             {/* Main Data Table */}
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col mt-4">
@@ -201,33 +202,34 @@ const CattleGrowingFund = ({
                     <table className="w-full border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200">
-                                <th className="sticky left-0 bg-slate-50 z-10 p-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 w-24">Month</th>
+                                <th className="sticky left-0 bg-slate-50 z-10 p-2 sm:p-4 text-center text-[10px] sm:text-sm font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 w-24 sm:w-32 min-w-[6rem] sm:min-w-[8rem]">Month</th>
                                 {activeChildren.map(c => (
-                                    <th key={c.id} className="p-2 text-center border-r border-slate-200 last:border-r-0 min-w-[100px]">
-                                        <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{c.id}</div>
+                                    <th key={c.id} className="p-2 sm:p-4 text-center border-r border-slate-200 last:border-r-0 min-w-[80px] sm:min-w-[100px]">
+                                        <div className="text-[10px] sm:text-sm font-bold text-slate-600 uppercase tracking-wider">{c.id}</div>
                                         <div className="flex flex-wrap justify-center gap-0.5 mt-1">
                                             {Array.from(childActiveBrackets[c.id] || []).map((b: any) => (
-                                                <span key={b} className="text-[8px] bg-indigo-100 text-indigo-700 px-1 rounded font-bold uppercase">{b}</span>
+                                                <span key={b} className="text-[7px] sm:text-[8px] bg-indigo-100 text-indigo-700 px-1 rounded font-bold uppercase">{b}</span>
                                             ))}
                                         </div>
                                         {c.units > 1 && (
-                                            <div className="text-[8px] bg-slate-100 text-slate-700 px-1 rounded font-bold uppercase mt-1">
-                                                ({c.units} units)
+                                            <div className="text-[7px] sm:text-[8px] bg-slate-100 text-slate-700 px-1 rounded font-bold uppercase mt-1">
+                                                ({c.units}u)
                                             </div>
                                         )}
                                     </th>
                                 ))}
-                                <th className="p-2 text-right text-[10px] font-bold text-slate-700 uppercase tracking-wider bg-slate-100/50 min-w-[110px]">Monthly Total</th>
+                                <th className="p-2 sm:p-4 text-center text-[10px] sm:text-sm font-bold text-slate-700 uppercase tracking-wider bg-slate-100/50 min-w-[90px] sm:min-w-[110px]">Total</th>
                             </tr>
+
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                             {monthlyData.map((row, idx) => (
                                 <tr key={idx} className={`hover:bg-slate-50/80 transition-colors ${!row.isValidMonth ? 'opacity-40 grayscale pointer-events-none bg-slate-50/50' : ''}`}>
-                                    <td className="sticky left-0 bg-white z-10 p-2 text-[11px] font-bold text-slate-700 border-r border-slate-200">{row.monthName}</td>
+                                    <td className="sticky left-0 bg-white z-10 p-2 sm:p-4 text-[11px] sm:text-[13px] font-bold text-slate-700 border-r border-slate-200 whitespace-nowrap text-center">{row.monthName}</td>
                                     {activeChildren.map(child => {
                                         const cost = row.costs[child.id];
                                         return (
-                                            <td key={child.id} className="p-2 text-center text-[11px] border-r border-slate-200 last:border-r-0 font-medium">
+                                            <td key={child.id} className="p-2 sm:p-4 text-center text-xs sm:text-base border-r border-slate-200 last:border-r-0 font-medium">
                                                 {cost === null ? (
                                                     <span className="text-slate-300 font-normal">-</span>
                                                 ) : (
@@ -238,32 +240,33 @@ const CattleGrowingFund = ({
                                             </td>
                                         );
                                     })}
-                                    <td className="p-2 text-right text-[11px] font-bold text-slate-900 bg-slate-50/30">
+                                    <td className="p-2 sm:p-4 text-center text-xs sm:text-base font-bold text-slate-900 bg-slate-50/30">
                                         {formatCurrency(row.totalMonthlyCost)}
                                     </td>
                                 </tr>
+
                             ))}
                         </tbody>
                         <tfoot>
                             <tr className="bg-slate-900 border-t border-slate-700">
-                                <td className="sticky left-0 bg-slate-900 z-10 p-2 text-[10px] font-bold text-white uppercase tracking-wider border-r border-slate-700">Annual Total</td>
+                                <td className="sticky left-0 bg-slate-900 z-10 p-4 text-sm font-bold text-white uppercase tracking-wider border-r border-slate-700 text-center">Annual Total</td>
                                 {activeChildren.map(child => (
-                                    <td key={child.id} className="p-2 text-center text-[11px] font-bold text-white border-r border-slate-700 last:border-r-0">
+                                    <td key={child.id} className="p-4 text-center text-base font-bold text-white border-r border-slate-700 last:border-r-0">
                                         {formatCurrency(childTotalCosts[child.id] || 0)}
                                     </td>
                                 ))}
-                                <td className="p-2 text-right text-[11px] font-black text-white bg-slate-800">
+                                <td className="p-4 text-center text-base font-black text-white bg-slate-800">
                                     {formatCurrency(totalYearlyCaringCost)}
                                 </td>
                             </tr>
                             <tr className="bg-white border-t border-slate-200">
-                                <td className="sticky left-0 bg-white z-10 p-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200">Asset Cost</td>
+                                <td className="sticky left-0 bg-white z-10 p-4 text-sm font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200 text-center">Asset Cost</td>
                                 {activeChildren.map(child => (
-                                    <td key={child.id} className="p-2 text-center text-[11px] font-bold text-indigo-600 border-r border-slate-200 last:border-r-0">
+                                    <td key={child.id} className="p-4 text-center text-base font-bold text-indigo-600 border-r border-slate-200 last:border-r-0">
                                         {formatCurrency(childCumulativeCosts[child.id] || 0)}
                                     </td>
                                 ))}
-                                <td className="p-2 text-right text-[11px] font-black text-indigo-700 bg-slate-50/50">
+                                <td className="p-4 text-center text-base font-black text-indigo-700 bg-slate-50/50">
                                     {formatCurrency(totalCumulativeCaringCost)}
                                 </td>
                             </tr>

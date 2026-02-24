@@ -83,6 +83,8 @@ const AssetMarketValue = ({
 
         let totalValue = 0;
         let totalCount = 0;
+        let calvesCount = 0;
+        let buffaloesCount = 0;
 
         // Calculate the simulation year index for this calendar year
         const simYearIndex = year - treeData.startYear;
@@ -106,6 +108,13 @@ const AssetMarketValue = ({
             if (absoluteBirthMonth <= cappedAbsTarget) {
                 const ageInMonths = calculateAgeInMonths(buffalo, targetYear, targetMonth);
                 let value = getBuffaloValueByAge(ageInMonths);
+
+                // Age categories
+                if (ageInMonths <= 24) {
+                    calvesCount += units;
+                } else {
+                    buffaloesCount += units;
+                }
 
                 // Override: 0-12 months value is 0 in the first year only
                 if (Number(year) === Number(treeData.startYear) && ageInMonths <= 12) {
@@ -137,7 +146,7 @@ const AssetMarketValue = ({
             }
         });
 
-        return { ageGroups, totalValue, totalCount };
+        return { ageGroups, totalValue, totalCount, buffaloesCount, calvesCount };
     };
 
     // Helper function to get category count from asset data
@@ -195,18 +204,31 @@ const AssetMarketValue = ({
             <div className="w-full mb-8 space-y-4">
 
                 {/* 1. Value Summary Cards */}
-                <div className="grid grid-cols-2 gap-2 max-w-2xl">
-                    <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl">
+                    <div className="bg-white rounded-md p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Asset Value</p>
-                            <h3 className="text-base font-bold text-slate-900 mt-0.5">{formatCurrency(detailedValue.totalValue || 0)}</h3>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Annual Asset Value</p>
+                            <h3 className="text-lg font-bold text-slate-900 mt-1">{formatCurrency(detailedValue.totalValue || 0)}</h3>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-md p-2 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Annual Headcount</p>
-                            <h3 className="text-base font-bold text-indigo-600 mt-0.5">{detailedValue.totalCount}</h3>
+                    <div className="bg-white rounded-md p-3 border border-slate-200 shadow-sm flex flex-col justify-between items-center text-center">
+                        <div className="w-full">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Annual Headcount</p>
+                            <div className="flex items-center justify-center divide-x divide-slate-100">
+                                <div className="px-1.5 sm:px-3">
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter sm:tracking-wide">Buffaloes</p>
+                                    <p className="text-sm sm:text-base font-black text-green-600">{detailedValue.buffaloesCount}</p>
+                                </div>
+                                <div className="px-1.5 sm:px-3">
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter sm:tracking-wide">Calves</p>
+                                    <p className="text-sm sm:text-base font-black text-blue-600">{detailedValue.calvesCount}</p>
+                                </div>
+                                <div className="px-1.5 sm:px-3">
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter sm:tracking-wide">Total</p>
+                                    <p className="text-sm sm:text-base font-black text-black">{detailedValue.totalCount}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -220,14 +242,15 @@ const AssetMarketValue = ({
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
-                                    <th className="px-6 py-4 font-bold border-r border-slate-100 w-1/5">Age Group</th>
-                                    <th className="px-6 py-4 font-bold border-r border-slate-100 text-center w-1/5">Unit Value</th>
-                                    <th className="px-6 py-4 font-bold border-r border-slate-100 text-center w-1/5">Count</th>
-                                    <th className="px-6 py-4 font-bold border-r border-slate-100 text-center w-1/5">Total Value</th>
-                                    <th className="px-6 py-4 font-bold text-center w-1/5">% of Total</th>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] sm:text-sm text-slate-500 uppercase">
+                                    <th className="px-2 sm:px-6 py-3 sm:py-5 font-bold border-r border-slate-100 w-1/4 text-center">Age Group</th>
+                                    <th className="px-2 sm:px-6 py-3 sm:py-5 font-bold border-r border-slate-100 text-center w-1/4">Value</th>
+                                    <th className="px-2 sm:px-6 py-3 sm:py-5 font-bold border-r border-slate-100 text-center w-1/4">Count</th>
+                                    <th className="px-2 sm:px-6 py-3 sm:py-5 font-bold text-center w-1/4">Total</th>
+
                                 </tr>
                             </thead>
+
                             <tbody className="divide-y divide-slate-100">
                                 {Object.entries(detailedValue.ageGroups)
                                     .filter(([_, data]: [string, any]) => data.count > 0)
@@ -238,46 +261,36 @@ const AssetMarketValue = ({
                                                 key={ageGroup}
                                                 className={`hover:bg-slate-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
                                             >
-                                                <td className="px-6 py-3 font-medium text-slate-900 border-r border-slate-100">
+                                                <td className="px-2 sm:px-6 py-3 sm:py-4 font-medium text-slate-900 border-r border-slate-100 text-[10px] sm:text-sm text-center">
                                                     {ageGroup}
                                                 </td>
-                                                <td className="px-6 py-3 font-medium text-slate-600 text-center border-r border-slate-100 whitespace-nowrap">
+                                                <td className="px-2 sm:px-6 py-3 sm:py-4 font-medium text-slate-600 text-center border-r border-slate-100 whitespace-nowrap text-[10px] sm:text-sm">
                                                     {ageGroup === '0-12 months' && Number(selectedYear) === Number(treeData.startYear) ? formatCurrency(0) : formatCurrency(data.unitValue)}
                                                 </td>
-                                                <td className="px-6 py-3 font-bold text-slate-700 text-center border-r border-slate-100">
+                                                <td className="px-2 sm:px-6 py-3 sm:py-4 font-bold text-slate-700 text-center border-r border-slate-100 text-[10px] sm:text-sm">
                                                     {data.count}
                                                 </td>
-                                                <td className="px-6 py-3 font-bold text-emerald-600 text-center border-r border-slate-100 whitespace-nowrap">
+                                                <td className="px-2 sm:px-6 py-3 sm:py-4 font-bold text-emerald-600 text-center whitespace-nowrap text-[10px] sm:text-sm">
                                                     {formatCurrency(data.value)}
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <div className="flex items-center gap-2 justify-center">
-                                                        <span className="text-xs font-semibold text-slate-500 w-10 text-right">
-                                                            {detailedValue.totalValue > 0 ? ((data.value / detailedValue.totalValue) * 100).toFixed(1) : 0}%
-                                                        </span>
-                                                        <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-emerald-500 rounded-full"
-                                                                style={{ width: `${(data.value / detailedValue.totalValue) * 100}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </td>
+
                                             </tr>
+
                                         );
                                     })}
                             </tbody>
-                            <tfoot className="bg-slate-800 text-white">
+                            <tfoot className="bg-slate-800 text-white text-[10px] sm:text-sm">
                                 <tr>
-                                    <td className="px-6 py-4 font-bold border-r border-slate-700">Total</td>
-                                    <td className="px-6 py-4 font-bold text-center border-r border-slate-700">-</td>
-                                    <td className="px-6 py-4 font-bold text-center border-r border-slate-700">{detailedValue.totalCount}</td>
-                                    <td className="px-6 py-4 font-bold text-emerald-400 text-center border-r border-slate-700 whitespace-nowrap">
+                                    <td className="px-2 sm:px-6 py-3 sm:py-4 font-bold border-r border-slate-700 text-center">Total</td>
+                                    <td className="px-2 sm:px-6 py-3 sm:py-4 font-bold text-center border-r border-slate-700">-</td>
+                                    <td className="px-2 sm:px-6 py-3 sm:py-4 font-bold text-center border-r border-slate-700">{detailedValue.totalCount}</td>
+                                    <td className="px-2 sm:px-6 py-3 sm:py-4 font-bold text-emerald-400 text-center whitespace-nowrap">
                                         {formatCurrency(detailedValue.totalValue || 0)}
                                     </td>
-                                    <td className="px-6 py-4 font-bold text-center">100%</td>
+
                                 </tr>
                             </tfoot>
+
                         </table>
                     </div>
                 </div>
@@ -290,36 +303,38 @@ const AssetMarketValue = ({
                             <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Year-wise Age Category Distribution</h3>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
+                            <table className="w-full text-[10px] sm:text-base text-left">
+                                <thead className="bg-slate-50 border-b border-slate-200 text-[10px] sm:text-sm text-slate-500 uppercase">
                                     <tr>
-                                        <th className="px-4 py-3 font-bold border-r border-slate-100">Year</th>
-                                        <th className="px-4 py-3 font-bold border-r border-slate-100 text-center">Total</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">0-12m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">13-18m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">19-24m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">25-34m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">35-40m</th>
-                                        <th className="px-4 py-3 font-medium border-r border-slate-100 text-center text-slate-400">41+m</th>
-                                        <th className="px-4 py-3 font-bold text-right whitespace-nowrap">Value</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-bold border-r border-slate-100 text-center">Year</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-bold border-r border-slate-100 text-center">Total</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-medium border-r border-slate-100 text-center text-slate-400">0-12m</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-medium border-r border-slate-100 text-center text-slate-400">13-18m</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-medium border-r border-slate-100 text-center text-slate-400">19-24m</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-medium border-r border-slate-100 text-center text-slate-400">25-34m</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-medium border-r border-slate-100 text-center text-slate-400">35-40m</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-medium border-r border-slate-100 text-center text-slate-400">41+m</th>
+                                        <th className="px-2 sm:px-4 py-3 sm:py-4 font-bold text-center whitespace-nowrap">Value</th>
                                     </tr>
                                 </thead>
+
                                 <tbody className="divide-y divide-slate-100">
                                     {assetMarketValue.map((asset: any, yearIndex: number) => {
                                         return (
                                             <tr key={yearIndex} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-4 py-3 font-semibold text-slate-900 border-r border-slate-100">Year {yearIndex + 1}</td>
-                                                <td className="px-4 py-3 font-bold text-center text-slate-800 border-r border-slate-100">{asset.totalBuffaloes}</td>
-                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['0-12 months']?.count || 0)}</td>
-                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['13-18 months']?.count || 0)}</td>
-                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['19-24 months']?.count || 0)}</td>
-                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['25-34 months']?.count || 0)}</td>
-                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['35-40 months']?.count || 0)}</td>
-                                                <td className="px-4 py-3 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['41+ months']?.count || 0)}</td>
-                                                <td className="px-4 py-3 font-bold text-right text-emerald-600 whitespace-nowrap">
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 font-semibold text-slate-900 border-r border-slate-100 text-center">Year {yearIndex + 1}</td>
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 font-bold text-center text-slate-800 border-r border-slate-100">{asset.totalBuffaloes}</td>
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['0-12 months']?.count || 0)}</td>
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['13-18 months']?.count || 0)}</td>
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['19-24 months']?.count || 0)}</td>
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['25-34 months']?.count || 0)}</td>
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['35-40 months']?.count || 0)}</td>
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 text-center border-r border-slate-100 text-slate-500">{(asset.ageCategories?.['41+ months']?.count || 0)}</td>
+                                                <td className="px-2 sm:px-4 py-3 sm:py-4 font-bold text-center text-emerald-600 whitespace-nowrap">
                                                     {formatCurrency(asset.totalAssetValue || 0)}
                                                 </td>
                                             </tr>
+
                                         );
                                     })}
                                 </tbody>
@@ -340,10 +355,10 @@ const AssetMarketValue = ({
                             { age: '35-40m', price: '₹1.5L', desc: 'Prime' },
                             { age: '41+m', price: '₹1.75L', desc: 'Peak/Proven' }
                         ].map((item, index) => (
-                            <div key={index} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center">
-                                <div className="text-xs font-semibold text-slate-500 mb-0.5">{item.age}</div>
-                                <div className="text-sm font-bold text-slate-900">{item.price}</div>
-                                <div className="text-[10px] text-slate-400 mt-0.5">{item.desc}</div>
+                            <div key={index} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center">
+                                <div className="text-sm font-semibold text-slate-500 mb-1">{item.age}</div>
+                                <div className="text-base font-bold text-slate-900">{item.price}</div>
+                                <div className="text-xs text-slate-400 mt-1">{item.desc}</div>
                             </div>
                         ))}
                     </div>
