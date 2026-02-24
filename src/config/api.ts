@@ -1,10 +1,10 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
-    const productionUrl = 'https://animalkart-live-apis-jn6cma3vvq-el.a.run.app';
+    const productionUrl = 'https://animalkart-stagging-services-jn6cma3vvq-el.a.run.app';
 
     // Use local backend when running on localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'https://animalkart-live-apis-jn6cma3vvq-el.a.run.app';
+      return 'https://animalkart-stagging-services-jn6cma3vvq-el.a.run.app';
     } else {
       const corsUrl = 'https://cors-612299373064.asia-south1.run.app';
       return `${corsUrl}/${productionUrl}`;
