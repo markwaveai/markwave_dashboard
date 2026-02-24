@@ -987,15 +987,7 @@ const CostEstimationTableContent = ({
             const absoluteEndMonth = simAbsStart + treeData.durationMonths - 1;
             const displayEndYear = Math.floor(absoluteEndMonth / 12);
             const endMonthOfSimulation = absoluteEndMonth % 12;
-            const { totalValue, totalCount, ageGroups } = calculateDetailedAssetValue(displayEndYear, endMonthOfSimulation);
-
-            let calvesCount = 0;
-            if (ageGroups) {
-                calvesCount = (ageGroups['0-12 months']?.count || 0) +
-                    (ageGroups['13-18 months']?.count || 0) +
-                    (ageGroups['19-24 months']?.count || 0);
-            }
-            const buffaloesCount = totalCount - calvesCount;
+            const { totalValue, totalCount, buffaloesCount, calvesCount } = calculateDetailedAssetValue(displayEndYear, endMonthOfSimulation);
 
             setHeaderStats({
                 cumulativeNetRevenue,
@@ -1003,8 +995,6 @@ const CostEstimationTableContent = ({
                 totalRevenue,
                 totalAssetValue: totalValue,
                 totalBuffaloes: totalCount,
-                buffaloesCount,
-                calvesCount,
                 buffaloesCount,
                 calvesCount,
                 endYear: displayEndYear
