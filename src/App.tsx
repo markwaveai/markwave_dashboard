@@ -135,17 +135,6 @@ function App() {
     const unsubscribeMessage = notificationService.onForegroundMessage((payload) => {
       dispatch(addNotification({ title: payload.title, body: payload.body, data: payload.data }));
       pushToast(payload);
-
-      const data: Record<string, string> = payload.data || {};
-      if (data.type === 'MILESTONE_ACHIEVED' && data.milestone_id) {
-        dispatch(setHighlightedMilestoneId(data.milestone_id));
-        navigate('/offer-settings');
-      } else if (data.type === 'REFERRAL_REWARD' && data.recipient_mobile) {
-        navigate(`/user-management/network/${data.recipient_mobile}`);
-      } else if (data.order_id) {
-        dispatch(setHighlightedOrderId(data.order_id));
-        navigate('/orders');
-      }
     });
 
     // Init FCM, save token, subscribe to admin topic

@@ -127,10 +127,8 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
             errors.last_name = 'Last name is required';
         }
 
-        // Email Validation (Required)
-        if (!formData.email) {
-            errors.email = 'Email address is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        // Email Validation (Optional)
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             errors.email = 'Please enter a valid email address';
         }
 
@@ -147,7 +145,7 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
         if (!formData.mobile || formData.mobile.length !== 10) return false;
         if (!formData.first_name || formData.first_name.trim().length < 2) return false;
         if (!formData.last_name || formData.last_name.trim().length < 1) return false;
-        if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return false;
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return false;
         if (!isEditMode && !formData.referral_code) return false;
         return true;
     })();
@@ -189,7 +187,7 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
                     referred_by_code: formData.referral_code,
                     isabletorefer: isabletoreferr,
                     isTestAccount: !!formData.is_test,
-                  
+
                 };
 
                 const result = await userService.createUser(apiData);
@@ -235,12 +233,12 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
     return (
         <>
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
-                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col h-auto max-h-[min(85vh,800px)] overflow-hidden transform transition-all animate-scaleIn">
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl flex flex-col h-auto max-h-[min(85vh,800px)] overflow-hidden transform transition-all animate-scaleIn">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+                    <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100 shrink-0">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-                            <p className="text-xs text-gray-500 mt-0.5">{isEditMode ? 'Update user details' : 'Enter details to create a new account'}</p>
+                            <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{isEditMode ? 'Update user details' : 'Enter details to create a new account'}</p>
                         </div>
                         <button
                             onClick={onClose}
@@ -251,8 +249,8 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
                     </div>
 
                     {/* Form Content */}
-                    <div className="p-5 overflow-y-auto custom-scrollbar">
-                        <form onSubmit={handleSubmit} className="space-y-3">
+                    <div className="p-8 overflow-y-auto custom-scrollbar">
+                        <form onSubmit={handleSubmit} className="space-y-6">
 
                             {/* Role & Mobile Row */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -326,7 +324,7 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
 
                             {/* Email */}
                             <div className="space-y-1">
-                                <label className="block text-xs font-medium text-gray-700">Email</label>
+                                <label className="block text-xs font-medium text-gray-700">Email (Optional)</label>
                                 <input
                                     type="email"
                                     name="email"
@@ -399,18 +397,18 @@ export const CreateUser = ({ isOpen, onClose, onSuccess, adminReferralCode, init
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-3 pt-1">
+                            <div className="flex gap-4 pt-4">
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 px-3 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all font-semibold text-xs"
+                                    className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-bold text-sm"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading || !isFormValid}
-                                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:transform active:scale-[0.98] transition-all font-semibold text-xs shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 active:transform active:scale-[0.98] transition-all font-bold text-sm shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loading ? 'Processing...' : submitText}
                                 </button>
