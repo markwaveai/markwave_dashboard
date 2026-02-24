@@ -460,7 +460,8 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/deactivate-user',
     '/unit-calculator',
     '/emi-calculator',
-    '/acf-calculator'
+    '/acf-calculator',
+    '/referral-landing'
   ];
   const isHybridPath = hybridPrefixes.some(prefix => location.pathname.startsWith(prefix));
 

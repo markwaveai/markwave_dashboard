@@ -219,6 +219,19 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </li>
                         )}
 
+                        {hasSession && (
+                            <li>
+                                <Tooltip content="Referral Page" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('referral-landing')} onClick={() => navigate('/referral-landing', { state: { fromDashboard: true, adminReferralCode } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <Star size={20} className={activeTab === 'referral-landing' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Referral Page</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
+                            </li>
+                        )}
+
                         {/* <div className="my-4 border-t border-[var(--slate-800)]/50 mx-2"></div> */}
 
 

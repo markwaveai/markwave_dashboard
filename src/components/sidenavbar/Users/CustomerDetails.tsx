@@ -92,12 +92,18 @@ const CustomerDetailsPage: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                     <Mail size={16} /> {user.email || 'N/A'}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <MapPin size={16} /> {user.city}, {user.state} - {user.pincode}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Calendar size={16} /> Joined: {new Date(user.user_created_date).toLocaleDateString()}
-                                </div>
+                                {(user.city || user.state || user.pincode) && (
+                                    <div className="flex items-center gap-2">
+                                        <MapPin size={16} />
+                                        {[user.city, user.state].filter(Boolean).join(', ')}
+                                        {user.pincode ? ` - ${user.pincode}` : ''}
+                                    </div>
+                                )}
+                                {user.user_created_date && (
+                                    <div className="flex items-center gap-2">
+                                        <Calendar size={16} /> Joined: {new Date(user.user_created_date).toLocaleDateString()}
+                                    </div>
+                                )}
                                 {user.aadhar_number && (
                                     <div className="flex items-center gap-2">
                                         <FileText size={16} /> Aadhar: {user.aadhar_number}
@@ -153,12 +159,8 @@ const CustomerDetailsPage: React.FC = () => {
                         <div className="text-2xl font-bold">{stats.total_referrals}</div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow text-center">
-                        <div className="text-gray-500 text-xs uppercase mb-1">Referral Earned Coins</div>
-                        <div className="text-2xl font-bold text-blue-600">{user.referral_coins || 0}</div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg shadow text-center">
-                        <div className="text-gray-500 text-xs uppercase mb-1">Total Used Coins</div>
-                        <div className="text-2xl font-bold text-red-600">{user.used_coins || 0}</div>
+                        <div className="text-gray-500 text-xs uppercase mb-1">Total Coins</div>
+                        <div className="text-2xl font-bold text-blue-600">{user.coins || 0}</div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow text-center">
                         <div className="text-gray-500 text-xs uppercase mb-1">Purchased</div>
@@ -179,27 +181,33 @@ const CustomerDetailsPage: React.FC = () => {
                                 <tr>
                                     <th className="px-4 py-3">Order ID</th>
                                     <th className="px-4 py-3">Date</th>
-                                    <th className="px-4 py-3">Cost</th>
-                                    <th className="px-4 py-3">Payment</th>
-                                    <th className="px-4 py-3">Status</th>
+                                    <th className="px-4 py-3 text-center">Units</th>
+                                    <th className="px-4 py-3 text-center">Buffalo/Calf</th>
+                                    <th className="px-4 py-3 text-center">Coins</th>
+                                    <th className="px-4 py-3">Amount</th>
+                                    <th className="px-4 py-3">Order Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {orders.length === 0 ? (
-                                    <tr><td colSpan={5} className="px-4 py-4 text-center">No orders found</td></tr>
+                                    <tr><td colSpan={7} className="px-4 py-4 text-center">No orders found</td></tr>
                                 ) : (
                                     orders.map((order: any) => (
                                         <tr key={order.id} className="border-b hover:bg-gray-50">
                                             <td className="px-4 py-3 font-medium text-gray-900">{order.id}</td>
-                                            <td className="px-4 py-3">{new Date(order.placedAt).toLocaleDateString()}</td>
-                                            <td className="px-4 py-3">₹{order.totalCost.toLocaleString()}</td>
-                                            <td className="px-4 py-3">{order.paymentType}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">{new Date(order.placedAt).toLocaleDateString()}</td>
+                                            <td className="px-4 py-3 text-center">{order.numUnits}</td>
+                                            <td className="px-4 py-3 text-center">{order.buffaloCount} / {order.calfCount}</td>
+                                            <td className="px-4 py-3 text-center font-medium text-blue-600">
+                                                {order.coinsRedeemed ? order.coinsRedeemed : '-'}
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap">₹{order.totalCost?.toLocaleString()}</td>
                                             <td className="px-4 py-3">
-                                                <span className={`px-2 py-1 rounded text-xs font-semibold ${order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
-                                                    order.paymentStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                                        'bg-yellow-100 text-yellow-800'
+                                                <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${order.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                                    order.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                        'bg-blue-100 text-blue-800'
                                                     }`}>
-                                                    {order.paymentStatus}
+                                                    {order.status || 'PENDING'}
                                                 </span>
                                             </td>
                                         </tr>
@@ -222,14 +230,13 @@ const CustomerDetailsPage: React.FC = () => {
                                     <th className="px-4 py-3">Name</th>
                                     <th className="px-4 py-3">Mobile</th>
                                     <th className="px-4 py-3">City</th>
-                                    <th className="px-4 py-3"> Earn Coins</th>
-                                    <th className="px-4 py-3"> Spend Coins</th>
-                                    <th className="px-4 py-3">Verified</th>
+                                    <th className="px-4 py-3 text-center">Total Coins</th>
+                                    <th className="px-4 py-3 text-center">Verified</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {referrals.length === 0 ? (
-                                    <tr><td colSpan={6} className="px-4 py-4 text-center">No referrals found</td></tr>
+                                    <tr><td colSpan={5} className="px-4 py-4 text-center">No referrals found</td></tr>
                                 ) : (
                                     referrals.map((ref: any) => (
                                         <tr key={ref.id} className="border-b hover:bg-gray-50">
@@ -237,12 +244,9 @@ const CustomerDetailsPage: React.FC = () => {
                                             <td className="px-4 py-3">{ref.mobile}</td>
                                             <td className="px-4 py-3">{ref.city}</td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className="font-semibold text-green-600">{ref.earned_coins || 0}</span>
+                                                <span className="font-semibold text-blue-600">{ref.coins || 0}</span>
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <span className="font-semibold text-red-500">{ref.used_coins || 0}</span>
-                                            </td>
-                                            <td className="px-4 py-3">
                                                 {ref.verified ? <CheckCircle size={16} className="text-green-500" /> : <AlertCircle size={16} className="text-yellow-500" />}
                                             </td>
                                         </tr>

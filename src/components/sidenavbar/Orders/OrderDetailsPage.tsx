@@ -122,8 +122,8 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
     };
 
     // Manual fetch function triggered by action
-    const fetchInvoiceData = async () => {
-        if (!order?.id || !investor?.mobile || invoiceData || isFetchingInvoice) return;
+    const fetchInvoiceData = async (force: boolean = false) => {
+        if (!order?.id || !investor?.mobile || (invoiceData && !force) || isFetchingInvoice) return;
         setIsFetchingInvoice(true);
         try {
             const response = await orderService.getInvoiceDetails(order.id, investor.mobile);
@@ -136,6 +136,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
             setIsFetchingInvoice(false);
         }
     };
+
+    // Auto fetch on mount or status change
+    useEffect(() => {
+        if (order?.paymentStatus === 'PAID' && !invoiceData && !isFetchingInvoice) {
+            fetchInvoiceData();
+        }
+    }, [order?.paymentStatus, order?.id]);
+
 
     const handlePrintInvoice = useReactToPrint({
         contentRef: invoiceComponentRef,
@@ -172,11 +180,14 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
         if (invoiceData) {
             setIsInvoiceOpen(true);
         } else {
-            fetchInvoiceData().then(() => {
-                if (invoiceData) setIsInvoiceOpen(true);
+            fetchInvoiceData(true).then(() => {
+                // If we successfully fetched, the data will be set and modal can be opened by user
+                // or we could auto-open, but usually safer to just fetch.
+                // However, if user clicked 'View', they probably want to see it.
             });
         }
     };
+
 
     // Fallback while loading
     if (loading && !foundEntry) {
@@ -336,6 +347,13 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                     />
                                     {txData?.paymentType === 'CASH' && txData?.cashier_phone && (
                                         <InfoItem label="Cashier Phone" value={txData.cashier_phone} />
+                                    )}
+                                    {orderObj?.coinsRedeemed > 0 && (
+                                        <InfoItem
+                                            label="Coins Redeemed"
+                                            value={orderObj.coinsRedeemed.toLocaleString()}
+                                            highlight
+                                        />
                                     )}
                                 </div>
 
@@ -524,21 +542,29 @@ const OrderDetailsPage: React.FC<OrderDetailsPageProps> = ({ orderId: propOrderI
                                             {isFetchingInvoice ? (
                                                 <div className="absolute inset-0 h-full flex flex-col items-center justify-center gap-2">
                                                     <div className="w-6 h-6 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading...</span>
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Generating...</span>
                                                 </div>
                                             ) : invoiceData ? (
                                                 <div className="bg-white scale-[0.45] origin-top transform-gpu">
                                                     <InvoiceTemplate data={invoiceData} />
                                                 </div>
                                             ) : (
-                                                <div className="absolute inset-0 h-full flex flex-col items-center justify-center gap-2 text-gray-300">
-                                                    <FileText size={32} strokeWidth={1} />
-                                                    <span className="text-[10px] font-bold uppercase">No Preview</span>
+                                                <div className="absolute inset-0 h-full flex flex-col items-center justify-center gap-3">
+                                                    <div className="p-3 bg-white rounded-full shadow-sm text-gray-400">
+                                                        <FileText size={24} strokeWidth={1.5} />
+                                                    </div>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); fetchInvoiceData(true); }}
+                                                        className="px-4 py-1.5 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm hover:bg-blue-700 transition-colors"
+                                                    >
+                                                        Generate Invoice
+                                                    </button>
                                                 </div>
                                             )}
                                             {/* Gradient Fade Overlay */}
-                                            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-gray-50/100 to-transparent"></div>
+                                            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-gray-50/10 to-transparent"></div>
                                         </div>
+
 
                                         {/* Dark PDF Info Footer (WhatsApp style) */}
                                         <div className="bg-[#1f2937] px-4 py-3 flex items-center justify-between group-hover:bg-[#111827] transition-colors">

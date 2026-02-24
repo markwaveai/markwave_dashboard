@@ -155,7 +155,6 @@ const OrdersTab: React.FC = () => {
 
     useEffect(() => {
         const fetchFarms = async () => {
-            if (selectedOrderId) return;
             setFarmsLoading(true);
             try {
                 const data = await farmService.getFarms('ACTIVE');
@@ -167,7 +166,7 @@ const OrdersTab: React.FC = () => {
             }
         };
         fetchFarms();
-    }, [selectedOrderId]);
+    }, []);
 
     useEffect(() => {
         setLocalSearch(searchQuery);
@@ -175,8 +174,6 @@ const OrdersTab: React.FC = () => {
 
     useEffect(() => {
         const fetchFn = () => {
-            if (selectedOrderId) return;
-
             dispatch(fetchPendingUnits({
                 adminMobile,
                 page,

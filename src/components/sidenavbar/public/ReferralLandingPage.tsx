@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { CheckCircle, ShieldCheck, MapPin, Share2, Copy } from 'lucide-react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
-import { useAppDispatch } from '../../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { createReferralUser } from '../../../store/slices/usersSlice';
+import type { RootState } from '../../../store';
 
 const Modal = ({ isOpen, type, message, onClose }: { isOpen: boolean; type: 'success' | 'error'; message: string; onClose: () => void }) => {
     if (!isOpen) return null;
@@ -43,10 +44,14 @@ const ReferralLandingPage = () => {
     const [searchParams] = useSearchParams();
     const location = useLocation();
 
-    // Get code from URL OR from navigation state (dashboard)
+    const { adminProfile } = useAppSelector((state: RootState) => state.users);
+    const { referralCode: authReferralCode } = useAppSelector((state: RootState) => state.auth);
+
+    // Get code from URL OR from navigation state (dashboard) OR from Redux
     const urlReferralCode = searchParams.get('referral_code');
     const stateReferralCode = location.state?.adminReferralCode;
-    const referralCode = urlReferralCode || stateReferralCode || '';
+    const reduxReferralCode = adminProfile?.referral_code || authReferralCode;
+    const referralCode = urlReferralCode || stateReferralCode || reduxReferralCode || '';
 
     const [loading, setLoading] = React.useState(false);
     const [modalConfig, setModalConfig] = React.useState<{ isOpen: boolean; type: 'success' | 'error'; message: string }>({
@@ -119,8 +124,9 @@ const ReferralLandingPage = () => {
                 last_name: formData.last_name,
                 mobile: formData.mobile,
                 email: formData.email, // Optional email
-                referral_code: referralCode,
-                role: 'Investor' // Default role for public signups
+                referred_by_code: referralCode,
+                role: 'Investor', // Default role for public signups
+                isabletorefer: false
             };
 
             const result = await dispatch(createReferralUser(payload)).unwrap();

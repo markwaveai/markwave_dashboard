@@ -253,7 +253,10 @@ const HeaderControls = ({
                     {treeData && treeData.summaryStats && (
                         <div className="flex items-center gap-4 bg-white px-3 py-1 rounded-xl border border-slate-100 shadow-sm shrink-0 overflow-visible">
 
-                            <SimpleTooltip content="Total buffaloes + calves" placement="bottom">
+                            <SimpleTooltip
+                                content={`Buffaloes: ${activeTab === "costEstimation" && headerStats?.buffaloesCount !== undefined ? headerStats.buffaloesCount : treeData.summaryStats.buffaloesCount} / Calves: ${activeTab === "costEstimation" && headerStats?.calvesCount !== undefined ? headerStats.calvesCount : treeData.summaryStats.calvesCount}`}
+                                placement="bottom"
+                            >
                                 <div className="flex flex-col items-center cursor-default">
                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Buffaloes</span>
                                     <span className="text-sm font-black text-slate-800">
