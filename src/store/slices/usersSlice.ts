@@ -157,6 +157,18 @@ export const fetchAdminProfile = createAsyncThunk(
     }
 );
 
+export const fetchAdmins = createAsyncThunk(
+    'users/fetchAdmins',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await userService.getAdmins();
+            return response;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch admin list');
+        }
+    }
+);
+
 export interface UsersState {
     referralUsers: any[];
     existingCustomers: any[];
@@ -197,6 +209,10 @@ export interface UsersState {
     };
     adminProfile: any | null;
     adminProfileLoading: boolean;
+    adminProfileError: string | null;
+    admins: any[];
+    adminsLoading: boolean;
+    adminsError: string | null;
 }
 
 const initialState: UsersState = {
@@ -239,6 +255,10 @@ const initialState: UsersState = {
     },
     adminProfile: null,
     adminProfileLoading: false,
+    adminProfileError: null,
+    admins: [],
+    adminsLoading: false,
+    adminsError: null,
 };
 
 const UsersSlice = createSlice({
@@ -456,8 +476,22 @@ const UsersSlice = createSlice({
             state.adminProfileLoading = false;
             state.adminProfile = action.payload;
         });
-        builder.addCase(fetchAdminProfile.rejected, (state) => {
+        builder.addCase(fetchAdminProfile.rejected, (state, action) => {
             state.adminProfileLoading = false;
+            state.adminProfileError = action.payload as string || 'Failed to fetch profile';
+        });
+
+        builder.addCase(fetchAdmins.pending, (state) => {
+            state.adminsLoading = true;
+            state.adminsError = null;
+        });
+        builder.addCase(fetchAdmins.fulfilled, (state, action) => {
+            state.adminsLoading = false;
+            state.admins = action.payload;
+        });
+        builder.addCase(fetchAdmins.rejected, (state, action) => {
+            state.adminsLoading = false;
+            state.adminsError = action.payload as string;
         });
     }
 });

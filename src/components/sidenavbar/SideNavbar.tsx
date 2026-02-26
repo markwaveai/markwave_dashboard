@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     ClipboardList, Users, ShoppingBag, LogOut, UserCheck,
     Calculator, Shield as ShieldIcon, LifeBuoy, Warehouse, Award, Trophy,
-    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search, UserCog, Coins
+    UserMinus, Mail, ChevronDown, ChevronRight, LayoutDashboard, FileText, ChevronLeft, Star, Search, UserCog, Coins, ShoppingBasket
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Tooltip from '../common/Tooltip';
@@ -40,6 +40,8 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
     let activeTab = 'dashboard';
     if (currentPath === '/dashboard') activeTab = 'dashboard';
     else if (currentPath.includes('/orders')) activeTab = 'orders';
+    else if (currentPath.includes('/basket')) activeTab = 'basket';
+    else if (currentPath.includes('/admin-list')) activeTab = 'admin-list';
     else if (currentPath.includes('/user-management/network')) activeTab = 'network';
 
     else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
@@ -120,16 +122,30 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                             </li>
                         )} */}
                         {hasSession && (
-                            <li className="relative group/toggle">
-                                <Tooltip content="Orders" disabled={isSidebarOpen}>
-                                    <button className={navItemClass('orders')} onClick={() => navigate('/orders', { state: { fromDashboard: true } })}>
-                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
-                                            <ClipboardList size={20} className={activeTab === 'orders' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
-                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Orders</span>}
-                                        </div>
-                                    </button>
-                                </Tooltip>
-                            </li>
+                            <>
+                                <li className="relative group/toggle">
+                                    <Tooltip content="Orders" disabled={isSidebarOpen}>
+                                        <button className={navItemClass('orders')} onClick={() => navigate('/orders', { state: { fromDashboard: true } })}>
+                                            <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                                <ClipboardList size={20} className={activeTab === 'orders' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                                {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Orders</span>}
+                                            </div>
+                                        </button>
+                                    </Tooltip>
+                                </li>
+                                {isSuperAdmin && (
+                                    <li className="relative group/toggle">
+                                        <Tooltip content="Basket" disabled={isSidebarOpen}>
+                                            <button className={navItemClass('basket')} onClick={() => navigate('/basket', { state: { fromDashboard: true } })}>
+                                                <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                                    <ShoppingBasket size={20} className={activeTab === 'basket' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                                    {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Basket</span>}
+                                                </div>
+                                            </button>
+                                        </Tooltip>
+                                    </li>
+                                )}
+                            </>
                         )}
                         {hasSession && (
                             <li>
@@ -138,6 +154,18 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                         <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
                                             <Users size={20} className={activeTab === 'user-management' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
                                             {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Users</span>}
+                                        </div>
+                                    </button>
+                                </Tooltip>
+                            </li>
+                        )}
+                        {hasSession && isSuperAdmin && (
+                            <li>
+                                <Tooltip content="Admin List" disabled={isSidebarOpen}>
+                                    <button className={navItemClass('admin-list')} onClick={() => navigate('/admin-list', { state: { fromDashboard: true } })}>
+                                        <div className={`flex items-center gap-3 ${!isSidebarOpen ? 'justify-center w-full' : 'px-1'}`}>
+                                            <UserCheck size={20} className={activeTab === 'admin-list' ? 'text-white' : 'text-[var(--slate-400)] group-hover:text-[var(--slate-200)]'} />
+                                            {isSidebarOpen && <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis font-medium">Admin List</span>}
                                         </div>
                                     </button>
                                 </Tooltip>
@@ -206,7 +234,7 @@ const SideNavbar: React.FC<SideNavbarProps> = ({
                                 </Tooltip>
                             </li>
                         )}
-                        {hasSession && (
+                        {isSuperAdmin && (
                             <li>
                                 <Tooltip content="Farm Management" disabled={isSidebarOpen}>
                                     <button className={navItemClass('farm')} onClick={() => navigate('/farm-management', { state: { fromDashboard: true } })}>

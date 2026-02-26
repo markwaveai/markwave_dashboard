@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
-import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest, SelfBenefit, CreateSelfBenefitRequest, ReferralMilestone, CreateReferralMilestoneRequest, ReferralConfig, UpdateReferralConfigRequest, RoleChangeRequest, RoleChangeRequestResponse } from '../types';
+import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest, SelfBenefit, CreateSelfBenefitRequest, ReferralMilestone, CreateReferralMilestoneRequest, ReferralConfig, UpdateReferralConfigRequest, RoleChangeRequest, RoleChangeRequestResponse, AssignAdminToFarmRequest } from '../types';
 
 const api = axios.create({
   timeout: 30000,
@@ -139,6 +139,37 @@ export const userService = {
       console.error('Health check failed:', error);
       return false;
     }
+  },
+
+  getAdmins: async (): Promise<any[]> => {
+    try {
+      const response = await api.get<{ status: string, statuscode: number, users: any[], count: number }>(API_ENDPOINTS.getAdmins());
+      return response.data.users || [];
+    } catch (error) {
+      console.error('Error fetching admins:', error);
+      throw error;
+    }
+  },
+
+  addAdmin: async (adminData: any, superAdminMobile: string, superAdminOtp: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(API_ENDPOINTS.addAdmin(), adminData, {
+        headers: {
+          'x-admin-mobile': superAdminMobile,
+          'x-admin-otp': superAdminOtp,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to add admin' };
+      }
+
+      return { data: response.data, message: 'Admin added successfully' };
+    } catch (error: any) {
+      console.error('Error adding admin:', error);
+      return { error: extractErrorMessage(error) };
+    }
   }
 };
 
@@ -192,6 +223,28 @@ export const farmService = {
       return { data: response.data, message: 'Farm updated successfully' };
     } catch (error: any) {
       console.error('Error updating farm:', error);
+      return { error: extractErrorMessage(error) };
+    }
+  },
+
+  assignAdminToFarm: async (farmId: string, adminMobile: string, superAdminMobile: string, superAdminOtp: string): Promise<ApiResponse<any>> => {
+    try {
+      const payload: AssignAdminToFarmRequest = { admin_mobile: adminMobile };
+      const response = await api.post(API_ENDPOINTS.assignAdminToFarm(farmId), payload, {
+        headers: {
+          'x-admin-mobile': superAdminMobile,
+          'x-admin-otp': superAdminOtp,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to assign admin' };
+      }
+
+      return { data: response.data, message: 'Admin assigned successfully' };
+    } catch (error: any) {
+      console.error('Error assigning admin:', error);
       return { error: extractErrorMessage(error) };
     }
   }
@@ -410,6 +463,56 @@ export const orderService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching invoice details:', error);
+      throw error;
+    }
+  }
+};
+
+export const procurementService = {
+  getProcurementRoster: async (params: { stage: string; date?: string }): Promise<{ data: any[], totalGroups?: number }> => {
+    try {
+      const response = await api.get<any>(API_ENDPOINTS.getProcurementRoster(), { params });
+      const totalGroups = response.data?.totalGroups ?? response.data?.total_groups;
+
+      // Case 1: Grouped data (usually Basket stages)
+      if (response.data && Array.isArray(response.data.data)) {
+        return { data: response.data.data, totalGroups: totalGroups ?? response.data.data.length };
+      }
+
+      // Case 2: Flat list (usually Procurement/Tracking stages)
+      if (response.data && Array.isArray(response.data.buffaloes)) {
+        const flatData = [{
+          approvedDate: response.data.filterDate || null,
+          totalBuffaloes: response.data.totalBuffaloes || response.data.buffaloes.length,
+          buffaloes: response.data.buffaloes
+        }];
+        return { data: flatData, totalGroups: totalGroups ?? 1 };
+      }
+
+      return { data: [], totalGroups: 0 };
+    } catch (error) {
+      console.error('Error fetching procurement roster:', error);
+      throw error;
+    }
+  },
+
+  performProcurementAction: async (data: {
+    action: string;
+    buffaloIds: string[];
+    marketName?: string;
+    sendNotification: boolean;
+    adminMobile: string;
+  }): Promise<any> => {
+    try {
+      const { adminMobile, ...payload } = data;
+      const response = await api.post<any>(API_ENDPOINTS.procurementAction(), payload, {
+        headers: {
+          'x-admin-mobile': adminMobile || 'true'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error performing procurement action:', error);
       throw error;
     }
   }

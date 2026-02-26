@@ -51,6 +51,8 @@ const SelfBenefitsTab = React.lazy(() => import('./components/sidenavbar/SelfBen
 const ReferralBenefitsTab = React.lazy(() => import('./components/sidenavbar/ReferralBenefits/ReferralBenefitsTab'));
 const RoleRequestsTab = React.lazy(() => import('./components/sidenavbar/RoleRequests/RoleRequestsTab'));
 const OffersAchievedTab = React.lazy(() => import('./components/sidenavbar/OffersAchieved/OffersAchievedTab'));
+const BasketTab = React.lazy(() => import('./components/sidenavbar/Basket/BasketTab'));
+const AdminListTab = React.lazy(() => import('./components/sidenavbar/Users/AdminListTab'));
 
 interface Session {
   mobile: string;
@@ -79,7 +81,7 @@ function App() {
     return null;
   });
   const dispatch = useAppDispatch();
-  const { adminProfile, adminProfileLoading } = useAppSelector((state: RootState) => state.users);
+  const { adminProfile, adminProfileLoading, adminProfileError } = useAppSelector((state: RootState) => state.users);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -223,13 +225,14 @@ function App() {
       const roles = session.role ? session.role.split(',').map((r) => r.trim()) : [];
       notificationService.onUserLogout(session.mobile, roles);
     }
-    window.localStorage.removeItem('ak_dashboard_session');
+    // Clear ALL local storage for security and a clean state
+    window.localStorage.clear();
     setSession(null);
     navigate('/login', { replace: true });
   };
 
-  const userRoles = session?.role ? session.role.split(',').map(r => r.trim()) : [];
-  const isAdmin = userRoles.some(r => ['Admin', 'Animalkart admin', 'SuperAdmin'].includes(r));
+  const userRoles = session?.role ? session.role.split(',').map((r: string) => r.trim().toLowerCase()) : [];
+  const isAdmin = userRoles.some((r: string) => ['admin', 'animalkart admin', 'superadmin'].includes(r));
 
   const getSortIcon = (key: string, currentSortConfig: any) => {
     if (currentSortConfig.key !== key) return '';
@@ -319,7 +322,7 @@ function App() {
         <Route element={<DashboardLayout session={session} isAdmin={isAdmin} handleLogout={handleLogout} />}>
 
           {/* Strictly Protected Routes */}
-          <Route element={<RequireAuth session={session} isAdmin={isAdmin} handleLogout={handleLogout}><Outlet /></RequireAuth>}>
+          <Route element={<RequireAuth session={session} isAdmin={isAdmin} adminProfile={adminProfile} adminProfileLoading={adminProfileLoading} adminProfileError={adminProfileError} handleLogout={handleLogout}><Outlet /></RequireAuth>}>
             {/* <Route path="/dashboard" element={<DashboardHome />} /> */}
 
             <Route path="/orders" element={
@@ -331,6 +334,12 @@ function App() {
             <Route path="/user-management" element={
               <React.Suspense fallback={<UsersPageSkeleton />}>
                 <UserDetails getSortIcon={getSortIcon} />
+              </React.Suspense>
+            } />
+
+            <Route path="/admin-list" element={
+              <React.Suspense fallback={<UsersPageSkeleton />}>
+                <AdminListTab />
               </React.Suspense>
             } />
 
@@ -367,6 +376,11 @@ function App() {
             <Route path="/role-requests" element={
               <React.Suspense fallback={<OrdersPageSkeleton />}>
                 <RoleRequestsTab />
+              </React.Suspense>
+            } />
+            <Route path="/basket" element={
+              <React.Suspense fallback={<OrdersPageSkeleton />}>
+                <BasketTab />
               </React.Suspense>
             } />
           </Route>
@@ -432,7 +446,9 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
     '/farm-management',
     '/offer-settings',
     '/role-requests',
-    '/offers-achieved'
+    '/offers-achieved',
+    '/basket',
+    '/admin-list'
   ];
 
   const isProtectedPath = protectedPrefixes.some(prefix => location.pathname.startsWith(prefix)) && !location.pathname.startsWith('/acf-calculator');
@@ -485,7 +501,7 @@ const DashboardLayout = ({ session, isAdmin, handleLogout }: { session: Session 
 };
 
 // Helper for strict protection
-const RequireAuth = ({ children, session, isAdmin, handleLogout }: { children: React.ReactNode, session: Session | null, isAdmin: boolean, handleLogout: () => void }) => {
+const RequireAuth = ({ children, session, isAdmin, adminProfile, adminProfileLoading, adminProfileError, handleLogout }: { children: React.ReactNode, session: Session | null, isAdmin: boolean, adminProfile: any, adminProfileLoading: boolean, adminProfileError: string | null, handleLogout: () => void }) => {
   const location = useLocation();
   if (!session) return <Navigate to="/login" replace state={{ from: location }} />;
   if (!isAdmin) {
@@ -497,10 +513,27 @@ const RequireAuth = ({ children, session, isAdmin, handleLogout }: { children: R
       </div>
     );
   }
+
+  // If profile is loading OR we have a session but haven't started/finished fetching the profile yet, wait.
+  // We stop waiting if an error occurs so we don't hang indefinitely.
+  if ((adminProfileLoading || (session && !adminProfile)) && !adminProfileError) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
   // Rolecheck
-  const userRoles = session.role ? session.role.split(',').map(r => r.trim()) : [];
-  if (userRoles.includes('Animalkart admin') && !userRoles.includes('SuperAdmin') && location.pathname.startsWith('/true-harvest')) {
-    return <Navigate to="/orders" replace />;
+  const sessionRoles = session.role ? session.role.split(',').map((r: string) => r.trim().toLowerCase()) : [];
+  const profileRoles = adminProfile?.role ? adminProfile.role.split(',').map((r: string) => r.trim().toLowerCase()) : [];
+  const isSuperAdmin = sessionRoles.some((r: string) => r.includes('superadmin')) || profileRoles.some((r: string) => r.includes('superadmin'));
+
+  if (!isSuperAdmin) {
+    const restrictedPrefixes = ['/true-harvest', '/basket', '/farm-management', '/admin-list', '/offer-settings'];
+    if (restrictedPrefixes.some(prefix => location.pathname.startsWith(prefix))) {
+      return <Navigate to="/orders" replace />;
+    }
   }
   return <>{children}</>;
 };

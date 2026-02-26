@@ -47,7 +47,6 @@ export const API_ENDPOINTS = {
   updateFarm: (id: string) => `${API_CONFIG.getBaseUrl()}/farms/${id}`,
   getSelfBenefits: () => `${API_CONFIG.getBaseUrl()}/self-benefits/`,
   updateSelfBenefit: (id: string) => `${API_CONFIG.getBaseUrl()}/self-benefits/${id}`,
-
   getReferralMilestones: () => `${API_CONFIG.getBaseUrl()}/referral-benefits/milestones`,
   updateReferralMilestone: (id: string) => `${API_CONFIG.getBaseUrl()}/referral-benefits/milestones/${encodeURIComponent(id)}`,
   getReferralConfig: () => `${API_CONFIG.getBaseUrl()}/referral-benefits/config`,
@@ -57,4 +56,9 @@ export const API_ENDPOINTS = {
   getAchievedBenefits: () => `${API_CONFIG.getBaseUrl()}/self-benefits/admin/achieved`,
   getAchievedReferralMilestones: () => `${API_CONFIG.getBaseUrl()}/referral-benefits/admin/achieved-milestones`,
   verifyOtp: () => `${API_CONFIG.getBaseUrl()}/otp/verify`,
+  getProcurementRoster: () => `${API_CONFIG.getBaseUrl()}/order-tracking/procurement/roster`,
+  procurementAction: () => `${API_CONFIG.getBaseUrl()}/order-tracking/procurement/action`,
+  getAdmins: () => `${API_CONFIG.getBaseUrl()}/users/admins/list`,
+  addAdmin: () => `${API_CONFIG.getBaseUrl()}/users/superadmin/add-user`,
+  assignAdminToFarm: (farmId: string) => `${API_CONFIG.getBaseUrl()}/farms/${farmId}/admin`,
 };

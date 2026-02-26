@@ -215,6 +215,10 @@ export interface CreateFarmRequest {
   isReferralBenefitsActive?: boolean;
 }
 
+export interface AssignAdminToFarmRequest {
+  admin_mobile: string;
+}
+
 export interface SelfBenefit {
   id: string;
   title: string;

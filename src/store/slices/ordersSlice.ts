@@ -5,7 +5,7 @@ import { API_ENDPOINTS } from '../../config/api';
 // Async Thunks
 export const fetchPendingUnits = createAsyncThunk(
     'orders/fetchPendingUnits',
-    async ({ adminMobile, page = 1, pageSize = 10, paymentStatus, paymentType, transferMode, search, farmId }: {
+    async ({ adminMobile, page = 1, pageSize = 10, paymentStatus, paymentType, transferMode, search, farmId, date }: {
         adminMobile: string;
         page?: number;
         pageSize?: number;
@@ -14,14 +14,29 @@ export const fetchPendingUnits = createAsyncThunk(
         transferMode?: string;
         search?: string;
         farmId?: string;
-    }, { rejectWithValue }) => {
+        date?: string;
+    }, { getState, rejectWithValue }) => {
         try {
             const params: any = { page, page_size: pageSize };
             if (paymentStatus && paymentStatus !== 'All Status') params.paymentStatus = paymentStatus;
             if (paymentType && paymentType !== 'All Payments') params.paymentType = paymentType;
             if (transferMode && transferMode !== 'All Modes') params.transferMode = transferMode;
             if (search) params.search = search;
-            if (farmId && farmId !== 'All Farms') params.farmId = farmId;
+
+            // Logic: Only send farmId if definitely provided AND not restricted.
+            // However, it's safer to check the role from the state if we want to be sure.
+            const state = getState() as any;
+            const authRole = state.auth?.adminRole || '';
+            const adminProfileRole = state.users?.adminProfile?.role || '';
+            const effectiveRole = adminProfileRole || authRole;
+            const userRoles = effectiveRole ? effectiveRole.split(',').map((r: string) => r.trim()) : [];
+            const isSuperAdmin = userRoles.includes('SuperAdmin');
+
+            if (isSuperAdmin && farmId && farmId !== 'All Farms') {
+                params.farmId = farmId;
+            }
+
+            if (date) params.date = date;
 
             const response = await axios.get(API_ENDPOINTS.getPendingUnits(), {
                 headers: { 'X-Admin-Mobile': adminMobile },
@@ -90,7 +105,8 @@ export const approveOrder = createAsyncThunk(
                 paymentStatus: filters.statusFilter,
                 paymentType: filters.paymentTypeFilter,
                 transferMode: filters.transferModeFilter,
-                farmId: filters.farmFilter
+                farmId: filters.farmFilter,
+                date: filters.dateFilter
             }));
             return unitId;
         } catch (error: any) {
@@ -139,7 +155,8 @@ export const rejectOrder = createAsyncThunk(
                 paymentStatus: filters.statusFilter,
                 paymentType: filters.paymentTypeFilter,
                 transferMode: filters.transferModeFilter,
-                farmId: filters.farmFilter
+                farmId: filters.farmFilter,
+                date: filters.dateFilter
             }));
             return unitId;
         } catch (error: any) {
@@ -170,6 +187,7 @@ export interface OrdersState {
         transferModeFilter: string;
         statusFilter: string;
         farmFilter: string;
+        dateFilter: string;
         page: number;
         pageSize: number;
     };
@@ -210,6 +228,7 @@ const initialState: OrdersState = {
         transferModeFilter: localStorage.getItem('orders_transferModeFilter') || 'All Modes',
         statusFilter: localStorage.getItem('orders_statusFilter') || 'PENDING_ADMIN_VERIFICATION',
         farmFilter: localStorage.getItem('orders_farmFilter') || 'All Farms',
+        dateFilter: localStorage.getItem('orders_dateFilter') || '',
         page: 1,
         pageSize: 15,
     },
@@ -231,6 +250,7 @@ const ordersSlice = createSlice({
             if (action.payload.paymentTypeFilter !== undefined) state.filters.paymentTypeFilter = action.payload.paymentTypeFilter;
             if (action.payload.transferModeFilter !== undefined) state.filters.transferModeFilter = action.payload.transferModeFilter;
             if (action.payload.farmFilter !== undefined) state.filters.farmFilter = action.payload.farmFilter;
+            if (action.payload.dateFilter !== undefined) state.filters.dateFilter = action.payload.dateFilter;
         },
         setPaymentFilter: (state, action: PayloadAction<string>) => {
             state.filters.paymentTypeFilter = action.payload;
@@ -243,6 +263,9 @@ const ordersSlice = createSlice({
         },
         setFarmFilter: (state, action: PayloadAction<string>) => {
             state.filters.farmFilter = action.payload;
+        },
+        setDateFilter: (state, action: PayloadAction<string>) => {
+            state.filters.dateFilter = action.payload;
         },
         setPage: (state, action: PayloadAction<number>) => {
             state.filters.page = action.payload;
@@ -348,6 +371,7 @@ export const {
     setTransferModeFilter,
     setStatusFilter,
     setFarmFilter,
+    setDateFilter,
     setPage,
     setExpandedOrderId,
     setActiveUnitIndex,

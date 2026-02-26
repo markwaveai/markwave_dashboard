@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
-import { Check, Copy, User, X, AlertCircle, ChevronDown, Search } from 'lucide-react';
+import { Check, Copy, User, X, AlertCircle, ChevronDown, Search, Calendar } from 'lucide-react';
 import { formatRawDateTime } from '../../../utils/format';
 import {
     setSearchQuery,
@@ -17,6 +17,7 @@ import {
     approveOrder,
     rejectOrder,
     setFarmFilter,
+    setDateFilter,
 } from '../../../store/slices/ordersSlice';
 import { setProofModal, setApprovalModal, setSnackbar, setApprovalHistoryModal, clearHighlight } from '../../../store/slices/uiSlice';
 import Pagination from '../../common/Pagination';
@@ -101,6 +102,7 @@ const OrdersTab: React.FC = () => {
         statusFilter,
         transferModeFilter,
         farmFilter,
+        dateFilter,
         page,
         pageSize
     } = filters;
@@ -182,11 +184,14 @@ const OrdersTab: React.FC = () => {
                 paymentType: paymentTypeFilter,
                 transferMode: transferModeFilter,
                 search: localSearch,
-                farmId: farmFilter
+                farmId: isSuperAdmin ? farmFilter : undefined,
+                date: dateFilter
             }));
 
             if (localSearch !== searchQuery) {
                 dispatch(setSearchQuery(localSearch));
+                dispatch(setExpandedOrderId(null));
+                dispatch(setActiveUnitIndex(null));
             }
         };
 
@@ -198,7 +203,7 @@ const OrdersTab: React.FC = () => {
             return () => clearTimeout(timer);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [localSearch, dispatch, searchQuery, adminMobile, pageSize, statusFilter, paymentTypeFilter, transferModeFilter, page, farmFilter]);
+    }, [localSearch, dispatch, searchQuery, adminMobile, pageSize, statusFilter, paymentTypeFilter, transferModeFilter, page, farmFilter, dateFilter]);
 
     useEffect(() => {
         localStorage.setItem('orders_searchQuery', searchQuery);
@@ -206,6 +211,7 @@ const OrdersTab: React.FC = () => {
         localStorage.setItem('orders_statusFilter', statusFilter);
         localStorage.setItem('orders_transferModeFilter', transferModeFilter);
         localStorage.setItem('orders_farmFilter', farmFilter);
+        localStorage.setItem('orders_dateFilter', dateFilter);
         localStorage.setItem('orders_page', String(page));
         if (selectedOrderId) {
             localStorage.setItem('selectedOrderId', selectedOrderId);
@@ -217,16 +223,22 @@ const OrdersTab: React.FC = () => {
     const handleStatusFilterChange = (status: string) => {
         dispatch(setStatusFilter(status));
         dispatch(setPage(1));
+        dispatch(setExpandedOrderId(null));
+        dispatch(setActiveUnitIndex(null));
     };
 
     const handlePaymentTypeChange = (type: string) => {
         dispatch(setPaymentFilter(type));
         dispatch(setPage(1));
+        dispatch(setExpandedOrderId(null));
+        dispatch(setActiveUnitIndex(null));
     };
 
     const handleFarmChange = (farmId: string) => {
         dispatch(setFarmFilter(farmId));
         dispatch(setPage(1));
+        dispatch(setExpandedOrderId(null));
+        dispatch(setActiveUnitIndex(null));
     };
 
 
@@ -252,15 +264,31 @@ const OrdersTab: React.FC = () => {
     const currentCols = (showActions || statusFilter === 'REJECTED') ? 10 : (statusFilter === 'PAID' ? 10 : 8); // Consolidated approval details in PAID tab
 
     // Filter Buttons Config
-    const filterButtons = [
-        { label: 'All Orders', status: 'All Status', count: totalAllOrders },
-        { label: 'Pending Admin Approval', status: 'PENDING_ADMIN_VERIFICATION', count: pendingAdminApprovalCount },
-        { label: 'S.Admin Approval', status: 'PENDING_SUPER_ADMIN_VERIFICATION', count: pendingSuperAdminApprovalCount },
-        { label: 'S.Admin Rejection', status: 'PENDING_SUPER_ADMIN_REJECTION', count: pendingSuperAdminRejectionCount },
-        { label: 'Approved/Paid', status: 'PAID', count: paidCount },
-        { label: 'Rejected', status: 'REJECTED', count: rejectedCount },
-        { label: 'Payment Due', status: 'PENDING_PAYMENT', count: paymentDueCount },
-    ];
+    const filterButtons = useMemo(() => {
+        const allButtons = [
+            { label: 'All Orders', status: 'All Status', count: totalAllOrders },
+            { label: 'Pending Admin Approval', status: 'PENDING_ADMIN_VERIFICATION', count: pendingAdminApprovalCount },
+            { label: 'S.Admin Approval', status: 'PENDING_SUPER_ADMIN_VERIFICATION', count: pendingSuperAdminApprovalCount },
+            { label: 'S.Admin Rejection', status: 'PENDING_SUPER_ADMIN_REJECTION', count: pendingSuperAdminRejectionCount },
+            { label: 'Approved/Paid', status: 'PAID', count: paidCount },
+            { label: 'Rejected', status: 'REJECTED', count: rejectedCount },
+            { label: 'Payment Due', status: 'PENDING_PAYMENT', count: paymentDueCount },
+        ];
+
+        if (isSuperAdmin) {
+            // S.Admin tabs first
+            const sAdminTabs = allButtons.filter(b => b.status.includes('SUPER_ADMIN'));
+            const otherTabs = allButtons.filter(b => !b.status.includes('SUPER_ADMIN'));
+            return [...sAdminTabs, ...otherTabs];
+        } else if (isAdmin) {
+            // Admin tab first
+            const adminTab = allButtons.filter(b => b.status === 'PENDING_ADMIN_VERIFICATION');
+            const otherTabs = allButtons.filter(b => b.status !== 'PENDING_ADMIN_VERIFICATION');
+            return [...adminTab, ...otherTabs];
+        }
+
+        return allButtons;
+    }, [isSuperAdmin, isAdmin, totalAllOrders, pendingAdminApprovalCount, pendingSuperAdminApprovalCount, pendingSuperAdminRejectionCount, paidCount, rejectedCount, paymentDueCount]);
 
     if (selectedOrderId) {
         return <OrderDetailsPage orderId={selectedOrderId} onBack={() => setSelectedOrderId(null)} />;
@@ -269,79 +297,98 @@ const OrdersTab: React.FC = () => {
     return (
         <div className="w-full h-full bg-slate-50/50">
             {/* New Header: Order Management Left, Filters Right */}
-            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-6">
-                <h2 className="text-2xl font-bold m-0 text-slate-800 shrink-0">Order Management</h2>
-                <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto relative z-20">
-                    {/* Search Input */}
-                    <div className="relative w-full sm:w-[280px]">
-                        <input
-                            type="text"
-                            placeholder="Search by Order ID, Mobile"
-                            className="h-[42px] pl-4 pr-10 text-sm border-0 shadow-sm rounded-xl bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 w-full"
-                            value={localSearch}
-                            onChange={(e) => setLocalSearch(e.target.value)}
-                        />
-                        <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
-                        {localSearch && (
-                            <button
-                                onClick={() => setLocalSearch('')}
-                                className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
-                            >
-                                <X size={14} />
-                            </button>
+            <div className="flex flex-col gap-4 mb-3">
+                <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+                    <h2 className="text-2xl font-bold m-0 text-slate-800 shrink-0">Order Management</h2>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto relative z-20">
+                        {/* Search Input */}
+                        <div className="relative w-full sm:w-[280px]">
+                            <input
+                                type="text"
+                                placeholder="Search by Order ID, Mobile"
+                                className="h-[42px] pl-4 pr-10 text-sm border-0 shadow-sm rounded-xl bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 w-full"
+                                value={localSearch}
+                                onChange={(e) => setLocalSearch(e.target.value)}
+                            />
+                            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                            {localSearch && (
+                                <button
+                                    onClick={() => setLocalSearch('')}
+                                    className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 font-bold bg-transparent border-none cursor-pointer"
+                                    type="button"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Date Filter */}
+                        <div className="relative w-full sm:w-[180px]">
+                            <input
+                                type="date"
+                                className="h-[42px] pl-10 pr-4 text-sm border-0 shadow-sm rounded-xl bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 w-full cursor-pointer font-semibold"
+                                value={dateFilter}
+                                onChange={(e) => {
+                                    dispatch(setDateFilter(e.target.value));
+                                    dispatch(setPage(1));
+                                    dispatch(setExpandedOrderId(null));
+                                    dispatch(setActiveUnitIndex(null));
+                                }}
+                            />
+                            <Calendar size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            {dateFilter && (
+                                <button
+                                    onClick={() => {
+                                        dispatch(setDateFilter(''));
+                                        dispatch(setPage(1));
+                                        dispatch(setExpandedOrderId(null));
+                                        dispatch(setActiveUnitIndex(null));
+                                    }}
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 font-bold bg-transparent border-none cursor-pointer"
+                                    type="button"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Farm Filter - SuperAdmin only */}
+                        {isSuperAdmin && (
+                            <div className="relative w-full sm:w-[200px]">
+                                <select
+                                    className="h-[42px] pl-4 pr-10 text-sm border-0 shadow-sm rounded-xl bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 w-full appearance-none cursor-pointer font-semibold"
+                                    value={farmFilter}
+                                    onChange={(e) => handleFarmChange(e.target.value)}
+                                    disabled={farmsLoading}
+                                >
+                                    <option value="All Farms">All Farms</option>
+                                    {farms.map(farm => (
+                                        <option key={farm.id} value={farm.id}>{farm.location}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
                         )}
                     </div>
+                </div>
 
-                    {/* Status Filter Dropdown */}
-                    <div className="group relative inline-block text-left w-full sm:w-auto">
+                {/* Horizontal Status Filter Buttons */}
+                <div className="flex flex-wrap gap-2 mb-0 p-1 overflow-x-auto no-scrollbar">
+                    {filterButtons.map((btn) => (
                         <button
-                            type="button"
-                            className="inline-flex justify-between items-center w-full sm:w-[260px] px-4 py-2 bg-white border-0 shadow-sm rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all h-[42px]"
+                            key={btn.status}
+                            onClick={() => handleStatusFilterChange(btn.status)}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all duration-200 border-none cursor-pointer whitespace-nowrap shadow-sm active:scale-95 ${statusFilter === btn.status
+                                ? 'bg-blue-600 text-white shadow-blue-100 shadow-lg'
+                                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'
+                                }`}
                         >
-                            <span className="truncate">
-                                {filterButtons.find(b => b.status === statusFilter)?.label || 'Filter Status'}
-                                {filterButtons.find(b => b.status === statusFilter)?.count !== undefined && ` (${filterButtons.find(b => b.status === statusFilter)?.count})`}
+                            <span>{btn.label}</span>
+                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${statusFilter === btn.status ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                {btn.count !== undefined ? btn.count : '0'}
                             </span>
-                            <ChevronDown size={16} className="ml-2 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
                         </button>
-
-                        {/* Dropdown menu */}
-                        <div className="absolute left-0 top-full mt-2 w-[260px] bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left overflow-hidden z-50">
-                            <div className="py-1.5">
-                                {filterButtons.map((btn) => (
-                                    <button
-                                        key={btn.status}
-                                        onClick={() => handleStatusFilterChange(btn.status)}
-                                        className={`flex items-center justify-between w-full px-4 py-2.5 text-sm text-left transition-colors ${statusFilter === btn.status
-                                            ? 'bg-blue-50 text-blue-700 font-semibold'
-                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                            }`}
-                                    >
-                                        <span>{btn.label}</span>
-                                        <span className={`text-[12px] font-bold ${statusFilter === btn.status ? 'text-blue-700' : 'text-slate-400'}`}>
-                                            ({btn.count !== undefined ? btn.count : '-'})
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Farm Filter */}
-                    <div className="relative w-full sm:w-[200px]">
-                        <select
-                            className="h-[42px] pl-4 pr-10 text-sm border-0 shadow-sm rounded-xl bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 w-full appearance-none cursor-pointer font-semibold"
-                            value={farmFilter}
-                            onChange={(e) => handleFarmChange(e.target.value)}
-                            disabled={farmsLoading}
-                        >
-                            <option value="All Farms">All Farms</option>
-                            {farms.map(farm => (
-                                <option key={farm.id} value={farm.id}>{farm.location}</option>
-                            ))}
-                        </select>
-                        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
+                    ))}
                 </div>
             </div>
 
@@ -651,10 +698,10 @@ const OrderVerificationModal: React.FC = () => {
 
     // Unified Selection States (null = none, true = OK, false = Not OK)
     const [status, setStatus] = useState({
-        units: null as boolean | null,
-        proof: null as boolean | null,
-        payment: null as boolean | null,
-        coins: null as boolean | null
+        units: false,
+        proof: false,
+        payment: false,
+        coins: false
     });
     const [rejectionNotes, setRejectionNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -672,7 +719,7 @@ const OrderVerificationModal: React.FC = () => {
     // Reset when modal opens
     useEffect(() => {
         if (isOpen) {
-            setStatus({ units: null, proof: null, payment: null, coins: null });
+            setStatus({ units: false, proof: false, payment: false, coins: false });
             setRejectionNotes('');
         }
     }, [isOpen]);
@@ -706,7 +753,7 @@ const OrderVerificationModal: React.FC = () => {
     const onClose = () => {
         if (isSubmitting) return;
         dispatch(setApprovalModal({ isOpen: false, unitId: null }));
-        setStatus({ units: null, proof: null, payment: null, coins: null });
+        setStatus({ units: false, proof: false, payment: false, coins: false });
         setRejectionNotes('');
     };
 
