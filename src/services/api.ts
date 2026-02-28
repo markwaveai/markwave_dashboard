@@ -500,6 +500,7 @@ export const procurementService = {
     action: string;
     buffaloIds: string[];
     marketName?: string;
+    marketId?: string;
     sendNotification: boolean;
     adminMobile: string;
   }): Promise<any> => {

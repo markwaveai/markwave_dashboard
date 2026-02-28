@@ -17,7 +17,7 @@ const BasketTab: React.FC = () => {
     const [processingIds, setProcessingIds] = useState<string[]>([]);
     const [selectedBuffaloIds, setSelectedBuffaloIds] = useState<string[]>([]);
     const [selectedMarkets, setSelectedMarkets] = useState<Record<string, string>>({});
-    const [markets, setMarkets] = useState<string[]>([]);
+    const [markets, setMarkets] = useState<Market[]>([]);
 
 
 
@@ -91,14 +91,19 @@ const BasketTab: React.FC = () => {
         }
     };
 
-    const handleMarketAssignment = async (buffaloIds: string[], marketName: string, approvedDate: string) => {
-        if (!buffaloIds.length || !marketName) return;
+    const handleMarketAssignment = async (buffaloIds: string[], marketId: string, approvedDate: string) => {
+        if (!buffaloIds.length || !marketId) return;
+
+        const market = markets.find(m => m.id === marketId);
+        if (!market) return;
+
         setProcessingIds((prev: string[]) => [...prev, ...buffaloIds]);
         try {
             await procurementService.performProcurementAction({
                 action: 'assign_market',
                 buffaloIds: buffaloIds,
-                marketName: marketName,
+                marketName: market.name,
+                marketId: market.id,
                 sendNotification: true,
                 adminMobile: adminMobile
             });
@@ -221,11 +226,9 @@ const BasketTab: React.FC = () => {
     const fetchMarkets = useCallback(async () => {
         try {
             const data = await marketService.getMarkets();
-            // Filter only active markets and extract names
-            const activeMarketNames = (data || [])
-                .filter((m: Market) => m.isActive)
-                .map((m: Market) => m.name);
-            setMarkets(activeMarketNames);
+            // Filter only active markets
+            const activeMarkets = (data || []).filter((m: Market) => m.isActive);
+            setMarkets(activeMarkets);
         } catch (error) {
             console.error('Error fetching markets:', error);
         }
@@ -409,7 +412,7 @@ const BasketTab: React.FC = () => {
                                                         className="h-[42px] px-4 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium min-w-[180px]"
                                                     >
                                                         <option value="">Select Market</option>
-                                                        {markets.map(m => <option key={m} value={m}>{m}</option>)}
+                                                        {markets.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                                     </select>
                                                     <button
                                                         onClick={() => handleMarketAssignment(selectedInGroup, selectedMarkets[displayDate], displayDate as string)}
