@@ -61,4 +61,9 @@ export const API_ENDPOINTS = {
   getAdmins: () => `${API_CONFIG.getBaseUrl()}/users/admins/list`,
   addAdmin: () => `${API_CONFIG.getBaseUrl()}/users/superadmin/add-user`,
   assignAdminToFarm: (farmId: string) => `${API_CONFIG.getBaseUrl()}/farms/${farmId}/admin`,
+  getMarkets: () => `${API_CONFIG.getBaseUrl()}/markets/`,
+  addMarket: () => `${API_CONFIG.getBaseUrl()}/markets/`,
+  updateMarket: (id: string) => `${API_CONFIG.getBaseUrl()}/markets/${id}`,
+  toggleMarketStatus: (id: string) => `${API_CONFIG.getBaseUrl()}/markets/${id}/status`,
 };
+

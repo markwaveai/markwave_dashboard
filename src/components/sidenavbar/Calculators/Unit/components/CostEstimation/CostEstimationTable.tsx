@@ -10,9 +10,12 @@ import {
     Clock,
     Sprout,
     Calculator,
-    ChevronDown
+    ChevronDown,
+    FileSpreadsheet
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import MonthlyRevenueBreak from './MonthlyRevenueBreak';
+
 import RevenueBreakEven from './RevenueBreakEven';
 import AssetMarketValue from './AssetMarketValue';
 import HerdPerformance from './HerdPerformance';
@@ -1008,6 +1011,153 @@ const CostEstimationTableContent = ({
         return Object.values(cumulativeRevenue as Record<string, any>).reduce((sum: number, revenue: any) => sum + (revenue as number), 0);
     };
 
+    const downloadFullReport = () => {
+        const selectedUnit = 1; // Assuming primary unit for full report
+        const allBuffaloes = Object.values(buffaloDetails).filter((b: any) => (b as any).unit === selectedUnit);
+        const data: any[][] = [];
+
+        // Helper to resolve Calendar Year/Month from Simulation Year/Month
+        const getCalendarDate = (yearIndex: number, monthIndexInSim: number) => {
+            const absStart = (treeData.startYear * 12 + (treeData.startMonth || 0));
+            const absTarget = absStart + (yearIndex * 12) + monthIndexInSim;
+            return {
+                year: Math.floor(absTarget / 12),
+                month: absTarget % 12,
+                absMonth: absTarget
+            };
+        };
+
+        const isCpfApplicableForMonth = (buffalo: any, yearIndex: number, monthIndexInSim: number) => {
+            const { absMonth } = getCalendarDate(yearIndex, monthIndexInSim);
+            const absoluteStartMonth = treeData.startYear * 12 + (treeData.startMonth || 0);
+            const absoluteEndMonth = absoluteStartMonth + (treeData.durationMonths) - 1;
+            if (absMonth < absoluteStartMonth || absMonth > absoluteEndMonth) return false;
+            const isFirstInUnit = (buffalo.id.charCodeAt(0) - 65) % 2 === 0;
+            if (buffalo.generation === 0) {
+                const monthsSinceStart = absMonth - absoluteStartMonth;
+                if (isFirstInUnit) return monthsSinceStart >= 12;
+                else {
+                    const isPresent = (treeData.startYear + yearIndex > treeData.startYear || (treeData.startYear + yearIndex === treeData.startYear && monthIndexInSim >= buffalo.acquisitionMonth));
+                    if (isPresent) {
+                        const isFreePeriod = monthsSinceStart >= 6 && monthsSinceStart < 18;
+                        return !isFreePeriod;
+                    }
+                }
+            } else {
+                const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                const ageInMonths = ((Math.floor(absMonth / 12) - buffalo.birthYear) * 12) + ((absMonth % 12) - birthMonth);
+                return ageInMonths >= 24;
+            }
+            return false;
+        };
+
+        const calculateMonthlyCGF = (yIndex: number, mIndex: number) => {
+            let monthlyCGF = 0;
+            const { absMonth } = getCalendarDate(yIndex, mIndex);
+            allBuffaloes.forEach((buffalo: any) => {
+                if (buffalo.generation > 0) {
+                    const birthYear = buffalo.birthYear;
+                    const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                    const birthAbsolute = birthYear * 12 + birthMonth;
+                    if (birthAbsolute <= absMonth) {
+                        const ageInMonths = (absMonth - birthAbsolute) + 1;
+                        let monthlyCost = 0;
+                        if (ageInMonths > 12 && ageInMonths <= 18) monthlyCost = 1000;
+                        else if (ageInMonths > 18 && ageInMonths <= 24) monthlyCost = 1400;
+                        else if (ageInMonths > 24 && ageInMonths <= 30) monthlyCost = 1800;
+                        else if (ageInMonths > 30 && ageInMonths <= 36) monthlyCost = 2500;
+                        monthlyCGF += monthlyCost;
+                    }
+                }
+            });
+            return isCGFEnabled ? monthlyCGF : 0;
+        };
+
+        const formatMonthDateRangeLocal = (year: number, month: number, startDay: number) => {
+            const monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const startDate = new Date(year, month, startDay);
+            const endDate = new Date(year, month + 1, startDay - 1);
+            return `${startDate.getDate()} ${monthsShort[startDate.getMonth()]} ${startDate.getFullYear()} - ${endDate.getDate()} ${monthsShort[endDate.getMonth()]} ${endDate.getFullYear()}`;
+        };
+
+        for (let yIdx = 0; yIdx < treeData.years; yIdx++) {
+            const currentSimYear = treeData.startYear + yIdx;
+            const buffaloesInYear = allBuffaloes.filter((buffalo: any) => {
+                const { year, month } = getCalendarDate(yIdx, 11);
+                let isPresent = false;
+                if (buffalo.generation === 0) {
+                    isPresent = year > treeData.startYear || (year === treeData.startYear && month >= (buffalo.acquisitionMonth || 0));
+                } else {
+                    const birthMonth = buffalo.birthMonth !== undefined ? buffalo.birthMonth : (buffalo.acquisitionMonth || 0);
+                    const birthAbsolute = buffalo.birthYear * 12 + birthMonth;
+                    const currentAbsolute = year * 12 + month;
+                    isPresent = currentAbsolute >= birthAbsolute;
+                }
+                return isPresent;
+            });
+
+            data.push([`Year ${yIdx + 1} Report (${currentSimYear})`]);
+            const header = ["Month"];
+            buffaloesInYear.forEach((buffalo: any) => header.push(`Buffalo ${buffalo.id} revenue`));
+            header.push("Total Revenue", "CPF", "CGF", "Net");
+            data.push(header);
+
+            let yearlyUnitTotal = 0;
+            let yearlyCPFTotal = 0;
+            let yearlyCGFTotal = 0;
+            let yearlyNetTotal = 0;
+
+            Array.from({ length: 12 }).forEach((_, mIndex) => {
+                const { year, month, absMonth } = getCalendarDate(yIdx, mIndex);
+                const absStart = (treeData.startYear * 12 + (treeData.startMonth || 0));
+                const absEnd = absStart + (treeData.durationMonths || (treeData.years * 12)) - 1;
+                if (absMonth < absStart || absMonth > absEnd) return;
+
+                const row: any[] = [formatMonthDateRangeLocal(year, month, treeData.startDay || 1)];
+                let monthlyUnitTotal = 0;
+                buffaloesInYear.forEach((buffalo: any) => {
+                    const revenue = Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0;
+                    row.push(Math.round(revenue));
+                    monthlyUnitTotal += revenue;
+                });
+
+                let monthlyCPF = 0;
+                buffaloesInYear.forEach((buffalo: any) => {
+                    if (isCpfApplicableForMonth(buffalo, yIdx, mIndex)) monthlyCPF += (15000 / 12);
+                });
+
+                const monthlyCGF = calculateMonthlyCGF(yIdx, mIndex) * treeData.units;
+                const monthlyNet = monthlyUnitTotal - (monthlyCPF * treeData.units) - monthlyCGF;
+                row.push(Math.round(monthlyUnitTotal), Math.round(monthlyCPF * treeData.units), Math.round(monthlyCGF), Math.round(monthlyNet));
+                data.push(row);
+
+                yearlyUnitTotal += monthlyUnitTotal;
+                yearlyCPFTotal += (monthlyCPF * treeData.units);
+                yearlyCGFTotal += monthlyCGF;
+                yearlyNetTotal += monthlyNet;
+            });
+
+            const yearlySummaryRow: any[] = [`Year ${yIdx + 1} Total`];
+            buffaloesInYear.forEach((buffalo: any) => {
+                let buffaloYearly = 0;
+                Array.from({ length: 12 }).forEach((_, mIndex) => {
+                    const { year, month } = getCalendarDate(yIdx, mIndex);
+                    buffaloYearly += Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0;
+                });
+                yearlySummaryRow.push(Math.round(buffaloYearly));
+            });
+            yearlySummaryRow.push(Math.round(yearlyUnitTotal), Math.round(yearlyCPFTotal), Math.round(yearlyCGFTotal), Math.round(yearlyNetTotal));
+            data.push(yearlySummaryRow);
+            data.push([]); data.push([]);
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "10-Year Report");
+        XLSX.writeFile(wb, `Unit-Full-Report.xlsx`);
+    };
+
+
     // Calculate dynamic year ranges
     // Calculate dynamic year ranges
     // const startYear = treeData.startYear; // startYear is already in scope from state
@@ -1117,6 +1267,16 @@ const CostEstimationTableContent = ({
                                     <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-0 pointer-events-none group-hover:text-indigo-500 transition-colors" />
                                 </div>
                             </div>
+                            <button
+                                onClick={downloadFullReport}
+                                className="bg-white hover:bg-slate-50 text-indigo-600 px-3 py-1.5 rounded-full transition-all duration-200 flex items-center gap-2 shadow-sm border border-slate-200 active:scale-95 group"
+                                title={`Download Full ${treeData.years}-Year Report`}
+                            >
+                                <FileSpreadsheet className="w-3.5 h-3.5 transition-transform group-hover:scale-110" />
+                                <span className="text-[11px] font-bold uppercase tracking-tight">Full Report</span>
+                            </button>
+
+
 
                         </div>
                     )}

@@ -290,3 +290,21 @@ export interface RoleChangeRequestResponse {
   status: string;
   data: RoleChangeRequest[];
 }
+
+export interface Market {
+  id: string;
+  name: string;
+  state: string;
+  location: string;
+  status?: string; // Keep for UI compatibility if needed
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMarketRequest {
+  name: string;
+  state: string;
+  location: string;
+  isActive: boolean;
+}

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
-import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest, SelfBenefit, CreateSelfBenefitRequest, ReferralMilestone, CreateReferralMilestoneRequest, ReferralConfig, UpdateReferralConfigRequest, RoleChangeRequest, RoleChangeRequestResponse, AssignAdminToFarmRequest } from '../types';
+import { User, CreateUserRequest, ApiResponse, Farm, CreateFarmRequest, SelfBenefit, CreateSelfBenefitRequest, ReferralMilestone, CreateReferralMilestoneRequest, ReferralConfig, UpdateReferralConfigRequest, RoleChangeRequest, RoleChangeRequestResponse, AssignAdminToFarmRequest, Market, CreateMarketRequest } from '../types';
 
 const api = axios.create({
   timeout: 30000,
@@ -514,6 +514,84 @@ export const procurementService = {
     } catch (error) {
       console.error('Error performing procurement action:', error);
       throw error;
+    }
+  }
+};
+
+export const marketService = {
+  getMarkets: async (): Promise<Market[]> => {
+    try {
+      const response = await api.get<any>(API_ENDPOINTS.getMarkets());
+      // Handle both direct array and wrapped object responses
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (response.data && Array.isArray(response.data.markets)) {
+        return response.data.markets;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching markets:', error);
+      throw error;
+    }
+  },
+
+  addMarket: async (marketData: CreateMarketRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.post(API_ENDPOINTS.addMarket(), marketData, {
+        headers: {
+          'x-admin-mobile': adminMobile,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to add market' };
+      }
+
+      return { data: response.data, message: 'Market added successfully' };
+    } catch (error: any) {
+      console.error('Error adding market:', error);
+      return { error: extractErrorMessage(error) };
+    }
+  },
+
+  updateMarket: async (marketId: string, marketData: CreateMarketRequest, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.put(API_ENDPOINTS.updateMarket(marketId), marketData, {
+        headers: {
+          'x-admin-mobile': adminMobile,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to update market' };
+      }
+
+      return { data: response.data, message: 'Market updated successfully' };
+    } catch (error: any) {
+      console.error('Error updating market:', error);
+      return { error: extractErrorMessage(error) };
+    }
+  },
+
+  toggleMarketStatus: async (marketId: string, isActive: boolean, adminMobile: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await api.patch(API_ENDPOINTS.toggleMarketStatus(marketId), { isActive }, {
+        headers: {
+          'x-admin-mobile': adminMobile,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && (response.data.status === 'error' || response.data.statuscode >= 400)) {
+        return { error: response.data.message || 'Failed to toggle status' };
+      }
+
+      return { data: response.data, message: `Market ${isActive ? 'activated' : 'deactivated'} successfully` };
+    } catch (error: any) {
+      console.error('Error toggling market status:', error);
+      return { error: extractErrorMessage(error) };
     }
   }
 };

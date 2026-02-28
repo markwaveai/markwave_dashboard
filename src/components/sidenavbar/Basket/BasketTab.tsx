@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, RotateCcw, ShoppingBasket, Truck, ShieldCheck, Box, CheckCircle2, Layers, Loader2, AlertCircle, User } from 'lucide-react';
-import { procurementService } from '../../../services/api';
+import { procurementService, marketService } from '../../../services/api';
+import { Market } from '../../../types';
 import { useAppSelector } from '../../../store/hooks';
+
 
 const BasketTab: React.FC = () => {
     const adminMobile = useAppSelector((state) => state.auth.adminMobile);
@@ -15,8 +17,9 @@ const BasketTab: React.FC = () => {
     const [processingIds, setProcessingIds] = useState<string[]>([]);
     const [selectedBuffaloIds, setSelectedBuffaloIds] = useState<string[]>([]);
     const [selectedMarkets, setSelectedMarkets] = useState<Record<string, string>>({});
+    const [markets, setMarkets] = useState<string[]>([]);
 
-    const markets = ['Haryana', 'Punjab', 'Rohtak', 'Jind', 'Hisar'];
+
 
     const phasesList = ['Phase 1', 'Phase 2'];
 
@@ -215,9 +218,24 @@ const BasketTab: React.FC = () => {
         }
     };
 
+    const fetchMarkets = useCallback(async () => {
+        try {
+            const data = await marketService.getMarkets();
+            // Filter only active markets and extract names
+            const activeMarketNames = (data || [])
+                .filter((m: Market) => m.isActive)
+                .map((m: Market) => m.name);
+            setMarkets(activeMarketNames);
+        } catch (error) {
+            console.error('Error fetching markets:', error);
+        }
+    }, []);
+
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+        fetchMarkets();
+    }, [fetchData, fetchMarkets]);
+
 
     return (
         <div className="p-8 max-w-[1600px] mx-auto animate-in fade-in duration-700">

@@ -292,6 +292,11 @@ const UsersSlice = createSlice({
             state.customerDetailsLoading = false;
             state.customerDetailsError = null;
         },
+        clearAdminProfile: (state) => {
+            state.adminProfile = null;
+            state.adminProfileLoading = false;
+            state.adminProfileError = null;
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchReferralUsers.pending, (state) => {
@@ -496,6 +501,6 @@ const UsersSlice = createSlice({
     }
 });
 
-export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState, clearCustomerDetails } = UsersSlice.actions;
+export const { setReferralUsers, setExistingCustomers, resetDeactivationState, resetActivationState, clearCustomerDetails, clearAdminProfile } = UsersSlice.actions;
 export const usersReducer = UsersSlice.reducer;
 export default UsersSlice.reducer;

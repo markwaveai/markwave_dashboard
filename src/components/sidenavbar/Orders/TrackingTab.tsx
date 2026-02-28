@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
 import { API_ENDPOINTS } from '../../../config/api';
 
@@ -15,7 +16,6 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
     // Real Tracking Integration
     const [realTrackingData, setRealTrackingData] = useState<any>(null);
     const [trackingLoading, setTrackingLoading] = useState(false);
-    const [actionLoading, setActionLoading] = useState<string | null>(null); // Track specific stage being updated
 
     useEffect(() => {
         if (orderId) {
@@ -100,67 +100,6 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
         return { currentStageId: maxStageId, history, stages: dynamicStages };
     }, []);
 
-    const handleStageUpdateLocal = async (orderId: string, buffaloIds: string[], nextStageId: number) => {
-        // Map nextStageId to Specific Backend Status required by user
-        let status = '';
-
-        if (nextStageId === 5) status = 'PLACED_TO_MARKET';
-        else if (nextStageId === 6) status = 'BOUGHT';
-        else if (nextStageId === 7) status = 'IN_QUARANTINE';
-        else if (nextStageId === 8) status = 'IN_TRANSIT';
-
-        if (!status) {
-            alert("Update not allowed for this stage.");
-            return;
-        }
-
-        setActionLoading(`${orderId}-${nextStageId}`);
-
-        const payload = {
-            orderId: orderId,
-            status: status,
-            buffaloIds: buffaloIds, // LIST of IDs
-            adminMobile: adminMobile,
-            description: "",
-            location: ""
-        };
-
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(API_ENDPOINTS.updateOrderStatus(), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                    'x-admin-mobile': adminMobile
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-            if (data.status === 'success') {
-                // Refresh tracking data
-                const refreshResponse = await fetch(API_ENDPOINTS.getOrderStatus(), {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ orderId: orderId })
-                });
-                const refreshData = await refreshResponse.json();
-                if (refreshData.status === 'success') {
-                    setRealTrackingData(refreshData);
-                }
-            } else {
-                alert(`Failed to update status: ${data.message}`);
-            }
-        } catch (err) {
-            alert("Error updating status");
-        } finally {
-            setActionLoading(null);
-        }
-    };
 
     if (trackingLoading) {
         return <div className="p-4 text-center">Loading Tracking Details...</div>;
@@ -175,7 +114,7 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
         <div className="transition-all duration-300 ease-in-out">
             <div className="block">
                 <div className="w-full">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-3">
 
                         {realTrackingData?.deliveryPhases ? (
                             realTrackingData.deliveryPhases.map((phase: any, index: number) => {
@@ -217,100 +156,80 @@ const TrackingTab: React.FC<TrackingTabProps> = ({ orderId, expandedTrackerKeys,
 
                                 return (
                                     <div key={cycleNum} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                                        <div className="p-5 border-b border-slate-100 flex justify-between items-start">
-                                            <div className="flex flex-col">
-                                                <span className="text-base font-bold text-slate-800">{`Cycle ${cycleNum} ${buffaloText}`}</span>
+                                        <div
+                                            className="p-3.5 border-b border-slate-100 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                                            onClick={() => isTrackingEnabled && setExpandedTrackerKeys(prev => ({ ...prev, [trackerKey]: !isExpanded }))}
+                                        >
+                                            {isTrackingEnabled && (
+                                                <div className="flex items-center justify-center w-6">
+                                                    <ChevronRight
+                                                        size={16}
+                                                        className={`text-slate-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-90' : 'rotate-0'}`}
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col flex-1">
+                                                <span className="text-sm font-bold text-slate-800">{`Cycle ${cycleNum} ${buffaloText}`}</span>
                                                 {!isTrackingEnabled && (
-                                                    <span className="text-xs text-red-500 mt-1 font-medium">
+                                                    <span className="text-[11px] text-red-500 mt-0.5 font-medium">
                                                         Tracking starts in {daysRemaining - TRACKING_WINDOW_DAYS} days ({new Date(targetDate).toLocaleDateString()})
                                                     </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center">
-                                                {isTrackingEnabled && (
-                                                    <button
-                                                        onClick={() => setExpandedTrackerKeys(prev => ({ ...prev, [trackerKey]: !isExpanded }))}
-                                                        className="flex items-center text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors border-none cursor-pointer"
-                                                    >
-                                                        {isExpanded ? 'Minimize' : 'Expand'}
-                                                        <span className={`ml-2 text-[10px] transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
-                                                            ▼
-                                                        </span>
-                                                    </button>
                                                 )}
                                             </div>
                                         </div>
 
                                         {isExpanded && (
-                                            <div className="p-6 bg-slate-50/50 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                {timelineStages.map((stage: any, sIdx: number) => {
-                                                    const isLast = sIdx === timelineStages.length - 1;
-                                                    const isStepCompleted = stage.id < currentStageId;
-                                                    const isCurrent = stage.id === currentStageId;
-                                                    const stageDate = tracker.history[stage.id]?.date || '-';
-                                                    const stageTime = tracker.history[stage.id]?.time || '-';
+                                            <div className="p-4 bg-slate-50/50 overflow-x-auto no-scrollbar animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <div className="flex flex-row min-w-max pb-2 pt-1 relative">
+                                                    {timelineStages.map((stage: any, sIdx: number) => {
+                                                        const isLast = sIdx === timelineStages.length - 1;
+                                                        const isStepCompleted = stage.id < currentStageId;
+                                                        // const isCurrent = stage.id === currentStageId;
+                                                        const stageDate = tracker.history[stage.id]?.date || '-';
+                                                        const stageTime = tracker.history[stage.id]?.time || '-';
 
-                                                    return (
-                                                        <div key={stage.id} className="flex min-h-[80px]">
-                                                            {/* Date Column */}
-                                                            <div className="w-24 text-right pr-4 pt-1 flex-shrink-0">
-                                                                <div className="text-xs font-bold text-slate-600">{stageDate}</div>
-                                                                {stageTime !== '-' && <div className="text-[10px] text-slate-400 font-medium mt-0.5">{stageTime}</div>}
-                                                            </div>
-
-                                                            {/* Marker Column */}
-                                                            <div className="flex flex-col items-center mr-4 relative flex-shrink-0">
-                                                                {!isLast && (
-                                                                    <div className={`absolute top-6 bottom-[-4px] w-0.5 z-0 ${isStepCompleted ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-                                                                )}
-                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center z-10 text-[10px] font-bold border-2 ${isStepCompleted
-                                                                    ? 'bg-emerald-500 border-emerald-500 text-white'
-                                                                    : 'bg-white border-slate-200 text-slate-400'
-                                                                    }`}>
-                                                                    {isStepCompleted ? '✓' : stage.id}
+                                                        return (
+                                                            <div key={stage.id} className="flex flex-col items-center w-[180px] relative">
+                                                                {/* Date Column - MOVE TO TOP */}
+                                                                <div className="text-center mb-1 flex flex-col justify-end h-8">
+                                                                    <div className="text-[11px] font-bold text-slate-600">{stageDate}</div>
+                                                                    {stageTime !== '-' && <div className="text-[9px] text-slate-400 font-medium mt-0">{stageTime}</div>}
                                                                 </div>
-                                                            </div>
 
-                                                            {/* Content Column */}
-                                                            <div className={`flex-1 ${!isLast ? 'pb-8' : ''}`}>
-                                                                <div className="flex justify-between items-start">
-                                                                    <div className="flex flex-col">
-                                                                        <div className={`text-sm font-bold mb-1 ${isStepCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                                            {stage.label}
-                                                                        </div>
-                                                                        <div className="text-xs text-slate-500 font-medium leading-relaxed max-w-md">
-                                                                            {(tracker.history[stage.id]?.date && tracker.history[stage.id]?.date !== '-') ? `(${tracker.history[stage.id]?.description || stage.description})` : null}
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {(isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8 && (
-                                                                        <button
-                                                                            className={`ml-4 px-3 py-1.5 text-xs font-semibold text-white rounded-md transition-colors shadow-sm border-none cursor-pointer whitespace-nowrap ${actionLoading === `${orderId}-${stage.id + 1}` ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-                                                                            onClick={() => handleStageUpdateLocal(orderId, buffaloIds, stage.id + 1)}
-                                                                            disabled={actionLoading === `${orderId}-${stage.id + 1}`}
-                                                                        >
-                                                                            {(() => {
-                                                                                const nextId = stage.id + 1;
-                                                                                if (actionLoading === `${orderId}-${nextId}`) return 'Updating...';
-                                                                                if (nextId === 5) return 'Update Placed to Market';
-                                                                                if (nextId === 6) return 'Update Bought';
-                                                                                if (nextId === 7) return 'Update In Quarantine';
-                                                                                if (nextId === 8) return 'Update In Transit';
-                                                                                return 'Update';
-                                                                            })()}
-                                                                        </button>
+                                                                {/* Marker & Line Container */}
+                                                                <div className="relative w-full flex justify-center mb-2">
+                                                                    {/* Horizontal Connector Line */}
+                                                                    {!isLast && (
+                                                                        <div className={`absolute top-1/2 -translate-y-1/2 left-[calc(50%+10px)] right-[calc(-50%+10px)] h-0.5 z-0 ${isStepCompleted ? 'bg-emerald-500' : 'bg-slate-200'}`} />
                                                                     )}
 
-                                                                    {stage.status === 'COMPLETED' && !((isStepCompleted && stage.id === currentStageId - 1) && stage.id >= 4 && stage.id < 8) && (
-                                                                        <span className="ml-4 px-3 py-1 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 whitespace-nowrap">
+                                                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold border-2 relative z-10 ${isStepCompleted
+                                                                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                                                                        : 'bg-white border-slate-200 text-slate-400'
+                                                                        }`}>
+                                                                        {isStepCompleted ? '✓' : stage.id}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Content Column */}
+                                                                <div className="flex flex-col items-center text-center px-1">
+                                                                    <div className={`text-xs font-bold mb-1 ${isStepCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                                        {stage.label}
+                                                                    </div>
+                                                                    <div className="text-[10px] text-slate-500 font-medium leading-tight mb-1.5 h-6 overflow-hidden">
+                                                                        {(tracker.history[stage.id]?.date && tracker.history[stage.id]?.date !== '-') ? `(${tracker.history[stage.id]?.description || stage.description})` : null}
+                                                                    </div>
+
+                                                                    {stage.status === 'COMPLETED' && (
+                                                                        <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[9px] font-bold border border-emerald-200 whitespace-nowrap">
                                                                             Completed
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                })}
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         )}
                                     </div>

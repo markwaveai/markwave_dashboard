@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { setSession as setReduxSession } from './store/slices/authSlice';
-import { fetchAdminProfile } from './store/slices/usersSlice';
+import { setSession as setReduxSession, clearSession } from './store/slices/authSlice';
+import { fetchAdminProfile, clearAdminProfile } from './store/slices/usersSlice';
 import { RootState } from './store';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { API_ENDPOINTS } from './config/api';
@@ -123,8 +123,7 @@ function App() {
       fetchStartedRef.current = true;
       dispatch(fetchAdminProfile(session.mobile));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.mobile, dispatch]);
+  }, [session?.mobile, adminProfile, adminProfileLoading, dispatch]);
 
   // Wire up FCM: register SW, get/save token, subscribe to admin topic,
   // and listen for foreground and background messages.
@@ -225,6 +224,12 @@ function App() {
       const roles = session.role ? session.role.split(',').map((r) => r.trim()) : [];
       notificationService.onUserLogout(session.mobile, roles);
     }
+    // Clear Redux state
+    dispatch(clearSession());
+    dispatch(clearAdminProfile());
+    // Reset fetch flag for next login
+    fetchStartedRef.current = false;
+
     // Clear ALL local storage for security and a clean state
     window.localStorage.clear();
     setSession(null);

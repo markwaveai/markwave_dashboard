@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { RootState } from '../../../store';
-import { Check, Copy, User, X, AlertCircle, ChevronDown, Search, Calendar } from 'lucide-react';
+import { Check, Copy, User, X, AlertCircle, ChevronDown, ChevronRight, Search, Calendar } from 'lucide-react';
 import { formatRawDateTime } from '../../../utils/format';
 import {
     setSearchQuery,
@@ -402,17 +402,18 @@ const OrdersTab: React.FC = () => {
                 <table className="w-full border-separate border-spacing-y-3">
                     <thead className="sticky top-0 z-10 bg-[#f8fafc]">
                         <tr>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">S.No</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">User Details</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">Order Details</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-left">Farm Location</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Units</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Status</th>
-                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-right" style={{ minWidth: '160px' }}>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center" style={{ width: '40px' }}></th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-left">S.No</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-left">User Details</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-left">Order Details</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-left">Farm Location</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-center">Units</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-center">Status</th>
+                            <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-center" style={{ minWidth: '160px' }}>
                                 <select
                                     value={paymentTypeFilter}
                                     onChange={(e) => handlePaymentTypeChange(e.target.value)}
-                                    className="bg-transparent text-slate-500 border-none font-bold text-[11px] outline-none cursor-pointer hover:text-slate-700 transition-colors uppercase text-right w-full"
+                                    className="bg-transparent text-slate-500 border-none font-bold text-[11px] outline-none cursor-pointer hover:text-slate-700 transition-colors uppercase text-center w-full"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <option value="All Payments">Payment Type</option>
@@ -425,13 +426,13 @@ const OrdersTab: React.FC = () => {
                                 </select>
                             </th>
 
-                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-6 py-2 text-center">Amount</th>
-                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-6 py-2 text-center">Total Cost</th>
-                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-6 py-2 text-center">Coins Redeemed</th>
-                            {showActions && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Actions</th>}
-                            {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Rejected Details</th>}
+                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-3 py-2 text-center">Amount</th>
+                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-3 py-2 text-center">Total Cost</th>
+                            <th className="uppercase text-[11px] font-bold text-[var(--color-gray-500)] tracking-wider px-3 py-2 text-center">Coins Redeemed</th>
+                            {showActions && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-center">Actions</th>}
+                            {statusFilter === 'REJECTED' && <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-center">Rejected Details</th>}
                             {statusFilter === 'PAID' && (
-                                <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-6 py-2 text-center">Approved Details</th>
+                                <th className="uppercase text-[11px] font-bold text-slate-500 tracking-wider px-3 py-2 text-center">Approved Details</th>
                             )}
                         </tr>
                     </thead>
@@ -473,10 +474,26 @@ const OrdersTab: React.FC = () => {
                                             style={{ cursor: 'pointer' }}
                                             className={`group hover:transform hover:scale-[1.002] transition-all duration-200 bg-white shadow-sm rounded-xl ${isHighlighted ? 'ring-2 ring-amber-400 shadow-amber-200 shadow-lg animate-pulse' : ''}`}
                                         >
-                                            <td className="px-6 py-5 text-[13px] font-medium text-slate-800 rounded-l-xl">
+                                            <td className="px-2 py-5 text-center rounded-l-xl" style={{ width: '40px' }}>
+                                                {isExpandable ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleToggleExpansion(unit.id);
+                                                        }}
+                                                        className="p-1 hover:bg-slate-100 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                                                    >
+                                                        <ChevronRight
+                                                            size={16}
+                                                            className={`text-slate-400 transform transition-transform duration-200 ${expandedOrderId === unit.id ? 'rotate-90' : 'rotate-0'}`}
+                                                        />
+                                                    </button>
+                                                ) : <div className="w-6"></div>}
+                                            </td>
+                                            <td className="px-3 py-5 text-[13px] font-medium text-slate-800">
                                                 {serialNumber}
                                             </td>
-                                            <td className="px-6 py-5">
+                                            <td className="px-3 py-5">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 overflow-hidden">
                                                         {inv.profile_image ? (
@@ -493,17 +510,9 @@ const OrdersTab: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5">
+                                            <td className="px-3 py-5">
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span
-                                                        onClick={(e) => {
-                                                            if (isExpandable) {
-                                                                e.stopPropagation();
-                                                                handleToggleExpansion(unit.id);
-                                                            }
-                                                        }}
-                                                        className={`text-[13px] font-bold transition-colors ${isExpandable ? 'text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300 underline-offset-2' : 'text-slate-800'}`}
-                                                    >
+                                                    <span className="text-[13px] font-bold text-slate-800">
                                                         {unit.id}
                                                     </span>
                                                     {unit.placedAt ? (
@@ -513,13 +522,13 @@ const OrdersTab: React.FC = () => {
                                                     ) : <span className="text-[11px] text-slate-500">-</span>}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5 text-[14px] text-slate-800 font-medium capitalize">
+                                            <td className="px-3 py-5 text-[14px] text-slate-800 font-medium capitalize">
                                                 {unit.location || '-'}
                                             </td>
-                                            <td className="px-6 py-5 text-[14px] text-slate-800 text-center font-bold">
+                                            <td className="px-3 py-5 text-[14px] text-slate-800 text-center font-bold">
                                                 {unit.numUnits}
                                             </td>
-                                            <td className="px-6 py-5 text-center">
+                                            <td className="px-3 py-5 text-center">
                                                 {(() => {
                                                     let statusClasses = 'bg-slate-100 text-slate-600';
                                                     let label = unit.paymentStatus || '-';
@@ -551,7 +560,7 @@ const OrdersTab: React.FC = () => {
                                                     );
                                                 })()}
                                             </td>
-                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-right rounded-r-xl font-medium">
+                                            <td className="px-3 py-5 text-[13px] text-slate-800 text-center font-medium">
                                                 {tx.paymentType === 'BANK_TRANSFER' ? 'Bank Transfer' :
                                                     tx.paymentType === 'CHEQUE' ? 'Cheque' :
                                                         tx.paymentType === 'ONLINE' ? 'Online/UPI' :
@@ -561,12 +570,12 @@ const OrdersTab: React.FC = () => {
                                                                         tx.paymentType?.replace('_', ' ') || '-'}
                                             </td>
 
-                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')} ` : '-'}</td>
-                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')} ` : '-'}</td>
-                                            <td className="px-6 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
+                                            <td className="px-3 py-5 text-[13px] text-slate-800 text-center font-bold">{tx.amount ? `₹${Number(tx.amount).toLocaleString('en-IN')} ` : '-'}</td>
+                                            <td className="px-3 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.totalCost != null ? `₹${unit.totalCost.toLocaleString('en-IN')} ` : '-'}</td>
+                                            <td className="px-3 py-5 text-[13px] text-slate-800 text-center font-bold">{unit.coinsRedeemed != null ? unit.coinsRedeemed.toLocaleString('en-IN') : '0'}</td>
 
                                             {showActions && (
-                                                <td className="px-6 py-5 text-center">
+                                                <td className="px-3 py-5 text-center">
                                                     <div className="flex gap-2 items-center justify-center">
                                                         {(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_SUPER_ADMIN_REJECTION') && (
                                                             <button
@@ -636,7 +645,7 @@ const OrdersTab: React.FC = () => {
 
                                         {expandedOrderId === unit.id && (
                                             <tr>
-                                                <td colSpan={currentCols + 2} className="p-0 border-none">
+                                                <td colSpan={currentCols + 3} className="p-0 border-none">
                                                     <div className="bg-slate-50 mx-4 mb-4 rounded-xl border border-slate-200 overflow-hidden shadow-inner">
                                                         <div className="p-6">
                                                             <TrackingTab

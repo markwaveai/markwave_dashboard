@@ -3,6 +3,9 @@ import React, { useState, useMemo } from 'react';
 import { getBuffaloValueByAge, SimpleTooltip, formatMonthDateRange } from '../BuffaloFamilyTree/CommonComponents';
 import { ChevronRight } from 'lucide-react';
 
+
+
+
 const MonthlyRevenueBreak = ({
     treeData,
     buffaloDetails,
@@ -341,85 +344,8 @@ const MonthlyRevenueBreak = ({
     const endDateString = `31 Dec ${selectedYear}`;
     const dateRangeString = `${startDateString} - ${endDateString}`;
 
-    // Download Excel function
-    const downloadExcel = () => {
-        const yearLabel = `Year ${selectedYearIndex + 1}`;
-        let csvContent = "Monthly Revenue Breakdown - Unit " + selectedUnit + " - " + yearLabel + "\n\n";
-
-        csvContent += "Month,";
-        unitBuffaloes.forEach((buffalo: any) => {
-            csvContent += "Buffalo " + buffalo.id + " Revenue,";
-        });
-        csvContent += "Unit Total,CPF Cost,CGF Cost,Net Revenue,Cumulative Revenue Until " + yearLabel + "\n";
-
-        Array.from({ length: 12 }).forEach((_, mIndex) => {
-            const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
-            const monthName = monthNames[month];
-
-            const unitTotal: number = (unitBuffaloes as any[]).reduce((sum: number, buffalo: any) => {
-                return sum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0);
-            }, 0);
-
-            const monthlyCPFVal: number = cpfCost.monthlyCosts[mIndex] * units;
-            const monthlyCGFVal: number = calculateMonthlyCGF(selectedYearIndex, mIndex) * units;
-            const netRevenueVal: number = unitTotal - monthlyCPFVal - monthlyCGFVal;
-
-            csvContent += monthName + ",";
-            unitBuffaloes.map((buffalo: any) => {
-                const revenue = (monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id] || 0);
-                csvContent += Math.round(revenue) + ",";
-            });
-            csvContent += Math.round(unitTotal) + "," + Math.round(monthlyCPFVal) + "," + Math.round(monthlyCGFVal) + "," + Math.round(netRevenueVal) + "," + Math.round(totalCumulativeUntilYear) + "\n";
-        });
-
-        // Yearly totals (Sum over the 12 simulation months)
-        const yearlyUnitTotal: number = (unitBuffaloes as any[]).reduce((sum: number, buffalo: any) => {
-            return sum + (Array.from({ length: 12 }) as any[]).reduce((monthSum: number, _, mIndex: number) => {
-                const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
-                return monthSum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0);
-            }, 0);
-        }, 0);
-
-        const yearlyCGF: number = (Array.from({ length: 12 }) as any[]).reduce((sum, _, mIndex) => sum + calculateMonthlyCGF(selectedYearIndex, mIndex), 0) * units;
-        const yearlyCPFTotal: number = cpfCost.annualCPFCost * units;
-        const yearlyNetRevenue = yearlyUnitTotal - yearlyCPFTotal - yearlyCGF;
-
-        csvContent += "\nYearly Total,";
-        (unitBuffaloes as any[]).forEach((buffalo: any) => {
-            const yearlyTotal: number = (Array.from({ length: 12 }) as any[]).reduce((sum: number, _, mIndex: number) => {
-                const { year, month } = getCalendarDate(selectedYearIndex, mIndex);
-                return sum + (Number(monthlyRevenue[year]?.[month]?.buffaloes[buffalo.id]) || 0);
-            }, 0);
-            csvContent += Math.round(yearlyTotal) + ",";
-        });
-        csvContent += Math.round(yearlyUnitTotal) + "," + Math.round(yearlyCPFTotal) + "," + Math.round(yearlyCGF) + "," + Math.round(yearlyNetRevenue) + "," + Math.round(totalCumulativeUntilYear) + "\n";
-
-        // Add CPF details section
-        csvContent += "\n\nCPF Details,\n";
-        csvContent += "Buffalo ID,Has CPF,Months,Reason\n";
-        cpfCost.buffaloCPFDetails.forEach((detail: any) => {
-            csvContent += detail.id + "," + (detail.hasCPF ? "Yes" : "No") + "," + detail.monthsWithCPF + "," + detail.reason + "\n";
-        });
-
-        // Add cumulative data
-        csvContent += "\n\nCumulative Data,\n";
-        csvContent += "Description,Amount\n";
-        csvContent += "Cumulative Revenue Until " + yearLabel + "," + Math.round(totalCumulativeUntilYear) + "\n";
-        csvContent += "Cumulative CPF Cost," + Math.round(cumulativeCPFCost * units) + "\n";
-        csvContent += "Cumulative Net Revenue," + Math.round(cumulativeNetRevenue) + "\n";
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Unit-${selectedUnit}-Revenue-${yearLabel}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
     const checkScroll = () => {
+
         if (scrollContainerRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
             setShowScrollIndicator(scrollWidth > clientWidth && scrollLeft < scrollWidth - clientWidth - 10);
@@ -530,7 +456,9 @@ const MonthlyRevenueBreak = ({
                                 </div>
                             </div>
                         )}
+
                     </div>
+
 
                     {/* Row 2: Net Revenue / Cumulative Net / Asset Value */}
                     <div className="grid grid-cols-3 gap-2">
